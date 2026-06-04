@@ -188,6 +188,78 @@ long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft an
 
 この機能により、キャラクターの外見の一貫性を保ちながら、各種スチル用のプロンプトを効率よく作れるようにする。
 
+## スチル一覧タブ
+
+基本的に、この仕様書の「出力ファイル命名」にあるスチル一覧は常に描く対象として扱う。
+
+ツールには新しいタブとして「スチル一覧」を用意し、立ち絵、イベントスチル、行動スチル、エンディングスチルを一覧表示する。各行は、生成したいスチル 1 枚分の作業単位とする。
+
+### 常に描きたいスチル
+
+初期状態では、次のスチル項目をキャラクターごとに持たせる。
+
+- `Heroine_Normal`
+- `Heroine_Smile`
+- `Heroine_Spring`
+- `Heroine_Summer`
+- `Heroine_Autumn`
+- `Heroine_Winter`
+- `Heroine_Dress`
+- `Heroine_NightDress`
+- `Heroine_Raincoat`
+- `GameStartIntro_01`
+- `DayStart_Routine_01`
+- `DayStart_Rainy_01`
+- `WithForest_01`
+- `WithLake_01`
+- `WithCave_01`
+- `Tea_01`
+- `Rest_01`
+- `Walk_01`
+- `Gift_01`
+- `GoodEnding_01`
+- `NormalEnding_01`
+- `BadEnding_01`
+
+### スチルごとの管理項目
+
+スチル一覧の各行では、次を確認、編集できるようにする。
+
+- `AssetId`
+- 用途: `Sprites` / `Event` / `Actions` / `Ending`
+- 表示名
+- 出力ファイル名
+- スチル固有の追加プロンプト
+- 合成後の positive prompt
+- 対応する採用画像
+- prompt 記録の有無
+- 状態: 未生成 / 生成中 / 採用済み / 要修正 / 不要
+
+### プロンプト合成
+
+各スチルには、キャラクターの基本プロンプトに加えて、そのスチル画像を得るための追加プロンプトを持たせる。
+
+生成用 prompt は次のように組み立てる。
+
+```text
+{CharacterAppearancePrompt}, {StillSpecificPrompt}
+```
+
+例:
+
+```text
+long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft anime style,
+standing character sprite, full body, transparent background
+```
+
+スチル一覧タブでは、行を選択して「Prompt に反映」すると、合成後の positive prompt を選択中スチルの `PromptRecord.PositivePrompt` に反映できるようにする。
+
+### 採用画像との対応
+
+スチル一覧の `AssetId` は、画像登録時の `HeroineAsset.AssetId` と対応させる。
+
+同じ `AssetId` の採用画像がある場合は、そのスチルは「採用済み」として扱える。未登録の場合は「未生成」または「未採用」として表示し、必要なスチルの抜けを一覧で確認できるようにする。
+
 ## ツールの画面案
 
 ### キャラクター一覧
@@ -216,6 +288,14 @@ long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft an
 - 登録済み画像をプレビューする
 - 登録後に採用・保留・没を切り替えられる
 - 採用画像のファイル名を Unity 用に決める
+
+### スチル一覧画面
+
+- 仕様上、常に描きたいスチルを一覧表示する
+- スチルごとの用途、AssetId、ファイル名、状態を確認できる
+- キャラクター容姿プロンプトとスチル固有プロンプトを合成できる
+- 合成した positive prompt を prompt 記録へ反映できる
+- 採用済み画像の有無を確認できる
 
 ### Export 画面
 
