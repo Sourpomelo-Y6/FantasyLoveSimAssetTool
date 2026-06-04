@@ -299,6 +299,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
@@ -318,23 +319,55 @@
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,12"/>
 
-                            <DataGrid Grid.Row="2"
-                                      Grid.Column="0"
-                                      Grid.ColumnSpan="2"
-                                      ItemsSource="{Binding SelectedProfile.Assets}"
-                                      AutoGenerateColumns="False"
-                                      CanUserAddRows="False"
-                                      IsReadOnly="True">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId}" Width="140"/>
-                                    <DataGridTextColumn Header="用途" Binding="{Binding Usage}" Width="90"/>
-                                    <DataGridTextColumn Header="状態" Binding="{Binding Status}" Width="90"/>
-                                    <DataGridTextColumn Header="ファイル名" Binding="{Binding FileName}" Width="160"/>
-                                    <DataGridTextColumn Header="Prompt" Binding="{Binding PromptRecordPath}" Width="*"/>
-                                </DataGrid.Columns>
-                            </DataGrid>
+                            <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
 
-                            <Button Grid.Row="3"
+                                <TextBlock Grid.Column="0" Text="{Binding LastExportReport.AcceptedAssetCount, StringFormat=Accepted: {0}}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding LastExportReport.ExportedImageCount, StringFormat=Images: {0}}"/>
+                                <TextBlock Grid.Column="2" Text="{Binding LastExportReport.ExportedPromptCount, StringFormat=Prompts: {0}}"/>
+                                <TextBlock Grid.Column="3" Text="{Binding LastExportReport.SkippedImageCount, StringFormat=Skipped: {0}}"/>
+                            </Grid>
+
+                            <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Export 対象" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="警告" FontWeight="SemiBold" Margin="0,0,0,8"/>
+
+                                <DataGrid Grid.Row="1"
+                                          Grid.Column="0"
+                                          ItemsSource="{Binding SelectedProfile.Assets}"
+                                          AutoGenerateColumns="False"
+                                          CanUserAddRows="False"
+                                          IsReadOnly="True">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId}" Width="140"/>
+                                        <DataGridTextColumn Header="用途" Binding="{Binding Usage}" Width="90"/>
+                                        <DataGridTextColumn Header="状態" Binding="{Binding Status}" Width="90"/>
+                                        <DataGridTextColumn Header="ファイル名" Binding="{Binding FileName}" Width="160"/>
+                                        <DataGridTextColumn Header="Prompt" Binding="{Binding PromptRecordPath}" Width="*"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <ListBox Grid.Row="1"
+                                         Grid.Column="2"
+                                         ItemsSource="{Binding LastExportReport.Warnings}"/>
+                            </Grid>
+
+                            <Button Grid.Row="4"
                                     Grid.Column="1"
                                     Content="Export 実行"
                                     Command="{Binding ExportSelectedProfileCommand}"

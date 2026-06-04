@@ -24,6 +24,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private PromptTemplate selectedPromptTemplate;
         private PromptRecord currentPromptRecord;
         private HeroineProfile selectedProfile;
+        private ExportReport lastExportReport;
         private string statusMessage;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
@@ -165,6 +166,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public ExportReport LastExportReport
+        {
+            get { return lastExportReport; }
+            set
+            {
+                if (lastExportReport == value) { return; }
+                lastExportReport = value;
+                OnPropertyChanged(nameof(LastExportReport));
+            }
+        }
+
         public string StatusMessage
         {
             get { return statusMessage; }
@@ -219,6 +231,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             imageSourcePathInput = string.Empty;
             selectedAssetUsage = AssetUsage.Sprites;
             selectedAssetStatus = AssetStatus.Accepted;
+            lastExportReport = new ExportReport();
             statusMessage = string.Empty;
 
             CreateCharacterCommand = new RelayCommand(CreateCharacter);
@@ -402,8 +415,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             try
             {
                 characterProjectService.SaveProfile(SelectedProfile);
-                string exportPath = exportService.ExportHeroine(SelectedProfile);
-                StatusMessage = $"{SelectedProfile.HeroineId} を export しました: {exportPath}";
+                LastExportReport = exportService.ExportHeroine(SelectedProfile);
+                StatusMessage = $"{SelectedProfile.HeroineId} を export しました。画像 {LastExportReport.ExportedImageCount}/{LastExportReport.AcceptedAssetCount} 件、prompt {LastExportReport.ExportedPromptCount} 件、警告 {LastExportReport.Warnings.Count} 件。";
             }
             catch (Exception ex)
             {

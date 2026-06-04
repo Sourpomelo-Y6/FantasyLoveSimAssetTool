@@ -21,7 +21,7 @@ namespace FantasyLoveSimAssetTool.Services
             this.characterProjectService = characterProjectService ?? throw new ArgumentNullException(nameof(characterProjectService));
         }
 
-        public string ExportHeroine(HeroineProfile profile)
+        public ExportReport ExportHeroine(HeroineProfile profile)
         {
             if (profile == null)
             {
@@ -40,15 +40,32 @@ namespace FantasyLoveSimAssetTool.Services
                 .Where(asset => asset.Status == AssetStatus.Accepted)
                 .ToList();
 
+            ExportReport report = new ExportReport
+            {
+                ExportPath = heroineExportDirectory,
+                AcceptedAssetCount = acceptedAssets.Count
+            };
+
             foreach (HeroineAsset asset in acceptedAssets)
             {
-                ExportImage(profile, asset, heroineExportDirectory);
-                ExportPrompt(profile, asset, heroineExportDirectory);
+                if (ExportImage(profile, asset, heroineExportDirectory, report))
+                {
+                    report.ExportedImageCount++;
+                }
+                else
+                {
+                    report.SkippedImageCount++;
+                }
+
+                if (ExportPrompt(profile, asset, heroineExportDirectory, report))
+                {
+                    report.ExportedPromptCount++;
+                }
             }
 
             WriteDataFiles(profile, acceptedAssets, heroineExportDirectory);
 
-            return heroineExportDirectory;
+            return report;
         }
 
         private void EnsureExportDirectories(string heroineExportDirectory)
@@ -63,40 +80,46 @@ namespace FantasyLoveSimAssetTool.Services
             Directory.CreateDirectory(Path.Combine(heroineExportDirectory, "Prompts"));
         }
 
-        private void ExportImage(HeroineProfile profile, HeroineAsset asset, string heroineExportDirectory)
+        private bool ExportImage(HeroineProfile profile, HeroineAsset asset, string heroineExportDirectory, ExportReport report)
         {
             if (string.IsNullOrWhiteSpace(asset.StoredPath))
             {
-                return;
+                report.Warnings.Add($"{asset.AssetId}: StoredPath が空のため画像を export できません。");
+                return false;
             }
 
             string sourcePath = Path.Combine(characterProjectService.GetCharacterDirectory(profile.HeroineId), asset.StoredPath);
             if (!File.Exists(sourcePath))
             {
-                return;
+                report.Warnings.Add($"{asset.AssetId}: 画像ファイルが見つかりません: {sourcePath}");
+                return false;
             }
 
             string fileName = string.IsNullOrWhiteSpace(asset.FileName) ? Path.GetFileName(sourcePath) : asset.FileName;
             string destinationDirectory = Path.Combine(heroineExportDirectory, "Images", asset.Usage.ToString());
             Directory.CreateDirectory(destinationDirectory);
             File.Copy(sourcePath, Path.Combine(destinationDirectory, fileName), true);
+            return true;
         }
 
-        private void ExportPrompt(HeroineProfile profile, HeroineAsset asset, string heroineExportDirectory)
+        private bool ExportPrompt(HeroineProfile profile, HeroineAsset asset, string heroineExportDirectory, ExportReport report)
         {
             if (string.IsNullOrWhiteSpace(asset.PromptRecordPath))
             {
-                return;
+                report.Warnings.Add($"{asset.AssetId}: PromptRecordPath が空のため prompt JSON を export できません。");
+                return false;
             }
 
             string sourcePath = Path.Combine(characterProjectService.GetCharacterDirectory(profile.HeroineId), asset.PromptRecordPath);
             if (!File.Exists(sourcePath))
             {
-                return;
+                report.Warnings.Add($"{asset.AssetId}: prompt JSON が見つかりません: {sourcePath}");
+                return false;
             }
 
             string destinationPath = Path.Combine(heroineExportDirectory, "Prompts", Path.GetFileName(sourcePath));
             File.Copy(sourcePath, destinationPath, true);
+            return true;
         }
 
         private void WriteDataFiles(HeroineProfile profile, IReadOnlyList<HeroineAsset> acceptedAssets, string heroineExportDirectory)
