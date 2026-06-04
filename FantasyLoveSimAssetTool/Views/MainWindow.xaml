@@ -236,6 +236,7 @@
                         <Grid Margin="0,12,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
@@ -245,7 +246,15 @@
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,12"/>
 
-                            <DataGrid Grid.Row="1"
+                            <Button Grid.Row="1"
+                                    Content="Prompt に反映"
+                                    Command="{Binding ApplyStillPromptCommand}"
+                                    Width="140"
+                                    Height="28"
+                                    HorizontalAlignment="Right"
+                                    Margin="0,0,0,8"/>
+
+                            <DataGrid Grid.Row="2"
                                       ItemsSource="{Binding StillDefinitions}"
                                       SelectedItem="{Binding SelectedStillDefinition}"
                                       AutoGenerateColumns="False"

@@ -5,6 +5,7 @@ using Microsoft.Win32;
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Windows.Input;
 
 namespace FantasyLoveSimAssetTool.ViewModels
@@ -155,6 +156,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedStillDefinition == value) { return; }
                 selectedStillDefinition = value;
                 OnPropertyChanged(nameof(SelectedStillDefinition));
+                CommandManager.InvalidateRequerySuggested();
             }
         }
 
@@ -247,6 +249,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ApplyPromptTemplateCommand { get; }
 
+        public ICommand ApplyStillPromptCommand { get; }
+
         public ICommand ExportSelectedProfileCommand { get; }
 
         public MainWindowModel()
@@ -303,6 +307,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ApplyPromptTemplateCommand = new RelayCommand(
                 ApplyPromptTemplate,
                 () => SelectedProfile != null && SelectedPromptTemplate != null && CurrentPromptRecord != null);
+            ApplyStillPromptCommand = new RelayCommand(
+                ApplyStillPrompt,
+                () => SelectedProfile != null && SelectedStillDefinition != null);
             ExportSelectedProfileCommand = new RelayCommand(ExportSelectedProfile, () => SelectedProfile != null);
 
             LoadStillDefinitions();
@@ -487,6 +494,90 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 StatusMessage = $"テンプレート適用に失敗しました: {ex.Message}";
             }
+        }
+
+        private void ApplyStillPrompt()
+        {
+            if (SelectedProfile == null || SelectedStillDefinition == null)
+            {
+                return;
+            }
+
+            try
+            {
+                HeroineAsset asset = EnsureAssetForStill(SelectedProfile, SelectedStillDefinition);
+                SelectedAsset = asset;
+                if (CurrentPromptRecord == null)
+                {
+                    CurrentPromptRecord = promptRecordService.LoadOrCreatePromptRecord(SelectedProfile, asset);
+                }
+
+                CurrentPromptRecord.PositivePrompt = BuildStillPositivePrompt(SelectedProfile, SelectedStillDefinition);
+                characterProjectService.SaveProfile(SelectedProfile);
+                AssetIdInput = asset.AssetId;
+                SelectedAssetUsage = asset.Usage;
+                StatusMessage = $"{SelectedStillDefinition.DisplayName} の positive prompt を Prompt タブに反映しました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"スチル prompt 反映に失敗しました: {ex.Message}";
+            }
+        }
+
+        private HeroineAsset EnsureAssetForStill(HeroineProfile profile, StillDefinition stillDefinition)
+        {
+            profile.Assets ??= new ObservableCollection<HeroineAsset>();
+
+            HeroineAsset existingAsset = profile.Assets
+                .FirstOrDefault(asset => asset.AssetId == stillDefinition.AssetId);
+            if (existingAsset != null)
+            {
+                existingAsset.Usage = stillDefinition.Usage;
+                if (string.IsNullOrWhiteSpace(existingAsset.FileName))
+                {
+                    existingAsset.FileName = stillDefinition.FileName;
+                }
+
+                if (string.IsNullOrWhiteSpace(existingAsset.PromptRecordPath))
+                {
+                    existingAsset.PromptRecordPath = Path.Combine("Prompts", stillDefinition.AssetId + ".prompt.json");
+                }
+
+                return existingAsset;
+            }
+
+            HeroineAsset asset = new HeroineAsset
+            {
+                AssetId = stillDefinition.AssetId,
+                Usage = stillDefinition.Usage,
+                Status = AssetStatus.Pending,
+                FileName = stillDefinition.FileName,
+                StoredPath = string.Empty,
+                PromptRecordPath = Path.Combine("Prompts", stillDefinition.AssetId + ".prompt.json"),
+                Memo = "スチル一覧から作成した prompt 作業用レコード"
+            };
+
+            profile.Assets.Add(asset);
+            characterProjectService.SaveProfile(profile);
+            return asset;
+        }
+
+        private static string BuildStillPositivePrompt(HeroineProfile profile, StillDefinition stillDefinition)
+        {
+            string appearancePrompt = (profile.AppearancePrompt ?? string.Empty).Trim().TrimEnd(',');
+            string specificPrompt = (stillDefinition.SpecificPrompt ?? string.Empty).Trim().TrimStart(',');
+
+            if (string.IsNullOrWhiteSpace(appearancePrompt))
+            {
+                return specificPrompt;
+            }
+
+            if (string.IsNullOrWhiteSpace(specificPrompt))
+            {
+                return appearancePrompt;
+            }
+
+            return appearancePrompt + ", " + specificPrompt;
         }
 
         private void SavePromptRecord()
