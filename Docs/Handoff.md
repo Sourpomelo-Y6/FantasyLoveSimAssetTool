@@ -116,6 +116,7 @@ Models/
 - `SecondPerson`
 - `Likes`
 - `Dislikes`
+- `AppearancePrompt`
 - `ActionReactionPolicy`
 - `EndingPolicy`
 
@@ -185,6 +186,12 @@ Services/
 - prompt JSON の読み書き
 - 画像ファイル名と prompt ファイル名の対応付け
 
+### PromptTemplateService
+
+- スチル用途別のデフォルトプロンプトテンプレート管理
+- キャラクター容姿プロンプトとテンプレートの合成
+- 合成結果を `PromptRecord.PositivePrompt` に反映
+
 ### ExportService
 
 - 採用画像の export
@@ -213,14 +220,18 @@ Services/
 6. 画像用途別フォルダを作成する
 7. 採用画像登録の最小機能を作る
 8. prompt JSON 登録の最小機能を作る
-9. ExportService を作る
-10. `heroine_profile_note.md` を出力する
+9. キャラクター容姿プロンプトを追加する
+10. スチル用途別のデフォルトプロンプトテンプレートを用意する
+11. 容姿プロンプトとテンプレートを合成して `PromptRecord.PositivePrompt` に反映する
+12. ExportService を作る
+13. `heroine_profile_note.md` を出力する
 
 ## 検証観点
 
 - `HeroineId` から期待するフォルダが作られる
 - `profile.json` が保存、再読み込みできる
 - 画像と prompt JSON が同じ `AssetId` で対応する
+- キャラクター容姿プロンプトとスチル用テンプレートから positive prompt を生成できる
 - `Accepted` の画像だけが export される
 - Export 結果が `Docs/CharacterAssetGenerationToolSpec.md` の構成と一致する
 - `heroine_profile_note.md` に Unity 側で必要な参照情報が入る
@@ -230,6 +241,8 @@ Services/
 - 作業データの保存先をアプリ直下に固定するか、ユーザーが選べるようにするか
 - JSON の細かいスキーマ
 - 画像登録時にコピーするか、参照パスだけ保持するか
+- スチル用デフォルトプロンプトテンプレートをコード内固定にするか、JSON 設定として編集可能にするか
+- prompt テンプレートのプレースホルダー名をどう定義するか
 - `net5.0-windows` 維持を前提に、将来ターゲットフレームワーク移行を再検証するタイミング
 - 画像プレビュー、ドラッグ&ドロップ、画像検査をどの段階で入れるか
 
@@ -238,3 +251,5 @@ Services/
 まずは見た目よりも、保存形式と export 結果を固めるのが重要です。
 
 このツールの価値は、画像生成を自動化することより、採用済み素材、生成条件、Unity 取り込み先を失わずに管理することにあります。最初の実装では外部生成した画像を登録する前提で進め、Stable Diffusion 連携や Python 画像検査は後から追加する方が安全です。
+
+今後は、キャラクターごとの容姿プロンプトを登録し、各種スチル用のデフォルトプロンプトテンプレートと合成する機能を追加します。これにより、同じキャラクターの外見を保ったまま、立ち絵、イベント、行動、エンディング用の prompt を効率よく作れるようにします。

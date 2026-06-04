@@ -135,6 +135,59 @@ GameStartIntro_01.png
 GameStartIntro_01.prompt.json
 ```
 
+## プロンプトテンプレート
+
+各種スチル用のデフォルトプロンプトテンプレートを用意する。
+
+キャラクターごとに「容姿を表すプロンプト」を登録し、それをスチル用途ごとのテンプレートと合成することで、立ち絵、イベントスチル、行動スチル、エンディングスチル用の生成プロンプトを作れるようにする。
+
+### キャラクター容姿プロンプト
+
+キャラクター詳細に、次のような共通の容姿プロンプトを持たせる。
+
+- 髪型、髪色
+- 目の色、表情の傾向
+- 体型、身長感
+- 服装の基本方針
+- キャラクター固有の特徴
+- 絵柄や品質指定の基本要素
+
+例:
+
+```text
+long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft anime style
+```
+
+### スチル用デフォルトテンプレート
+
+用途別に、デフォルトのスチル用プロンプトを持たせる。
+
+- `Sprites`: 通常立ち絵、表情差分、衣装差分
+- `Event`: ゲーム開始、日常イベント、場所イベント
+- `Actions`: お茶、休憩、散歩、贈り物などの行動反応
+- `Ending`: Good / Normal / Bad Ending
+
+例:
+
+```text
+{CharacterAppearancePrompt}, standing character sprite, full body, transparent background
+{CharacterAppearancePrompt}, romantic event still, forest background, warm sunlight
+{CharacterAppearancePrompt}, drinking tea with the player, cozy room, gentle atmosphere
+{CharacterAppearancePrompt}, good ending still, emotional smile, cinematic composition
+```
+
+### 合成機能
+
+ツール上では、次の流れでプロンプトを作れるようにする。
+
+1. キャラクター詳細に容姿プロンプトを登録する
+2. 画像用途を選ぶ
+3. 用途別のデフォルトテンプレートを選ぶ
+4. `{CharacterAppearancePrompt}` などのプレースホルダーをキャラクター固有の容姿プロンプトで置換する
+5. 生成された positive prompt を `PromptRecord` に反映する
+
+この機能により、キャラクターの外見の一貫性を保ちながら、各種スチル用のプロンプトを効率よく作れるようにする。
+
 ## ツールの画面案
 
 ### キャラクター一覧
@@ -149,6 +202,7 @@ GameStartIntro_01.prompt.json
 - 口調・会話方針
 - 衣装一覧
 - 画像用途別リスト
+- キャラクター容姿プロンプト
 - Stable Diffusion プロンプトテンプレート
 - Unity 出力設定
 
@@ -156,6 +210,7 @@ GameStartIntro_01.prompt.json
 
 - 用途を選ぶ
 - プロンプトテンプレートから生成用プロンプトを作る
+- キャラクター容姿プロンプトとスチル用テンプレートを合成する
 - 生成結果を登録する
 - 採用・保留・没を管理する
 - 採用画像のファイル名を Unity 用に決める
@@ -205,6 +260,7 @@ Assets/Images/Heroines/<HeroineId>/
 - 画像の解像度、縦横比、透過、余白を自動チェックする
 - 立ち絵の背景透過や表情差分の整合性をチェックする
 - 複数ヒロイン間でプロンプトテンプレートを共有する
+- スチル用途別のデフォルトプロンプトテンプレートを編集、追加、共有する
 
 ## 最初に作る最小機能
 
