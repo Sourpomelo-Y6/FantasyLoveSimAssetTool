@@ -4,6 +4,7 @@ using FantasyLoveSimAssetTool.Services;
 using Microsoft.Win32;
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows.Input;
 
 namespace FantasyLoveSimAssetTool.ViewModels
@@ -25,6 +26,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private PromptRecord currentPromptRecord;
         private HeroineProfile selectedProfile;
         private ExportReport lastExportReport;
+        private string selectedAssetImagePath;
+        private string selectedAssetImageMessage;
         private string statusMessage;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
@@ -119,6 +122,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedAsset == value) { return; }
                 selectedAsset = value;
                 OnPropertyChanged(nameof(SelectedAsset));
+                RefreshSelectedAssetImagePath();
                 RefreshPromptTemplates();
                 LoadPromptForSelectedAsset();
                 CommandManager.InvalidateRequerySuggested();
@@ -177,6 +181,28 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public string SelectedAssetImagePath
+        {
+            get { return selectedAssetImagePath; }
+            set
+            {
+                if (selectedAssetImagePath == value) { return; }
+                selectedAssetImagePath = value;
+                OnPropertyChanged(nameof(SelectedAssetImagePath));
+            }
+        }
+
+        public string SelectedAssetImageMessage
+        {
+            get { return selectedAssetImageMessage; }
+            set
+            {
+                if (selectedAssetImageMessage == value) { return; }
+                selectedAssetImageMessage = value;
+                OnPropertyChanged(nameof(SelectedAssetImageMessage));
+            }
+        }
+
         public string StatusMessage
         {
             get { return statusMessage; }
@@ -232,6 +258,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             selectedAssetUsage = AssetUsage.Sprites;
             selectedAssetStatus = AssetStatus.Accepted;
             lastExportReport = new ExportReport();
+            selectedAssetImagePath = string.Empty;
+            selectedAssetImageMessage = "画像を選択してください。";
             statusMessage = string.Empty;
 
             CreateCharacterCommand = new RelayCommand(CreateCharacter);
@@ -307,6 +335,36 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 StatusMessage = $"画像登録に失敗しました: {ex.Message}";
             }
+        }
+
+        private void RefreshSelectedAssetImagePath()
+        {
+            SelectedAssetImagePath = string.Empty;
+
+            if (SelectedProfile == null || SelectedAsset == null)
+            {
+                SelectedAssetImageMessage = "画像を選択してください。";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(SelectedAsset.StoredPath))
+            {
+                SelectedAssetImageMessage = "StoredPath が空です。";
+                return;
+            }
+
+            string imagePath = Path.Combine(
+                characterProjectService.GetCharacterDirectory(SelectedProfile.HeroineId),
+                SelectedAsset.StoredPath);
+
+            if (!File.Exists(imagePath))
+            {
+                SelectedAssetImageMessage = "画像ファイルが見つかりません: " + imagePath;
+                return;
+            }
+
+            SelectedAssetImagePath = imagePath;
+            SelectedAssetImageMessage = imagePath;
         }
 
         private void LoadPromptForSelectedAsset()

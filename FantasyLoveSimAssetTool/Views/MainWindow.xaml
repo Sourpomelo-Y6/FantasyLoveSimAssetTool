@@ -164,20 +164,58 @@
                                 <Button Grid.Row="3" Grid.Column="2" Content="画像登録" Command="{Binding AddImageAssetCommand}" Height="26"/>
                             </Grid>
 
-                            <DataGrid Grid.Row="2"
-                                      ItemsSource="{Binding SelectedProfile.Assets}"
-                                      SelectedItem="{Binding SelectedAsset}"
-                                      AutoGenerateColumns="False"
-                                      CanUserAddRows="False"
-                                      IsReadOnly="True">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId}" Width="140"/>
-                                    <DataGridTextColumn Header="用途" Binding="{Binding Usage}" Width="90"/>
-                                    <DataGridTextColumn Header="状態" Binding="{Binding Status}" Width="90"/>
-                                    <DataGridTextColumn Header="ファイル名" Binding="{Binding FileName}" Width="160"/>
-                                    <DataGridTextColumn Header="保存先" Binding="{Binding StoredPath}" Width="*"/>
-                                </DataGrid.Columns>
-                            </DataGrid>
+                            <Grid Grid.Row="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="2*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="登録済み画像" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="プレビュー" FontWeight="SemiBold" Margin="0,0,0,8"/>
+
+                                <DataGrid Grid.Row="1"
+                                          Grid.Column="0"
+                                          ItemsSource="{Binding SelectedProfile.Assets}"
+                                          SelectedItem="{Binding SelectedAsset}"
+                                          AutoGenerateColumns="False"
+                                          CanUserAddRows="False"
+                                          IsReadOnly="True">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId}" Width="140"/>
+                                        <DataGridTextColumn Header="用途" Binding="{Binding Usage}" Width="90"/>
+                                        <DataGridTextColumn Header="状態" Binding="{Binding Status}" Width="90"/>
+                                        <DataGridTextColumn Header="ファイル名" Binding="{Binding FileName}" Width="160"/>
+                                        <DataGridTextColumn Header="保存先" Binding="{Binding StoredPath}" Width="*"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <Border Grid.Row="1"
+                                        Grid.Column="2"
+                                        BorderBrush="#DDDDDD"
+                                        BorderThickness="1"
+                                        Padding="8">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <Image Grid.Row="0"
+                                               Source="{Binding SelectedAssetImagePath, Mode=OneWay}"
+                                               Stretch="Uniform"/>
+                                        <TextBlock Grid.Row="1"
+                                                   Text="{Binding SelectedAssetImageMessage}"
+                                                   Foreground="Gray"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,8,0,0"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
                         </Grid>
                     </TabItem>
 
