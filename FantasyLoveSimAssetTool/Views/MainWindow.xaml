@@ -162,6 +162,7 @@
 
                             <DataGrid Grid.Row="2"
                                       ItemsSource="{Binding SelectedProfile.Assets}"
+                                      SelectedItem="{Binding SelectedAsset}"
                                       AutoGenerateColumns="False"
                                       CanUserAddRows="False"
                                       IsReadOnly="True">
@@ -173,6 +174,96 @@
                                     <DataGridTextColumn Header="保存先" Binding="{Binding StoredPath}" Width="*"/>
                                 </DataGrid.Columns>
                             </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Prompt">
+                        <Grid Margin="0,12,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Text="{Binding SelectedAsset.AssetId, StringFormat=選択中 Asset: {0}}"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,12"/>
+
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="positive prompt" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding CurrentPromptRecord.PositivePrompt, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="86" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="negative prompt" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding CurrentPromptRecord.NegativePrompt, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="70" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="model" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding CurrentPromptRecord.Model, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,8"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="2" Text="VAE" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="2" Grid.Column="3" Text="{Binding CurrentPromptRecord.Vae, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="LoRA" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding CurrentPromptRecord.Lora, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,8"/>
+
+                                    <TextBlock Grid.Row="3" Grid.Column="2" Text="sampler" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="3" Grid.Column="3" Text="{Binding CurrentPromptRecord.Sampler, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="steps" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding CurrentPromptRecord.Steps, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,8"/>
+
+                                    <TextBlock Grid.Row="4" Grid.Column="2" Text="CFG scale" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="4" Grid.Column="3" Text="{Binding CurrentPromptRecord.CfgScale, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="seed" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding CurrentPromptRecord.Seed, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,8"/>
+
+                                    <TextBlock Grid.Row="5" Grid.Column="2" Text="image size" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <StackPanel Grid.Row="5" Grid.Column="3" Orientation="Horizontal" Margin="0,0,0,8">
+                                        <TextBox Text="{Binding CurrentPromptRecord.ImageWidth, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                                        <TextBlock Text=" x " VerticalAlignment="Center" Margin="6,0"/>
+                                        <TextBox Text="{Binding CurrentPromptRecord.ImageHeight, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="ControlNet" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding CurrentPromptRecord.ControlNetMemo, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="48" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="7" Grid.Column="0" Text="upscale" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding CurrentPromptRecord.UpscaleMemo, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="48" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="8" Grid.Column="0" Text="inpaint / img2img" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding CurrentPromptRecord.InpaintMemo, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="48" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="9" Grid.Column="0" Text="採用理由" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding CurrentPromptRecord.AdoptionReason, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="56" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="10" Grid.Column="0" Text="修正メモ" VerticalAlignment="Top" Margin="0,4,8,0"/>
+                                    <TextBox Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding CurrentPromptRecord.RevisionMemo, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="56" TextWrapping="Wrap"/>
+                                </Grid>
+                            </ScrollViewer>
+
+                            <Button Grid.Row="2" Content="Prompt 保存" Command="{Binding SavePromptRecordCommand}" Width="140" Height="30" HorizontalAlignment="Right" Margin="0,12,0,0"/>
                         </Grid>
                     </TabItem>
                 </TabControl>

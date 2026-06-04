@@ -83,6 +83,7 @@ namespace FantasyLoveSimAssetTool.Services
 
             ValidateHeroineId(profile.HeroineId);
             ValidateAssetId(assetId);
+            profile.Assets ??= new ObservableCollection<HeroineAsset>();
 
             if (string.IsNullOrWhiteSpace(sourceImagePath))
             {

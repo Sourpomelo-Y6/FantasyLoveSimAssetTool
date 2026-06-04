@@ -11,12 +11,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
     public class MainWindowModel : ObservableObject
     {
         private readonly CharacterProjectService characterProjectService;
+        private readonly PromptRecordService promptRecordService;
         private string heroineIdInput;
         private string displayNameInput;
         private string assetIdInput;
         private string imageSourcePathInput;
         private AssetUsage selectedAssetUsage;
         private AssetStatus selectedAssetStatus;
+        private HeroineAsset selectedAsset;
+        private PromptRecord currentPromptRecord;
         private HeroineProfile selectedProfile;
         private string statusMessage;
 
@@ -97,6 +100,31 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public HeroineAsset SelectedAsset
+        {
+            get { return selectedAsset; }
+            set
+            {
+                if (selectedAsset == value) { return; }
+                selectedAsset = value;
+                OnPropertyChanged(nameof(SelectedAsset));
+                LoadPromptForSelectedAsset();
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public PromptRecord CurrentPromptRecord
+        {
+            get { return currentPromptRecord; }
+            set
+            {
+                if (currentPromptRecord == value) { return; }
+                currentPromptRecord = value;
+                OnPropertyChanged(nameof(CurrentPromptRecord));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
         public HeroineProfile SelectedProfile
         {
             get { return selectedProfile; }
@@ -105,6 +133,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedProfile == value) { return; }
                 selectedProfile = value;
                 OnPropertyChanged(nameof(SelectedProfile));
+                SelectedAsset = null;
+                if (selectedProfile != null && selectedProfile.Assets.Count > 0)
+                {
+                    SelectedAsset = selectedProfile.Assets[0];
+                }
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -130,9 +163,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand AddImageAssetCommand { get; }
 
+        public ICommand SavePromptRecordCommand { get; }
+
         public MainWindowModel()
         {
             characterProjectService = new CharacterProjectService();
+            promptRecordService = new PromptRecordService(characterProjectService);
             Profiles = new ObservableCollection<HeroineProfile>();
             AssetUsages = new ObservableCollection<AssetUsage>
             {
@@ -160,6 +196,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RefreshProfilesCommand = new RelayCommand(LoadProfiles);
             BrowseImageCommand = new RelayCommand(BrowseImage);
             AddImageAssetCommand = new RelayCommand(AddImageAsset, () => SelectedProfile != null);
+            SavePromptRecordCommand = new RelayCommand(
+                SavePromptRecord,
+                () => SelectedProfile != null && SelectedAsset != null && CurrentPromptRecord != null);
 
             LoadProfiles();
             StatusMessage = "キャラクター基本情報の保存準備ができています。";
@@ -214,11 +253,50 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     AssetIdInput,
                     SelectedAssetStatus);
 
+                SelectedAsset = asset;
                 StatusMessage = $"{asset.AssetId} を {asset.Usage} に登録しました。";
             }
             catch (Exception ex)
             {
                 StatusMessage = $"画像登録に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void LoadPromptForSelectedAsset()
+        {
+            if (SelectedProfile == null || SelectedAsset == null)
+            {
+                CurrentPromptRecord = null;
+                return;
+            }
+
+            try
+            {
+                CurrentPromptRecord = promptRecordService.LoadOrCreatePromptRecord(SelectedProfile, SelectedAsset);
+            }
+            catch (Exception ex)
+            {
+                CurrentPromptRecord = new PromptRecord();
+                StatusMessage = $"prompt 読み込みに失敗しました: {ex.Message}";
+            }
+        }
+
+        private void SavePromptRecord()
+        {
+            if (SelectedProfile == null || SelectedAsset == null || CurrentPromptRecord == null)
+            {
+                return;
+            }
+
+            try
+            {
+                promptRecordService.SavePromptRecord(SelectedProfile, SelectedAsset, CurrentPromptRecord);
+                characterProjectService.SaveProfile(SelectedProfile);
+                StatusMessage = $"{SelectedAsset.AssetId} の prompt 記録を保存しました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"prompt 保存に失敗しました: {ex.Message}";
             }
         }
 
