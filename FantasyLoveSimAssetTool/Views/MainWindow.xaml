@@ -80,6 +80,7 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="HeroineId" VerticalAlignment="Center" Margin="0,0,8,8"/>
@@ -112,11 +113,14 @@
                                     <TextBlock Grid.Row="9" Grid.Column="0" Text="苦手なもの" VerticalAlignment="Top" Margin="0,4,8,8"/>
                                     <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding SelectedProfile.Dislikes, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="56" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
-                                    <TextBlock Grid.Row="10" Grid.Column="0" Text="行動反応方針" VerticalAlignment="Top" Margin="0,4,8,8"/>
-                                    <TextBox Grid.Row="10" Grid.Column="1" Text="{Binding SelectedProfile.ActionReactionPolicy, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="64" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="10" Grid.Column="0" Text="容姿プロンプト" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="10" Grid.Column="1" Text="{Binding SelectedProfile.AppearancePrompt, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="72" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
-                                    <TextBlock Grid.Row="11" Grid.Column="0" Text="エンディング方針" VerticalAlignment="Top" Margin="0,4,8,0"/>
-                                    <TextBox Grid.Row="11" Grid.Column="1" Text="{Binding SelectedProfile.EndingPolicy, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="64" TextWrapping="Wrap"/>
+                                    <TextBlock Grid.Row="11" Grid.Column="0" Text="行動反応方針" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="11" Grid.Column="1" Text="{Binding SelectedProfile.ActionReactionPolicy, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="64" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="12" Grid.Column="0" Text="エンディング方針" VerticalAlignment="Top" Margin="0,4,8,0"/>
+                                    <TextBox Grid.Row="12" Grid.Column="1" Text="{Binding SelectedProfile.EndingPolicy, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="64" TextWrapping="Wrap"/>
                                 </Grid>
                             </ScrollViewer>
 
@@ -185,10 +189,33 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0"
-                                       Text="{Binding SelectedAsset.AssetId, StringFormat=選択中 Asset: {0}}"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,12"/>
+                            <Grid Grid.Row="0" Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="140"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0"
+                                           Grid.Column="0"
+                                           Grid.ColumnSpan="3"
+                                           Text="{Binding SelectedAsset.AssetId, StringFormat=選択中 Asset: {0}}"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,0,8"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="テンプレート" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <ComboBox Grid.Row="1"
+                                          Grid.Column="1"
+                                          ItemsSource="{Binding AvailablePromptTemplates}"
+                                          SelectedItem="{Binding SelectedPromptTemplate}"
+                                          DisplayMemberPath="DisplayName"
+                                          Margin="0,0,8,0"/>
+                                <Button Grid.Row="1" Grid.Column="2" Content="適用" Command="{Binding ApplyPromptTemplateCommand}" Height="26"/>
+                            </Grid>
 
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                                 <Grid>
@@ -264,6 +291,57 @@
                             </ScrollViewer>
 
                             <Button Grid.Row="2" Content="Prompt 保存" Command="{Binding SavePromptRecordCommand}" Width="140" Height="30" HorizontalAlignment="Right" Margin="0,12,0,0"/>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Export">
+                        <Grid Margin="0,12,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="出力先" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ExportPath, Mode=OneWay}" IsReadOnly="True" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="1"
+                                       Grid.Column="0"
+                                       Grid.ColumnSpan="2"
+                                       Text="Accepted の画像、対応する prompt JSON、Data 下書き Markdown を Unity 取り込み用に出力します。"
+                                       Foreground="Gray"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,12"/>
+
+                            <DataGrid Grid.Row="2"
+                                      Grid.Column="0"
+                                      Grid.ColumnSpan="2"
+                                      ItemsSource="{Binding SelectedProfile.Assets}"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      IsReadOnly="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId}" Width="140"/>
+                                    <DataGridTextColumn Header="用途" Binding="{Binding Usage}" Width="90"/>
+                                    <DataGridTextColumn Header="状態" Binding="{Binding Status}" Width="90"/>
+                                    <DataGridTextColumn Header="ファイル名" Binding="{Binding FileName}" Width="160"/>
+                                    <DataGridTextColumn Header="Prompt" Binding="{Binding PromptRecordPath}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <Button Grid.Row="3"
+                                    Grid.Column="1"
+                                    Content="Export 実行"
+                                    Command="{Binding ExportSelectedProfileCommand}"
+                                    Width="140"
+                                    Height="30"
+                                    HorizontalAlignment="Right"
+                                    Margin="0,12,0,0"/>
                         </Grid>
                     </TabItem>
                 </TabControl>

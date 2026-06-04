@@ -24,6 +24,8 @@ namespace FantasyLoveSimAssetTool.Models
 
         public string Dislikes { get; set; }
 
+        public string AppearancePrompt { get; set; }
+
         public string ActionReactionPolicy { get; set; }
 
         public string EndingPolicy { get; set; }
@@ -42,6 +44,7 @@ namespace FantasyLoveSimAssetTool.Models
             SecondPerson = string.Empty;
             Likes = string.Empty;
             Dislikes = string.Empty;
+            AppearancePrompt = string.Empty;
             ActionReactionPolicy = string.Empty;
             EndingPolicy = string.Empty;
             Assets = new ObservableCollection<HeroineAsset>();

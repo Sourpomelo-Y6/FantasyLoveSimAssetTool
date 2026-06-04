@@ -1,0 +1,100 @@
+using FantasyLoveSimAssetTool.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace FantasyLoveSimAssetTool.Services
+{
+    public class PromptTemplateService
+    {
+        public const string CharacterAppearancePromptPlaceholder = "{CharacterAppearancePrompt}";
+
+        private readonly IReadOnlyList<PromptTemplate> defaultTemplates;
+
+        public PromptTemplateService()
+        {
+            defaultTemplates = new List<PromptTemplate>
+            {
+                new PromptTemplate
+                {
+                    TemplateId = "sprites_normal",
+                    DisplayName = "立ち絵: 通常",
+                    Usage = AssetUsage.Sprites,
+                    TemplateText = CharacterAppearancePromptPlaceholder + ", standing character sprite, full body, clean line art, transparent background, soft anime style"
+                },
+                new PromptTemplate
+                {
+                    TemplateId = "sprites_smile",
+                    DisplayName = "立ち絵: 笑顔",
+                    Usage = AssetUsage.Sprites,
+                    TemplateText = CharacterAppearancePromptPlaceholder + ", standing character sprite, full body, gentle smile, transparent background, soft anime style"
+                },
+                new PromptTemplate
+                {
+                    TemplateId = "event_intro",
+                    DisplayName = "イベント: 導入",
+                    Usage = AssetUsage.Event,
+                    TemplateText = CharacterAppearancePromptPlaceholder + ", romantic event still, first meeting scene, warm light, cinematic composition, detailed background"
+                },
+                new PromptTemplate
+                {
+                    TemplateId = "event_daily",
+                    DisplayName = "イベント: 日常",
+                    Usage = AssetUsage.Event,
+                    TemplateText = CharacterAppearancePromptPlaceholder + ", daily life event still, relaxed atmosphere, natural pose, detailed environment, soft anime style"
+                },
+                new PromptTemplate
+                {
+                    TemplateId = "actions_tea",
+                    DisplayName = "行動: お茶",
+                    Usage = AssetUsage.Actions,
+                    TemplateText = CharacterAppearancePromptPlaceholder + ", drinking tea with the player, cozy room, gentle atmosphere, warm lighting, visual novel event still"
+                },
+                new PromptTemplate
+                {
+                    TemplateId = "actions_walk",
+                    DisplayName = "行動: 散歩",
+                    Usage = AssetUsage.Actions,
+                    TemplateText = CharacterAppearancePromptPlaceholder + ", walking outdoors with the player, peaceful path, natural sunlight, visual novel event still"
+                },
+                new PromptTemplate
+                {
+                    TemplateId = "ending_good",
+                    DisplayName = "エンディング: Good",
+                    Usage = AssetUsage.Ending,
+                    TemplateText = CharacterAppearancePromptPlaceholder + ", good ending still, emotional smile, hopeful atmosphere, cinematic composition, beautiful lighting"
+                },
+                new PromptTemplate
+                {
+                    TemplateId = "ending_normal",
+                    DisplayName = "エンディング: Normal",
+                    Usage = AssetUsage.Ending,
+                    TemplateText = CharacterAppearancePromptPlaceholder + ", normal ending still, bittersweet smile, calm atmosphere, cinematic composition, soft lighting"
+                }
+            };
+        }
+
+        public IReadOnlyList<PromptTemplate> GetTemplates(AssetUsage usage)
+        {
+            return defaultTemplates
+                .Where(template => template.Usage == usage)
+                .ToList();
+        }
+
+        public string BuildPositivePrompt(HeroineProfile profile, PromptTemplate template)
+        {
+            if (profile == null)
+            {
+                throw new ArgumentNullException(nameof(profile));
+            }
+
+            if (template == null)
+            {
+                throw new ArgumentNullException(nameof(template));
+            }
+
+            string appearancePrompt = profile.AppearancePrompt ?? string.Empty;
+            return template.TemplateText.Replace(CharacterAppearancePromptPlaceholder, appearancePrompt);
+        }
+    }
+}

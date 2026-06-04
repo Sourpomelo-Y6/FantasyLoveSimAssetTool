@@ -12,6 +12,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
     {
         private readonly CharacterProjectService characterProjectService;
         private readonly PromptRecordService promptRecordService;
+        private readonly PromptTemplateService promptTemplateService;
+        private readonly ExportService exportService;
         private string heroineIdInput;
         private string displayNameInput;
         private string assetIdInput;
@@ -19,6 +21,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private AssetUsage selectedAssetUsage;
         private AssetStatus selectedAssetStatus;
         private HeroineAsset selectedAsset;
+        private PromptTemplate selectedPromptTemplate;
         private PromptRecord currentPromptRecord;
         private HeroineProfile selectedProfile;
         private string statusMessage;
@@ -29,9 +32,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ObservableCollection<AssetStatus> AssetStatuses { get; }
 
+        public ObservableCollection<PromptTemplate> AvailablePromptTemplates { get; }
+
         public string WorkspacePath
         {
             get { return characterProjectService.WorkspaceRoot; }
+        }
+
+        public string ExportPath
+        {
+            get { return exportService.ExportDirectory; }
         }
 
         public string HeroineIdInput
@@ -108,7 +118,20 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedAsset == value) { return; }
                 selectedAsset = value;
                 OnPropertyChanged(nameof(SelectedAsset));
+                RefreshPromptTemplates();
                 LoadPromptForSelectedAsset();
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public PromptTemplate SelectedPromptTemplate
+        {
+            get { return selectedPromptTemplate; }
+            set
+            {
+                if (selectedPromptTemplate == value) { return; }
+                selectedPromptTemplate = value;
+                OnPropertyChanged(nameof(SelectedPromptTemplate));
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -165,11 +188,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand SavePromptRecordCommand { get; }
 
+        public ICommand ApplyPromptTemplateCommand { get; }
+
+        public ICommand ExportSelectedProfileCommand { get; }
+
         public MainWindowModel()
         {
             characterProjectService = new CharacterProjectService();
             promptRecordService = new PromptRecordService(characterProjectService);
+            promptTemplateService = new PromptTemplateService();
+            exportService = new ExportService(characterProjectService);
             Profiles = new ObservableCollection<HeroineProfile>();
+            AvailablePromptTemplates = new ObservableCollection<PromptTemplate>();
             AssetUsages = new ObservableCollection<AssetUsage>
             {
                 AssetUsage.Sprites,
@@ -199,6 +229,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SavePromptRecordCommand = new RelayCommand(
                 SavePromptRecord,
                 () => SelectedProfile != null && SelectedAsset != null && CurrentPromptRecord != null);
+            ApplyPromptTemplateCommand = new RelayCommand(
+                ApplyPromptTemplate,
+                () => SelectedProfile != null && SelectedPromptTemplate != null && CurrentPromptRecord != null);
+            ExportSelectedProfileCommand = new RelayCommand(ExportSelectedProfile, () => SelectedProfile != null);
 
             LoadProfiles();
             StatusMessage = "キャラクター基本情報の保存準備ができています。";
@@ -281,6 +315,46 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        private void RefreshPromptTemplates()
+        {
+            AvailablePromptTemplates.Clear();
+            SelectedPromptTemplate = null;
+
+            if (SelectedAsset == null)
+            {
+                return;
+            }
+
+            foreach (PromptTemplate template in promptTemplateService.GetTemplates(SelectedAsset.Usage))
+            {
+                AvailablePromptTemplates.Add(template);
+            }
+
+            if (AvailablePromptTemplates.Count > 0)
+            {
+                SelectedPromptTemplate = AvailablePromptTemplates[0];
+            }
+        }
+
+        private void ApplyPromptTemplate()
+        {
+            if (SelectedProfile == null || SelectedPromptTemplate == null || CurrentPromptRecord == null)
+            {
+                return;
+            }
+
+            try
+            {
+                CurrentPromptRecord.PositivePrompt = promptTemplateService.BuildPositivePrompt(SelectedProfile, SelectedPromptTemplate);
+                OnPropertyChanged(nameof(CurrentPromptRecord));
+                StatusMessage = $"{SelectedPromptTemplate.DisplayName} を positive prompt に反映しました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"テンプレート適用に失敗しました: {ex.Message}";
+            }
+        }
+
         private void SavePromptRecord()
         {
             if (SelectedProfile == null || SelectedAsset == null || CurrentPromptRecord == null)
@@ -315,6 +389,25 @@ namespace FantasyLoveSimAssetTool.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = $"保存に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void ExportSelectedProfile()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                characterProjectService.SaveProfile(SelectedProfile);
+                string exportPath = exportService.ExportHeroine(SelectedProfile);
+                StatusMessage = $"{SelectedProfile.HeroineId} を export しました: {exportPath}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"export に失敗しました: {ex.Message}";
             }
         }
 

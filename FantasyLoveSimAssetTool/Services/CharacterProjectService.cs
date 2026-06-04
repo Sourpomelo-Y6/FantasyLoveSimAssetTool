@@ -62,6 +62,7 @@ namespace FantasyLoveSimAssetTool.Services
             }
 
             ValidateHeroineId(profile.HeroineId);
+            profile.AppearancePrompt ??= string.Empty;
             profile.Assets ??= new ObservableCollection<HeroineAsset>();
             EnsureCharacterDirectories(profile.HeroineId);
 
@@ -155,6 +156,7 @@ namespace FantasyLoveSimAssetTool.Services
             }
 
             profile.Assets ??= new ObservableCollection<HeroineAsset>();
+            profile.AppearancePrompt ??= string.Empty;
 
             return profile;
         }
