@@ -17,7 +17,7 @@
 - ターゲットフレームワーク: `net5.0-windows`
 - UI: `Views/MainWindow.xaml`
 - ViewModel: `ViewModels/MainWindowModel.cs`
-- モデル: `Models/HeroineProfile.cs`, `Models/HeroineAsset.cs`, `Models/PromptRecord.cs`, `Models/PromptTemplate.cs`, `Models/ExportReport.cs`, `Models/StillDefinition.cs`
+- モデル: `Models/HeroineProfile.cs`, `Models/HeroineAsset.cs`, `Models/PromptRecord.cs`, `Models/PromptTemplate.cs`, `Models/ExportReport.cs`, `Models/StillDefinition.cs`, `Models/StillWorkItem.cs`
 - サービス: `Services/CharacterProjectService.cs`, `Services/PromptRecordService.cs`, `Services/PromptTemplateService.cs`, `Services/StillDefinitionService.cs`, `Services/ExportService.cs`
 - 共通基盤: `Common/ObservableObject.cs`, `Common/RelayCommand.cs`
 
@@ -37,6 +37,8 @@
 - スチルから `PromptRecord.PositivePrompt` への反映
 - スチルから画像登録欄への `AssetId`、用途、状態の反映
 - スチルごとの画像登録状況、prompt 保存状況、AssetStatus 表示
+- スチルの `Status` と `SpecificPrompt` をキャラクターごとの `StillWorkItems` として `profile.json` に保存
+- スチル作業タブからのスチル保存
 - Unity 向け export
 - `heroine_profile_note.md` と下書き Markdown の出力
 - Export report による件数、警告表示
@@ -71,6 +73,7 @@ WSL や Linux 上の .NET SDK では、`Microsoft.NET.Sdk.WindowsDesktop` が見
 Characters/
   <HeroineId>/
     profile.json
+    StillWorkItems は profile.json 内に保存
     Images/
       Sprites/
       Event/
@@ -112,6 +115,7 @@ Models/
   PromptTemplate.cs
   ExportReport.cs
   StillDefinition.cs
+  StillWorkItem.cs
   AssetUsage.cs
   AssetStatus.cs
   StillStatus.cs
@@ -132,6 +136,8 @@ Models/
 - `AppearancePrompt`
 - `ActionReactionPolicy`
 - `EndingPolicy`
+- `Assets`
+- `StillWorkItems`
 
 ### HeroineAsset
 
@@ -185,12 +191,22 @@ Models/
 
 ### StillDefinition
 
+仕様書にある固定スチル定義です。アプリ起動時に `StillDefinitionService` から生成され、キャラクターごとの保存値があれば上書きされます。
+
 - `AssetId`
 - `DisplayName`
 - `Usage`
 - `FileName`
 - `SpecificPrompt`
 - `Status`
+
+### StillWorkItem
+
+キャラクターごとのスチル作業状態です。`HeroineProfile.StillWorkItems` として `profile.json` に保存します。
+
+- `AssetId`
+- `Status`
+- `SpecificPrompt`
 
 ### StillStatus
 
@@ -256,7 +272,7 @@ Services/
 - 左ペイン: キャラクター一覧、新規作成、再読み込み
 - 基本情報タブ: プロフィール、容姿プロンプト、反応方針など
 - 画像タブ: 画像登録、ステータス編集、プレビュー
-- スチル作業タブ: 用途フィルタ付きの作業リスト、状況表示、画像プレビュー、合成 prompt、Prompt 反映、画像登録欄への反映
+- スチル作業タブ: 用途フィルタ付きの作業リスト、状況表示、画像プレビュー、合成 prompt、Prompt 反映、画像登録欄への反映、スチル保存
 - スチル一覧タブ: 仕様上必要なスチルの表形式一覧、状態と追加 prompt の編集
 - Prompt タブ: prompt 記録編集、テンプレート適用
 - Export タブ: export 実行、件数、警告表示
@@ -287,11 +303,10 @@ Services/
 22. スチルごとの画像登録状況、prompt 保存状況、AssetStatus、画像プレビューを表示する
 23. スチル作業タブから画像登録欄へ `AssetId`、用途、状態を反映する
 24. スチル作業タブに用途フィルタを追加する
+25. スチルの `Status` と `SpecificPrompt` を `StillWorkItems` として `profile.json` に保存する
 
 ## 次に進める候補
 
-- スチルの `Status` と `SpecificPrompt` をキャラクターごとに永続化する
-- スチル作業タブの状態変更を `profile.json` または専用 JSON に保存する
 - スチル一覧タブを開発確認用に残すか、スチル作業タブへ統合するか判断する
 - 画像サイズ、縦横比、透過の検査
 - 画像登録のドラッグ&ドロップ対応
@@ -311,6 +326,7 @@ Services/
 - スチル作業タブで登録済み画像プレビューが表示される
 - スチル作業タブから Prompt タブへ positive prompt を反映できる
 - スチル作業タブから画像登録欄へ `AssetId`、用途、状態を反映できる
+- スチル作業タブで変更した `Status` と `SpecificPrompt` が保存、再読み込み後も復元される
 - `Accepted` の画像だけが export される
 - Export report に件数と警告が出る
 - 登録済み画像を選ぶとプレビューが表示される
@@ -322,8 +338,8 @@ Services/
 
 - 作業データの保存先をアプリ直下に固定するか、ユーザーが選べるようにするか
 - JSON の細かいスキーマ
-- スチル一覧を `profile.json` に保存するか、固定定義から毎回生成するか
-- スチル状態を `HeroineAsset.Status` と統合するか、別の `StillStatus` を持つか
+- `StillWorkItems` を `profile.json` に保存する現方式で十分か、将来は専用 JSON に分離するか
+- スチル状態 `StillStatus` と画像状態 `HeroineAsset.Status` をどの程度連動させるか
 - 画像登録時にコピーするか、参照パスだけ保持するか
 - スチル用デフォルトプロンプトテンプレートをコード内固定にするか、JSON 設定として編集可能にするか
 - prompt テンプレートのプレースホルダー名をどう定義するか
@@ -338,6 +354,6 @@ Services/
 
 このツールの価値は、画像生成を自動化することより、採用済み素材、生成条件、Unity 取り込み先を失わずに管理することにあります。最初の実装では外部生成した画像を登録する前提で進め、Stable Diffusion 連携や Python 画像検査は後から追加する方が安全です。
 
-次に優先するなら、スチル一覧タブを追加するとよいです。仕様書にある立ち絵、イベント、行動、エンディングの各スチルを常に描く対象として一覧化し、各スチルにキャラクター容姿プロンプトとスチル固有プロンプトを合成した positive prompt を用意できるようにします。
+次に優先するなら、Export 結果フォルダを開く操作、画像検査、画像登録のドラッグ&ドロップ対応のいずれかを進めるとよいです。
 
 その後に、画像検査、テンプレート管理、Export 後の導線改善を進めるとよいです。現状の MVP は外部生成した画像を登録し、採用状態と prompt 記録を管理し、Unity 向けに出力する用途には使える状態です。

@@ -239,6 +239,16 @@ long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft an
 - prompt 記録の有無
 - 状態: 未生成 / 生成中 / 採用済み / 要修正 / 不要
 
+スチル定義のうち、仕様として固定される `AssetId`、用途、表示名、出力ファイル名は `StillDefinitionService` の固定定義から生成する。
+
+キャラクターごとに変わる `SpecificPrompt` と `Status` は、`HeroineProfile.StillWorkItems` として `profile.json` に保存する。これにより、アプリ再起動やキャラクター再読み込み後も、スチルごとの作業状態と追加 prompt を復元できる。
+
+`StillWorkItems` は次の項目を持つ。
+
+- `AssetId`
+- `Status`
+- `SpecificPrompt`
+
 ### スチル作業画面
 
 スチル作業画面では、左側に作成対象リスト、右側に選択スチルの詳細を表示する。
@@ -267,6 +277,7 @@ long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft an
 
 - `Prompt に反映`: 選択スチルの合成 positive prompt を `PromptRecord.PositivePrompt` に反映する
 - `画像登録欄に反映`: 選択スチルの `AssetId`、用途、初期状態を画像登録欄に反映する
+- `スチル保存`: 選択キャラクターの `profile.json` に `StillWorkItems` を保存する
 
 画像登録は、外部ツールで生成した画像を選んでアプリに登録する操作として扱う。スチル作業画面は、登録するべき `AssetId` と用途を間違えないための導線を提供する。
 
