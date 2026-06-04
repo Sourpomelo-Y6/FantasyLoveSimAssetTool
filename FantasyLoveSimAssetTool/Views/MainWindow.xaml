@@ -409,6 +409,11 @@
                                     <Button Content="Prompt に反映"
                                             Command="{Binding ApplyStillPromptCommand}"
                                             Width="140"
+                                            Height="30"
+                                            Margin="0,0,8,0"/>
+                                    <Button Content="スチル保存"
+                                            Command="{Binding SaveSelectedProfileCommand}"
+                                            Width="110"
                                             Height="30"/>
                                 </StackPanel>
                             </Grid>

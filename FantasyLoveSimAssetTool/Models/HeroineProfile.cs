@@ -32,6 +32,8 @@ namespace FantasyLoveSimAssetTool.Models
 
         public ObservableCollection<HeroineAsset> Assets { get; set; }
 
+        public ObservableCollection<StillWorkItem> StillWorkItems { get; set; }
+
         public HeroineProfile()
         {
             HeroineId = string.Empty;
@@ -48,6 +50,7 @@ namespace FantasyLoveSimAssetTool.Models
             ActionReactionPolicy = string.Empty;
             EndingPolicy = string.Empty;
             Assets = new ObservableCollection<HeroineAsset>();
+            StillWorkItems = new ObservableCollection<StillWorkItem>();
         }
     }
 }

@@ -189,6 +189,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     selectedStillDefinition.PropertyChanged += SelectedStillDefinitionPropertyChanged;
                 }
 
+                ApplySelectedStillWorkItem();
                 OnPropertyChanged(nameof(SelectedStillDefinition));
                 OnPropertyChanged(nameof(StillPromptPreview));
                 RefreshSelectedStillStatus();
@@ -229,6 +230,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 selectedProfile = value;
                 OnPropertyChanged(nameof(SelectedProfile));
                 OnPropertyChanged(nameof(StillPromptPreview));
+                LoadStillDefinitions();
                 SelectedAsset = null;
                 if (selectedProfile != null && selectedProfile.Assets.Count > 0)
                 {
@@ -462,6 +464,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
             if (e.PropertyName == nameof(StillDefinition.SpecificPrompt))
             {
                 OnPropertyChanged(nameof(StillPromptPreview));
+                UpdateStillWorkItemFromDefinition();
+            }
+            else if (e.PropertyName == nameof(StillDefinition.Status))
+            {
+                UpdateStillWorkItemFromDefinition();
             }
         }
 
@@ -606,7 +613,77 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 StillDefinitions.Add(definition);
             }
 
+            ApplyStillWorkItemsToDefinitions();
             RefreshFilteredStillDefinitions();
+        }
+
+        private void ApplyStillWorkItemsToDefinitions()
+        {
+            if (SelectedProfile == null || SelectedProfile.StillWorkItems == null)
+            {
+                return;
+            }
+
+            foreach (StillDefinition definition in StillDefinitions)
+            {
+                StillWorkItem workItem = SelectedProfile.StillWorkItems
+                    .FirstOrDefault(item => item.AssetId == definition.AssetId);
+                if (workItem == null)
+                {
+                    continue;
+                }
+
+                definition.Status = workItem.Status;
+                if (!string.IsNullOrWhiteSpace(workItem.SpecificPrompt))
+                {
+                    definition.SpecificPrompt = workItem.SpecificPrompt;
+                }
+            }
+        }
+
+        private void ApplySelectedStillWorkItem()
+        {
+            if (SelectedProfile == null || SelectedStillDefinition == null || SelectedProfile.StillWorkItems == null)
+            {
+                return;
+            }
+
+            StillWorkItem workItem = SelectedProfile.StillWorkItems
+                .FirstOrDefault(item => item.AssetId == SelectedStillDefinition.AssetId);
+            if (workItem == null)
+            {
+                return;
+            }
+
+            SelectedStillDefinition.Status = workItem.Status;
+            if (!string.IsNullOrWhiteSpace(workItem.SpecificPrompt))
+            {
+                SelectedStillDefinition.SpecificPrompt = workItem.SpecificPrompt;
+            }
+        }
+
+        private void UpdateStillWorkItemFromDefinition()
+        {
+            if (SelectedProfile == null || SelectedStillDefinition == null)
+            {
+                return;
+            }
+
+            SelectedProfile.StillWorkItems ??= new ObservableCollection<StillWorkItem>();
+
+            StillWorkItem workItem = SelectedProfile.StillWorkItems
+                .FirstOrDefault(item => item.AssetId == SelectedStillDefinition.AssetId);
+            if (workItem == null)
+            {
+                workItem = new StillWorkItem
+                {
+                    AssetId = SelectedStillDefinition.AssetId
+                };
+                SelectedProfile.StillWorkItems.Add(workItem);
+            }
+
+            workItem.Status = SelectedStillDefinition.Status;
+            workItem.SpecificPrompt = SelectedStillDefinition.SpecificPrompt ?? string.Empty;
         }
 
         private void RefreshFilteredStillDefinitions()

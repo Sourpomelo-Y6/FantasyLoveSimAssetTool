@@ -64,6 +64,7 @@ namespace FantasyLoveSimAssetTool.Services
             ValidateHeroineId(profile.HeroineId);
             profile.AppearancePrompt ??= string.Empty;
             profile.Assets ??= new ObservableCollection<HeroineAsset>();
+            profile.StillWorkItems ??= new ObservableCollection<StillWorkItem>();
             EnsureCharacterDirectories(profile.HeroineId);
 
             string json = JsonSerializer.Serialize(profile, jsonOptions);
@@ -156,6 +157,7 @@ namespace FantasyLoveSimAssetTool.Services
             }
 
             profile.Assets ??= new ObservableCollection<HeroineAsset>();
+            profile.StillWorkItems ??= new ObservableCollection<StillWorkItem>();
             profile.AppearancePrompt ??= string.Empty;
 
             return profile;
