@@ -390,13 +390,22 @@
                                     </Border>
                                 </Grid>
 
-                                <Button Grid.Row="3"
-                                        Grid.Column="3"
-                                        Content="Prompt に反映"
-                                        Command="{Binding ApplyStillPromptCommand}"
-                                        Height="30"
-                                        HorizontalAlignment="Stretch"
-                                        Margin="0,12,0,0"/>
+                                <StackPanel Grid.Row="3"
+                                            Grid.Column="1"
+                                            Grid.ColumnSpan="3"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Right"
+                                            Margin="0,12,0,0">
+                                    <Button Content="画像登録欄に反映"
+                                            Command="{Binding PrepareImageRegistrationForStillCommand}"
+                                            Width="150"
+                                            Height="30"
+                                            Margin="0,0,8,0"/>
+                                    <Button Content="Prompt に反映"
+                                            Command="{Binding ApplyStillPromptCommand}"
+                                            Width="140"
+                                            Height="30"/>
+                                </StackPanel>
                             </Grid>
                         </Grid>
                     </TabItem>

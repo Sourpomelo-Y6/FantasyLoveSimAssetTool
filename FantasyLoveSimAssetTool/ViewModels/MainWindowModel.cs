@@ -339,6 +339,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ApplyStillPromptCommand { get; }
 
+        public ICommand PrepareImageRegistrationForStillCommand { get; }
+
         public ICommand ExportSelectedProfileCommand { get; }
 
         public MainWindowModel()
@@ -402,6 +404,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedProfile != null && SelectedPromptTemplate != null && CurrentPromptRecord != null);
             ApplyStillPromptCommand = new RelayCommand(
                 ApplyStillPrompt,
+                () => SelectedProfile != null && SelectedStillDefinition != null);
+            PrepareImageRegistrationForStillCommand = new RelayCommand(
+                PrepareImageRegistrationForStill,
                 () => SelectedProfile != null && SelectedStillDefinition != null);
             ExportSelectedProfileCommand = new RelayCommand(ExportSelectedProfile, () => SelectedProfile != null);
 
@@ -626,6 +631,31 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 StatusMessage = $"スチル prompt 反映に失敗しました: {ex.Message}";
             }
+        }
+
+        private void PrepareImageRegistrationForStill()
+        {
+            if (SelectedProfile == null || SelectedStillDefinition == null)
+            {
+                return;
+            }
+
+            AssetIdInput = SelectedStillDefinition.AssetId;
+            SelectedAssetUsage = SelectedStillDefinition.Usage;
+            SelectedAssetStatus = AssetStatus.Pending;
+
+            HeroineAsset asset = FindAssetForStill(SelectedProfile, SelectedStillDefinition);
+            if (asset != null)
+            {
+                SelectedAsset = asset;
+                StatusMessage = $"{SelectedStillDefinition.DisplayName} の既存 Asset を選択しました。画像タブで状態確認または画像情報保存を行えます。";
+            }
+            else
+            {
+                StatusMessage = $"{SelectedStillDefinition.DisplayName} の画像登録欄を準備しました。画像タブで元画像を選択して登録してください。";
+            }
+
+            RefreshSelectedStillStatus();
         }
 
         private HeroineAsset EnsureAssetForStill(HeroineProfile profile, StillDefinition stillDefinition)
