@@ -32,6 +32,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private ExportReport lastExportReport;
         private string selectedAssetImagePath;
         private string selectedAssetImageMessage;
+        private string selectedStillAssetStatusText;
+        private string selectedStillImageStatusText;
+        private string selectedStillPromptStatusText;
+        private string selectedStillImagePath;
+        private string selectedStillImageMessage;
         private string statusMessage;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
@@ -181,6 +186,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
                 OnPropertyChanged(nameof(SelectedStillDefinition));
                 OnPropertyChanged(nameof(StillPromptPreview));
+                RefreshSelectedStillStatus();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -211,6 +217,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 {
                     SelectedAsset = selectedProfile.Assets[0];
                 }
+                RefreshSelectedStillStatus();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -245,6 +252,61 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedAssetImageMessage == value) { return; }
                 selectedAssetImageMessage = value;
                 OnPropertyChanged(nameof(SelectedAssetImageMessage));
+            }
+        }
+
+        public string SelectedStillAssetStatusText
+        {
+            get { return selectedStillAssetStatusText; }
+            set
+            {
+                if (selectedStillAssetStatusText == value) { return; }
+                selectedStillAssetStatusText = value;
+                OnPropertyChanged(nameof(SelectedStillAssetStatusText));
+            }
+        }
+
+        public string SelectedStillImageStatusText
+        {
+            get { return selectedStillImageStatusText; }
+            set
+            {
+                if (selectedStillImageStatusText == value) { return; }
+                selectedStillImageStatusText = value;
+                OnPropertyChanged(nameof(SelectedStillImageStatusText));
+            }
+        }
+
+        public string SelectedStillPromptStatusText
+        {
+            get { return selectedStillPromptStatusText; }
+            set
+            {
+                if (selectedStillPromptStatusText == value) { return; }
+                selectedStillPromptStatusText = value;
+                OnPropertyChanged(nameof(SelectedStillPromptStatusText));
+            }
+        }
+
+        public string SelectedStillImagePath
+        {
+            get { return selectedStillImagePath; }
+            set
+            {
+                if (selectedStillImagePath == value) { return; }
+                selectedStillImagePath = value;
+                OnPropertyChanged(nameof(SelectedStillImagePath));
+            }
+        }
+
+        public string SelectedStillImageMessage
+        {
+            get { return selectedStillImageMessage; }
+            set
+            {
+                if (selectedStillImageMessage == value) { return; }
+                selectedStillImageMessage = value;
+                OnPropertyChanged(nameof(SelectedStillImageMessage));
             }
         }
 
@@ -319,6 +381,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
             lastExportReport = new ExportReport();
             selectedAssetImagePath = string.Empty;
             selectedAssetImageMessage = "画像を選択してください。";
+            selectedStillAssetStatusText = "Asset: 未選択";
+            selectedStillImageStatusText = "画像: 未選択";
+            selectedStillPromptStatusText = "Prompt: 未選択";
+            selectedStillImagePath = string.Empty;
+            selectedStillImageMessage = "スチルを選択してください。";
             statusMessage = string.Empty;
 
             CreateCharacterCommand = new RelayCommand(CreateCharacter);
@@ -401,6 +468,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     SelectedAssetStatus);
 
                 SelectedAsset = asset;
+                RefreshSelectedStillStatus();
                 StatusMessage = $"{asset.AssetId} を {asset.Usage} に登録しました。";
             }
             catch (Exception ex)
@@ -449,6 +517,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             try
             {
                 characterProjectService.SaveProfile(SelectedProfile);
+                RefreshSelectedStillStatus();
                 StatusMessage = $"{SelectedProfile.HeroineId} の画像情報を保存しました。";
             }
             catch (Exception ex)
@@ -550,6 +619,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 characterProjectService.SaveProfile(SelectedProfile);
                 AssetIdInput = asset.AssetId;
                 SelectedAssetUsage = asset.Usage;
+                RefreshSelectedStillStatus();
                 StatusMessage = $"{SelectedStillDefinition.DisplayName} の positive prompt を Prompt タブに反映しました。";
             }
             catch (Exception ex)
@@ -625,6 +695,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 promptRecordService.SavePromptRecord(SelectedProfile, SelectedAsset, CurrentPromptRecord);
                 characterProjectService.SaveProfile(SelectedProfile);
+                RefreshSelectedStillStatus();
                 StatusMessage = $"{SelectedAsset.AssetId} の prompt 記録を保存しました。";
             }
             catch (Exception ex)
@@ -643,6 +714,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             try
             {
                 characterProjectService.SaveProfile(SelectedProfile);
+                RefreshSelectedStillStatus();
                 StatusMessage = $"{SelectedProfile.HeroineId} を保存しました。";
             }
             catch (Exception ex)
@@ -708,6 +780,74 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     return;
                 }
             }
+        }
+
+        private void RefreshSelectedStillStatus()
+        {
+            SelectedStillImagePath = string.Empty;
+
+            if (SelectedProfile == null || SelectedStillDefinition == null)
+            {
+                SelectedStillAssetStatusText = "Asset: 未選択";
+                SelectedStillImageStatusText = "画像: 未選択";
+                SelectedStillPromptStatusText = "Prompt: 未選択";
+                SelectedStillImageMessage = "スチルを選択してください。";
+                return;
+            }
+
+            HeroineAsset asset = FindAssetForStill(SelectedProfile, SelectedStillDefinition);
+            string promptPath = GetStillPromptRecordPath(SelectedProfile, SelectedStillDefinition);
+            SelectedStillPromptStatusText = File.Exists(promptPath) ? "Prompt: 保存済み" : "Prompt: 未保存";
+
+            if (asset == null)
+            {
+                SelectedStillAssetStatusText = "Asset: 未作成";
+                SelectedStillImageStatusText = "画像: 未登録";
+                SelectedStillImageMessage = "対応する Asset がありません。Prompt に反映すると作業用 Asset を作成します。";
+                return;
+            }
+
+            SelectedStillAssetStatusText = "AssetStatus: " + asset.Status;
+
+            if (string.IsNullOrWhiteSpace(asset.StoredPath))
+            {
+                SelectedStillImageStatusText = "画像: 未登録";
+                SelectedStillImageMessage = "画像はまだ登録されていません。";
+                return;
+            }
+
+            string imagePath = Path.Combine(
+                characterProjectService.GetCharacterDirectory(SelectedProfile.HeroineId),
+                asset.StoredPath);
+
+            if (!File.Exists(imagePath))
+            {
+                SelectedStillImageStatusText = "画像: ファイルなし";
+                SelectedStillImageMessage = "画像ファイルが見つかりません: " + imagePath;
+                return;
+            }
+
+            SelectedStillImagePath = imagePath;
+            SelectedStillImageStatusText = "画像: 登録済み";
+            SelectedStillImageMessage = imagePath;
+        }
+
+        private static HeroineAsset FindAssetForStill(HeroineProfile profile, StillDefinition stillDefinition)
+        {
+            if (profile.Assets == null)
+            {
+                return null;
+            }
+
+            return profile.Assets.FirstOrDefault(asset => asset.AssetId == stillDefinition.AssetId);
+        }
+
+        private string GetStillPromptRecordPath(HeroineProfile profile, StillDefinition stillDefinition)
+        {
+            return Path.Combine(
+                characterProjectService.GetCharacterDirectory(profile.HeroineId),
+                "Prompts",
+                stillDefinition.AssetId + ".prompt.json");
         }
     }
 }
