@@ -173,6 +173,7 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="登録済み画像" FontWeight="SemiBold" Margin="0,0,0,8"/>
@@ -184,15 +185,27 @@
                                           SelectedItem="{Binding SelectedAsset}"
                                           AutoGenerateColumns="False"
                                           CanUserAddRows="False"
-                                          IsReadOnly="True">
+                                          IsReadOnly="False">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId}" Width="140"/>
-                                        <DataGridTextColumn Header="用途" Binding="{Binding Usage}" Width="90"/>
-                                        <DataGridTextColumn Header="状態" Binding="{Binding Status}" Width="90"/>
-                                        <DataGridTextColumn Header="ファイル名" Binding="{Binding FileName}" Width="160"/>
-                                        <DataGridTextColumn Header="保存先" Binding="{Binding StoredPath}" Width="*"/>
+                                        <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId}" Width="140" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="用途" Binding="{Binding Usage}" Width="90" IsReadOnly="True"/>
+                                        <DataGridComboBoxColumn Header="状態"
+                                                                SelectedItemBinding="{Binding Status}"
+                                                                ItemsSource="{Binding DataContext.AssetStatuses, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                Width="100"/>
+                                        <DataGridTextColumn Header="ファイル名" Binding="{Binding FileName}" Width="160" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="保存先" Binding="{Binding StoredPath}" Width="*" IsReadOnly="True"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
+
+                                <Button Grid.Row="2"
+                                        Grid.Column="0"
+                                        Content="画像情報保存"
+                                        Command="{Binding SaveImageAssetsCommand}"
+                                        Width="140"
+                                        Height="28"
+                                        HorizontalAlignment="Right"
+                                        Margin="0,8,0,0"/>
 
                                 <Border Grid.Row="1"
                                         Grid.Column="2"

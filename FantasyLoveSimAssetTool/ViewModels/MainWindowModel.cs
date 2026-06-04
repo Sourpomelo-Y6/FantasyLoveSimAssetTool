@@ -224,6 +224,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand AddImageAssetCommand { get; }
 
+        public ICommand SaveImageAssetsCommand { get; }
+
         public ICommand SavePromptRecordCommand { get; }
 
         public ICommand ApplyPromptTemplateCommand { get; }
@@ -267,6 +269,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RefreshProfilesCommand = new RelayCommand(LoadProfiles);
             BrowseImageCommand = new RelayCommand(BrowseImage);
             AddImageAssetCommand = new RelayCommand(AddImageAsset, () => SelectedProfile != null);
+            SaveImageAssetsCommand = new RelayCommand(SaveImageAssets, () => SelectedProfile != null);
             SavePromptRecordCommand = new RelayCommand(
                 SavePromptRecord,
                 () => SelectedProfile != null && SelectedAsset != null && CurrentPromptRecord != null);
@@ -365,6 +368,24 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             SelectedAssetImagePath = imagePath;
             SelectedAssetImageMessage = imagePath;
+        }
+
+        private void SaveImageAssets()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                characterProjectService.SaveProfile(SelectedProfile);
+                StatusMessage = $"{SelectedProfile.HeroineId} の画像情報を保存しました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"画像情報の保存に失敗しました: {ex.Message}";
+            }
         }
 
         private void LoadPromptForSelectedAsset()
