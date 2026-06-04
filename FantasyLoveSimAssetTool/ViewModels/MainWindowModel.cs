@@ -27,6 +27,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private HeroineAsset selectedAsset;
         private PromptTemplate selectedPromptTemplate;
         private StillDefinition selectedStillDefinition;
+        private string selectedStillUsageFilter;
         private PromptRecord currentPromptRecord;
         private HeroineProfile selectedProfile;
         private ExportReport lastExportReport;
@@ -48,6 +49,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<PromptTemplate> AvailablePromptTemplates { get; }
 
         public ObservableCollection<StillDefinition> StillDefinitions { get; }
+
+        public ObservableCollection<StillDefinition> FilteredStillDefinitions { get; }
+
+        public ObservableCollection<string> StillUsageFilters { get; }
 
         public ObservableCollection<StillStatus> StillStatuses { get; }
 
@@ -188,6 +193,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 OnPropertyChanged(nameof(StillPromptPreview));
                 RefreshSelectedStillStatus();
                 CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public string SelectedStillUsageFilter
+        {
+            get { return selectedStillUsageFilter; }
+            set
+            {
+                if (selectedStillUsageFilter == value) { return; }
+                selectedStillUsageFilter = value;
+                OnPropertyChanged(nameof(SelectedStillUsageFilter));
+                RefreshFilteredStillDefinitions();
             }
         }
 
@@ -353,6 +370,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
             Profiles = new ObservableCollection<HeroineProfile>();
             AvailablePromptTemplates = new ObservableCollection<PromptTemplate>();
             StillDefinitions = new ObservableCollection<StillDefinition>();
+            FilteredStillDefinitions = new ObservableCollection<StillDefinition>();
+            StillUsageFilters = new ObservableCollection<string>
+            {
+                "All",
+                AssetUsage.Sprites.ToString(),
+                AssetUsage.Event.ToString(),
+                AssetUsage.Actions.ToString(),
+                AssetUsage.Ending.ToString()
+            };
             AssetUsages = new ObservableCollection<AssetUsage>
             {
                 AssetUsage.Sprites,
@@ -380,6 +406,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             imageSourcePathInput = string.Empty;
             selectedAssetUsage = AssetUsage.Sprites;
             selectedAssetStatus = AssetStatus.Accepted;
+            selectedStillUsageFilter = "All";
             lastExportReport = new ExportReport();
             selectedAssetImagePath = string.Empty;
             selectedAssetImageMessage = "画像を選択してください。";
@@ -579,10 +606,36 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 StillDefinitions.Add(definition);
             }
 
-            if (StillDefinitions.Count > 0)
+            RefreshFilteredStillDefinitions();
+        }
+
+        private void RefreshFilteredStillDefinitions()
+        {
+            StillDefinition previousSelection = SelectedStillDefinition;
+            FilteredStillDefinitions.Clear();
+
+            foreach (StillDefinition definition in StillDefinitions.Where(MatchesStillUsageFilter))
             {
-                SelectedStillDefinition = StillDefinitions[0];
+                FilteredStillDefinitions.Add(definition);
             }
+
+            if (previousSelection != null && FilteredStillDefinitions.Contains(previousSelection))
+            {
+                SelectedStillDefinition = previousSelection;
+                return;
+            }
+
+            SelectedStillDefinition = FilteredStillDefinitions.Count > 0 ? FilteredStillDefinitions[0] : null;
+        }
+
+        private bool MatchesStillUsageFilter(StillDefinition definition)
+        {
+            if (string.IsNullOrWhiteSpace(SelectedStillUsageFilter) || SelectedStillUsageFilter == "All")
+            {
+                return true;
+            }
+
+            return definition.Usage.ToString() == SelectedStillUsageFilter;
         }
 
         private void ApplyPromptTemplate()
