@@ -4,6 +4,7 @@ using FantasyLoveSimAssetTool.Services;
 using Microsoft.Win32;
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Windows.Input;
@@ -44,6 +45,19 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<StillDefinition> StillDefinitions { get; }
 
         public ObservableCollection<StillStatus> StillStatuses { get; }
+
+        public string StillPromptPreview
+        {
+            get
+            {
+                if (SelectedProfile == null || SelectedStillDefinition == null)
+                {
+                    return string.Empty;
+                }
+
+                return BuildStillPositivePrompt(SelectedProfile, SelectedStillDefinition);
+            }
+        }
 
         public string WorkspacePath
         {
@@ -154,8 +168,19 @@ namespace FantasyLoveSimAssetTool.ViewModels
             set
             {
                 if (selectedStillDefinition == value) { return; }
+                if (selectedStillDefinition != null)
+                {
+                    selectedStillDefinition.PropertyChanged -= SelectedStillDefinitionPropertyChanged;
+                }
+
                 selectedStillDefinition = value;
+                if (selectedStillDefinition != null)
+                {
+                    selectedStillDefinition.PropertyChanged += SelectedStillDefinitionPropertyChanged;
+                }
+
                 OnPropertyChanged(nameof(SelectedStillDefinition));
+                OnPropertyChanged(nameof(StillPromptPreview));
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -180,6 +205,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedProfile == value) { return; }
                 selectedProfile = value;
                 OnPropertyChanged(nameof(SelectedProfile));
+                OnPropertyChanged(nameof(StillPromptPreview));
                 SelectedAsset = null;
                 if (selectedProfile != null && selectedProfile.Assets.Count > 0)
                 {
@@ -329,6 +355,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = $"作成に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void SelectedStillDefinitionPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(StillDefinition.SpecificPrompt))
+            {
+                OnPropertyChanged(nameof(StillPromptPreview));
             }
         }
 

@@ -1,26 +1,89 @@
+using FantasyLoveSimAssetTool.Common;
+
 namespace FantasyLoveSimAssetTool.Models
 {
-    public class StillDefinition
+    public class StillDefinition : ObservableObject
     {
-        public string AssetId { get; set; }
+        private string assetId;
+        private string displayName;
+        private AssetUsage usage;
+        private string fileName;
+        private string specificPrompt;
+        private StillStatus status;
 
-        public string DisplayName { get; set; }
+        public string AssetId
+        {
+            get { return assetId; }
+            set
+            {
+                if (assetId == value) { return; }
+                assetId = value;
+                OnPropertyChanged(nameof(AssetId));
+            }
+        }
 
-        public AssetUsage Usage { get; set; }
+        public string DisplayName
+        {
+            get { return displayName; }
+            set
+            {
+                if (displayName == value) { return; }
+                displayName = value;
+                OnPropertyChanged(nameof(DisplayName));
+            }
+        }
 
-        public string FileName { get; set; }
+        public AssetUsage Usage
+        {
+            get { return usage; }
+            set
+            {
+                if (usage == value) { return; }
+                usage = value;
+                OnPropertyChanged(nameof(Usage));
+            }
+        }
 
-        public string SpecificPrompt { get; set; }
+        public string FileName
+        {
+            get { return fileName; }
+            set
+            {
+                if (fileName == value) { return; }
+                fileName = value;
+                OnPropertyChanged(nameof(FileName));
+            }
+        }
 
-        public StillStatus Status { get; set; }
+        public string SpecificPrompt
+        {
+            get { return specificPrompt; }
+            set
+            {
+                if (specificPrompt == value) { return; }
+                specificPrompt = value;
+                OnPropertyChanged(nameof(SpecificPrompt));
+            }
+        }
+
+        public StillStatus Status
+        {
+            get { return status; }
+            set
+            {
+                if (status == value) { return; }
+                status = value;
+                OnPropertyChanged(nameof(Status));
+            }
+        }
 
         public StillDefinition()
         {
-            AssetId = string.Empty;
-            DisplayName = string.Empty;
-            FileName = string.Empty;
-            SpecificPrompt = string.Empty;
-            Status = StillStatus.NotGenerated;
+            assetId = string.Empty;
+            displayName = string.Empty;
+            fileName = string.Empty;
+            specificPrompt = string.Empty;
+            status = StillStatus.NotGenerated;
         }
     }
 }
