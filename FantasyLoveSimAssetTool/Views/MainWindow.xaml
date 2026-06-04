@@ -6,11 +6,126 @@
         xmlns:vm="clr-namespace:FantasyLoveSimAssetTool.ViewModels"
         xmlns:local="clr-namespace:FantasyLoveSimAssetTool.Views"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="FantasyLoveSimAssetTool" Height="620" Width="980">
     <Window.DataContext>
         <vm:MainWindowModel/>
     </Window.DataContext>
-    <Grid>
-        <TextBlock Text="{Binding Text}"/>
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" Margin="0,0,0,12">
+            <StackPanel>
+                <TextBlock Text="FantasyLoveSimAssetTool" FontSize="22" FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding WorkspacePath, StringFormat=Workspace: {0}}" Foreground="Gray" Margin="0,4,0,0"/>
+            </StackPanel>
+        </DockPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="12">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="キャラクター" FontWeight="SemiBold" Margin="0,0,0,8"/>
+
+                    <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                        <TextBlock Text="HeroineId"/>
+                        <TextBox Text="{Binding HeroineIdInput, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,8"/>
+
+                        <TextBlock Text="表示名"/>
+                        <TextBox Text="{Binding DisplayNameInput, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,8"/>
+
+                        <Button Content="新規作成" Command="{Binding CreateCharacterCommand}" Height="28"/>
+                        <Button Content="再読み込み" Command="{Binding RefreshProfilesCommand}" Height="28" Margin="0,8,0,0"/>
+                    </StackPanel>
+
+                    <ListBox ItemsSource="{Binding Profiles}"
+                             SelectedItem="{Binding SelectedProfile}"
+                             DisplayMemberPath="DisplayName"/>
+                </DockPanel>
+            </Border>
+
+            <Border Grid.Column="2" BorderBrush="#DDDDDD" BorderThickness="1" Padding="12">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="基本情報" FontWeight="SemiBold" Margin="0,0,0,12"/>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="HeroineId" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedProfile.HeroineId}" IsReadOnly="True" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="表示名" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedProfile.DisplayName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="年齢" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedProfile.Age, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="身長" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding SelectedProfile.Height, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="性格" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding SelectedProfile.Personality, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="56" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="口調" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                            <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding SelectedProfile.SpeakingStyle, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="56" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="一人称" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                            <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding SelectedProfile.FirstPerson, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="7" Grid.Column="0" Text="二人称" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                            <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding SelectedProfile.SecondPerson, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="8" Grid.Column="0" Text="好きなもの" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                            <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding SelectedProfile.Likes, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="56" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="9" Grid.Column="0" Text="苦手なもの" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                            <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding SelectedProfile.Dislikes, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="56" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="10" Grid.Column="0" Text="行動反応方針" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                            <TextBox Grid.Row="10" Grid.Column="1" Text="{Binding SelectedProfile.ActionReactionPolicy, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="64" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                            <TextBlock Grid.Row="11" Grid.Column="0" Text="エンディング方針" VerticalAlignment="Top" Margin="0,4,8,0"/>
+                            <TextBox Grid.Row="11" Grid.Column="1" Text="{Binding SelectedProfile.EndingPolicy, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="64" TextWrapping="Wrap"/>
+                        </Grid>
+                    </ScrollViewer>
+
+                    <Button Grid.Row="2" Content="保存" Command="{Binding SaveSelectedProfileCommand}" Width="120" Height="30" HorizontalAlignment="Right" Margin="0,12,0,0"/>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <TextBlock Grid.Row="2" Text="{Binding StatusMessage}" Foreground="#444444" Margin="0,12,0,0"/>
     </Grid>
 </Window>
