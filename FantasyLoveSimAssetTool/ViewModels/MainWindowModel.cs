@@ -1,6 +1,7 @@
 ﻿using FantasyLoveSimAssetTool.Common;
 using FantasyLoveSimAssetTool.Models;
 using FantasyLoveSimAssetTool.Services;
+using Microsoft.Win32;
 using System;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -12,10 +13,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly CharacterProjectService characterProjectService;
         private string heroineIdInput;
         private string displayNameInput;
+        private string assetIdInput;
+        private string imageSourcePathInput;
+        private AssetUsage selectedAssetUsage;
+        private AssetStatus selectedAssetStatus;
         private HeroineProfile selectedProfile;
         private string statusMessage;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
+
+        public ObservableCollection<AssetUsage> AssetUsages { get; }
+
+        public ObservableCollection<AssetStatus> AssetStatuses { get; }
 
         public string WorkspacePath
         {
@@ -41,6 +50,50 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (displayNameInput == value) { return; }
                 displayNameInput = value;
                 OnPropertyChanged(nameof(DisplayNameInput));
+            }
+        }
+
+        public string AssetIdInput
+        {
+            get { return assetIdInput; }
+            set
+            {
+                if (assetIdInput == value) { return; }
+                assetIdInput = value;
+                OnPropertyChanged(nameof(AssetIdInput));
+            }
+        }
+
+        public string ImageSourcePathInput
+        {
+            get { return imageSourcePathInput; }
+            set
+            {
+                if (imageSourcePathInput == value) { return; }
+                imageSourcePathInput = value;
+                OnPropertyChanged(nameof(ImageSourcePathInput));
+            }
+        }
+
+        public AssetUsage SelectedAssetUsage
+        {
+            get { return selectedAssetUsage; }
+            set
+            {
+                if (selectedAssetUsage == value) { return; }
+                selectedAssetUsage = value;
+                OnPropertyChanged(nameof(SelectedAssetUsage));
+            }
+        }
+
+        public AssetStatus SelectedAssetStatus
+        {
+            get { return selectedAssetStatus; }
+            set
+            {
+                if (selectedAssetStatus == value) { return; }
+                selectedAssetStatus = value;
+                OnPropertyChanged(nameof(SelectedAssetStatus));
             }
         }
 
@@ -73,17 +126,40 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand RefreshProfilesCommand { get; }
 
+        public ICommand BrowseImageCommand { get; }
+
+        public ICommand AddImageAssetCommand { get; }
+
         public MainWindowModel()
         {
             characterProjectService = new CharacterProjectService();
             Profiles = new ObservableCollection<HeroineProfile>();
+            AssetUsages = new ObservableCollection<AssetUsage>
+            {
+                AssetUsage.Sprites,
+                AssetUsage.Event,
+                AssetUsage.Actions,
+                AssetUsage.Ending
+            };
+            AssetStatuses = new ObservableCollection<AssetStatus>
+            {
+                AssetStatus.Accepted,
+                AssetStatus.Pending,
+                AssetStatus.Rejected
+            };
             heroineIdInput = "TestHeroine";
             displayNameInput = "テストヒロイン";
+            assetIdInput = "Heroine_Normal";
+            imageSourcePathInput = string.Empty;
+            selectedAssetUsage = AssetUsage.Sprites;
+            selectedAssetStatus = AssetStatus.Accepted;
             statusMessage = string.Empty;
 
             CreateCharacterCommand = new RelayCommand(CreateCharacter);
             SaveSelectedProfileCommand = new RelayCommand(SaveSelectedProfile, () => SelectedProfile != null);
             RefreshProfilesCommand = new RelayCommand(LoadProfiles);
+            BrowseImageCommand = new RelayCommand(BrowseImage);
+            AddImageAssetCommand = new RelayCommand(AddImageAsset, () => SelectedProfile != null);
 
             LoadProfiles();
             StatusMessage = "キャラクター基本情報の保存準備ができています。";
@@ -101,6 +177,48 @@ namespace FantasyLoveSimAssetTool.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = $"作成に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void BrowseImage()
+        {
+            OpenFileDialog dialog = new OpenFileDialog
+            {
+                Title = "登録する画像を選択",
+                Filter = "Image files (*.png;*.jpg;*.jpeg;*.webp)|*.png;*.jpg;*.jpeg;*.webp|All files (*.*)|*.*"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                ImageSourcePathInput = dialog.FileName;
+                if (string.IsNullOrWhiteSpace(AssetIdInput))
+                {
+                    AssetIdInput = System.IO.Path.GetFileNameWithoutExtension(dialog.FileName);
+                }
+            }
+        }
+
+        private void AddImageAsset()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                HeroineAsset asset = characterProjectService.AddImageAsset(
+                    SelectedProfile,
+                    ImageSourcePathInput,
+                    SelectedAssetUsage,
+                    AssetIdInput,
+                    SelectedAssetStatus);
+
+                StatusMessage = $"{asset.AssetId} を {asset.Usage} に登録しました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"画像登録に失敗しました: {ex.Message}";
             }
         }
 

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace FantasyLoveSimAssetTool.Models
 {
@@ -28,7 +28,7 @@ namespace FantasyLoveSimAssetTool.Models
 
         public string EndingPolicy { get; set; }
 
-        public List<HeroineAsset> Assets { get; set; }
+        public ObservableCollection<HeroineAsset> Assets { get; set; }
 
         public HeroineProfile()
         {
@@ -44,7 +44,7 @@ namespace FantasyLoveSimAssetTool.Models
             Dislikes = string.Empty;
             ActionReactionPolicy = string.Empty;
             EndingPolicy = string.Empty;
-            Assets = new List<HeroineAsset>();
+            Assets = new ObservableCollection<HeroineAsset>();
         }
     }
 }

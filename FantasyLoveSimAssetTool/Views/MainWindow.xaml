@@ -53,76 +53,129 @@
             </Border>
 
             <Border Grid.Column="2" BorderBrush="#DDDDDD" BorderThickness="1" Padding="12">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" Text="基本情報" FontWeight="SemiBold" Margin="0,0,0,12"/>
-
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                <TabControl>
+                    <TabItem Header="基本情報">
+                        <Grid Margin="0,12,0,0">
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="HeroineId" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedProfile.HeroineId}" IsReadOnly="True" Margin="0,0,0,8"/>
+                            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="表示名" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedProfile.DisplayName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="HeroineId" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedProfile.HeroineId}" IsReadOnly="True" Margin="0,0,0,8"/>
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="年齢" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedProfile.Age, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="表示名" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedProfile.DisplayName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="身長" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding SelectedProfile.Height, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="年齢" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedProfile.Age, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
 
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="性格" VerticalAlignment="Top" Margin="0,4,8,8"/>
-                            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding SelectedProfile.Personality, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="56" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="身長" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding SelectedProfile.Height, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
 
-                            <TextBlock Grid.Row="5" Grid.Column="0" Text="口調" VerticalAlignment="Top" Margin="0,4,8,8"/>
-                            <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding SelectedProfile.SpeakingStyle, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="56" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="性格" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding SelectedProfile.Personality, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="56" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
-                            <TextBlock Grid.Row="6" Grid.Column="0" Text="一人称" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                            <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding SelectedProfile.FirstPerson, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="口調" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding SelectedProfile.SpeakingStyle, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="56" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
-                            <TextBlock Grid.Row="7" Grid.Column="0" Text="二人称" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                            <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding SelectedProfile.SecondPerson, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="一人称" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding SelectedProfile.FirstPerson, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
 
-                            <TextBlock Grid.Row="8" Grid.Column="0" Text="好きなもの" VerticalAlignment="Top" Margin="0,4,8,8"/>
-                            <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding SelectedProfile.Likes, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="56" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="7" Grid.Column="0" Text="二人称" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding SelectedProfile.SecondPerson, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
 
-                            <TextBlock Grid.Row="9" Grid.Column="0" Text="苦手なもの" VerticalAlignment="Top" Margin="0,4,8,8"/>
-                            <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding SelectedProfile.Dislikes, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="56" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="8" Grid.Column="0" Text="好きなもの" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding SelectedProfile.Likes, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="56" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
-                            <TextBlock Grid.Row="10" Grid.Column="0" Text="行動反応方針" VerticalAlignment="Top" Margin="0,4,8,8"/>
-                            <TextBox Grid.Row="10" Grid.Column="1" Text="{Binding SelectedProfile.ActionReactionPolicy, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="64" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="9" Grid.Column="0" Text="苦手なもの" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding SelectedProfile.Dislikes, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="56" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
-                            <TextBlock Grid.Row="11" Grid.Column="0" Text="エンディング方針" VerticalAlignment="Top" Margin="0,4,8,0"/>
-                            <TextBox Grid.Row="11" Grid.Column="1" Text="{Binding SelectedProfile.EndingPolicy, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="64" TextWrapping="Wrap"/>
+                                    <TextBlock Grid.Row="10" Grid.Column="0" Text="行動反応方針" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="10" Grid.Column="1" Text="{Binding SelectedProfile.ActionReactionPolicy, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="64" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="11" Grid.Column="0" Text="エンディング方針" VerticalAlignment="Top" Margin="0,4,8,0"/>
+                                    <TextBox Grid.Row="11" Grid.Column="1" Text="{Binding SelectedProfile.EndingPolicy, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="64" TextWrapping="Wrap"/>
+                                </Grid>
+                            </ScrollViewer>
+
+                            <Button Grid.Row="1" Content="保存" Command="{Binding SaveSelectedProfileCommand}" Width="120" Height="30" HorizontalAlignment="Right" Margin="0,12,0,0"/>
                         </Grid>
-                    </ScrollViewer>
+                    </TabItem>
 
-                    <Button Grid.Row="2" Content="保存" Command="{Binding SaveSelectedProfileCommand}" Width="120" Height="30" HorizontalAlignment="Right" Margin="0,12,0,0"/>
-                </Grid>
+                    <TabItem Header="画像">
+                        <Grid Margin="0,12,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="12"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="96"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="AssetId" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding AssetIdInput, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="元画像" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ImageSourcePathInput, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,8"/>
+                                <Button Grid.Row="1" Grid.Column="2" Content="参照" Command="{Binding BrowseImageCommand}" Height="26" Margin="0,0,0,8"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="用途" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" ItemsSource="{Binding AssetUsages}" SelectedItem="{Binding SelectedAssetUsage}" Margin="0,0,0,8"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="状態" VerticalAlignment="Center"/>
+                                <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding AssetStatuses}" SelectedItem="{Binding SelectedAssetStatus}" Margin="0,0,8,0"/>
+                                <Button Grid.Row="3" Grid.Column="2" Content="画像登録" Command="{Binding AddImageAssetCommand}" Height="26"/>
+                            </Grid>
+
+                            <DataGrid Grid.Row="2"
+                                      ItemsSource="{Binding SelectedProfile.Assets}"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      IsReadOnly="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId}" Width="140"/>
+                                    <DataGridTextColumn Header="用途" Binding="{Binding Usage}" Width="90"/>
+                                    <DataGridTextColumn Header="状態" Binding="{Binding Status}" Width="90"/>
+                                    <DataGridTextColumn Header="ファイル名" Binding="{Binding FileName}" Width="160"/>
+                                    <DataGridTextColumn Header="保存先" Binding="{Binding StoredPath}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
             </Border>
         </Grid>
 
