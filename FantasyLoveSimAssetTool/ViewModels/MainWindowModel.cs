@@ -14,6 +14,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly CharacterProjectService characterProjectService;
         private readonly PromptRecordService promptRecordService;
         private readonly PromptTemplateService promptTemplateService;
+        private readonly StillDefinitionService stillDefinitionService;
         private readonly ExportService exportService;
         private string heroineIdInput;
         private string displayNameInput;
@@ -23,6 +24,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private AssetStatus selectedAssetStatus;
         private HeroineAsset selectedAsset;
         private PromptTemplate selectedPromptTemplate;
+        private StillDefinition selectedStillDefinition;
         private PromptRecord currentPromptRecord;
         private HeroineProfile selectedProfile;
         private ExportReport lastExportReport;
@@ -37,6 +39,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<AssetStatus> AssetStatuses { get; }
 
         public ObservableCollection<PromptTemplate> AvailablePromptTemplates { get; }
+
+        public ObservableCollection<StillDefinition> StillDefinitions { get; }
+
+        public ObservableCollection<StillStatus> StillStatuses { get; }
 
         public string WorkspacePath
         {
@@ -141,6 +147,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public StillDefinition SelectedStillDefinition
+        {
+            get { return selectedStillDefinition; }
+            set
+            {
+                if (selectedStillDefinition == value) { return; }
+                selectedStillDefinition = value;
+                OnPropertyChanged(nameof(SelectedStillDefinition));
+            }
+        }
+
         public PromptRecord CurrentPromptRecord
         {
             get { return currentPromptRecord; }
@@ -237,9 +254,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
             characterProjectService = new CharacterProjectService();
             promptRecordService = new PromptRecordService(characterProjectService);
             promptTemplateService = new PromptTemplateService();
+            stillDefinitionService = new StillDefinitionService();
             exportService = new ExportService(characterProjectService);
             Profiles = new ObservableCollection<HeroineProfile>();
             AvailablePromptTemplates = new ObservableCollection<PromptTemplate>();
+            StillDefinitions = new ObservableCollection<StillDefinition>();
             AssetUsages = new ObservableCollection<AssetUsage>
             {
                 AssetUsage.Sprites,
@@ -252,6 +271,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 AssetStatus.Accepted,
                 AssetStatus.Pending,
                 AssetStatus.Rejected
+            };
+            StillStatuses = new ObservableCollection<StillStatus>
+            {
+                StillStatus.NotGenerated,
+                StillStatus.Generating,
+                StillStatus.Accepted,
+                StillStatus.NeedsFix,
+                StillStatus.NotNeeded
             };
             heroineIdInput = "TestHeroine";
             displayNameInput = "テストヒロイン";
@@ -278,6 +305,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedProfile != null && SelectedPromptTemplate != null && CurrentPromptRecord != null);
             ExportSelectedProfileCommand = new RelayCommand(ExportSelectedProfile, () => SelectedProfile != null);
 
+            LoadStillDefinitions();
             LoadProfiles();
             StatusMessage = "キャラクター基本情報の保存準備ができています。";
         }
@@ -425,6 +453,20 @@ namespace FantasyLoveSimAssetTool.ViewModels
             if (AvailablePromptTemplates.Count > 0)
             {
                 SelectedPromptTemplate = AvailablePromptTemplates[0];
+            }
+        }
+
+        private void LoadStillDefinitions()
+        {
+            StillDefinitions.Clear();
+            foreach (StillDefinition definition in stillDefinitionService.GetDefaultDefinitions())
+            {
+                StillDefinitions.Add(definition);
+            }
+
+            if (StillDefinitions.Count > 0)
+            {
+                SelectedStillDefinition = StillDefinitions[0];
             }
         }
 
