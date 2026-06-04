@@ -17,8 +17,8 @@
 - ターゲットフレームワーク: `net5.0-windows`
 - UI: `Views/MainWindow.xaml`
 - ViewModel: `ViewModels/MainWindowModel.cs`
-- モデル: `Models/HeroineProfile.cs`, `Models/HeroineAsset.cs`, `Models/PromptRecord.cs`, `Models/PromptTemplate.cs`, `Models/ExportReport.cs`
-- サービス: `Services/CharacterProjectService.cs`, `Services/PromptRecordService.cs`, `Services/PromptTemplateService.cs`, `Services/ExportService.cs`
+- モデル: `Models/HeroineProfile.cs`, `Models/HeroineAsset.cs`, `Models/PromptRecord.cs`, `Models/PromptTemplate.cs`, `Models/ExportReport.cs`, `Models/StillDefinition.cs`
+- サービス: `Services/CharacterProjectService.cs`, `Services/PromptRecordService.cs`, `Services/PromptTemplateService.cs`, `Services/StillDefinitionService.cs`, `Services/ExportService.cs`
 - 共通基盤: `Common/ObservableObject.cs`, `Common/RelayCommand.cs`
 
 実装済みの機能は次の通りです。
@@ -31,6 +31,12 @@
 - 登録済み画像の `Accepted`, `Pending`, `Rejected` 変更と保存
 - prompt 記録保存、読み込み
 - キャラクター容姿プロンプトとスチル用テンプレートの合成
+- 仕様書にある常時必要スチルの固定リスト表示
+- スチル作業タブでの用途フィルタ、状態表示、画像プレビュー
+- スチル固有 prompt と合成 positive prompt のプレビュー
+- スチルから `PromptRecord.PositivePrompt` への反映
+- スチルから画像登録欄への `AssetId`、用途、状態の反映
+- スチルごとの画像登録状況、prompt 保存状況、AssetStatus 表示
 - Unity 向け export
 - `heroine_profile_note.md` と下書き Markdown の出力
 - Export report による件数、警告表示
@@ -105,8 +111,10 @@ Models/
   PromptRecord.cs
   PromptTemplate.cs
   ExportReport.cs
+  StillDefinition.cs
   AssetUsage.cs
   AssetStatus.cs
+  StillStatus.cs
 ```
 
 ### HeroineProfile
@@ -175,6 +183,23 @@ Models/
 - `Usage`
 - `TemplateText`
 
+### StillDefinition
+
+- `AssetId`
+- `DisplayName`
+- `Usage`
+- `FileName`
+- `SpecificPrompt`
+- `Status`
+
+### StillStatus
+
+- `NotGenerated`
+- `Generating`
+- `Accepted`
+- `NeedsFix`
+- `NotNeeded`
+
 ### ExportReport
 
 - `ExportPath`
@@ -213,6 +238,11 @@ Services/
 - キャラクター容姿プロンプトとテンプレートの合成
 - 合成結果を `PromptRecord.PositivePrompt` に反映
 
+### StillDefinitionService
+
+- 仕様書にある常時必要スチルの固定リスト管理
+- `AssetId`、用途、出力ファイル名、スチル固有 prompt の初期値提供
+
 ### ExportService
 
 - 採用画像の export
@@ -226,6 +256,8 @@ Services/
 - 左ペイン: キャラクター一覧、新規作成、再読み込み
 - 基本情報タブ: プロフィール、容姿プロンプト、反応方針など
 - 画像タブ: 画像登録、ステータス編集、プレビュー
+- スチル作業タブ: 用途フィルタ付きの作業リスト、状況表示、画像プレビュー、合成 prompt、Prompt 反映、画像登録欄への反映
+- スチル一覧タブ: 仕様上必要なスチルの表形式一覧、状態と追加 prompt の編集
 - Prompt タブ: prompt 記録編集、テンプレート適用
 - Export タブ: export 実行、件数、警告表示
 
@@ -247,13 +279,20 @@ Services/
 14. Export report を表示する
 15. 登録済み画像をプレビューする
 16. 登録済み画像の Status を一覧から変更、保存する
+17. 仕様書にある常時必要スチルを固定リスト化する
+18. スチル一覧タブを追加する
+19. スチル作業タブを追加する
+20. スチル固有 prompt とキャラクター容姿 prompt の合成プレビューを追加する
+21. スチルから Prompt タブへ positive prompt を反映する
+22. スチルごとの画像登録状況、prompt 保存状況、AssetStatus、画像プレビューを表示する
+23. スチル作業タブから画像登録欄へ `AssetId`、用途、状態を反映する
+24. スチル作業タブに用途フィルタを追加する
 
 ## 次に進める候補
 
-- スチル一覧タブの追加
-- 仕様書にある常時必要スチルの初期リスト化
-- スチルごとの追加プロンプト管理
-- キャラクター容姿プロンプトとスチル追加プロンプトの合成
+- スチルの `Status` と `SpecificPrompt` をキャラクターごとに永続化する
+- スチル作業タブの状態変更を `profile.json` または専用 JSON に保存する
+- スチル一覧タブを開発確認用に残すか、スチル作業タブへ統合するか判断する
 - 画像サイズ、縦横比、透過の検査
 - 画像登録のドラッグ&ドロップ対応
 - Export 結果フォルダを開く操作
@@ -267,6 +306,11 @@ Services/
 - `profile.json` が保存、再読み込みできる
 - 画像と prompt JSON が同じ `AssetId` で対応する
 - キャラクター容姿プロンプトとスチル用テンプレートから positive prompt を生成できる
+- スチル作業タブで用途フィルタが効く
+- スチル作業タブで画像登録状況、prompt 保存状況、AssetStatus が表示される
+- スチル作業タブで登録済み画像プレビューが表示される
+- スチル作業タブから Prompt タブへ positive prompt を反映できる
+- スチル作業タブから画像登録欄へ `AssetId`、用途、状態を反映できる
 - `Accepted` の画像だけが export される
 - Export report に件数と警告が出る
 - 登録済み画像を選ぶとプレビューが表示される

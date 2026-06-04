@@ -188,11 +188,15 @@ long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft an
 
 この機能により、キャラクターの外見の一貫性を保ちながら、各種スチル用のプロンプトを効率よく作れるようにする。
 
-## スチル一覧タブ
+## スチル作業とスチル一覧
 
 基本的に、この仕様書の「出力ファイル命名」にあるスチル一覧は常に描く対象として扱う。
 
-ツールには新しいタブとして「スチル一覧」を用意し、立ち絵、イベントスチル、行動スチル、エンディングスチルを一覧表示する。各行は、生成したいスチル 1 枚分の作業単位とする。
+ツールには、作業向けの「スチル作業」と、確認向けの「スチル一覧」を用意する。
+
+「スチル作業」は、制作中に主に使う画面とする。用途フィルタで対象を絞り、選択したスチルの詳細、追加 prompt、合成 prompt、画像登録状況、prompt 保存状況、AssetStatus、登録済み画像プレビューを確認できるようにする。
+
+「スチル一覧」は、仕様上必要なスチルを表形式で確認する画面とする。全項目を横断的に確認したいとき、または開発中のデバッグ用に使う。
 
 ### 常に描きたいスチル
 
@@ -235,6 +239,37 @@ long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft an
 - prompt 記録の有無
 - 状態: 未生成 / 生成中 / 採用済み / 要修正 / 不要
 
+### スチル作業画面
+
+スチル作業画面では、左側に作成対象リスト、右側に選択スチルの詳細を表示する。
+
+左側の作成対象リストでは、次を表示する。
+
+- 表示名
+- `AssetId`
+- スチル状態
+- 用途フィルタ: `All` / `Sprites` / `Event` / `Actions` / `Ending`
+
+右側の詳細では、次を表示、編集できるようにする。
+
+- `AssetId`
+- スチル状態
+- 用途
+- 出力ファイル名
+- スチル固有の追加 prompt
+- キャラクター容姿 prompt と追加 prompt を合成した positive prompt
+- 画像登録状況: 未登録 / 登録済み / ファイルなし
+- prompt 保存状況: 未保存 / 保存済み
+- `HeroineAsset.AssetStatus`
+- 登録済み画像プレビュー
+
+スチル作業画面には、次の操作を用意する。
+
+- `Prompt に反映`: 選択スチルの合成 positive prompt を `PromptRecord.PositivePrompt` に反映する
+- `画像登録欄に反映`: 選択スチルの `AssetId`、用途、初期状態を画像登録欄に反映する
+
+画像登録は、外部ツールで生成した画像を選んでアプリに登録する操作として扱う。スチル作業画面は、登録するべき `AssetId` と用途を間違えないための導線を提供する。
+
 ### プロンプト合成
 
 各スチルには、キャラクターの基本プロンプトに加えて、そのスチル画像を得るための追加プロンプトを持たせる。
@@ -252,7 +287,7 @@ long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft an
 standing character sprite, full body, transparent background
 ```
 
-スチル一覧タブでは、行を選択して「Prompt に反映」すると、合成後の positive prompt を選択中スチルの `PromptRecord.PositivePrompt` に反映できるようにする。
+スチル作業画面またはスチル一覧タブでは、行を選択して「Prompt に反映」すると、合成後の positive prompt を選択中スチルの `PromptRecord.PositivePrompt` に反映できるようにする。
 
 ### 採用画像との対応
 
@@ -288,6 +323,17 @@ standing character sprite, full body, transparent background
 - 登録済み画像をプレビューする
 - 登録後に採用・保留・没を切り替えられる
 - 採用画像のファイル名を Unity 用に決める
+
+### スチル作業画面
+
+- 用途フィルタで対象スチルを絞り込む
+- 選択中スチルの詳細を表示する
+- スチル固有 prompt を編集する
+- 合成 positive prompt をプレビューする
+- 画像登録状況、prompt 保存状況、AssetStatus を表示する
+- 登録済み画像をプレビューする
+- `Prompt に反映` で prompt 記録へ反映する
+- `画像登録欄に反映` で画像登録タブへ登録情報を渡す
 
 ### スチル一覧画面
 
