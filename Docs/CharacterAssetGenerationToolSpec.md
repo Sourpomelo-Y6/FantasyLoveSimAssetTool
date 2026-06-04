@@ -213,6 +213,8 @@ long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft an
 - キャラクター容姿プロンプトとスチル用テンプレートを合成する
 - 生成結果を登録する
 - 採用・保留・没を管理する
+- 登録済み画像をプレビューする
+- 登録後に採用・保留・没を切り替えられる
 - 採用画像のファイル名を Unity 用に決める
 
 ### Export 画面
@@ -221,6 +223,7 @@ long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft an
 - 採用画像だけを出力する
 - prompt 記録を同梱するか選べる
 - `HeroineProfileData` 作成用のメモまたは JSON を出力する
+- 出力画像数、出力 prompt 数、スキップ数、警告を表示する
 
 ## 出力フォルダ例
 
@@ -261,6 +264,8 @@ Assets/Images/Heroines/<HeroineId>/
 - 立ち絵の背景透過や表情差分の整合性をチェックする
 - 複数ヒロイン間でプロンプトテンプレートを共有する
 - スチル用途別のデフォルトプロンプトテンプレートを編集、追加、共有する
+- Export 結果フォルダを開く
+- 登録済み画像の差し替え、削除に対応する
 
 ## 最初に作る最小機能
 

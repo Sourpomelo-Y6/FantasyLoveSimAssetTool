@@ -8,15 +8,20 @@ Stable Diffusion などで生成した立ち絵、イベントスチル、行動
 
 ## 現在の状態
 
-現在は WPF アプリのひな形段階です。
+現在は、素材管理 MVP の主要機能を実装済みです。
 
 - .NET 5 WPF アプリ
-- MVVM の最小構成
-- `MainWindow` と `MainWindowModel`
-- `ObservableObject`
-- `RelayCommand`
+- MVVM ベースの単一画面構成
+- キャラクター基本情報の JSON 保存
+- 画像登録と用途別フォルダへのコピー
+- 登録済み画像のプレビュー
+- 採用、保留、没ステータス管理
+- prompt JSON の保存
+- キャラクター容姿プロンプトとスチル用テンプレートの合成
+- Unity 向け Export
+- Export 件数と警告の表示
 
-まだキャラクター管理、画像管理、プロンプト記録、export 機能は実装されていません。
+Stable Diffusion の画像生成自体はアプリ内では行わず、外部生成した画像を登録、整理、出力するツールとして動作します。
 
 ## 想定する用途
 
@@ -49,12 +54,23 @@ FantasyLoveSimAssetTool/
     ObservableObject.cs
     RelayCommand.cs
   Models/
+    HeroineProfile.cs
+    HeroineAsset.cs
+    PromptRecord.cs
+    PromptTemplate.cs
+    ExportReport.cs
   ViewModels/
     MainWindowModel.cs
+  Services/
+    CharacterProjectService.cs
+    PromptRecordService.cs
+    PromptTemplateService.cs
+    ExportService.cs
   Views/
     MainWindow.xaml
 Docs/
   CharacterAssetGenerationToolSpec.md
+  Handoff.md
 ```
 
 ## 開発環境
@@ -80,26 +96,26 @@ WPF は Windows Desktop SDK が必要です。WSL や Linux 上の .NET SDK で�
 
 現在のターゲットフレームワーク `net5.0-windows` はサポート終了済みですが、`net8.0-windows` への移行がうまくいかなかったため、当面は `net5.0-windows` のまま維持します。ターゲットフレームワーク移行は別タスクとして扱います。
 
-## 最初に実装する機能
+## 実装済みの主な機能
 
-最初の実装範囲は、仕様書の「最初に作る最小機能」に合わせます。
+- キャラクター作成
+- `Characters/<HeroineId>/profile.json` の保存、読み込み
+- `Images/Sprites`, `Event`, `Actions`, `Ending`, `Prompts` の作成
+- 元画像の登録と用途別フォルダへのコピー
+- 登録済み画像の一覧表示とプレビュー
+- 登録済み画像の `Accepted`, `Pending`, `Rejected` 切り替え
+- prompt 記録の保存、読み込み
+- スチル用途別デフォルトテンプレートの適用
+- `Export/<HeroineId>/` への Unity 向け出力
+- Export report による件数、警告表示
 
-1. キャラクター基本情報を JSON で保存する
-2. 画像用途別フォルダを作成する
-3. 採用画像と prompt 記録を同じ ID で保存する
-4. Unity 向け export フォルダを作る
-5. `heroine_profile_note.md` を出力する
+## 画面
 
-この段階では Stable Diffusion の画像生成自体はアプリ内で行わず、外部で生成した画像を登録・整理するツールとして作ります。
-
-## 予定している画面
-
-- キャラクター一覧
-- キャラクター詳細
-- 画像用途別リスト
-- プロンプト記録編集
-- 採用画像管理
-- Unity Export
+- 左ペイン: キャラクター一覧、新規作成、再読み込み
+- 基本情報タブ: プロフィール、口調、容姿プロンプトなどの編集
+- 画像タブ: 画像登録、ステータス編集、プレビュー
+- Prompt タブ: prompt 記録編集、テンプレート適用
+- Export タブ: Export 実行、件数、警告確認
 
 ## 保存データの方針
 
@@ -153,10 +169,9 @@ Export/
 
 ## 今後の拡張候補
 
-- 画像プレビュー
-- 画像の採用、保留、没ステータス管理
 - ドラッグ&ドロップによる画像登録
-- prompt テンプレート管理
+- prompt テンプレートの JSON 管理
 - 画像サイズ、縦横比、透過、余白のチェック
 - Unity の ScriptableObject 生成補助
 - Python スクリプト連携による画像検査
+- Export 結果フォルダを開く操作

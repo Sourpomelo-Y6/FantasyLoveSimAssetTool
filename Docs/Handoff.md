@@ -10,27 +10,30 @@
 
 ## 現在の状態
 
-現在は WPF アプリのひな形段階です。
+現在は、素材管理 MVP の主要機能を実装済みです。
 
 - ソリューション: `FantasyLoveSimAssetTool.sln`
 - アプリ本体: `FantasyLoveSimAssetTool/`
 - ターゲットフレームワーク: `net5.0-windows`
 - UI: `Views/MainWindow.xaml`
 - ViewModel: `ViewModels/MainWindowModel.cs`
+- モデル: `Models/HeroineProfile.cs`, `Models/HeroineAsset.cs`, `Models/PromptRecord.cs`, `Models/PromptTemplate.cs`, `Models/ExportReport.cs`
+- サービス: `Services/CharacterProjectService.cs`, `Services/PromptRecordService.cs`, `Services/PromptTemplateService.cs`, `Services/ExportService.cs`
 - 共通基盤: `Common/ObservableObject.cs`, `Common/RelayCommand.cs`
 
-実装済みの機能は、`MainWindow` に `MainWindowModel.Text` を表示する最小構成のみです。
+実装済みの機能は次の通りです。
 
-次の機能は未実装です。
-
-- キャラクター基本情報の保存
-- キャラクター一覧
+- キャラクター基本情報の保存、読み込み
+- キャラクター一覧表示
 - 画像用途別フォルダ作成
-- 画像登録
-- prompt 記録保存
-- 採用、保留、没の状態管理
+- 画像登録と用途別フォルダへのコピー
+- 登録済み画像のプレビュー
+- 登録済み画像の `Accepted`, `Pending`, `Rejected` 変更と保存
+- prompt 記録保存、読み込み
+- キャラクター容姿プロンプトとスチル用テンプレートの合成
 - Unity 向け export
-- `heroine_profile_note.md` 出力
+- `heroine_profile_note.md` と下書き Markdown の出力
+- Export report による件数、警告表示
 
 ## 開発時の注意
 
@@ -42,9 +45,9 @@ WSL や Linux 上の .NET SDK では、`Microsoft.NET.Sdk.WindowsDesktop` が見
 
 `net5.0-windows` はサポート終了済みですが、このプロジェクトでは `net8.0-windows` への移行がうまくいかなかったため、当面は変更しない方針です。実装を進める際も、ターゲットフレームワーク移行は別タスクとして扱ってください。
 
-## 推奨する最初の実装範囲
+## 実装済みの最小範囲
 
-最初は画像生成連携や高度な UI は入れず、素材管理の土台だけを作るのがよいです。
+仕様書の「最初に作る最小機能」は概ね実装済みです。
 
 1. キャラクター基本情報を JSON で保存する
 2. 画像用途別フォルダを作成する
@@ -52,7 +55,7 @@ WSL や Linux 上の .NET SDK では、`Microsoft.NET.Sdk.WindowsDesktop` が見
 4. Unity 向け export フォルダを作る
 5. `heroine_profile_note.md` を出力する
 
-この範囲ができると、Stable Diffusion で生成した画像を手動登録し、Unity へ取り込む作業を分離できます。
+画像生成自体は外部ツールで行い、本アプリは登録、整理、追跡、出力を担当します。
 
 ## 推奨ディレクトリ構成
 
@@ -100,6 +103,8 @@ Models/
   HeroineProfile.cs
   HeroineAsset.cs
   PromptRecord.cs
+  PromptTemplate.cs
+  ExportReport.cs
   AssetUsage.cs
   AssetStatus.cs
 ```
@@ -163,6 +168,22 @@ Models/
 - `Pending`
 - `Rejected`
 
+### PromptTemplate
+
+- `TemplateId`
+- `DisplayName`
+- `Usage`
+- `TemplateText`
+
+### ExportReport
+
+- `ExportPath`
+- `AcceptedAssetCount`
+- `ExportedImageCount`
+- `ExportedPromptCount`
+- `SkippedImageCount`
+- `Warnings`
+
 ## 推奨サービス
 
 ViewModel にファイル処理を直接書きすぎないよう、次のサービスを切ると保守しやすくなります。
@@ -198,19 +219,17 @@ Services/
 - prompt 記録の export
 - `heroine_profile_note.md` 生成
 - 下書き Markdown の生成
+- export 件数と警告の report 生成
 
-## 最初の画面構成案
+## 現在の画面構成
 
-最初の UI は、1 画面に詰め込みすぎず次の構成にすると実装しやすいです。
+- 左ペイン: キャラクター一覧、新規作成、再読み込み
+- 基本情報タブ: プロフィール、容姿プロンプト、反応方針など
+- 画像タブ: 画像登録、ステータス編集、プレビュー
+- Prompt タブ: prompt 記録編集、テンプレート適用
+- Export タブ: export 実行、件数、警告表示
 
-- 左ペイン: キャラクター一覧
-- 中央: 選択キャラクターの基本情報
-- 右ペイン: 画像用途別の採用状況
-- 下部または別タブ: Export 実行
-
-初期段階では画像プレビューを簡易表示に留め、まず JSON 保存と export の正しさを優先してください。
-
-## 実装順序
+## ここまでの実装順序
 
 1. `Models` を追加する
 2. JSON 保存用サービスを追加する
@@ -225,6 +244,18 @@ Services/
 11. 容姿プロンプトとテンプレートを合成して `PromptRecord.PositivePrompt` に反映する
 12. ExportService を作る
 13. `heroine_profile_note.md` を出力する
+14. Export report を表示する
+15. 登録済み画像をプレビューする
+16. 登録済み画像の Status を一覧から変更、保存する
+
+## 次に進める候補
+
+- 画像サイズ、縦横比、透過の検査
+- 画像登録のドラッグ&ドロップ対応
+- Export 結果フォルダを開く操作
+- prompt テンプレートの JSON 化
+- Accepted 画像だけを一覧上で絞り込む機能
+- 画像ファイルの差し替え、削除
 
 ## 検証観点
 
@@ -233,6 +264,9 @@ Services/
 - 画像と prompt JSON が同じ `AssetId` で対応する
 - キャラクター容姿プロンプトとスチル用テンプレートから positive prompt を生成できる
 - `Accepted` の画像だけが export される
+- Export report に件数と警告が出る
+- 登録済み画像を選ぶとプレビューが表示される
+- 登録済み画像の Status を変更して `profile.json` に保存できる
 - Export 結果が `Docs/CharacterAssetGenerationToolSpec.md` の構成と一致する
 - `heroine_profile_note.md` に Unity 側で必要な参照情報が入る
 
@@ -244,7 +278,9 @@ Services/
 - スチル用デフォルトプロンプトテンプレートをコード内固定にするか、JSON 設定として編集可能にするか
 - prompt テンプレートのプレースホルダー名をどう定義するか
 - `net5.0-windows` 維持を前提に、将来ターゲットフレームワーク移行を再検証するタイミング
-- 画像プレビュー、ドラッグ&ドロップ、画像検査をどの段階で入れるか
+- 画像検査をどの段階で入れるか
+- Export 結果フォルダをアプリから開くか
+- 画像削除時に元ファイルも削除するか、profile から除外するだけにするか
 
 ## 次の担当者へのメモ
 
@@ -252,4 +288,4 @@ Services/
 
 このツールの価値は、画像生成を自動化することより、採用済み素材、生成条件、Unity 取り込み先を失わずに管理することにあります。最初の実装では外部生成した画像を登録する前提で進め、Stable Diffusion 連携や Python 画像検査は後から追加する方が安全です。
 
-今後は、キャラクターごとの容姿プロンプトを登録し、各種スチル用のデフォルトプロンプトテンプレートと合成する機能を追加します。これにより、同じキャラクターの外見を保ったまま、立ち絵、イベント、行動、エンディング用の prompt を効率よく作れるようにします。
+今後は、画像検査、テンプレート管理、Export 後の導線改善を進めるとよいです。現状の MVP は外部生成した画像を登録し、採用状態と prompt 記録を管理し、Unity 向けに出力する用途には使える状態です。
