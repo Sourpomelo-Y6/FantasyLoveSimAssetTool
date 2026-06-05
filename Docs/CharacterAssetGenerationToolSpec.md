@@ -330,6 +330,8 @@ standing character sprite, full body, transparent background
 - プロンプトテンプレートから生成用プロンプトを作る
 - キャラクター容姿プロンプトとスチル用テンプレートを合成する
 - 生成結果を登録する
+- 元画像欄へ画像ファイルをドラッグ&ドロップして登録元を指定する
+- 既存 `AssetId` へ登録する場合は上書き確認を表示する
 - 採用・保留・没を管理する
 - 登録済み画像をプレビューする
 - 登録後に採用・保留・没を切り替えられる
@@ -361,6 +363,7 @@ standing character sprite, full body, transparent background
 - prompt 記録を同梱するか選べる
 - `HeroineProfileData` 作成用のメモまたは JSON を出力する
 - 出力画像数、出力 prompt 数、スキップ数、警告を表示する
+- Export 結果フォルダを開く
 
 ## 出力フォルダ例
 

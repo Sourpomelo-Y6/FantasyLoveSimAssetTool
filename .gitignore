@@ -11,6 +11,10 @@ obj/
 # Visual Studio cache
 .vs/
 
+# Codex local metadata
+.agents/
+.codex/
+
 # Python virtual environments
 venv/
 .venv/
