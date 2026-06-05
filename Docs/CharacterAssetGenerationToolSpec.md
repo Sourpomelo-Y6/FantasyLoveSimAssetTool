@@ -255,7 +255,8 @@ http://127.0.0.1:8188
 接続先 URL は環境により変わる可能性があるため、将来は設定画面または設定 JSON で変更できるようにする。
 
 ComfyUI 連携設定は `ComfySettings/comfyui.json` で管理する。
-現時点では設定の読み込みと Prompt タブ上での確認までを実装し、ComfyUI への HTTP 送信、生成進捗取得、画像取得は後続タスクとする。
+workflow template は `ComfySettings/workflow-template.json` に置く。
+現時点では設定の読み込み、Prompt タブ上での確認、positive / negative prompt を差し込んだ workflow preview 作成までを実装し、ComfyUI への HTTP 送信、生成進捗取得、画像取得は後続タスクとする。
 
 ```json
 {
@@ -263,7 +264,9 @@ ComfyUI 連携設定は `ComfySettings/comfyui.json` で管理する。
   "workflowTemplatePath": "ComfySettings/workflow-template.json",
   "positivePromptPlaceholder": "{PositivePrompt}",
   "negativePromptPlaceholder": "{NegativePrompt}",
-  "outputNodeId": ""
+  "outputNodeId": "7",
+  "positivePromptNodeId": "2",
+  "negativePromptNodeId": "3"
 }
 ```
 

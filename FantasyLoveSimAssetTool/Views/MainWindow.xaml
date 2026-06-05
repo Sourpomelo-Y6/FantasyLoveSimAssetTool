@@ -535,12 +535,20 @@
                                          Text="{Binding ComfySettingsSummary}"
                                          IsReadOnly="True"
                                          Margin="0,8,8,0"/>
-                                <Button Grid.Row="2"
-                                        Grid.Column="2"
-                                        Content="設定再読込"
-                                        Command="{Binding ReloadComfySettingsCommand}"
-                                        Height="26"
-                                        Margin="0,8,0,0"/>
+                                <StackPanel Grid.Row="2"
+                                            Grid.Column="2"
+                                            Orientation="Horizontal"
+                                            Margin="0,8,0,0">
+                                    <Button Content="設定再読込"
+                                            Command="{Binding ReloadComfySettingsCommand}"
+                                            Width="84"
+                                            Height="26"
+                                            Margin="0,0,4,0"/>
+                                    <Button Content="作成"
+                                            Command="{Binding BuildComfyWorkflowPreviewCommand}"
+                                            Width="52"
+                                            Height="26"/>
+                                </StackPanel>
                             </Grid>
 
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -552,6 +560,7 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
@@ -613,6 +622,19 @@
 
                                     <TextBlock Grid.Row="10" Grid.Column="0" Text="修正メモ" VerticalAlignment="Top" Margin="0,4,8,0"/>
                                     <TextBox Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding CurrentPromptRecord.RevisionMemo, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="56" TextWrapping="Wrap"/>
+
+                                    <TextBlock Grid.Row="11" Grid.Column="0" Text="Comfy workflow" VerticalAlignment="Top" Margin="0,12,8,0"/>
+                                    <TextBox Grid.Row="11"
+                                             Grid.Column="1"
+                                             Grid.ColumnSpan="3"
+                                             Text="{Binding CurrentComfyWorkflowPreview}"
+                                             IsReadOnly="True"
+                                             AcceptsReturn="True"
+                                             Height="140"
+                                             TextWrapping="NoWrap"
+                                             HorizontalScrollBarVisibility="Auto"
+                                             VerticalScrollBarVisibility="Auto"
+                                             Margin="0,8,0,0"/>
                                 </Grid>
                             </ScrollViewer>
 

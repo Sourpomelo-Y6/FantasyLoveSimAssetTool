@@ -18,7 +18,7 @@
 - UI: `Views/MainWindow.xaml`
 - ViewModel: `ViewModels/MainWindowModel.cs`
 - モデル: `Models/HeroineProfile.cs`, `Models/HeroineAsset.cs`, `Models/PromptRecord.cs`, `Models/PromptTemplate.cs`, `Models/ExportReport.cs`, `Models/ImageInspectionResult.cs`, `Models/ComfySettings.cs`, `Models/StillDefinition.cs`, `Models/StillWorkItem.cs`
-- サービス: `Services/CharacterProjectService.cs`, `Services/PromptRecordService.cs`, `Services/PromptTemplateService.cs`, `Services/StillDefinitionService.cs`, `Services/ImageInspectionService.cs`, `Services/ComfySettingsService.cs`, `Services/ExportService.cs`
+- サービス: `Services/CharacterProjectService.cs`, `Services/PromptRecordService.cs`, `Services/PromptTemplateService.cs`, `Services/StillDefinitionService.cs`, `Services/ImageInspectionService.cs`, `Services/ComfySettingsService.cs`, `Services/ComfyWorkflowService.cs`, `Services/ExportService.cs`
 - 共通基盤: `Common/ObservableObject.cs`, `Common/RelayCommand.cs`
 
 実装済みの機能は次の通りです。
@@ -38,6 +38,7 @@
 - キャラクター容姿プロンプトとスチル用テンプレートの合成
 - `PromptTemplates/templates.json` からの prompt テンプレート読み込み
 - `ComfySettings/comfyui.json` からの ComfyUI 設定読み込みと Prompt タブでの表示
+- `ComfySettings/workflow-template.json` への positive / negative prompt 差し込み preview
 - 仕様書にある常時必要スチルの固定リスト表示
 - スチル作業タブでの用途フィルタ、状態表示、画像プレビュー
 - スチル固有 prompt と合成 positive prompt のプレビュー
@@ -273,7 +274,12 @@ Services/
 
 - `ComfySettings/comfyui.json` から ComfyUI 接続設定を読み込む
 - JSON がない、空、不正な場合は `http://127.0.0.1:8188` などのデフォルト設定へ fallback する
-- 現時点では設定確認までで、ComfyUI への HTTP 送信は未実装
+
+### ComfyWorkflowService
+
+- `ComfySettings/workflow-template.json` を読み込む
+- `PromptRecord.PositivePrompt` と `PromptRecord.NegativePrompt` を workflow template の placeholder に差し込む
+- 現時点では preview 作成までで、ComfyUI への HTTP 送信は未実装
 
 ### StillDefinitionService
 

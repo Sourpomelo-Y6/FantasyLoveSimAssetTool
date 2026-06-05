@@ -3,5 +3,7 @@
   "workflowTemplatePath": "ComfySettings/workflow-template.json",
   "positivePromptPlaceholder": "{PositivePrompt}",
   "negativePromptPlaceholder": "{NegativePrompt}",
-  "outputNodeId": ""
+  "outputNodeId": "7",
+  "positivePromptNodeId": "2",
+  "negativePromptNodeId": "3"
 }

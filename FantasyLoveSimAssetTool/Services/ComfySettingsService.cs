@@ -84,6 +84,16 @@ namespace FantasyLoveSimAssetTool.Services
             }
 
             normalized.OutputNodeId ??= string.Empty;
+            if (string.IsNullOrWhiteSpace(normalized.PositivePromptNodeId))
+            {
+                normalized.PositivePromptNodeId = defaults.PositivePromptNodeId;
+            }
+
+            if (string.IsNullOrWhiteSpace(normalized.NegativePromptNodeId))
+            {
+                normalized.NegativePromptNodeId = defaults.NegativePromptNodeId;
+            }
+
             return normalized;
         }
     }
