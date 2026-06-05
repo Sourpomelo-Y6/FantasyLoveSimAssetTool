@@ -256,8 +256,8 @@ http://127.0.0.1:8188
 
 ComfyUI 連携設定は `ComfySettings/comfyui.json` で管理する。
 workflow template は `ComfySettings/workflow-template.json` に置く。
-現時点では設定の読み込み、Prompt タブ上での確認、positive / negative prompt を差し込んだ workflow preview 作成、ComfyUI `/prompt` への送信、`prompt_id` 取得までを実装する。
-生成進捗取得、画像取得、登録は後続タスクとする。
+現時点では設定の読み込み、Prompt タブ上での確認、positive / negative prompt を差し込んだ workflow preview 作成、ComfyUI `/prompt` への送信、`prompt_id` 取得、`/history/{prompt_id}` からの出力画像ファイル情報取得までを実装する。
+画像取得、登録は後続タスクとする。
 `workflow-template.json` が ComfyUI 画面用 workflow 形式の場合は、既知ノードを `/prompt` 用 API prompt 形式へ変換して送信する。
 `SaveImage.filename_prefix` に `%date:yyyy-MM-dd%` のような日付トークンがある場合は、送信前にツール側で現在日付へ展開する。
 
@@ -297,9 +297,10 @@ negative prompt は、`PromptRecord.NegativePrompt` または用途別テンプ�
 3. 必要に応じて Prompt 記録へ反映する
 4. workflow JSON に prompt と生成条件を差し込む
 5. ローカル ComfyUI に生成リクエストを送り、`prompt_id` を受け取る
-6. 生成完了後、出力画像を取得してツール上でプレビューする
-7. 採用する画像を選び、既存の画像登録処理に渡す
-8. 登録時は既存 `AssetId` の上書き確認を表示する
+6. `/history/{prompt_id}` から生成結果の `filename`、`subfolder`、`type` を取得する
+7. 生成完了後、出力画像を取得してツール上でプレビューする
+8. 採用する画像を選び、既存の画像登録処理に渡す
+9. 登録時は既存 `AssetId` の上書き確認を表示する
 
 取得した画像は、外部ファイル登録と同じ保存ルールで `Characters/<HeroineId>/Images/<Usage>/<AssetId>.png` にコピーする。
 これにより、外部ファイル登録、ドラッグ&ドロップ登録、ComfyUI 生成結果登録の保存形式を揃える。

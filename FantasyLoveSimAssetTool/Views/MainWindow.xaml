@@ -351,6 +351,7 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="72"/>
+                                        <RowDefinition Height="70"/>
                                         <RowDefinition Height="120"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
@@ -393,8 +394,18 @@
                                              VerticalScrollBarVisibility="Auto"
                                              Margin="0,0,0,8"/>
 
-                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="合成 prompt" VerticalAlignment="Top" Margin="0,4,8,0"/>
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Comfy 結果" VerticalAlignment="Top" Margin="0,4,8,8"/>
                                     <TextBox Grid.Row="5"
+                                             Grid.Column="1"
+                                             Text="{Binding CurrentComfyResultSummary, Mode=OneWay}"
+                                             IsReadOnly="True"
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             VerticalScrollBarVisibility="Auto"
+                                             Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="合成 prompt" VerticalAlignment="Top" Margin="0,4,8,0"/>
+                                    <TextBox Grid.Row="6"
                                              Grid.Column="1"
                                              Text="{Binding StillPromptPreview, Mode=OneWay}"
                                              IsReadOnly="True"
@@ -403,8 +414,8 @@
                                              VerticalScrollBarVisibility="Auto"
                                              Margin="0,0,0,8"/>
 
-                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="workflow preview" VerticalAlignment="Top" Margin="0,4,8,0"/>
-                                    <TextBox Grid.Row="6"
+                                    <TextBlock Grid.Row="7" Grid.Column="0" Text="workflow preview" VerticalAlignment="Top" Margin="0,4,8,0"/>
+                                    <TextBox Grid.Row="7"
                                              Grid.Column="1"
                                              Text="{Binding CurrentComfyWorkflowPreview, Mode=OneWay}"
                                              IsReadOnly="True"
@@ -416,7 +427,7 @@
 
                                     <Border Grid.Row="0"
                                             Grid.Column="3"
-                                            Grid.RowSpan="7"
+                                            Grid.RowSpan="8"
                                             BorderBrush="#DDDDDD"
                                             BorderThickness="1"
                                             Padding="8">
@@ -462,6 +473,11 @@
                                     <Button Content="Comfy 送信"
                                             Command="{Binding SubmitStillComfyPromptCommand}"
                                             Width="110"
+                                            Height="30"
+                                            Margin="0,0,8,0"/>
+                                    <Button Content="結果確認"
+                                            Command="{Binding CheckStillComfyResultCommand}"
+                                            Width="90"
                                             Height="30"
                                             Margin="0,0,8,0"/>
                                     <Button Content="スチル保存"

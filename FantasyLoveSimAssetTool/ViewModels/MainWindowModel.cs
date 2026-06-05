@@ -50,7 +50,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string comfySettingsSummary;
         private string currentComfyWorkflowPreview;
         private string currentComfyPromptId;
+        private string currentComfyResultSummary;
         private bool isComfySubmitting;
+        private bool isComfyCheckingResult;
         private string statusMessage;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
@@ -243,6 +245,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 OnPropertyChanged(nameof(SelectedStillDefinition));
                 OnPropertyChanged(nameof(StillPromptPreview));
                 CurrentComfyWorkflowPreview = string.Empty;
+                CurrentComfyPromptId = string.Empty;
+                CurrentComfyResultSummary = string.Empty;
                 RefreshSelectedStillStatus();
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -282,6 +286,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 OnPropertyChanged(nameof(SelectedProfile));
                 OnPropertyChanged(nameof(StillPromptPreview));
                 CurrentComfyWorkflowPreview = string.Empty;
+                CurrentComfyPromptId = string.Empty;
+                CurrentComfyResultSummary = string.Empty;
                 LoadStillDefinitions();
                 RefreshFilteredAssets();
                 RefreshAcceptedAssets();
@@ -419,6 +425,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (currentComfyPromptId == value) { return; }
                 currentComfyPromptId = value;
                 OnPropertyChanged(nameof(CurrentComfyPromptId));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public string CurrentComfyResultSummary
+        {
+            get { return currentComfyResultSummary; }
+            set
+            {
+                if (currentComfyResultSummary == value) { return; }
+                currentComfyResultSummary = value;
+                OnPropertyChanged(nameof(CurrentComfyResultSummary));
             }
         }
 
@@ -430,6 +448,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (isComfySubmitting == value) { return; }
                 isComfySubmitting = value;
                 OnPropertyChanged(nameof(IsComfySubmitting));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public bool IsComfyCheckingResult
+        {
+            get { return isComfyCheckingResult; }
+            set
+            {
+                if (isComfyCheckingResult == value) { return; }
+                isComfyCheckingResult = value;
+                OnPropertyChanged(nameof(IsComfyCheckingResult));
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -476,6 +506,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ICommand BuildStillComfyWorkflowPreviewCommand { get; }
 
         public ICommand SubmitStillComfyPromptCommand { get; }
+
+        public ICommand CheckStillComfyResultCommand { get; }
 
         public MainWindowModel()
         {
@@ -551,7 +583,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             comfySettingsSummary = string.Empty;
             currentComfyWorkflowPreview = string.Empty;
             currentComfyPromptId = string.Empty;
+            currentComfyResultSummary = string.Empty;
             isComfySubmitting = false;
+            isComfyCheckingResult = false;
             statusMessage = string.Empty;
 
             CreateCharacterCommand = new RelayCommand(CreateCharacter);
@@ -584,6 +618,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SubmitStillComfyPromptCommand = new RelayCommand(
                 SubmitStillComfyPrompt,
                 () => SelectedProfile != null && SelectedStillDefinition != null && !IsComfySubmitting);
+            CheckStillComfyResultCommand = new RelayCommand(
+                CheckStillComfyResult,
+                () => !string.IsNullOrWhiteSpace(CurrentComfyPromptId) && !IsComfySubmitting && !IsComfyCheckingResult);
 
             ReloadComfySettings();
             LoadStillDefinitions();
@@ -680,6 +717,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             IsComfySubmitting = true;
             CurrentComfyPromptId = string.Empty;
+            CurrentComfyResultSummary = string.Empty;
             try
             {
                 PromptRecord promptRecord = CreateStillPromptRecord();
@@ -695,6 +733,40 @@ namespace FantasyLoveSimAssetTool.ViewModels
             finally
             {
                 IsComfySubmitting = false;
+            }
+        }
+
+        private async void CheckStillComfyResult()
+        {
+            if (string.IsNullOrWhiteSpace(CurrentComfyPromptId))
+            {
+                return;
+            }
+
+            IsComfyCheckingResult = true;
+            try
+            {
+                System.Collections.Generic.IReadOnlyList<ComfyOutputImage> images =
+                    await comfyClientService.GetOutputImagesAsync(ComfySettings, CurrentComfyPromptId);
+                if (images.Count == 0)
+                {
+                    CurrentComfyResultSummary = "生成結果はまだ取得できません。生成中、または画像出力がありません。";
+                    StatusMessage = "ComfyUI の生成結果はまだ取得できません。";
+                    return;
+                }
+
+                CurrentComfyResultSummary = string.Join(
+                    Environment.NewLine,
+                    images.Select(image => $"{image.DisplayPath} ({image.Type})"));
+                StatusMessage = $"ComfyUI 生成結果を {images.Count} 件取得しました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"ComfyUI 生成結果取得に失敗しました: {ex.Message}";
+            }
+            finally
+            {
+                IsComfyCheckingResult = false;
             }
         }
 

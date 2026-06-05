@@ -1,5 +1,6 @@
 using FantasyLoveSimAssetTool.Models;
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -72,6 +73,35 @@ namespace FantasyLoveSimAssetTool.Services
             return promptId;
         }
 
+        public async Task<IReadOnlyList<ComfyOutputImage>> GetOutputImagesAsync(ComfySettings settings, string promptId)
+        {
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
+            if (string.IsNullOrWhiteSpace(settings.EndpointUrl))
+            {
+                throw new InvalidOperationException("ComfyUI endpoint URL is empty.");
+            }
+
+            if (string.IsNullOrWhiteSpace(promptId))
+            {
+                throw new InvalidOperationException("ComfyUI prompt_id is empty.");
+            }
+
+            Uri endpointUri = BuildHistoryEndpointUri(settings.EndpointUrl, promptId);
+            using HttpResponseMessage response = await httpClient.GetAsync(endpointUri).ConfigureAwait(false);
+            string responseJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException($"ComfyUI history returned {(int)response.StatusCode}: {TrimForMessage(responseJson)}");
+            }
+
+            return ParseOutputImages(responseJson, promptId);
+        }
+
         private static Uri BuildPromptEndpointUri(string endpointUrl)
         {
             if (!Uri.TryCreate(endpointUrl.TrimEnd('/') + "/prompt", UriKind.Absolute, out Uri endpointUri))
@@ -80,6 +110,61 @@ namespace FantasyLoveSimAssetTool.Services
             }
 
             return endpointUri;
+        }
+
+        private static Uri BuildHistoryEndpointUri(string endpointUrl, string promptId)
+        {
+            string escapedPromptId = Uri.EscapeDataString(promptId);
+            if (!Uri.TryCreate(endpointUrl.TrimEnd('/') + "/history/" + escapedPromptId, UriKind.Absolute, out Uri endpointUri))
+            {
+                throw new InvalidOperationException($"ComfyUI endpoint URL is invalid: {endpointUrl}");
+            }
+
+            return endpointUri;
+        }
+
+        private static IReadOnlyList<ComfyOutputImage> ParseOutputImages(string responseJson, string promptId)
+        {
+            List<ComfyOutputImage> images = new List<ComfyOutputImage>();
+            using JsonDocument document = JsonDocument.Parse(responseJson);
+            if (!document.RootElement.TryGetProperty(promptId, out JsonElement promptHistoryElement) ||
+                !promptHistoryElement.TryGetProperty("outputs", out JsonElement outputsElement) ||
+                outputsElement.ValueKind != JsonValueKind.Object)
+            {
+                return images;
+            }
+
+            foreach (JsonProperty outputProperty in outputsElement.EnumerateObject())
+            {
+                if (!outputProperty.Value.TryGetProperty("images", out JsonElement imagesElement) ||
+                    imagesElement.ValueKind != JsonValueKind.Array)
+                {
+                    continue;
+                }
+
+                foreach (JsonElement imageElement in imagesElement.EnumerateArray())
+                {
+                    images.Add(new ComfyOutputImage
+                    {
+                        FileName = GetStringProperty(imageElement, "filename"),
+                        Subfolder = GetStringProperty(imageElement, "subfolder"),
+                        Type = GetStringProperty(imageElement, "type")
+                    });
+                }
+            }
+
+            return images;
+        }
+
+        private static string GetStringProperty(JsonElement element, string propertyName)
+        {
+            if (element.TryGetProperty(propertyName, out JsonElement propertyElement) &&
+                propertyElement.ValueKind == JsonValueKind.String)
+            {
+                return propertyElement.GetString() ?? string.Empty;
+            }
+
+            return string.Empty;
         }
 
         private static string TrimForMessage(string value)

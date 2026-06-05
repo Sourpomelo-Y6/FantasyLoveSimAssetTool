@@ -26,12 +26,13 @@ Stable Diffusion などで生成した立ち絵、イベントスチル、行動
 - ComfyUI workflow template への prompt 差し込み preview
 - スチル作業タブ内での positive / negative prompt 確認と ComfyUI workflow preview 作成、表示
 - スチル作業タブからローカル ComfyUI `/prompt` への workflow 送信と `prompt_id` 表示
+- `prompt_id` からの ComfyUI 生成履歴確認と出力画像ファイル情報表示
 - Unity 向け Export
 - Export 件数と警告の表示
 
 現状では、Stable Diffusion などの画像生成自体はアプリ内では完結せず、外部生成した画像を登録、整理、出力するツールとして動作します。
 この外部ファイル登録フローは今後も残し、将来追加するローカル ComfyUI 連携は、同じ登録処理へ生成結果を渡す任意機能として扱います。
-ComfyUI 連携は現時点では workflow 送信と `prompt_id` 取得までです。生成履歴の監視、画像取得、登録は後続タスクです。
+ComfyUI 連携は現時点では workflow 送信、`prompt_id` 取得、生成履歴からの出力画像ファイル情報取得までです。画像取得と登録は後続タスクです。
 
 ## 想定する用途
 

@@ -41,6 +41,7 @@
 - `ComfySettings/comfyui.json` からの ComfyUI 設定読み込みと Prompt タブでの表示
 - `ComfySettings/workflow-template.json` への positive / negative prompt 差し込み preview
 - スチル作業タブからローカル ComfyUI `/prompt` への workflow 送信と `prompt_id` 表示
+- `prompt_id` からの ComfyUI 生成履歴確認と出力画像ファイル情報表示
 - 仕様書にある常時必要スチルの固定リスト表示
 - スチル作業タブでの用途フィルタ、状態表示、画像プレビュー
 - スチル固有 prompt、合成 positive prompt、現在の negative prompt のプレビュー
@@ -295,8 +296,10 @@ Services/
 
 - `ComfySettings.EndpointUrl` の `/prompt` に workflow JSON を送る
 - 成功時に ComfyUI の `prompt_id` を返す
+- `ComfySettings.EndpointUrl` の `/history/{prompt_id}` から生成履歴を取得する
+- 生成履歴の `outputs.*.images[]` から `filename`、`subfolder`、`type` を抽出する
 - ComfyUI 未起動、URL 不正、workflow 不正、`prompt_id` 欠落は例外として ViewModel 側でステータス表示する
-- 現時点では生成履歴監視、画像取得、登録は未実装
+- 現時点では画像取得、登録は未実装
 
 ### StillDefinitionService
 
@@ -355,7 +358,7 @@ Services/
 ## 次に進める候補
 
 - スチル一覧タブを開発確認用に残すか、スチル作業タブへ統合するか判断する
-- ローカル ComfyUI の生成履歴監視、生成結果取得、採用登録
+- ローカル ComfyUI の生成画像取得、プレビュー、採用登録
 - 会話データ作成機能の設計と Unity Editor Import 用 JSON export
 - 画像ファイルの差し替え、削除
 
@@ -370,8 +373,9 @@ Services/
 2. キャラクター容姿 prompt とスチル固有 prompt から positive prompt を合成する
 3. `PromptRecord.PositivePrompt` と negative prompt を ComfyUI 用 workflow JSON に差し込む
 4. ローカル ComfyUI の HTTP API に workflow を送信し、`prompt_id` を受け取る
-5. 生成完了後、出力画像を取得してプレビューする
-6. 採用する画像を既存の画像登録処理に渡し、`HeroineAsset` として保存する
+5. `/history/{prompt_id}` から生成結果の `filename`、`subfolder`、`type` を取得する
+6. 生成完了後、出力画像を取得してプレビューする
+7. 採用する画像を既存の画像登録処理に渡し、`HeroineAsset` として保存する
 
 ComfyUI の既定接続先は、ローカル実行を前提に `http://127.0.0.1:8188` とします。
 ただし、URL、workflow JSON、seed、画像サイズ、出力ノード名は環境差が出やすいため、将来は設定として編集可能にする必要があります。
