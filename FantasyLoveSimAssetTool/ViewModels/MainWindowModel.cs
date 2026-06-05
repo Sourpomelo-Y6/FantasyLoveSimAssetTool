@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Windows;
 using System.Windows.Input;
 
 namespace FantasyLoveSimAssetTool.ViewModels
@@ -548,21 +549,58 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             try
             {
+                bool overwriteExisting = ShouldOverwriteExistingAsset();
+                if (overwriteExisting == false && HasExistingAssetId())
+                {
+                    StatusMessage = "画像登録をキャンセルしました。";
+                    return;
+                }
+
                 HeroineAsset asset = characterProjectService.AddImageAsset(
                     SelectedProfile,
                     ImageSourcePathInput,
                     SelectedAssetUsage,
                     AssetIdInput,
-                    SelectedAssetStatus);
+                    SelectedAssetStatus,
+                    overwriteExisting);
 
                 SelectedAsset = asset;
                 RefreshSelectedStillStatus();
-                StatusMessage = $"{asset.AssetId} を {asset.Usage} に登録しました。";
+                StatusMessage = overwriteExisting
+                    ? $"{asset.AssetId} を {asset.Usage} に上書き登録しました。"
+                    : $"{asset.AssetId} を {asset.Usage} に登録しました。";
             }
             catch (Exception ex)
             {
                 StatusMessage = $"画像登録に失敗しました: {ex.Message}";
             }
+        }
+
+        private bool HasExistingAssetId()
+        {
+            if (SelectedProfile == null || SelectedProfile.Assets == null || string.IsNullOrWhiteSpace(AssetIdInput))
+            {
+                return false;
+            }
+
+            string assetId = AssetIdInput.Trim();
+            return SelectedProfile.Assets.Any(asset => asset.AssetId == assetId);
+        }
+
+        private bool ShouldOverwriteExistingAsset()
+        {
+            if (!HasExistingAssetId())
+            {
+                return false;
+            }
+
+            MessageBoxResult result = MessageBox.Show(
+                $"AssetId '{AssetIdInput.Trim()}' はすでに登録されています。画像と登録情報を上書きしますか？",
+                "画像登録の上書き確認",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            return result == MessageBoxResult.Yes;
         }
 
         private void RefreshSelectedAssetImagePath()

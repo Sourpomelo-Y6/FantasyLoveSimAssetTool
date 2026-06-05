@@ -76,7 +76,8 @@ namespace FantasyLoveSimAssetTool.Services
             string sourceImagePath,
             AssetUsage usage,
             string assetId,
-            AssetStatus status)
+            AssetStatus status,
+            bool overwriteExisting = false)
         {
             if (profile == null)
             {
@@ -97,7 +98,9 @@ namespace FantasyLoveSimAssetTool.Services
                 throw new FileNotFoundException("Source image file was not found.", sourceImagePath);
             }
 
-            if (profile.Assets.Any(asset => asset.AssetId == assetId.Trim()))
+            string normalizedAssetId = assetId.Trim();
+            HeroineAsset existingAsset = profile.Assets.FirstOrDefault(asset => asset.AssetId == normalizedAssetId);
+            if (existingAsset != null && !overwriteExisting)
             {
                 throw new InvalidOperationException("AssetId already exists in this heroine profile.");
             }
@@ -110,30 +113,46 @@ namespace FantasyLoveSimAssetTool.Services
                 extension = ".png";
             }
 
-            string fileName = assetId.Trim() + extension;
+            string fileName = normalizedAssetId + extension;
             string imageDirectory = GetImageUsageDirectory(profile.HeroineId, usage);
             string storedPath = Path.Combine(imageDirectory, fileName);
-            if (File.Exists(storedPath))
+            if (File.Exists(storedPath) && !overwriteExisting)
             {
                 throw new IOException("Destination image file already exists.");
             }
 
-            File.Copy(sourceImagePath, storedPath);
-
             string relativeStoredPath = Path.Combine("Images", usage.ToString(), fileName);
-            string relativePromptPath = Path.Combine("Prompts", assetId.Trim() + ".prompt.json");
-            HeroineAsset assetRecord = new HeroineAsset
-            {
-                AssetId = assetId.Trim(),
-                Usage = usage,
-                Status = status,
-                FileName = fileName,
-                SourcePath = sourceImagePath,
-                StoredPath = relativeStoredPath,
-                PromptRecordPath = relativePromptPath
-            };
+            string oldStoredPath = existingAsset != null && !string.IsNullOrWhiteSpace(existingAsset.StoredPath)
+                ? Path.Combine(GetCharacterDirectory(profile.HeroineId), existingAsset.StoredPath)
+                : string.Empty;
 
-            profile.Assets.Add(assetRecord);
+            if (!IsSamePath(sourceImagePath, storedPath))
+            {
+                File.Copy(sourceImagePath, storedPath, overwriteExisting);
+            }
+
+            if (!string.IsNullOrWhiteSpace(oldStoredPath) && oldStoredPath != storedPath && File.Exists(oldStoredPath))
+            {
+                File.Delete(oldStoredPath);
+            }
+
+            string relativePromptPath = Path.Combine("Prompts", normalizedAssetId + ".prompt.json");
+            HeroineAsset assetRecord = existingAsset ?? new HeroineAsset();
+            assetRecord.AssetId = normalizedAssetId;
+            assetRecord.Usage = usage;
+            assetRecord.Status = status;
+            assetRecord.FileName = fileName;
+            assetRecord.SourcePath = sourceImagePath;
+            assetRecord.StoredPath = relativeStoredPath;
+            if (string.IsNullOrWhiteSpace(assetRecord.PromptRecordPath))
+            {
+                assetRecord.PromptRecordPath = relativePromptPath;
+            }
+
+            if (existingAsset == null)
+            {
+                profile.Assets.Add(assetRecord);
+            }
             SaveProfile(profile);
 
             return assetRecord;
@@ -231,6 +250,14 @@ namespace FantasyLoveSimAssetTool.Services
             {
                 throw new ArgumentException("AssetId contains invalid file name characters.", nameof(assetId));
             }
+        }
+
+        private static bool IsSamePath(string left, string right)
+        {
+            return string.Equals(
+                Path.GetFullPath(left),
+                Path.GetFullPath(right),
+                StringComparison.OrdinalIgnoreCase);
         }
     }
 }
