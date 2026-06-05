@@ -510,6 +510,7 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.Row="0"
@@ -527,6 +528,19 @@
                                           DisplayMemberPath="DisplayName"
                                           Margin="0,0,8,0"/>
                                 <Button Grid.Row="1" Grid.Column="2" Content="適用" Command="{Binding ApplyPromptTemplateCommand}" Height="26"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="ComfyUI" VerticalAlignment="Center" Margin="0,8,8,0"/>
+                                <TextBox Grid.Row="2"
+                                         Grid.Column="1"
+                                         Text="{Binding ComfySettingsSummary}"
+                                         IsReadOnly="True"
+                                         Margin="0,8,8,0"/>
+                                <Button Grid.Row="2"
+                                        Grid.Column="2"
+                                        Content="設定再読込"
+                                        Command="{Binding ReloadComfySettingsCommand}"
+                                        Height="26"
+                                        Margin="0,8,0,0"/>
                             </Grid>
 
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">

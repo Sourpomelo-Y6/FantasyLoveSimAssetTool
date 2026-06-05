@@ -254,6 +254,19 @@ http://127.0.0.1:8188
 
 接続先 URL は環境により変わる可能性があるため、将来は設定画面または設定 JSON で変更できるようにする。
 
+ComfyUI 連携設定は `ComfySettings/comfyui.json` で管理する。
+現時点では設定の読み込みと Prompt タブ上での確認までを実装し、ComfyUI への HTTP 送信、生成進捗取得、画像取得は後続タスクとする。
+
+```json
+{
+  "endpointUrl": "http://127.0.0.1:8188",
+  "workflowTemplatePath": "ComfySettings/workflow-template.json",
+  "positivePromptPlaceholder": "{PositivePrompt}",
+  "negativePromptPlaceholder": "{NegativePrompt}",
+  "outputNodeId": ""
+}
+```
+
 ### ComfyUI に渡す情報
 
 ComfyUI 連携では、次の情報を workflow JSON に差し込む。

@@ -21,6 +21,7 @@ Stable Diffusion などで生成した立ち絵、イベントスチル、行動
 - prompt JSON の保存
 - キャラクター容姿プロンプトとスチル用テンプレートの合成
 - `PromptTemplates/templates.json` による prompt テンプレート管理
+- `ComfySettings/comfyui.json` による ComfyUI 設定読み込み
 - Unity 向け Export
 - Export 件数と警告の表示
 
@@ -74,6 +75,8 @@ FantasyLoveSimAssetTool/
     MainWindow.xaml
 PromptTemplates/
   templates.json
+ComfySettings/
+  comfyui.json
 Docs/
   CharacterAssetGenerationToolSpec.md
   Handoff.md

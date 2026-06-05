@@ -17,8 +17,8 @@
 - ターゲットフレームワーク: `net5.0-windows`
 - UI: `Views/MainWindow.xaml`
 - ViewModel: `ViewModels/MainWindowModel.cs`
-- モデル: `Models/HeroineProfile.cs`, `Models/HeroineAsset.cs`, `Models/PromptRecord.cs`, `Models/PromptTemplate.cs`, `Models/ExportReport.cs`, `Models/ImageInspectionResult.cs`, `Models/StillDefinition.cs`, `Models/StillWorkItem.cs`
-- サービス: `Services/CharacterProjectService.cs`, `Services/PromptRecordService.cs`, `Services/PromptTemplateService.cs`, `Services/StillDefinitionService.cs`, `Services/ImageInspectionService.cs`, `Services/ExportService.cs`
+- モデル: `Models/HeroineProfile.cs`, `Models/HeroineAsset.cs`, `Models/PromptRecord.cs`, `Models/PromptTemplate.cs`, `Models/ExportReport.cs`, `Models/ImageInspectionResult.cs`, `Models/ComfySettings.cs`, `Models/StillDefinition.cs`, `Models/StillWorkItem.cs`
+- サービス: `Services/CharacterProjectService.cs`, `Services/PromptRecordService.cs`, `Services/PromptTemplateService.cs`, `Services/StillDefinitionService.cs`, `Services/ImageInspectionService.cs`, `Services/ComfySettingsService.cs`, `Services/ExportService.cs`
 - 共通基盤: `Common/ObservableObject.cs`, `Common/RelayCommand.cs`
 
 実装済みの機能は次の通りです。
@@ -37,6 +37,7 @@
 - prompt 記録保存、読み込み
 - キャラクター容姿プロンプトとスチル用テンプレートの合成
 - `PromptTemplates/templates.json` からの prompt テンプレート読み込み
+- `ComfySettings/comfyui.json` からの ComfyUI 設定読み込みと Prompt タブでの表示
 - 仕様書にある常時必要スチルの固定リスト表示
 - スチル作業タブでの用途フィルタ、状態表示、画像プレビュー
 - スチル固有 prompt と合成 positive prompt のプレビュー
@@ -268,6 +269,12 @@ Services/
 - キャラクター容姿プロンプトとテンプレートの合成
 - 合成結果を `PromptRecord.PositivePrompt` に反映
 
+### ComfySettingsService
+
+- `ComfySettings/comfyui.json` から ComfyUI 接続設定を読み込む
+- JSON がない、空、不正な場合は `http://127.0.0.1:8188` などのデフォルト設定へ fallback する
+- 現時点では設定確認までで、ComfyUI への HTTP 送信は未実装
+
 ### StillDefinitionService
 
 - 仕様書にある常時必要スチルの固定リスト管理
@@ -325,7 +332,7 @@ Services/
 ## 次に進める候補
 
 - スチル一覧タブを開発確認用に残すか、スチル作業タブへ統合するか判断する
-- ローカル ComfyUI 連携の設計、設定項目、workflow JSON テンプレート化
+- ローカル ComfyUI への prompt 送信、生成結果取得、採用登録
 - 会話データ作成機能の設計と Unity Editor Import 用 JSON export
 - 画像ファイルの差し替え、削除
 
@@ -411,7 +418,7 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 - `StillWorkItems` を `profile.json` に保存する現方式で十分か、将来は専用 JSON に分離するか
 - スチル状態 `StillStatus` と画像状態 `HeroineAsset.Status` をどの程度連動させるか
 - prompt テンプレートのプレースホルダー名をどう定義するか
-- ComfyUI の接続先 URL、workflow JSON、seed、出力ノード名をどこに保存するか
+- ComfyUI workflow JSON の実体、seed、画像サイズ、出力ノード名をどうテンプレートへ差し込むか
 - ComfyUI 生成画像を自動登録するか、プレビュー後に手動採用するか
 - ComfyUI の生成履歴、seed、workflow、出力ファイル名を `PromptRecord` にどう記録するか
 - ComfyUI 生成中の進捗表示、キャンセル、同時実行制御をどう扱うか
@@ -427,6 +434,6 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 
 このツールの価値は、画像生成を自動化することより、採用済み素材、生成条件、Unity 取り込み先を失わずに管理することにあります。最初の実装では外部生成した画像を登録する前提で進め、ローカル ComfyUI 連携や Python 画像検査は後から追加する方が安全です。
 
-次に優先するなら、画像サイズ、縦横比、透過の検査を進めるとよいです。
+次に優先するなら、ComfyUI への prompt 送信、生成結果取得、採用登録の流れを小さく実装するとよいです。
 
 その後に、画像検査、テンプレート管理、ComfyUI 連携、Export 後の導線改善を進めるとよいです。現状の MVP は外部生成した画像を登録し、採用状態と prompt 記録を管理し、Unity 向けに出力する用途には使える状態です。

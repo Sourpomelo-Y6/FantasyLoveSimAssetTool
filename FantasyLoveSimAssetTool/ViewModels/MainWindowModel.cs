@@ -20,6 +20,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly PromptTemplateService promptTemplateService;
         private readonly StillDefinitionService stillDefinitionService;
         private readonly ImageInspectionService imageInspectionService;
+        private readonly ComfySettingsService comfySettingsService;
         private readonly ExportService exportService;
         private string heroineIdInput;
         private string displayNameInput;
@@ -42,6 +43,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string selectedStillPromptStatusText;
         private string selectedStillImagePath;
         private string selectedStillImageMessage;
+        private ComfySettings comfySettings;
+        private string comfySettingsSummary;
         private string statusMessage;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
@@ -348,6 +351,28 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public ComfySettings ComfySettings
+        {
+            get { return comfySettings; }
+            set
+            {
+                if (comfySettings == value) { return; }
+                comfySettings = value;
+                OnPropertyChanged(nameof(ComfySettings));
+            }
+        }
+
+        public string ComfySettingsSummary
+        {
+            get { return comfySettingsSummary; }
+            set
+            {
+                if (comfySettingsSummary == value) { return; }
+                comfySettingsSummary = value;
+                OnPropertyChanged(nameof(ComfySettingsSummary));
+            }
+        }
+
         public string StatusMessage
         {
             get { return statusMessage; }
@@ -383,6 +408,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand OpenExportDirectoryCommand { get; }
 
+        public ICommand ReloadComfySettingsCommand { get; }
+
         public MainWindowModel()
         {
             characterProjectService = new CharacterProjectService();
@@ -390,6 +417,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             promptTemplateService = new PromptTemplateService(characterProjectService.WorkspaceRoot);
             stillDefinitionService = new StillDefinitionService();
             imageInspectionService = new ImageInspectionService();
+            comfySettingsService = new ComfySettingsService(characterProjectService.WorkspaceRoot);
             exportService = new ExportService(characterProjectService, imageInspectionService);
             Profiles = new ObservableCollection<HeroineProfile>();
             FilteredAssets = new ObservableCollection<HeroineAsset>();
@@ -449,6 +477,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             selectedStillPromptStatusText = "Prompt: 未選択";
             selectedStillImagePath = string.Empty;
             selectedStillImageMessage = "スチルを選択してください。";
+            comfySettings = new ComfySettings();
+            comfySettingsSummary = string.Empty;
             statusMessage = string.Empty;
 
             CreateCharacterCommand = new RelayCommand(CreateCharacter);
@@ -471,7 +501,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedProfile != null && SelectedStillDefinition != null);
             ExportSelectedProfileCommand = new RelayCommand(ExportSelectedProfile, () => SelectedProfile != null);
             OpenExportDirectoryCommand = new RelayCommand(OpenExportDirectory);
+            ReloadComfySettingsCommand = new RelayCommand(ReloadComfySettings);
 
+            ReloadComfySettings();
             LoadStillDefinitions();
             LoadProfiles();
             StatusMessage = "キャラクター基本情報の保存準備ができています。";
@@ -490,6 +522,32 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 StatusMessage = $"作成に失敗しました: {ex.Message}";
             }
+        }
+
+        private void ReloadComfySettings()
+        {
+            try
+            {
+                ComfySettings = comfySettingsService.Load();
+                ComfySettingsSummary = BuildComfySettingsSummary(ComfySettings);
+                StatusMessage = "ComfyUI 設定を読み込みました。";
+            }
+            catch (Exception ex)
+            {
+                ComfySettings = new ComfySettings();
+                ComfySettingsSummary = BuildComfySettingsSummary(ComfySettings);
+                StatusMessage = $"ComfyUI 設定の読み込みに失敗しました: {ex.Message}";
+            }
+        }
+
+        private static string BuildComfySettingsSummary(ComfySettings settings)
+        {
+            if (settings == null)
+            {
+                return string.Empty;
+            }
+
+            return $"Endpoint: {settings.EndpointUrl} / Workflow: {settings.WorkflowTemplatePath} / Positive: {settings.PositivePromptPlaceholder} / Negative: {settings.NegativePromptPlaceholder} / OutputNode: {settings.OutputNodeId}";
         }
 
         private void SelectedStillDefinitionPropertyChanged(object sender, PropertyChangedEventArgs e)

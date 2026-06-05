@@ -1,0 +1,7 @@
+{
+  "endpointUrl": "http://127.0.0.1:8188",
+  "workflowTemplatePath": "ComfySettings/workflow-template.json",
+  "positivePromptPlaceholder": "{PositivePrompt}",
+  "negativePromptPlaceholder": "{NegativePrompt}",
+  "outputNodeId": ""
+}
