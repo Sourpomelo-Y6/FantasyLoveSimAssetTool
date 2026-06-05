@@ -24,7 +24,7 @@ Stable Diffusion などで生成した立ち絵、イベントスチル、行動
 - Prompt タブでのテンプレート用途選択
 - `ComfySettings/comfyui.json` による ComfyUI 設定読み込み
 - ComfyUI workflow template への prompt 差し込み preview
-- スチル作業タブ内での ComfyUI workflow preview 作成と表示
+- スチル作業タブ内での positive / negative prompt 確認と ComfyUI workflow preview 作成、表示
 - Unity 向け Export
 - Export 件数と警告の表示
 

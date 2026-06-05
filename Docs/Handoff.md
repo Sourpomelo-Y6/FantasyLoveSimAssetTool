@@ -42,8 +42,8 @@
 - `ComfySettings/workflow-template.json` への positive / negative prompt 差し込み preview
 - 仕様書にある常時必要スチルの固定リスト表示
 - スチル作業タブでの用途フィルタ、状態表示、画像プレビュー
-- スチル固有 prompt と合成 positive prompt のプレビュー
-- スチル作業タブ内での ComfyUI workflow preview 作成と表示
+- スチル固有 prompt、合成 positive prompt、現在の negative prompt のプレビュー
+- スチル作業タブ内での positive / negative prompt を使った ComfyUI workflow preview 作成と表示
 - スチルから `PromptRecord.PositivePrompt` への反映
 - スチルから画像登録欄への `AssetId`、用途、状態の反映
 - スチルごとの画像登録状況、prompt 保存状況、AssetStatus 表示

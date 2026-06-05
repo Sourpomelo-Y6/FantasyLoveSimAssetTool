@@ -350,6 +350,7 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="72"/>
                                         <RowDefinition Height="120"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
@@ -382,8 +383,18 @@
                                              TextWrapping="Wrap"
                                              Margin="0,0,0,8"/>
 
-                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="合成 prompt" VerticalAlignment="Top" Margin="0,4,8,0"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="negative prompt" VerticalAlignment="Top" Margin="0,4,8,8"/>
                                     <TextBox Grid.Row="4"
+                                             Grid.Column="1"
+                                             Text="{Binding CurrentPromptRecord.NegativePrompt, Mode=OneWay}"
+                                             IsReadOnly="True"
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             VerticalScrollBarVisibility="Auto"
+                                             Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="合成 prompt" VerticalAlignment="Top" Margin="0,4,8,0"/>
+                                    <TextBox Grid.Row="5"
                                              Grid.Column="1"
                                              Text="{Binding StillPromptPreview, Mode=OneWay}"
                                              IsReadOnly="True"
@@ -392,8 +403,8 @@
                                              VerticalScrollBarVisibility="Auto"
                                              Margin="0,0,0,8"/>
 
-                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="workflow preview" VerticalAlignment="Top" Margin="0,4,8,0"/>
-                                    <TextBox Grid.Row="5"
+                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="workflow preview" VerticalAlignment="Top" Margin="0,4,8,0"/>
+                                    <TextBox Grid.Row="6"
                                              Grid.Column="1"
                                              Text="{Binding CurrentComfyWorkflowPreview, Mode=OneWay}"
                                              IsReadOnly="True"
@@ -405,7 +416,7 @@
 
                                     <Border Grid.Row="0"
                                             Grid.Column="3"
-                                            Grid.RowSpan="6"
+                                            Grid.RowSpan="7"
                                             BorderBrush="#DDDDDD"
                                             BorderThickness="1"
                                             Padding="8">

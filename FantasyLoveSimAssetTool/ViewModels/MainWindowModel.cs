@@ -626,8 +626,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             try
             {
-                PromptRecord promptRecord = CurrentPromptRecord ?? new PromptRecord();
-                promptRecord.PositivePrompt = BuildStillPositivePrompt(SelectedProfile, SelectedStillDefinition);
+                PromptRecord promptRecord = new PromptRecord
+                {
+                    PositivePrompt = BuildStillPositivePrompt(SelectedProfile, SelectedStillDefinition),
+                    NegativePrompt = CurrentPromptRecord != null ? CurrentPromptRecord.NegativePrompt : string.Empty
+                };
                 CurrentComfyWorkflowPreview = comfyWorkflowService.BuildWorkflowPreview(ComfySettings, promptRecord);
                 StatusMessage = $"{SelectedStillDefinition.DisplayName} の ComfyUI workflow preview を作成しました。";
             }
