@@ -31,6 +31,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private AssetStatus selectedAssetStatus;
         private string selectedAssetStatusFilter;
         private HeroineAsset selectedAsset;
+        private AssetUsage selectedPromptTemplateUsage;
         private PromptTemplate selectedPromptTemplate;
         private StillDefinition selectedStillDefinition;
         private string selectedStillUsageFilter;
@@ -181,9 +182,28 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 selectedAsset = value;
                 OnPropertyChanged(nameof(SelectedAsset));
                 RefreshSelectedAssetImagePath();
-                RefreshPromptTemplates();
+                if (selectedAsset != null)
+                {
+                    SelectedPromptTemplateUsage = selectedAsset.Usage;
+                }
+                else
+                {
+                    RefreshPromptTemplates();
+                }
                 LoadPromptForSelectedAsset();
                 CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public AssetUsage SelectedPromptTemplateUsage
+        {
+            get { return selectedPromptTemplateUsage; }
+            set
+            {
+                if (selectedPromptTemplateUsage == value) { return; }
+                selectedPromptTemplateUsage = value;
+                OnPropertyChanged(nameof(SelectedPromptTemplateUsage));
+                RefreshPromptTemplates();
             }
         }
 
@@ -484,6 +504,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             selectedAssetUsage = AssetUsage.Sprites;
             selectedAssetStatus = AssetStatus.Accepted;
             selectedAssetStatusFilter = "All";
+            selectedPromptTemplateUsage = AssetUsage.Sprites;
             selectedStillUsageFilter = "All";
             lastExportReport = new ExportReport();
             selectedAssetImagePath = string.Empty;
@@ -835,12 +856,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             AvailablePromptTemplates.Clear();
             SelectedPromptTemplate = null;
 
-            if (SelectedAsset == null)
-            {
-                return;
-            }
-
-            foreach (PromptTemplate template in promptTemplateService.GetTemplates(SelectedAsset.Usage))
+            foreach (PromptTemplate template in promptTemplateService.GetTemplates(SelectedPromptTemplateUsage))
             {
                 AvailablePromptTemplates.Add(template);
             }

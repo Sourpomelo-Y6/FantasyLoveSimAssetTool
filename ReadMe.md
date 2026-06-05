@@ -21,6 +21,7 @@ Stable Diffusion などで生成した立ち絵、イベントスチル、行動
 - prompt JSON の保存
 - キャラクター容姿プロンプトとスチル用テンプレートの合成
 - `PromptTemplates/templates.json` による prompt テンプレート管理
+- Prompt タブでのテンプレート用途選択
 - `ComfySettings/comfyui.json` による ComfyUI 設定読み込み
 - ComfyUI workflow template への prompt 差し込み preview
 - Unity 向け Export

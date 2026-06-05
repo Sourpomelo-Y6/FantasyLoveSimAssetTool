@@ -37,6 +37,7 @@
 - prompt 記録保存、読み込み
 - キャラクター容姿プロンプトとスチル用テンプレートの合成
 - `PromptTemplates/templates.json` からの prompt テンプレート読み込み
+- Prompt タブでのテンプレート用途選択
 - `ComfySettings/comfyui.json` からの ComfyUI 設定読み込みと Prompt タブでの表示
 - `ComfySettings/workflow-template.json` への positive / negative prompt 差し込み preview
 - 仕様書にある常時必要スチルの固定リスト表示
