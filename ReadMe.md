@@ -15,6 +15,7 @@ Stable Diffusion などで生成した立ち絵、イベントスチル、行動
 - キャラクター基本情報の JSON 保存
 - 画像登録と用途別フォルダへのコピー
 - 登録済み画像のプレビュー
+- 画像登録時と Export 時の解像度、縦横比、透過 PNG 検査
 - 採用、保留、没ステータス管理
 - prompt JSON の保存
 - キャラクター容姿プロンプトとスチル用テンプレートの合成
@@ -172,11 +173,11 @@ Export/
 
 - ドラッグ&ドロップによる画像登録
 - prompt テンプレートの JSON 管理
-- 画像サイズ、縦横比、透過、余白のチェック
+- 余白や表情差分などの高度な画像検査
 - 会話、イベント、行動反応、エンディング本文の作成
 - Unity Editor Import 用の会話データ JSON export
 - Unity Editor 側で JSON から ScriptableObject `.asset` を生成する補助
-- Python スクリプト連携による画像検査
+- Python スクリプト連携による高度な画像検査
 - ローカル ComfyUI へ prompt を送信し、生成画像を取得、登録する機能
 - ComfyUI workflow JSON のテンプレート管理
 - Export 結果フォルダを開く操作

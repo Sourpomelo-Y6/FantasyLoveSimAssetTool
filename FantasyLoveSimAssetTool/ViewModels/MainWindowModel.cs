@@ -19,6 +19,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly PromptRecordService promptRecordService;
         private readonly PromptTemplateService promptTemplateService;
         private readonly StillDefinitionService stillDefinitionService;
+        private readonly ImageInspectionService imageInspectionService;
         private readonly ExportService exportService;
         private string heroineIdInput;
         private string displayNameInput;
@@ -372,7 +373,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             promptRecordService = new PromptRecordService(characterProjectService);
             promptTemplateService = new PromptTemplateService();
             stillDefinitionService = new StillDefinitionService();
-            exportService = new ExportService(characterProjectService);
+            imageInspectionService = new ImageInspectionService();
+            exportService = new ExportService(characterProjectService, imageInspectionService);
             Profiles = new ObservableCollection<HeroineProfile>();
             AvailablePromptTemplates = new ObservableCollection<PromptTemplate>();
             StillDefinitions = new ObservableCollection<StillDefinition>();
@@ -566,9 +568,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
                 SelectedAsset = asset;
                 RefreshSelectedStillStatus();
-                StatusMessage = overwriteExisting
+                string registrationMessage = overwriteExisting
                     ? $"{asset.AssetId} を {asset.Usage} に上書き登録しました。"
                     : $"{asset.AssetId} を {asset.Usage} に登録しました。";
+                StatusMessage = AppendImageInspectionMessage(registrationMessage, asset);
             }
             catch (Exception ex)
             {
@@ -630,7 +633,35 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             SelectedAssetImagePath = imagePath;
-            SelectedAssetImageMessage = imagePath;
+            SelectedAssetImageMessage = AppendImageInspectionMessage(imagePath, SelectedAsset);
+        }
+
+        private string AppendImageInspectionMessage(string baseMessage, HeroineAsset asset)
+        {
+            if (SelectedProfile == null || asset == null || string.IsNullOrWhiteSpace(asset.StoredPath))
+            {
+                return baseMessage;
+            }
+
+            string imagePath = Path.Combine(
+                characterProjectService.GetCharacterDirectory(SelectedProfile.HeroineId),
+                asset.StoredPath);
+
+            try
+            {
+                ImageInspectionResult result = imageInspectionService.Inspect(imagePath, asset.Usage);
+                string summary = imageInspectionService.BuildSummary(result);
+                if (result.Warnings.Count == 0)
+                {
+                    return $"{baseMessage} 検査: {summary}";
+                }
+
+                return $"{baseMessage} 検査: {summary} / 警告 {result.Warnings.Count} 件: {string.Join(" / ", result.Warnings)}";
+            }
+            catch (Exception ex)
+            {
+                return $"{baseMessage} 画像検査に失敗しました: {ex.Message}";
+            }
         }
 
         private void SaveImageAssets()
@@ -1097,7 +1128,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             SelectedStillImagePath = imagePath;
             SelectedStillImageStatusText = "画像: 登録済み";
-            SelectedStillImageMessage = imagePath;
+            SelectedStillImageMessage = AppendImageInspectionMessage(imagePath, asset);
         }
 
         private static HeroineAsset FindAssetForStill(HeroineProfile profile, StillDefinition stillDefinition)

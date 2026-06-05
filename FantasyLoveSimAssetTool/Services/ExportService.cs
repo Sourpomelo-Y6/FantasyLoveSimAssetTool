@@ -10,6 +10,7 @@ namespace FantasyLoveSimAssetTool.Services
     public class ExportService
     {
         private readonly CharacterProjectService characterProjectService;
+        private readonly ImageInspectionService imageInspectionService;
 
         public string ExportDirectory
         {
@@ -17,8 +18,14 @@ namespace FantasyLoveSimAssetTool.Services
         }
 
         public ExportService(CharacterProjectService characterProjectService)
+            : this(characterProjectService, new ImageInspectionService())
+        {
+        }
+
+        public ExportService(CharacterProjectService characterProjectService, ImageInspectionService imageInspectionService)
         {
             this.characterProjectService = characterProjectService ?? throw new ArgumentNullException(nameof(characterProjectService));
+            this.imageInspectionService = imageInspectionService ?? throw new ArgumentNullException(nameof(imageInspectionService));
         }
 
         public ExportReport ExportHeroine(HeroineProfile profile)
@@ -95,11 +102,29 @@ namespace FantasyLoveSimAssetTool.Services
                 return false;
             }
 
+            AddImageInspectionWarnings(asset, sourcePath, report);
+
             string fileName = string.IsNullOrWhiteSpace(asset.FileName) ? Path.GetFileName(sourcePath) : asset.FileName;
             string destinationDirectory = Path.Combine(heroineExportDirectory, "Images", asset.Usage.ToString());
             Directory.CreateDirectory(destinationDirectory);
             File.Copy(sourcePath, Path.Combine(destinationDirectory, fileName), true);
             return true;
+        }
+
+        private void AddImageInspectionWarnings(HeroineAsset asset, string sourcePath, ExportReport report)
+        {
+            try
+            {
+                ImageInspectionResult result = imageInspectionService.Inspect(sourcePath, asset.Usage);
+                foreach (string warning in result.Warnings)
+                {
+                    report.Warnings.Add($"{asset.AssetId}: {warning}");
+                }
+            }
+            catch (Exception ex)
+            {
+                report.Warnings.Add($"{asset.AssetId}: 画像検査に失敗しました: {ex.Message}");
+            }
         }
 
         private bool ExportPrompt(HeroineProfile profile, HeroineAsset asset, string heroineExportDirectory, ExportReport report)
