@@ -435,6 +435,9 @@
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="*"/>
                                                 <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="12"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
 
                                             <Image Grid.Row="0"
@@ -442,6 +445,14 @@
                                                    Stretch="Uniform"/>
                                             <TextBlock Grid.Row="1"
                                                        Text="{Binding SelectedStillImageMessage}"
+                                                       Foreground="Gray"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,8,0,0"/>
+                                            <Image Grid.Row="3"
+                                                   Source="{Binding CurrentComfyPreviewImagePath, Mode=OneWay}"
+                                                   Stretch="Uniform"/>
+                                            <TextBlock Grid.Row="4"
+                                                       Text="{Binding CurrentComfyPreviewImageMessage}"
                                                        Foreground="Gray"
                                                        TextWrapping="Wrap"
                                                        Margin="0,8,0,0"/>
@@ -477,6 +488,11 @@
                                             Margin="0,0,8,0"/>
                                     <Button Content="結果確認"
                                             Command="{Binding CheckStillComfyResultCommand}"
+                                            Width="90"
+                                            Height="30"
+                                            Margin="0,0,8,0"/>
+                                    <Button Content="画像取得"
+                                            Command="{Binding FetchStillComfyImageCommand}"
                                             Width="90"
                                             Height="30"
                                             Margin="0,0,8,0"/>

@@ -102,6 +102,41 @@ namespace FantasyLoveSimAssetTool.Services
             return ParseOutputImages(responseJson, promptId);
         }
 
+        public async Task<byte[]> GetImageAsync(ComfySettings settings, ComfyOutputImage image)
+        {
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
+            if (image == null)
+            {
+                throw new ArgumentNullException(nameof(image));
+            }
+
+            if (string.IsNullOrWhiteSpace(settings.EndpointUrl))
+            {
+                throw new InvalidOperationException("ComfyUI endpoint URL is empty.");
+            }
+
+            if (string.IsNullOrWhiteSpace(image.FileName))
+            {
+                throw new InvalidOperationException("ComfyUI image filename is empty.");
+            }
+
+            Uri endpointUri = BuildViewEndpointUri(settings.EndpointUrl, image);
+            using HttpResponseMessage response = await httpClient.GetAsync(endpointUri).ConfigureAwait(false);
+            byte[] imageBytes = await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string responseText = Encoding.UTF8.GetString(imageBytes);
+                throw new InvalidOperationException($"ComfyUI view returned {(int)response.StatusCode}: {TrimForMessage(responseText)}");
+            }
+
+            return imageBytes;
+        }
+
         private static Uri BuildPromptEndpointUri(string endpointUrl)
         {
             if (!Uri.TryCreate(endpointUrl.TrimEnd('/') + "/prompt", UriKind.Absolute, out Uri endpointUri))
@@ -116,6 +151,19 @@ namespace FantasyLoveSimAssetTool.Services
         {
             string escapedPromptId = Uri.EscapeDataString(promptId);
             if (!Uri.TryCreate(endpointUrl.TrimEnd('/') + "/history/" + escapedPromptId, UriKind.Absolute, out Uri endpointUri))
+            {
+                throw new InvalidOperationException($"ComfyUI endpoint URL is invalid: {endpointUrl}");
+            }
+
+            return endpointUri;
+        }
+
+        private static Uri BuildViewEndpointUri(string endpointUrl, ComfyOutputImage image)
+        {
+            string query = "filename=" + Uri.EscapeDataString(image.FileName ?? string.Empty) +
+                "&subfolder=" + Uri.EscapeDataString(image.Subfolder ?? string.Empty) +
+                "&type=" + Uri.EscapeDataString(image.Type ?? string.Empty);
+            if (!Uri.TryCreate(endpointUrl.TrimEnd('/') + "/view?" + query, UriKind.Absolute, out Uri endpointUri))
             {
                 throw new InvalidOperationException($"ComfyUI endpoint URL is invalid: {endpointUrl}");
             }

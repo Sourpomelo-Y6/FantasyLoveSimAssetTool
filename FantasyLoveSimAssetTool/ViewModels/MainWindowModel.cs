@@ -51,8 +51,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string currentComfyWorkflowPreview;
         private string currentComfyPromptId;
         private string currentComfyResultSummary;
+        private string currentComfyPreviewImagePath;
+        private string currentComfyPreviewImageMessage;
+        private ComfyOutputImage currentComfyOutputImage;
         private bool isComfySubmitting;
         private bool isComfyCheckingResult;
+        private bool isComfyFetchingImage;
         private string statusMessage;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
@@ -247,6 +251,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 CurrentComfyWorkflowPreview = string.Empty;
                 CurrentComfyPromptId = string.Empty;
                 CurrentComfyResultSummary = string.Empty;
+                ClearComfyPreviewImage();
                 RefreshSelectedStillStatus();
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -288,6 +293,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 CurrentComfyWorkflowPreview = string.Empty;
                 CurrentComfyPromptId = string.Empty;
                 CurrentComfyResultSummary = string.Empty;
+                ClearComfyPreviewImage();
                 LoadStillDefinitions();
                 RefreshFilteredAssets();
                 RefreshAcceptedAssets();
@@ -440,6 +446,28 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public string CurrentComfyPreviewImagePath
+        {
+            get { return currentComfyPreviewImagePath; }
+            set
+            {
+                if (currentComfyPreviewImagePath == value) { return; }
+                currentComfyPreviewImagePath = value;
+                OnPropertyChanged(nameof(CurrentComfyPreviewImagePath));
+            }
+        }
+
+        public string CurrentComfyPreviewImageMessage
+        {
+            get { return currentComfyPreviewImageMessage; }
+            set
+            {
+                if (currentComfyPreviewImageMessage == value) { return; }
+                currentComfyPreviewImageMessage = value;
+                OnPropertyChanged(nameof(CurrentComfyPreviewImageMessage));
+            }
+        }
+
         public bool IsComfySubmitting
         {
             get { return isComfySubmitting; }
@@ -460,6 +488,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (isComfyCheckingResult == value) { return; }
                 isComfyCheckingResult = value;
                 OnPropertyChanged(nameof(IsComfyCheckingResult));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public bool IsComfyFetchingImage
+        {
+            get { return isComfyFetchingImage; }
+            set
+            {
+                if (isComfyFetchingImage == value) { return; }
+                isComfyFetchingImage = value;
+                OnPropertyChanged(nameof(IsComfyFetchingImage));
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -508,6 +548,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ICommand SubmitStillComfyPromptCommand { get; }
 
         public ICommand CheckStillComfyResultCommand { get; }
+
+        public ICommand FetchStillComfyImageCommand { get; }
 
         public MainWindowModel()
         {
@@ -584,8 +626,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
             currentComfyWorkflowPreview = string.Empty;
             currentComfyPromptId = string.Empty;
             currentComfyResultSummary = string.Empty;
+            currentComfyPreviewImagePath = string.Empty;
+            currentComfyPreviewImageMessage = "Comfy 生成画像は未取得です。";
+            currentComfyOutputImage = null;
             isComfySubmitting = false;
             isComfyCheckingResult = false;
+            isComfyFetchingImage = false;
             statusMessage = string.Empty;
 
             CreateCharacterCommand = new RelayCommand(CreateCharacter);
@@ -621,6 +667,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             CheckStillComfyResultCommand = new RelayCommand(
                 CheckStillComfyResult,
                 () => !string.IsNullOrWhiteSpace(CurrentComfyPromptId) && !IsComfySubmitting && !IsComfyCheckingResult);
+            FetchStillComfyImageCommand = new RelayCommand(
+                FetchStillComfyImage,
+                () => currentComfyOutputImage != null && !IsComfySubmitting && !IsComfyCheckingResult && !IsComfyFetchingImage);
 
             ReloadComfySettings();
             LoadStillDefinitions();
@@ -718,6 +767,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             IsComfySubmitting = true;
             CurrentComfyPromptId = string.Empty;
             CurrentComfyResultSummary = string.Empty;
+            ClearComfyPreviewImage();
             try
             {
                 PromptRecord promptRecord = CreateStillPromptRecord();
@@ -751,14 +801,19 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (images.Count == 0)
                 {
                     CurrentComfyResultSummary = "生成結果はまだ取得できません。生成中、または画像出力がありません。";
+                    currentComfyOutputImage = null;
+                    ClearComfyPreviewImage();
                     StatusMessage = "ComfyUI の生成結果はまだ取得できません。";
+                    CommandManager.InvalidateRequerySuggested();
                     return;
                 }
 
+                currentComfyOutputImage = images[0];
                 CurrentComfyResultSummary = string.Join(
                     Environment.NewLine,
                     images.Select(image => $"{image.DisplayPath} ({image.Type})"));
                 StatusMessage = $"ComfyUI 生成結果を {images.Count} 件取得しました。";
+                CommandManager.InvalidateRequerySuggested();
             }
             catch (Exception ex)
             {
@@ -768,6 +823,58 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 IsComfyCheckingResult = false;
             }
+        }
+
+        private async void FetchStillComfyImage()
+        {
+            if (currentComfyOutputImage == null)
+            {
+                return;
+            }
+
+            IsComfyFetchingImage = true;
+            try
+            {
+                byte[] imageBytes = await comfyClientService.GetImageAsync(ComfySettings, currentComfyOutputImage);
+                string tempImagePath = SaveComfyTempImage(CurrentComfyPromptId, currentComfyOutputImage, imageBytes);
+                CurrentComfyPreviewImagePath = tempImagePath;
+                CurrentComfyPreviewImageMessage = $"Comfy 生成画像: {currentComfyOutputImage.DisplayPath}";
+                StatusMessage = $"ComfyUI 生成画像を一時保存しました: {tempImagePath}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"ComfyUI 生成画像取得に失敗しました: {ex.Message}";
+            }
+            finally
+            {
+                IsComfyFetchingImage = false;
+            }
+        }
+
+        private string SaveComfyTempImage(string promptId, ComfyOutputImage image, byte[] imageBytes)
+        {
+            string tempDirectory = Path.Combine(characterProjectService.WorkspaceRoot, "Temp", "ComfyResults");
+            Directory.CreateDirectory(tempDirectory);
+
+            string fileName = SanitizeFileName($"{promptId}_{image.FileName}");
+            string outputPath = Path.Combine(tempDirectory, fileName);
+            File.WriteAllBytes(outputPath, imageBytes);
+            return outputPath;
+        }
+
+        private static string SanitizeFileName(string fileName)
+        {
+            char[] invalidChars = Path.GetInvalidFileNameChars();
+            char[] chars = fileName.Select(ch => invalidChars.Contains(ch) ? '_' : ch).ToArray();
+            return new string(chars);
+        }
+
+        private void ClearComfyPreviewImage()
+        {
+            currentComfyOutputImage = null;
+            CurrentComfyPreviewImagePath = string.Empty;
+            CurrentComfyPreviewImageMessage = "Comfy 生成画像は未取得です。";
+            CommandManager.InvalidateRequerySuggested();
         }
 
         private PromptRecord CreateStillPromptRecord()
