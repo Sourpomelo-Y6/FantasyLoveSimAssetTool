@@ -22,6 +22,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly ImageInspectionService imageInspectionService;
         private readonly ComfySettingsService comfySettingsService;
         private readonly ComfyWorkflowService comfyWorkflowService;
+        private readonly ComfyClientService comfyClientService;
         private readonly ExportService exportService;
         private string heroineIdInput;
         private string displayNameInput;
@@ -48,6 +49,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private ComfySettings comfySettings;
         private string comfySettingsSummary;
         private string currentComfyWorkflowPreview;
+        private string currentComfyPromptId;
+        private bool isComfySubmitting;
         private string statusMessage;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
@@ -408,6 +411,29 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public string CurrentComfyPromptId
+        {
+            get { return currentComfyPromptId; }
+            set
+            {
+                if (currentComfyPromptId == value) { return; }
+                currentComfyPromptId = value;
+                OnPropertyChanged(nameof(CurrentComfyPromptId));
+            }
+        }
+
+        public bool IsComfySubmitting
+        {
+            get { return isComfySubmitting; }
+            set
+            {
+                if (isComfySubmitting == value) { return; }
+                isComfySubmitting = value;
+                OnPropertyChanged(nameof(IsComfySubmitting));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
         public string StatusMessage
         {
             get { return statusMessage; }
@@ -449,6 +475,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand BuildStillComfyWorkflowPreviewCommand { get; }
 
+        public ICommand SubmitStillComfyPromptCommand { get; }
+
         public MainWindowModel()
         {
             characterProjectService = new CharacterProjectService();
@@ -458,6 +486,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             imageInspectionService = new ImageInspectionService();
             comfySettingsService = new ComfySettingsService(characterProjectService.WorkspaceRoot);
             comfyWorkflowService = new ComfyWorkflowService(characterProjectService.WorkspaceRoot);
+            comfyClientService = new ComfyClientService();
             exportService = new ExportService(characterProjectService, imageInspectionService);
             Profiles = new ObservableCollection<HeroineProfile>();
             FilteredAssets = new ObservableCollection<HeroineAsset>();
@@ -521,6 +550,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             comfySettings = new ComfySettings();
             comfySettingsSummary = string.Empty;
             currentComfyWorkflowPreview = string.Empty;
+            currentComfyPromptId = string.Empty;
+            isComfySubmitting = false;
             statusMessage = string.Empty;
 
             CreateCharacterCommand = new RelayCommand(CreateCharacter);
@@ -550,6 +581,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             BuildStillComfyWorkflowPreviewCommand = new RelayCommand(
                 BuildStillComfyWorkflowPreview,
                 () => SelectedProfile != null && SelectedStillDefinition != null);
+            SubmitStillComfyPromptCommand = new RelayCommand(
+                SubmitStillComfyPrompt,
+                () => SelectedProfile != null && SelectedStillDefinition != null && !IsComfySubmitting);
 
             ReloadComfySettings();
             LoadStillDefinitions();
@@ -626,11 +660,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             try
             {
-                PromptRecord promptRecord = new PromptRecord
-                {
-                    PositivePrompt = BuildStillPositivePrompt(SelectedProfile, SelectedStillDefinition),
-                    NegativePrompt = CurrentPromptRecord != null ? CurrentPromptRecord.NegativePrompt : string.Empty
-                };
+                PromptRecord promptRecord = CreateStillPromptRecord();
                 CurrentComfyWorkflowPreview = comfyWorkflowService.BuildWorkflowPreview(ComfySettings, promptRecord);
                 StatusMessage = $"{SelectedStillDefinition.DisplayName} の ComfyUI workflow preview を作成しました。";
             }
@@ -639,6 +669,42 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 CurrentComfyWorkflowPreview = string.Empty;
                 StatusMessage = $"スチル ComfyUI workflow preview 作成に失敗しました: {ex.Message}";
             }
+        }
+
+        private async void SubmitStillComfyPrompt()
+        {
+            if (SelectedProfile == null || SelectedStillDefinition == null)
+            {
+                return;
+            }
+
+            IsComfySubmitting = true;
+            CurrentComfyPromptId = string.Empty;
+            try
+            {
+                PromptRecord promptRecord = CreateStillPromptRecord();
+                string workflowJson = comfyWorkflowService.BuildWorkflowJson(ComfySettings, promptRecord);
+                CurrentComfyWorkflowPreview = comfyWorkflowService.BuildWorkflowPreview(ComfySettings, promptRecord);
+                CurrentComfyPromptId = await comfyClientService.QueuePromptAsync(ComfySettings, workflowJson);
+                StatusMessage = $"{SelectedStillDefinition.DisplayName} を ComfyUI に送信しました。prompt_id: {CurrentComfyPromptId}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"ComfyUI 送信に失敗しました: {ex.Message}";
+            }
+            finally
+            {
+                IsComfySubmitting = false;
+            }
+        }
+
+        private PromptRecord CreateStillPromptRecord()
+        {
+            return new PromptRecord
+            {
+                PositivePrompt = BuildStillPositivePrompt(SelectedProfile, SelectedStillDefinition),
+                NegativePrompt = CurrentPromptRecord != null ? CurrentPromptRecord.NegativePrompt : string.Empty
+            };
         }
 
         private void SelectedStillDefinitionPropertyChanged(object sender, PropertyChangedEventArgs e)

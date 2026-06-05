@@ -40,6 +40,7 @@
 - Prompt タブでのテンプレート用途選択
 - `ComfySettings/comfyui.json` からの ComfyUI 設定読み込みと Prompt タブでの表示
 - `ComfySettings/workflow-template.json` への positive / negative prompt 差し込み preview
+- スチル作業タブからローカル ComfyUI `/prompt` への workflow 送信と `prompt_id` 表示
 - 仕様書にある常時必要スチルの固定リスト表示
 - スチル作業タブでの用途フィルタ、状態表示、画像プレビュー
 - スチル固有 prompt、合成 positive prompt、現在の negative prompt のプレビュー
@@ -284,7 +285,17 @@ Services/
 - `ComfySettings/workflow-template.json` を読み込む
 - `workflow-template.json` はビルド時に実行出力フォルダへコピーされる
 - `PromptRecord.PositivePrompt` と `PromptRecord.NegativePrompt` を workflow template の placeholder に差し込む
-- 現時点では preview 作成までで、ComfyUI への HTTP 送信は未実装
+- workflow preview 用の整形 JSON と、ComfyUI 送信用 JSON を作る
+- `nodes` / `links` を持つ ComfyUI 画面用 workflow は、既知ノードを `/prompt` 用 API prompt 形式へ変換する
+- 現時点の変換対象は `CheckpointLoaderSimple`、`CLIPTextEncode`、`EmptyLatentImage`、`KSamplerAdvanced`、`VAEDecode`、`SaveImage`、`PrimitiveInt`
+- `PrimitiveInt` から `noise_seed` などの seed 入力へ負の値が渡る場合は、ComfyUI API の validation に合わせて非負のランダム seed に変換する
+
+### ComfyClientService
+
+- `ComfySettings.EndpointUrl` の `/prompt` に workflow JSON を送る
+- 成功時に ComfyUI の `prompt_id` を返す
+- ComfyUI 未起動、URL 不正、workflow 不正、`prompt_id` 欠落は例外として ViewModel 側でステータス表示する
+- 現時点では生成履歴監視、画像取得、登録は未実装
 
 ### StillDefinitionService
 
@@ -343,7 +354,7 @@ Services/
 ## 次に進める候補
 
 - スチル一覧タブを開発確認用に残すか、スチル作業タブへ統合するか判断する
-- ローカル ComfyUI への prompt 送信、生成結果取得、採用登録
+- ローカル ComfyUI の生成履歴監視、生成結果取得、採用登録
 - 会話データ作成機能の設計と Unity Editor Import 用 JSON export
 - 画像ファイルの差し替え、削除
 
@@ -357,7 +368,7 @@ Services/
 1. スチル作業タブで対象スチルを選ぶ
 2. キャラクター容姿 prompt とスチル固有 prompt から positive prompt を合成する
 3. `PromptRecord.PositivePrompt` と negative prompt を ComfyUI 用 workflow JSON に差し込む
-4. ローカル ComfyUI の HTTP API に workflow を送信する
+4. ローカル ComfyUI の HTTP API に workflow を送信し、`prompt_id` を受け取る
 5. 生成完了後、出力画像を取得してプレビューする
 6. 採用する画像を既存の画像登録処理に渡し、`HeroineAsset` として保存する
 

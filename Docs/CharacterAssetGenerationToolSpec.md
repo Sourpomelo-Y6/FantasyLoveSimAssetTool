@@ -256,7 +256,9 @@ http://127.0.0.1:8188
 
 ComfyUI 連携設定は `ComfySettings/comfyui.json` で管理する。
 workflow template は `ComfySettings/workflow-template.json` に置く。
-現時点では設定の読み込み、Prompt タブ上での確認、positive / negative prompt を差し込んだ workflow preview 作成までを実装し、ComfyUI への HTTP 送信、生成進捗取得、画像取得は後続タスクとする。
+現時点では設定の読み込み、Prompt タブ上での確認、positive / negative prompt を差し込んだ workflow preview 作成、ComfyUI `/prompt` への送信、`prompt_id` 取得までを実装する。
+生成進捗取得、画像取得、登録は後続タスクとする。
+`workflow-template.json` が ComfyUI 画面用 workflow 形式の場合は、既知ノードを `/prompt` 用 API prompt 形式へ変換して送信する。
 
 ```json
 {
@@ -283,6 +285,8 @@ ComfyUI 連携では、次の情報を workflow JSON に差し込む。
 
 positive prompt は、キャラクター容姿プロンプトとスチル固有プロンプトを合成したものを使う。
 negative prompt は、`PromptRecord.NegativePrompt` または用途別テンプレートから取得する。
+画面用 workflow から API prompt へ変換する場合、`CheckpointLoaderSimple`、`CLIPTextEncode`、`EmptyLatentImage`、`KSamplerAdvanced`、`VAEDecode`、`SaveImage`、`PrimitiveInt` を当面の対象にする。
+`PrimitiveInt` から `noise_seed` などの seed 入力へ負の値が渡る場合は、ComfyUI API の validation に合わせて非負のランダム seed に変換する。
 
 ### 生成から登録までの流れ
 
@@ -290,7 +294,7 @@ negative prompt は、`PromptRecord.NegativePrompt` または用途別テンプ�
 2. 合成 positive prompt を確認する
 3. 必要に応じて Prompt 記録へ反映する
 4. workflow JSON に prompt と生成条件を差し込む
-5. ローカル ComfyUI に生成リクエストを送る
+5. ローカル ComfyUI に生成リクエストを送り、`prompt_id` を受け取る
 6. 生成完了後、出力画像を取得してツール上でプレビューする
 7. 採用する画像を選び、既存の画像登録処理に渡す
 8. 登録時は既存 `AssetId` の上書き確認を表示する
