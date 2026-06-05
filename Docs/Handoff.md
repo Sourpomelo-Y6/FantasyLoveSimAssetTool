@@ -44,6 +44,7 @@
 - `prompt_id` からの ComfyUI 生成履歴確認と出力画像ファイル情報表示
 - ComfyUI `/view` からの生成画像取得、一時保存、スチル作業タブでのプレビュー
 - ComfyUI 生成画像のスチル採用登録
+- ComfyUI 生成条件の `PromptRecord` への保存
 - 仕様書にある常時必要スチルの固定リスト表示
 - スチル作業タブでの用途フィルタ、状態表示、画像プレビュー
 - スチル固有 prompt、合成 positive prompt、現在の negative prompt のプレビュー
@@ -304,6 +305,7 @@ Services/
 - `ComfySettings.EndpointUrl` の `/view` から生成画像 bytes を取得する
 - ComfyUI 未起動、URL 不正、workflow 不正、`prompt_id` 欠落は例外として ViewModel 側でステータス表示する
 - 取得した ComfyUI 生成画像は、既存の画像登録処理と同じ上書き確認ルールで採用登録する
+- 採用時に positive / negative prompt、`prompt_id`、Comfy 出力ファイル情報、endpoint、workflow template path、送信用 workflow JSON、seed、model、sampler、steps、CFG scale、画像サイズを `PromptRecord` に保存する
 
 ### StillDefinitionService
 
@@ -362,7 +364,7 @@ Services/
 ## 次に進める候補
 
 - スチル一覧タブを開発確認用に残すか、スチル作業タブへ統合するか判断する
-- ComfyUI 生成画像の prompt / workflow / seed 記録
+- ComfyUI 生成中の進捗表示、キャンセル、同時実行制御
 - 会話データ作成機能の設計と Unity Editor Import 用 JSON export
 - 画像ファイルの差し替え、削除
 

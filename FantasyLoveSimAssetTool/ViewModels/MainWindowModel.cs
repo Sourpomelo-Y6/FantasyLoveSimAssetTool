@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
 
@@ -54,6 +55,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string currentComfyPreviewImagePath;
         private string currentComfyPreviewImageMessage;
         private ComfyOutputImage currentComfyOutputImage;
+        private PromptRecord currentComfySubmittedPromptRecord;
+        private string currentComfyWorkflowJson;
         private bool isComfySubmitting;
         private bool isComfyCheckingResult;
         private bool isComfyFetchingImage;
@@ -638,6 +641,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             currentComfyPreviewImagePath = string.Empty;
             currentComfyPreviewImageMessage = "Comfy 生成画像は未取得です。";
             currentComfyOutputImage = null;
+            currentComfySubmittedPromptRecord = null;
+            currentComfyWorkflowJson = string.Empty;
             isComfySubmitting = false;
             isComfyCheckingResult = false;
             isComfyFetchingImage = false;
@@ -782,11 +787,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
             IsComfySubmitting = true;
             CurrentComfyPromptId = string.Empty;
             CurrentComfyResultSummary = string.Empty;
+            currentComfySubmittedPromptRecord = null;
+            currentComfyWorkflowJson = string.Empty;
             ClearComfyPreviewImage();
             try
             {
                 PromptRecord promptRecord = CreateStillPromptRecord();
                 string workflowJson = comfyWorkflowService.BuildWorkflowJson(ComfySettings, promptRecord);
+                currentComfySubmittedPromptRecord = promptRecord;
+                currentComfyWorkflowJson = workflowJson;
                 CurrentComfyWorkflowPreview = comfyWorkflowService.BuildWorkflowPreview(ComfySettings, promptRecord);
                 CurrentComfyPromptId = await comfyClientService.QueuePromptAsync(ComfySettings, workflowJson);
                 StatusMessage = $"{SelectedStillDefinition.DisplayName} を ComfyUI に送信しました。prompt_id: {CurrentComfyPromptId}";
@@ -909,7 +918,141 @@ namespace FantasyLoveSimAssetTool.ViewModels
             AssetIdInput = SelectedStillDefinition.AssetId;
             SelectedAssetUsage = SelectedStillDefinition.Usage;
             SelectedAssetStatus = AssetStatus.Accepted;
-            AddImageAsset();
+            try
+            {
+                HeroineAsset asset = AddImageAssetCore();
+                if (asset == null)
+                {
+                    return;
+                }
+
+                SaveComfyPromptRecord(asset);
+                StatusMessage += " Comfy 生成条件を prompt 記録に保存しました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Comfy 生成画像の採用に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void SaveComfyPromptRecord(HeroineAsset asset)
+        {
+            if (SelectedProfile == null || asset == null)
+            {
+                return;
+            }
+
+            PromptRecord record = promptRecordService.LoadOrCreatePromptRecord(SelectedProfile, asset);
+            PromptRecord sourceRecord = currentComfySubmittedPromptRecord ?? CreateStillPromptRecord();
+
+            record.PositivePrompt = sourceRecord.PositivePrompt;
+            record.NegativePrompt = sourceRecord.NegativePrompt;
+            record.ComfyPromptId = CurrentComfyPromptId ?? string.Empty;
+            record.ComfyEndpointUrl = ComfySettings != null ? ComfySettings.EndpointUrl : string.Empty;
+            record.ComfyWorkflowTemplatePath = ComfySettings != null ? ComfySettings.WorkflowTemplatePath : string.Empty;
+            record.ComfyWorkflowJson = currentComfyWorkflowJson ?? string.Empty;
+
+            if (currentComfyOutputImage != null)
+            {
+                record.ComfyOutputFileName = currentComfyOutputImage.FileName;
+                record.ComfyOutputSubfolder = currentComfyOutputImage.Subfolder;
+                record.ComfyOutputType = currentComfyOutputImage.Type;
+            }
+
+            ApplyComfyWorkflowSettings(record, currentComfyWorkflowJson);
+            promptRecordService.SavePromptRecord(SelectedProfile, asset, record);
+            characterProjectService.SaveProfile(SelectedProfile);
+            CurrentPromptRecord = record;
+            RefreshSelectedStillStatus();
+        }
+
+        private static void ApplyComfyWorkflowSettings(PromptRecord record, string workflowJson)
+        {
+            if (record == null || string.IsNullOrWhiteSpace(workflowJson))
+            {
+                return;
+            }
+
+            using JsonDocument document = JsonDocument.Parse(workflowJson);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            foreach (JsonProperty nodeProperty in document.RootElement.EnumerateObject())
+            {
+                JsonElement nodeElement = nodeProperty.Value;
+                string classType = GetJsonString(nodeElement, "class_type");
+                if (!nodeElement.TryGetProperty("inputs", out JsonElement inputsElement) ||
+                    inputsElement.ValueKind != JsonValueKind.Object)
+                {
+                    continue;
+                }
+
+                switch (classType)
+                {
+                    case "CheckpointLoaderSimple":
+                        record.Model = GetJsonString(inputsElement, "ckpt_name");
+                        break;
+                    case "EmptyLatentImage":
+                        record.ImageWidth = GetJsonInt(inputsElement, "width");
+                        record.ImageHeight = GetJsonInt(inputsElement, "height");
+                        break;
+                    case "KSamplerAdvanced":
+                        record.Seed = GetJsonLong(inputsElement, "noise_seed");
+                        record.Steps = GetJsonInt(inputsElement, "steps");
+                        record.CfgScale = GetJsonDouble(inputsElement, "cfg");
+                        record.Sampler = GetJsonString(inputsElement, "sampler_name");
+                        break;
+                }
+            }
+        }
+
+        private static string GetJsonString(JsonElement element, string propertyName)
+        {
+            if (element.TryGetProperty(propertyName, out JsonElement propertyElement) &&
+                propertyElement.ValueKind == JsonValueKind.String)
+            {
+                return propertyElement.GetString() ?? string.Empty;
+            }
+
+            return string.Empty;
+        }
+
+        private static int GetJsonInt(JsonElement element, string propertyName)
+        {
+            if (element.TryGetProperty(propertyName, out JsonElement propertyElement) &&
+                propertyElement.ValueKind == JsonValueKind.Number &&
+                propertyElement.TryGetInt32(out int value))
+            {
+                return value;
+            }
+
+            return 0;
+        }
+
+        private static long GetJsonLong(JsonElement element, string propertyName)
+        {
+            if (element.TryGetProperty(propertyName, out JsonElement propertyElement) &&
+                propertyElement.ValueKind == JsonValueKind.Number &&
+                propertyElement.TryGetInt64(out long value))
+            {
+                return value;
+            }
+
+            return 0;
+        }
+
+        private static double GetJsonDouble(JsonElement element, string propertyName)
+        {
+            if (element.TryGetProperty(propertyName, out JsonElement propertyElement) &&
+                propertyElement.ValueKind == JsonValueKind.Number &&
+                propertyElement.TryGetDouble(out double value))
+            {
+                return value;
+            }
+
+            return 0;
         }
 
         private PromptRecord CreateStillPromptRecord()
@@ -949,6 +1092,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             CurrentComfyWorkflowPreview = string.Empty;
             CurrentComfyPromptId = string.Empty;
             CurrentComfyResultSummary = string.Empty;
+            currentComfySubmittedPromptRecord = null;
+            currentComfyWorkflowJson = string.Empty;
             ClearComfyPreviewImage();
         }
 
@@ -1024,35 +1169,41 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             try
             {
-                bool overwriteExisting = ShouldOverwriteExistingAsset();
-                if (overwriteExisting == false && HasExistingAssetId())
-                {
-                    StatusMessage = "画像登録をキャンセルしました。";
-                    return;
-                }
-
-                HeroineAsset asset = characterProjectService.AddImageAsset(
-                    SelectedProfile,
-                    ImageSourcePathInput,
-                    SelectedAssetUsage,
-                    AssetIdInput,
-                    SelectedAssetStatus,
-                    overwriteExisting);
-
-                SelectedAssetStatusFilter = asset.Status.ToString();
-                RefreshFilteredAssets();
-                RefreshAcceptedAssets();
-                SelectedAsset = asset;
-                RefreshSelectedStillStatus();
-                string registrationMessage = overwriteExisting
-                    ? $"{asset.AssetId} を {asset.Usage} に上書き登録しました。"
-                    : $"{asset.AssetId} を {asset.Usage} に登録しました。";
-                StatusMessage = AppendImageInspectionMessage(registrationMessage, asset);
+                AddImageAssetCore();
             }
             catch (Exception ex)
             {
                 StatusMessage = $"画像登録に失敗しました: {ex.Message}";
             }
+        }
+
+        private HeroineAsset AddImageAssetCore()
+        {
+            bool overwriteExisting = ShouldOverwriteExistingAsset();
+            if (overwriteExisting == false && HasExistingAssetId())
+            {
+                StatusMessage = "画像登録をキャンセルしました。";
+                return null;
+            }
+
+            HeroineAsset asset = characterProjectService.AddImageAsset(
+                SelectedProfile,
+                ImageSourcePathInput,
+                SelectedAssetUsage,
+                AssetIdInput,
+                SelectedAssetStatus,
+                overwriteExisting);
+
+            SelectedAssetStatusFilter = asset.Status.ToString();
+            RefreshFilteredAssets();
+            RefreshAcceptedAssets();
+            SelectedAsset = asset;
+            RefreshSelectedStillStatus();
+            string registrationMessage = overwriteExisting
+                ? $"{asset.AssetId} を {asset.Usage} に上書き登録しました。"
+                : $"{asset.AssetId} を {asset.Usage} に登録しました。";
+            StatusMessage = AppendImageInspectionMessage(registrationMessage, asset);
+            return asset;
         }
 
         private bool HasExistingAssetId()

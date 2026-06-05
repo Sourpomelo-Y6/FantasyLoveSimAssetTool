@@ -311,8 +311,10 @@ ComfyUI で生成した画像については、採用時に次を `PromptRecord`
 - 使用した positive prompt
 - 使用した negative prompt
 - seed
+- model、sampler、steps、CFG scale、画像サイズ
+- ComfyUI の `prompt_id`
 - workflow JSON または workflow 名
-- ComfyUI の出力ファイル名
+- ComfyUI の出力ファイル名、subfolder、type
 - 採用理由、修正メモ
 
 workflow JSON をそのまま保存するか、workflow 名と差し込み値だけを保存するかは未決とする。

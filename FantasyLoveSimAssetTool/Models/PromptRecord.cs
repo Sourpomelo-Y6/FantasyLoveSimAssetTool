@@ -20,6 +20,13 @@ namespace FantasyLoveSimAssetTool.Models
         private string inpaintMemo;
         private string adoptionReason;
         private string revisionMemo;
+        private string comfyPromptId;
+        private string comfyOutputFileName;
+        private string comfyOutputSubfolder;
+        private string comfyOutputType;
+        private string comfyEndpointUrl;
+        private string comfyWorkflowTemplatePath;
+        private string comfyWorkflowJson;
 
         public string PositivePrompt
         {
@@ -197,6 +204,83 @@ namespace FantasyLoveSimAssetTool.Models
             }
         }
 
+        public string ComfyPromptId
+        {
+            get { return comfyPromptId; }
+            set
+            {
+                if (comfyPromptId == value) { return; }
+                comfyPromptId = value;
+                OnPropertyChanged(nameof(ComfyPromptId));
+            }
+        }
+
+        public string ComfyOutputFileName
+        {
+            get { return comfyOutputFileName; }
+            set
+            {
+                if (comfyOutputFileName == value) { return; }
+                comfyOutputFileName = value;
+                OnPropertyChanged(nameof(ComfyOutputFileName));
+            }
+        }
+
+        public string ComfyOutputSubfolder
+        {
+            get { return comfyOutputSubfolder; }
+            set
+            {
+                if (comfyOutputSubfolder == value) { return; }
+                comfyOutputSubfolder = value;
+                OnPropertyChanged(nameof(ComfyOutputSubfolder));
+            }
+        }
+
+        public string ComfyOutputType
+        {
+            get { return comfyOutputType; }
+            set
+            {
+                if (comfyOutputType == value) { return; }
+                comfyOutputType = value;
+                OnPropertyChanged(nameof(ComfyOutputType));
+            }
+        }
+
+        public string ComfyEndpointUrl
+        {
+            get { return comfyEndpointUrl; }
+            set
+            {
+                if (comfyEndpointUrl == value) { return; }
+                comfyEndpointUrl = value;
+                OnPropertyChanged(nameof(ComfyEndpointUrl));
+            }
+        }
+
+        public string ComfyWorkflowTemplatePath
+        {
+            get { return comfyWorkflowTemplatePath; }
+            set
+            {
+                if (comfyWorkflowTemplatePath == value) { return; }
+                comfyWorkflowTemplatePath = value;
+                OnPropertyChanged(nameof(ComfyWorkflowTemplatePath));
+            }
+        }
+
+        public string ComfyWorkflowJson
+        {
+            get { return comfyWorkflowJson; }
+            set
+            {
+                if (comfyWorkflowJson == value) { return; }
+                comfyWorkflowJson = value;
+                OnPropertyChanged(nameof(ComfyWorkflowJson));
+            }
+        }
+
         public PromptRecord()
         {
             positivePrompt = string.Empty;
@@ -210,6 +294,13 @@ namespace FantasyLoveSimAssetTool.Models
             inpaintMemo = string.Empty;
             adoptionReason = string.Empty;
             revisionMemo = string.Empty;
+            comfyPromptId = string.Empty;
+            comfyOutputFileName = string.Empty;
+            comfyOutputSubfolder = string.Empty;
+            comfyOutputType = string.Empty;
+            comfyEndpointUrl = string.Empty;
+            comfyWorkflowTemplatePath = string.Empty;
+            comfyWorkflowJson = string.Empty;
         }
     }
 }

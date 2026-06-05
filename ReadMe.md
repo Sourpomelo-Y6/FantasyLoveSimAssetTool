@@ -29,6 +29,7 @@ Stable Diffusion などで生成した立ち絵、イベントスチル、行動
 - `prompt_id` からの ComfyUI 生成履歴確認と出力画像ファイル情報表示
 - ComfyUI `/view` からの生成画像取得、一時保存、スチル作業タブでのプレビュー
 - ComfyUI 生成画像のスチル採用登録
+- ComfyUI 生成条件の prompt JSON への記録
 - Unity 向け Export
 - Export 件数と警告の表示
 
