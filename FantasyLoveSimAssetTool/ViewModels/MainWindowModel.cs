@@ -494,6 +494,51 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public void SetImageSourceFromDroppedFiles(string[] filePaths)
+        {
+            if (filePaths == null || filePaths.Length == 0)
+            {
+                StatusMessage = "ドロップされた画像ファイルがありません。";
+                return;
+            }
+
+            string imagePath = filePaths.FirstOrDefault(IsSupportedImageFile);
+            if (string.IsNullOrWhiteSpace(imagePath))
+            {
+                StatusMessage = "PNG/JPG/JPEG/WEBP の画像ファイルをドロップしてください。";
+                return;
+            }
+
+            ImageSourcePathInput = imagePath;
+            if (string.IsNullOrWhiteSpace(AssetIdInput))
+            {
+                AssetIdInput = Path.GetFileNameWithoutExtension(imagePath);
+            }
+
+            if (filePaths.Length > 1)
+            {
+                StatusMessage = $"複数ファイルがドロップされたため、先頭の画像を元画像に設定しました: {imagePath}";
+            }
+            else
+            {
+                StatusMessage = $"元画像を設定しました: {imagePath}";
+            }
+        }
+
+        private static bool IsSupportedImageFile(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+            {
+                return false;
+            }
+
+            string extension = Path.GetExtension(filePath).ToLowerInvariant();
+            return extension == ".png"
+                || extension == ".jpg"
+                || extension == ".jpeg"
+                || extension == ".webp";
+        }
+
         private void AddImageAsset()
         {
             if (SelectedProfile == null)

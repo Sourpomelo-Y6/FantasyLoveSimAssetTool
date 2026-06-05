@@ -153,7 +153,13 @@
                                 <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding AssetIdInput, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="元画像" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ImageSourcePathInput, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,8"/>
+                                <TextBox Grid.Row="1"
+                                         Grid.Column="1"
+                                         Text="{Binding ImageSourcePathInput, UpdateSourceTrigger=PropertyChanged}"
+                                         AllowDrop="True"
+                                         PreviewDragOver="ImageSourcePath_PreviewDragOver"
+                                         Drop="ImageSourcePath_Drop"
+                                         Margin="0,0,8,8"/>
                                 <Button Grid.Row="1" Grid.Column="2" Content="参照" Command="{Binding BrowseImageCommand}" Height="26" Margin="0,0,0,8"/>
 
                                 <TextBlock Grid.Row="2" Grid.Column="0" Text="用途" VerticalAlignment="Center" Margin="0,0,8,8"/>

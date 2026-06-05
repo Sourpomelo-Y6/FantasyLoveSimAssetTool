@@ -1,16 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using FantasyLoveSimAssetTool.ViewModels;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace FantasyLoveSimAssetTool.Views
 {
@@ -22,6 +12,27 @@ namespace FantasyLoveSimAssetTool.Views
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void ImageSourcePath_PreviewDragOver(object sender, DragEventArgs e)
+        {
+            e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop)
+                ? DragDropEffects.Copy
+                : DragDropEffects.None;
+            e.Handled = true;
+        }
+
+        private void ImageSourcePath_Drop(object sender, DragEventArgs e)
+        {
+            if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                return;
+            }
+
+            if (DataContext is MainWindowModel model)
+            {
+                model.SetImageSourceFromDroppedFiles((string[])e.Data.GetData(DataFormats.FileDrop));
+            }
         }
     }
 }
