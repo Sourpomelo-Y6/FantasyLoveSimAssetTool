@@ -173,6 +173,23 @@ GameStartIntro_01.prompt.json
 
 キャラクターごとに「容姿を表すプロンプト」を登録し、それをスチル用途ごとのテンプレートと合成することで、立ち絵、イベントスチル、行動スチル、エンディングスチル用の生成プロンプトを作れるようにする。
 
+テンプレートは `PromptTemplates/templates.json` で管理する。
+JSON が存在しない、空、不正な場合は、アプリ内のデフォルトテンプレートへ fallback する。
+
+```json
+[
+  {
+    "templateId": "sprites_normal",
+    "displayName": "立ち絵: 通常",
+    "usage": "Sprites",
+    "templateText": "{CharacterAppearancePrompt}, standing character sprite, full body, transparent background"
+  }
+]
+```
+
+`usage` は `Sprites`, `Event`, `Actions`, `Ending` のいずれかを指定する。
+`templateText` には `{CharacterAppearancePrompt}` を含め、キャラクター容姿プロンプトと合成できるようにする。
+
 ### キャラクター容姿プロンプト
 
 キャラクター詳細に、次のような共通の容姿プロンプトを持たせる。

@@ -19,6 +19,7 @@ Stable Diffusion などで生成した立ち絵、イベントスチル、行動
 - 採用、保留、没ステータス管理
 - prompt JSON の保存
 - キャラクター容姿プロンプトとスチル用テンプレートの合成
+- `PromptTemplates/templates.json` による prompt テンプレート管理
 - Unity 向け Export
 - Export 件数と警告の表示
 
@@ -70,6 +71,8 @@ FantasyLoveSimAssetTool/
     ExportService.cs
   Views/
     MainWindow.xaml
+PromptTemplates/
+  templates.json
 Docs/
   CharacterAssetGenerationToolSpec.md
   Handoff.md
@@ -172,7 +175,6 @@ Export/
 ## 今後の拡張候補
 
 - ドラッグ&ドロップによる画像登録
-- prompt テンプレートの JSON 管理
 - 余白や表情差分などの高度な画像検査
 - 会話、イベント、行動反応、エンディング本文の作成
 - Unity Editor Import 用の会話データ JSON export

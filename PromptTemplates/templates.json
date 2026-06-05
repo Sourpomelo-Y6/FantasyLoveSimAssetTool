@@ -1,0 +1,50 @@
+[
+  {
+    "templateId": "sprites_normal",
+    "displayName": "立ち絵: 通常",
+    "usage": "Sprites",
+    "templateText": "{CharacterAppearancePrompt}, standing character sprite, full body, clean line art, transparent background, soft anime style"
+  },
+  {
+    "templateId": "sprites_smile",
+    "displayName": "立ち絵: 笑顔",
+    "usage": "Sprites",
+    "templateText": "{CharacterAppearancePrompt}, standing character sprite, full body, gentle smile, transparent background, soft anime style"
+  },
+  {
+    "templateId": "event_intro",
+    "displayName": "イベント: 導入",
+    "usage": "Event",
+    "templateText": "{CharacterAppearancePrompt}, romantic event still, first meeting scene, warm light, cinematic composition, detailed background"
+  },
+  {
+    "templateId": "event_daily",
+    "displayName": "イベント: 日常",
+    "usage": "Event",
+    "templateText": "{CharacterAppearancePrompt}, daily life event still, relaxed atmosphere, natural pose, detailed environment, soft anime style"
+  },
+  {
+    "templateId": "actions_tea",
+    "displayName": "行動: お茶",
+    "usage": "Actions",
+    "templateText": "{CharacterAppearancePrompt}, drinking tea with the player, cozy room, gentle atmosphere, warm lighting, visual novel event still"
+  },
+  {
+    "templateId": "actions_walk",
+    "displayName": "行動: 散歩",
+    "usage": "Actions",
+    "templateText": "{CharacterAppearancePrompt}, walking outdoors with the player, peaceful path, natural sunlight, visual novel event still"
+  },
+  {
+    "templateId": "ending_good",
+    "displayName": "エンディング: Good",
+    "usage": "Ending",
+    "templateText": "{CharacterAppearancePrompt}, good ending still, emotional smile, hopeful atmosphere, cinematic composition, beautiful lighting"
+  },
+  {
+    "templateId": "ending_normal",
+    "displayName": "エンディング: Normal",
+    "usage": "Ending",
+    "templateText": "{CharacterAppearancePrompt}, normal ending still, bittersweet smile, calm atmosphere, cinematic composition, soft lighting"
+  }
+]

@@ -371,7 +371,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             characterProjectService = new CharacterProjectService();
             promptRecordService = new PromptRecordService(characterProjectService);
-            promptTemplateService = new PromptTemplateService();
+            promptTemplateService = new PromptTemplateService(characterProjectService.WorkspaceRoot);
             stillDefinitionService = new StillDefinitionService();
             imageInspectionService = new ImageInspectionService();
             exportService = new ExportService(characterProjectService, imageInspectionService);

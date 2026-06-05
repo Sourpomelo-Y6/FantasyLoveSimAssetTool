@@ -1,7 +1,10 @@
 using FantasyLoveSimAssetTool.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace FantasyLoveSimAssetTool.Services
 {
@@ -9,11 +12,93 @@ namespace FantasyLoveSimAssetTool.Services
     {
         public const string CharacterAppearancePromptPlaceholder = "{CharacterAppearancePrompt}";
 
-        private readonly IReadOnlyList<PromptTemplate> defaultTemplates;
+        private const string TemplateDirectoryName = "PromptTemplates";
+        private const string TemplateFileName = "templates.json";
+
+        private readonly IReadOnlyList<PromptTemplate> templates;
 
         public PromptTemplateService()
+            : this(Directory.GetCurrentDirectory())
         {
-            defaultTemplates = new List<PromptTemplate>
+        }
+
+        public PromptTemplateService(string workspaceRoot)
+        {
+            templates = LoadTemplates(workspaceRoot);
+        }
+
+        public IReadOnlyList<PromptTemplate> GetTemplates(AssetUsage usage)
+        {
+            return templates
+                .Where(template => template.Usage == usage)
+                .ToList();
+        }
+
+        public string BuildPositivePrompt(HeroineProfile profile, PromptTemplate template)
+        {
+            if (profile == null)
+            {
+                throw new ArgumentNullException(nameof(profile));
+            }
+
+            if (template == null)
+            {
+                throw new ArgumentNullException(nameof(template));
+            }
+
+            string appearancePrompt = profile.AppearancePrompt ?? string.Empty;
+            return template.TemplateText.Replace(CharacterAppearancePromptPlaceholder, appearancePrompt);
+        }
+
+        private static IReadOnlyList<PromptTemplate> LoadTemplates(string workspaceRoot)
+        {
+            string templatePath = Path.Combine(workspaceRoot, TemplateDirectoryName, TemplateFileName);
+            if (!File.Exists(templatePath))
+            {
+                return CreateDefaultTemplates();
+            }
+
+            try
+            {
+                JsonSerializerOptions options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                options.Converters.Add(new JsonStringEnumConverter());
+
+                List<PromptTemplate> loadedTemplates = JsonSerializer.Deserialize<List<PromptTemplate>>(
+                    File.ReadAllText(templatePath),
+                    options);
+
+                if (loadedTemplates == null || loadedTemplates.Count == 0)
+                {
+                    return CreateDefaultTemplates();
+                }
+
+                List<PromptTemplate> validTemplates = loadedTemplates
+                    .Where(IsValidTemplate)
+                    .ToList();
+                return validTemplates.Count == 0
+                    ? CreateDefaultTemplates()
+                    : validTemplates;
+            }
+            catch
+            {
+                return CreateDefaultTemplates();
+            }
+        }
+
+        private static bool IsValidTemplate(PromptTemplate template)
+        {
+            return template != null
+                && !string.IsNullOrWhiteSpace(template.TemplateId)
+                && !string.IsNullOrWhiteSpace(template.DisplayName)
+                && !string.IsNullOrWhiteSpace(template.TemplateText);
+        }
+
+        private static IReadOnlyList<PromptTemplate> CreateDefaultTemplates()
+        {
+            return new List<PromptTemplate>
             {
                 new PromptTemplate
                 {
@@ -72,29 +157,6 @@ namespace FantasyLoveSimAssetTool.Services
                     TemplateText = CharacterAppearancePromptPlaceholder + ", normal ending still, bittersweet smile, calm atmosphere, cinematic composition, soft lighting"
                 }
             };
-        }
-
-        public IReadOnlyList<PromptTemplate> GetTemplates(AssetUsage usage)
-        {
-            return defaultTemplates
-                .Where(template => template.Usage == usage)
-                .ToList();
-        }
-
-        public string BuildPositivePrompt(HeroineProfile profile, PromptTemplate template)
-        {
-            if (profile == null)
-            {
-                throw new ArgumentNullException(nameof(profile));
-            }
-
-            if (template == null)
-            {
-                throw new ArgumentNullException(nameof(template));
-            }
-
-            string appearancePrompt = profile.AppearancePrompt ?? string.Empty;
-            return template.TemplateText.Replace(CharacterAppearancePromptPlaceholder, appearancePrompt);
         }
     }
 }

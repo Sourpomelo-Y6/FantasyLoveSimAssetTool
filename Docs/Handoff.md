@@ -35,6 +35,7 @@
 - 登録済み画像の `Accepted`, `Pending`, `Rejected` 変更と保存
 - prompt 記録保存、読み込み
 - キャラクター容姿プロンプトとスチル用テンプレートの合成
+- `PromptTemplates/templates.json` からの prompt テンプレート読み込み
 - 仕様書にある常時必要スチルの固定リスト表示
 - スチル作業タブでの用途フィルタ、状態表示、画像プレビュー
 - スチル固有 prompt と合成 positive prompt のプレビュー
@@ -260,7 +261,8 @@ Services/
 
 ### PromptTemplateService
 
-- スチル用途別のデフォルトプロンプトテンプレート管理
+- `PromptTemplates/templates.json` からスチル用途別 prompt テンプレートを読み込む
+- JSON がない、空、不正な場合はコード内のデフォルトテンプレートへ fallback する
 - キャラクター容姿プロンプトとテンプレートの合成
 - 合成結果を `PromptRecord.PositivePrompt` に反映
 
@@ -323,8 +325,6 @@ Services/
 - スチル一覧タブを開発確認用に残すか、スチル作業タブへ統合するか判断する
 - ローカル ComfyUI 連携の設計、設定項目、workflow JSON テンプレート化
 - 会話データ作成機能の設計と Unity Editor Import 用 JSON export
-- 画像サイズ、縦横比、透過の検査
-- prompt テンプレートの JSON 化
 - Accepted 画像だけを一覧上で絞り込む機能
 - 画像ファイルの差し替え、削除
 
@@ -407,7 +407,6 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 - JSON の細かいスキーマ
 - `StillWorkItems` を `profile.json` に保存する現方式で十分か、将来は専用 JSON に分離するか
 - スチル状態 `StillStatus` と画像状態 `HeroineAsset.Status` をどの程度連動させるか
-- スチル用デフォルトプロンプトテンプレートをコード内固定にするか、JSON 設定として編集可能にするか
 - prompt テンプレートのプレースホルダー名をどう定義するか
 - ComfyUI の接続先 URL、workflow JSON、seed、出力ノード名をどこに保存するか
 - ComfyUI 生成画像を自動登録するか、プレビュー後に手動採用するか
@@ -417,7 +416,6 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 - Unity Editor Import 拡張を別リポジトリで作るか、Unity プロジェクト側に直接置くか
 - `.asset` の直接生成を将来も避けるか、限定条件付きで対応するか
 - `net5.0-windows` 維持を前提に、将来ターゲットフレームワーク移行を再検証するタイミング
-- 画像検査をどの段階で入れるか
 - 画像削除時に元ファイルも削除するか、profile から除外するだけにするか
 
 ## 次の担当者へのメモ
