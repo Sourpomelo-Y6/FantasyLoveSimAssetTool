@@ -21,7 +21,8 @@ Stable Diffusion などで生成した立ち絵、イベントスチル、行動
 - Unity 向け Export
 - Export 件数と警告の表示
 
-Stable Diffusion の画像生成自体はアプリ内では行わず、外部生成した画像を登録、整理、出力するツールとして動作します。
+現状では、Stable Diffusion などの画像生成自体はアプリ内では行わず、外部生成した画像を登録、整理、出力するツールとして動作します。
+この外部ファイル登録フローは今後も残し、将来追加するローカル ComfyUI 連携は、同じ登録処理へ生成結果を渡す任意機能として扱います。
 
 ## 想定する用途
 
@@ -172,6 +173,10 @@ Export/
 - ドラッグ&ドロップによる画像登録
 - prompt テンプレートの JSON 管理
 - 画像サイズ、縦横比、透過、余白のチェック
-- Unity の ScriptableObject 生成補助
+- 会話、イベント、行動反応、エンディング本文の作成
+- Unity Editor Import 用の会話データ JSON export
+- Unity Editor 側で JSON から ScriptableObject `.asset` を生成する補助
 - Python スクリプト連携による画像検査
+- ローカル ComfyUI へ prompt を送信し、生成画像を取得、登録する機能
+- ComfyUI workflow JSON のテンプレート管理
 - Export 結果フォルダを開く操作

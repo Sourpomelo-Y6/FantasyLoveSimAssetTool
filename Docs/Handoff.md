@@ -27,6 +27,7 @@
 - キャラクター一覧表示
 - 画像用途別フォルダ作成
 - 画像登録と用途別フォルダへのコピー
+- 外部ツールで生成済みの画像ファイルを登録する運用
 - 画像登録欄へのドラッグ&ドロップ入力
 - 既存 `AssetId` への画像上書き登録と確認ダイアログ
 - 登録済み画像のプレビュー
@@ -68,7 +69,8 @@ Codex のローカル作業用メタデータである `.agents/` と `.codex/` 
 4. Unity 向け export フォルダを作る
 5. `heroine_profile_note.md` を出力する
 
-画像生成自体は外部ツールで行い、本アプリは登録、整理、追跡、出力を担当します。
+現状では、画像生成自体は外部ツールで行い、本アプリは登録、整理、追跡、出力を担当します。
+この外部ファイル登録フローは、今後ローカル ComfyUI 連携を追加する場合も残します。
 
 ## 推奨ディレクトリ構成
 
@@ -317,10 +319,60 @@ Services/
 ## 次に進める候補
 
 - スチル一覧タブを開発確認用に残すか、スチル作業タブへ統合するか判断する
+- ローカル ComfyUI 連携の設計、設定項目、workflow JSON テンプレート化
+- 会話データ作成機能の設計と Unity Editor Import 用 JSON export
 - 画像サイズ、縦横比、透過の検査
 - prompt テンプレートの JSON 化
 - Accepted 画像だけを一覧上で絞り込む機能
 - 画像ファイルの差し替え、削除
+
+## ローカル ComfyUI 連携案
+
+外部生成済み画像ファイルを登録する現行機能は、基本フロー兼フォールバックとして維持します。
+その上で、任意機能としてローカルで起動している ComfyUI に prompt を送り、生成画像を取得して登録できる導線を追加します。
+
+想定する流れは次の通りです。
+
+1. スチル作業タブで対象スチルを選ぶ
+2. キャラクター容姿 prompt とスチル固有 prompt から positive prompt を合成する
+3. `PromptRecord.PositivePrompt` と negative prompt を ComfyUI 用 workflow JSON に差し込む
+4. ローカル ComfyUI の HTTP API に workflow を送信する
+5. 生成完了後、出力画像を取得してプレビューする
+6. 採用する画像を既存の画像登録処理に渡し、`HeroineAsset` として保存する
+
+ComfyUI の既定接続先は、ローカル実行を前提に `http://127.0.0.1:8188` とします。
+ただし、URL、workflow JSON、seed、画像サイズ、出力ノード名は環境差が出やすいため、将来は設定として編集可能にする必要があります。
+
+生成画像の保存先は、外部ファイル登録時と同じく次を基本にします。
+
+```text
+Characters/<HeroineId>/Images/<Usage>/<AssetId>.png
+```
+
+ComfyUI から取得した画像も、登録時には既存 `AssetId` の上書き確認を通します。
+これにより、外部ファイル登録、ドラッグ&ドロップ登録、ComfyUI 生成結果登録のすべてが同じ `HeroineAsset` 更新ルールを使えます。
+
+ComfyUI が起動していない、生成に失敗した、workflow JSON が不正などの場合でも、外部ファイル登録は継続して使えるようにします。
+ComfyUI 連携は画像生成の補助であり、素材管理 MVP の必須条件にはしません。
+
+## Unity .asset と会話データ作成案
+
+将来、会話データ、イベントデータ、行動反応、エンディング本文もこのツールで作成できるようにします。
+ただし、WPF ツールから Unity の `.asset` を直接生成する方式は優先しません。
+
+Unity の `.asset` は ScriptableObject の保存ファイルで、Force Text 設定なら YAML として外部から読めます。
+しかし、外部ツールで直接書く場合は `.meta` の GUID、ScriptableObject の型情報、fileID、Assembly 名、Unity バージョン差分を正しく扱う必要があります。
+壊れやすいため、WPF ツール側では中間データを JSON または Markdown として出力し、Unity Editor 側で ScriptableObject に変換する方針にします。
+
+想定する流れは次の通りです。
+
+1. WPF ツールでヒロインごとの会話、イベント、行動反応、エンディング本文を編集する
+2. `conversations_export.json`、`game_events_export.json`、`action_reactions_export.json`、`endings_export.json` などを出力する
+3. Unity プロジェクト側の Editor 拡張で JSON を読み込む
+4. Unity Editor 内で `ConversationData`、`GameEventData`、`ActionReactionData`、`EndingData` の `.asset` を生成、更新する
+
+この方式なら、`.asset` の GUID や型情報は Unity Editor が管理できます。
+WPF ツールは、Unity に渡す内容の作成、整理、export に集中します。
 
 ## 検証観点
 
@@ -353,6 +405,13 @@ Services/
 - スチル状態 `StillStatus` と画像状態 `HeroineAsset.Status` をどの程度連動させるか
 - スチル用デフォルトプロンプトテンプレートをコード内固定にするか、JSON 設定として編集可能にするか
 - prompt テンプレートのプレースホルダー名をどう定義するか
+- ComfyUI の接続先 URL、workflow JSON、seed、出力ノード名をどこに保存するか
+- ComfyUI 生成画像を自動登録するか、プレビュー後に手動採用するか
+- ComfyUI の生成履歴、seed、workflow、出力ファイル名を `PromptRecord` にどう記録するか
+- ComfyUI 生成中の進捗表示、キャンセル、同時実行制御をどう扱うか
+- 会話データ JSON のスキーマを Unity 側の `ConversationData` などとどう対応させるか
+- Unity Editor Import 拡張を別リポジトリで作るか、Unity プロジェクト側に直接置くか
+- `.asset` の直接生成を将来も避けるか、限定条件付きで対応するか
 - `net5.0-windows` 維持を前提に、将来ターゲットフレームワーク移行を再検証するタイミング
 - 画像検査をどの段階で入れるか
 - 画像削除時に元ファイルも削除するか、profile から除外するだけにするか
@@ -361,8 +420,8 @@ Services/
 
 まずは見た目よりも、保存形式と export 結果を固めるのが重要です。
 
-このツールの価値は、画像生成を自動化することより、採用済み素材、生成条件、Unity 取り込み先を失わずに管理することにあります。最初の実装では外部生成した画像を登録する前提で進め、Stable Diffusion 連携や Python 画像検査は後から追加する方が安全です。
+このツールの価値は、画像生成を自動化することより、採用済み素材、生成条件、Unity 取り込み先を失わずに管理することにあります。最初の実装では外部生成した画像を登録する前提で進め、ローカル ComfyUI 連携や Python 画像検査は後から追加する方が安全です。
 
 次に優先するなら、画像サイズ、縦横比、透過の検査を進めるとよいです。
 
-その後に、画像検査、テンプレート管理、Export 後の導線改善を進めるとよいです。現状の MVP は外部生成した画像を登録し、採用状態と prompt 記録を管理し、Unity 向けに出力する用途には使える状態です。
+その後に、画像検査、テンプレート管理、ComfyUI 連携、Export 後の導線改善を進めるとよいです。現状の MVP は外部生成した画像を登録し、採用状態と prompt 記録を管理し、Unity 向けに出力する用途には使える状態です。

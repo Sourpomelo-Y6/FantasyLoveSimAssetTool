@@ -14,9 +14,12 @@ Unity プロジェクト本体とは分けて運用し、生成した成果物�
 
 1. 別リポジトリにキャラクターごとの素材生成プロジェクトを作る
 2. ツール上で `HeroineId`、名前、外見設定、性格、口調、衣装、生成プロンプトを登録する
-3. Stable Diffusion で画像を生成し、用途別に採用画像を選ぶ
+3. Stable Diffusion や ComfyUI などで画像を生成し、用途別に採用画像を選ぶ
 4. 採用画像を Unity 向けのフォルダ構成とファイル名へ整形して export する
 5. Unity 側で `Assets/Images/Heroines/<HeroineId>/...` と `Assets/Resources/Heroines/<HeroineId>/...` に取り込む
+
+画像生成は、外部ツールで生成済みの画像ファイルを登録する運用を基本にする。
+ローカル ComfyUI 連携を追加する場合も、この外部ファイル登録フローは残し、ComfyUI 生成結果を同じ登録処理に渡せるようにする。
 
 ## 管理対象
 
@@ -62,6 +65,35 @@ Assets/Images/Heroines/<HeroineId>/Ending/
 - エンディング本文案
 
 最終的には Unity 側で `ConversationData`、`GameEventData`、`ActionReactionData`、`EndingData` に手動または変換ツールで反映する。
+
+### Unity .asset と会話データ作成方針
+
+Unity の `.asset` は ScriptableObject の保存ファイルであり、Asset Serialization が Force Text の場合は YAML として外部から読み書きできる。
+ただし、`.asset` を外部ツールから直接生成する場合は、`.meta` の GUID、ScriptableObject の型情報、fileID、Assembly 名、Unity バージョン差分を正しく扱う必要がある。
+そのため、このツールから `.asset` を直接出力することは将来拡張としても優先しない。
+
+会話データを作成できるようにする場合は、次の段階的な方式を基本にする。
+
+1. WPF ツール側で会話、イベント、行動反応、エンディング本文を JSON または Markdown として編集、出力する
+2. Unity プロジェクト側に Editor 拡張を用意する
+3. Unity Editor 内で JSON を読み込む
+4. Unity Editor 側で `ConversationData`、`GameEventData`、`ActionReactionData`、`EndingData` の ScriptableObject `.asset` を生成、更新する
+
+この方式なら、`.asset` の GUID や型情報は Unity Editor が管理できる。
+WPF ツール側は、Unity に渡す中間データの作成と整形に集中する。
+
+会話データ export の候補ファイルは次の通り。
+
+```text
+Data/
+  heroine_profile_note.md
+  conversations_export.json
+  game_events_export.json
+  action_reactions_export.json
+  endings_export.json
+```
+
+当面は既存の下書き Markdown を維持し、後の段階で JSON export と Unity Editor Import を追加する。
 
 ## 出力ファイル命名
 
@@ -187,6 +219,64 @@ long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft an
 5. 生成された positive prompt を `PromptRecord` に反映する
 
 この機能により、キャラクターの外見の一貫性を保ちながら、各種スチル用のプロンプトを効率よく作れるようにする。
+
+## ローカル ComfyUI 連携
+
+ローカルで起動している ComfyUI に対して、ツール上で組み立てた prompt を送り、生成された画像を取得して登録できる機能を将来追加する。
+
+この機能は、外部ツールで生成済みの画像ファイルを登録する現行フローを置き換えるものではない。
+ComfyUI が使えない環境、手動で生成した画像、別ツールで生成した画像も、引き続きファイル選択またはドラッグ&ドロップで登録できるようにする。
+
+### 想定する接続先
+
+既定では、ローカル ComfyUI の HTTP API を使う。
+
+```text
+http://127.0.0.1:8188
+```
+
+接続先 URL は環境により変わる可能性があるため、将来は設定画面または設定 JSON で変更できるようにする。
+
+### ComfyUI に渡す情報
+
+ComfyUI 連携では、次の情報を workflow JSON に差し込む。
+
+- positive prompt
+- negative prompt
+- seed
+- 画像サイズ
+- モデル、LoRA、VAE などの workflow 側設定
+- 出力先または出力ノード名
+
+positive prompt は、キャラクター容姿プロンプトとスチル固有プロンプトを合成したものを使う。
+negative prompt は、`PromptRecord.NegativePrompt` または用途別テンプレートから取得する。
+
+### 生成から登録までの流れ
+
+1. スチル作業画面で対象スチルを選ぶ
+2. 合成 positive prompt を確認する
+3. 必要に応じて Prompt 記録へ反映する
+4. workflow JSON に prompt と生成条件を差し込む
+5. ローカル ComfyUI に生成リクエストを送る
+6. 生成完了後、出力画像を取得してツール上でプレビューする
+7. 採用する画像を選び、既存の画像登録処理に渡す
+8. 登録時は既存 `AssetId` の上書き確認を表示する
+
+取得した画像は、外部ファイル登録と同じ保存ルールで `Characters/<HeroineId>/Images/<Usage>/<AssetId>.png` にコピーする。
+これにより、外部ファイル登録、ドラッグ&ドロップ登録、ComfyUI 生成結果登録の保存形式を揃える。
+
+### 記録するメタデータ
+
+ComfyUI で生成した画像については、採用時に次を `PromptRecord` へ記録できるようにする。
+
+- 使用した positive prompt
+- 使用した negative prompt
+- seed
+- workflow JSON または workflow 名
+- ComfyUI の出力ファイル名
+- 採用理由、修正メモ
+
+workflow JSON をそのまま保存するか、workflow 名と差し込み値だけを保存するかは未決とする。
 
 ## スチル作業とスチル一覧
 
@@ -329,7 +419,9 @@ standing character sprite, full body, transparent background
 - 用途を選ぶ
 - プロンプトテンプレートから生成用プロンプトを作る
 - キャラクター容姿プロンプトとスチル用テンプレートを合成する
+- ローカル ComfyUI が使える場合は、合成 prompt を送信して生成画像を取得する
 - 生成結果を登録する
+- 外部ツールで生成済みの画像ファイルも従来通り登録できる
 - 元画像欄へ画像ファイルをドラッグ&ドロップして登録元を指定する
 - 既存 `AssetId` へ登録する場合は上書き確認を表示する
 - 採用・保留・没を管理する
@@ -397,13 +489,16 @@ Assets/Images/Heroines/<HeroineId>/
 
 ## 将来の拡張
 
-- Unity の ScriptableObject を YAML として自動生成する
 - Unity Editor 拡張で export 結果を取り込む
 - JSON から `ConversationData` や `GameEventData` を生成する
+- 会話、イベント、行動反応、エンディング本文の編集画面を追加する
+- WPF ツールから Unity 用の会話データ JSON を export する
 - 画像の解像度、縦横比、透過、余白を自動チェックする
 - 立ち絵の背景透過や表情差分の整合性をチェックする
 - 複数ヒロイン間でプロンプトテンプレートを共有する
 - スチル用途別のデフォルトプロンプトテンプレートを編集、追加、共有する
+- ローカル ComfyUI へ prompt を送信し、生成画像を取得する
+- ComfyUI workflow JSON のテンプレート管理と設定画面を追加する
 - Export 結果フォルダを開く
 - 登録済み画像の差し替え、削除に対応する
 
