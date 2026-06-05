@@ -5,6 +5,7 @@ using Microsoft.Win32;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows.Input;
@@ -362,6 +363,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ExportSelectedProfileCommand { get; }
 
+        public ICommand OpenExportDirectoryCommand { get; }
+
         public MainWindowModel()
         {
             characterProjectService = new CharacterProjectService();
@@ -438,6 +441,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 PrepareImageRegistrationForStill,
                 () => SelectedProfile != null && SelectedStillDefinition != null);
             ExportSelectedProfileCommand = new RelayCommand(ExportSelectedProfile, () => SelectedProfile != null);
+            OpenExportDirectoryCommand = new RelayCommand(OpenExportDirectory);
 
             LoadStillDefinitions();
             LoadProfiles();
@@ -899,6 +903,27 @@ namespace FantasyLoveSimAssetTool.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = $"export に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void OpenExportDirectory()
+        {
+            try
+            {
+                string directory = LastExportReport != null && !string.IsNullOrWhiteSpace(LastExportReport.ExportPath)
+                    ? LastExportReport.ExportPath
+                    : ExportPath;
+
+                Directory.CreateDirectory(directory);
+                Process.Start(new ProcessStartInfo(directory)
+                {
+                    UseShellExecute = true
+                });
+                StatusMessage = $"Export フォルダを開きました: {directory}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Export フォルダを開けませんでした: {ex.Message}";
             }
         }
 

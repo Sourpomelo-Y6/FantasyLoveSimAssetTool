@@ -660,14 +660,21 @@
                                          ItemsSource="{Binding LastExportReport.Warnings}"/>
                             </Grid>
 
-                            <Button Grid.Row="4"
-                                    Grid.Column="1"
-                                    Content="Export 実行"
-                                    Command="{Binding ExportSelectedProfileCommand}"
-                                    Width="140"
-                                    Height="30"
-                                    HorizontalAlignment="Right"
-                                    Margin="0,12,0,0"/>
+                            <StackPanel Grid.Row="4"
+                                        Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Right"
+                                        Margin="0,12,0,0">
+                                <Button Content="出力先を開く"
+                                        Command="{Binding OpenExportDirectoryCommand}"
+                                        Width="120"
+                                        Height="30"
+                                        Margin="0,0,8,0"/>
+                                <Button Content="Export 実行"
+                                        Command="{Binding ExportSelectedProfileCommand}"
+                                        Width="140"
+                                        Height="30"/>
+                            </StackPanel>
                         </Grid>
                     </TabItem>
                 </TabControl>
