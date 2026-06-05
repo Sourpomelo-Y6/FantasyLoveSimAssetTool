@@ -73,12 +73,22 @@ FantasyLoveSimAssetTool/
     PromptRecord.cs
     PromptTemplate.cs
     ExportReport.cs
+    ImageInspectionResult.cs
+    ComfySettings.cs
+    ComfyOutputImage.cs
+    StillDefinition.cs
+    StillWorkItem.cs
   ViewModels/
     MainWindowModel.cs
   Services/
     CharacterProjectService.cs
     PromptRecordService.cs
     PromptTemplateService.cs
+    StillDefinitionService.cs
+    ImageInspectionService.cs
+    ComfySettingsService.cs
+    ComfyWorkflowService.cs
+    ComfyClientService.cs
     ExportService.cs
   Views/
     MainWindow.xaml
@@ -196,6 +206,5 @@ Export/
 - Unity Editor Import 用の会話データ JSON export
 - Unity Editor 側で JSON から ScriptableObject `.asset` を生成する補助
 - Python スクリプト連携による高度な画像検査
-- ローカル ComfyUI へ prompt を送信し、生成画像を取得、登録する機能
-- ComfyUI workflow JSON のテンプレート管理
-- Export 結果フォルダを開く操作
+- ComfyUI 生成中の進捗表示、キャンセル、同時実行制御
+- ComfyUI workflow JSON のテンプレート編集画面

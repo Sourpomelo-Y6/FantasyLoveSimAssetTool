@@ -306,7 +306,7 @@ negative prompt は、`PromptRecord.NegativePrompt` または用途別テンプ�
 
 ### 記録するメタデータ
 
-ComfyUI で生成した画像については、採用時に次を `PromptRecord` へ記録できるようにする。
+ComfyUI で生成した画像については、採用時に次を `PromptRecord` へ記録する。
 
 - 使用した positive prompt
 - 使用した negative prompt
@@ -317,7 +317,7 @@ ComfyUI で生成した画像については、採用時に次を `PromptRecord`
 - ComfyUI の出力ファイル名、subfolder、type
 - 採用理由、修正メモ
 
-workflow JSON をそのまま保存するか、workflow 名と差し込み値だけを保存するかは未決とする。
+現時点では、採用時に送信用 workflow JSON を `PromptRecord.ComfyWorkflowJson` へ保存する。将来、ファイルサイズや可読性が問題になる場合は、workflow template path と差し込み値だけを保存する方式へ見直す。
 
 ## スチル作業とスチル一覧
 
@@ -540,9 +540,8 @@ Assets/Images/Heroines/<HeroineId>/
 - 余白、立ち絵の切れ、表情差分の整合性などの高度な画像検査を追加する
 - 複数ヒロイン間でプロンプトテンプレートを共有する
 - スチル用途別のデフォルトプロンプトテンプレートを編集、追加、共有する
-- ローカル ComfyUI へ prompt を送信し、生成画像を取得する
-- ComfyUI workflow JSON のテンプレート管理と設定画面を追加する
-- Export 結果フォルダを開く
+- ComfyUI 生成中の進捗表示、キャンセル、同時実行制御を追加する
+- ComfyUI workflow JSON のテンプレート編集画面を追加する
 - 登録済み画像の差し替え、削除に対応する
 
 ## 最初に作る最小機能

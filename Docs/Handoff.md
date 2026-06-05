@@ -17,8 +17,8 @@
 - ターゲットフレームワーク: `net5.0-windows`
 - UI: `Views/MainWindow.xaml`
 - ViewModel: `ViewModels/MainWindowModel.cs`
-- モデル: `Models/HeroineProfile.cs`, `Models/HeroineAsset.cs`, `Models/PromptRecord.cs`, `Models/PromptTemplate.cs`, `Models/ExportReport.cs`, `Models/ImageInspectionResult.cs`, `Models/ComfySettings.cs`, `Models/StillDefinition.cs`, `Models/StillWorkItem.cs`
-- サービス: `Services/CharacterProjectService.cs`, `Services/PromptRecordService.cs`, `Services/PromptTemplateService.cs`, `Services/StillDefinitionService.cs`, `Services/ImageInspectionService.cs`, `Services/ComfySettingsService.cs`, `Services/ComfyWorkflowService.cs`, `Services/ExportService.cs`
+- モデル: `Models/HeroineProfile.cs`, `Models/HeroineAsset.cs`, `Models/PromptRecord.cs`, `Models/PromptTemplate.cs`, `Models/ExportReport.cs`, `Models/ImageInspectionResult.cs`, `Models/ComfySettings.cs`, `Models/ComfyOutputImage.cs`, `Models/StillDefinition.cs`, `Models/StillWorkItem.cs`
+- サービス: `Services/CharacterProjectService.cs`, `Services/PromptRecordService.cs`, `Services/PromptTemplateService.cs`, `Services/StillDefinitionService.cs`, `Services/ImageInspectionService.cs`, `Services/ComfySettingsService.cs`, `Services/ComfyWorkflowService.cs`, `Services/ComfyClientService.cs`, `Services/ExportService.cs`
 - 共通基盤: `Common/ObservableObject.cs`, `Common/RelayCommand.cs`
 
 実装済みの機能は次の通りです。
@@ -190,6 +190,13 @@ Models/
 - `InpaintMemo`
 - `AdoptionReason`
 - `RevisionMemo`
+- `ComfyPromptId`
+- `ComfyOutputFileName`
+- `ComfyOutputSubfolder`
+- `ComfyOutputType`
+- `ComfyEndpointUrl`
+- `ComfyWorkflowTemplatePath`
+- `ComfyWorkflowJson`
 
 ### AssetUsage
 
@@ -360,11 +367,19 @@ Services/
 26. Export 結果フォルダを開く操作を追加する
 27. 画像登録欄へのドラッグ&ドロップ入力を追加する
 28. 既存 `AssetId` の画像上書き登録と確認ダイアログを追加する
+29. スチル作業タブから ComfyUI workflow preview を作成する
+30. スチル作業タブから ComfyUI `/prompt` へ送信し、`prompt_id` を表示する
+31. `/history/{prompt_id}` から生成画像ファイル情報を取得する
+32. `/view` から生成画像を取得し、`Temp/ComfyResults/` に一時保存してプレビューする
+33. ComfyUI 生成画像を既存画像登録処理で採用登録する
+34. ComfyUI 生成条件を `PromptRecord` に保存する
+35. キャラクター基本 prompt 変更時にスチル合成 prompt を即時更新し、古い Comfy preview をクリアする
 
 ## 次に進める候補
 
-- スチル一覧タブを開発確認用に残すか、スチル作業タブへ統合するか判断する
 - ComfyUI 生成中の進捗表示、キャンセル、同時実行制御
+- ComfyUI workflow JSON のテンプレート編集画面
+- スチル一覧タブを開発確認用に残すか、スチル作業タブへ統合するか判断する
 - 会話データ作成機能の設計と Unity Editor Import 用 JSON export
 - 画像ファイルの差し替え、削除
 
@@ -451,9 +466,7 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 - `StillWorkItems` を `profile.json` に保存する現方式で十分か、将来は専用 JSON に分離するか
 - スチル状態 `StillStatus` と画像状態 `HeroineAsset.Status` をどの程度連動させるか
 - prompt テンプレートのプレースホルダー名をどう定義するか
-- ComfyUI workflow JSON の実体、seed、画像サイズ、出力ノード名をどうテンプレートへ差し込むか
-- ComfyUI 生成画像を自動登録するか、プレビュー後に手動採用するか
-- ComfyUI の生成履歴、seed、workflow、出力ファイル名を `PromptRecord` にどう記録するか
+- ComfyUI workflow JSON のテンプレートを UI から編集できるようにするか、JSON ファイル編集のままにするか
 - ComfyUI 生成中の進捗表示、キャンセル、同時実行制御をどう扱うか
 - 会話データ JSON のスキーマを Unity 側の `ConversationData` などとどう対応させるか
 - Unity Editor Import 拡張を別リポジトリで作るか、Unity プロジェクト側に直接置くか
@@ -467,6 +480,6 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 
 このツールの価値は、画像生成を自動化することより、採用済み素材、生成条件、Unity 取り込み先を失わずに管理することにあります。最初の実装では外部生成した画像を登録する前提で進め、ローカル ComfyUI 連携や Python 画像検査は後から追加する方が安全です。
 
-次に優先するなら、ComfyUI への prompt 送信、生成結果取得、採用登録の流れを小さく実装するとよいです。
+次に優先するなら、ComfyUI 生成中の進捗表示、キャンセル、同時実行制御を小さく実装するとよいです。
 
-その後に、画像検査、テンプレート管理、ComfyUI 連携、Export 後の導線改善を進めるとよいです。現状の MVP は外部生成した画像を登録し、採用状態と prompt 記録を管理し、Unity 向けに出力する用途には使える状態です。
+その後に、画像検査、テンプレート編集画面、Export 後の導線改善を進めるとよいです。現状の MVP は外部生成した画像または ComfyUI 生成画像を登録し、採用状態と prompt 記録を管理し、Unity 向けに出力する用途には使える状態です。
