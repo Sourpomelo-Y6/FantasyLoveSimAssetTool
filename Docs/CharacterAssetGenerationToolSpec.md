@@ -256,8 +256,7 @@ http://127.0.0.1:8188
 
 ComfyUI 連携設定は `ComfySettings/comfyui.json` で管理する。
 workflow template は `ComfySettings/workflow-template.json` に置く。
-現時点では設定の読み込み、Prompt タブ上での確認、positive / negative prompt を差し込んだ workflow preview 作成、ComfyUI `/prompt` への送信、`prompt_id` 取得、`/history/{prompt_id}` からの出力画像ファイル情報取得、`/view` からの生成画像取得と一時保存、スチル作業タブでのプレビューまでを実装する。
-正式登録は後続タスクとする。
+現時点では設定の読み込み、Prompt タブ上での確認、positive / negative prompt を差し込んだ workflow preview 作成、ComfyUI `/prompt` への送信、`prompt_id` 取得、`/history/{prompt_id}` からの出力画像ファイル情報取得、`/view` からの生成画像取得と一時保存、スチル作業タブでのプレビュー、既存画像登録処理を使った採用登録までを実装する。
 `workflow-template.json` が ComfyUI 画面用 workflow 形式の場合は、既知ノードを `/prompt` 用 API prompt 形式へ変換して送信する。
 `SaveImage.filename_prefix` に `%date:yyyy-MM-dd%` のような日付トークンがある場合は、送信前にツール側で現在日付へ展開する。
 

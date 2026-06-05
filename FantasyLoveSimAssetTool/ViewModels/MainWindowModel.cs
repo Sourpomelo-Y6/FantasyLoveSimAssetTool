@@ -460,6 +460,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (currentComfyPreviewImagePath == value) { return; }
                 currentComfyPreviewImagePath = value;
                 OnPropertyChanged(nameof(CurrentComfyPreviewImagePath));
+                CommandManager.InvalidateRequerySuggested();
             }
         }
 
@@ -556,6 +557,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ICommand CheckStillComfyResultCommand { get; }
 
         public ICommand FetchStillComfyImageCommand { get; }
+
+        public ICommand AdoptStillComfyImageCommand { get; }
 
         public MainWindowModel()
         {
@@ -676,6 +679,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
             FetchStillComfyImageCommand = new RelayCommand(
                 FetchStillComfyImage,
                 () => currentComfyOutputImage != null && !IsComfySubmitting && !IsComfyCheckingResult && !IsComfyFetchingImage);
+            AdoptStillComfyImageCommand = new RelayCommand(
+                AdoptStillComfyImage,
+                () => SelectedProfile != null &&
+                    SelectedStillDefinition != null &&
+                    !string.IsNullOrWhiteSpace(CurrentComfyPreviewImagePath) &&
+                    File.Exists(CurrentComfyPreviewImagePath));
 
             ReloadComfySettings();
             LoadStillDefinitions();
@@ -881,6 +890,26 @@ namespace FantasyLoveSimAssetTool.ViewModels
             CurrentComfyPreviewImagePath = string.Empty;
             CurrentComfyPreviewImageMessage = "Comfy 生成画像は未取得です。";
             CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void AdoptStillComfyImage()
+        {
+            if (SelectedProfile == null || SelectedStillDefinition == null)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(CurrentComfyPreviewImagePath) || !File.Exists(CurrentComfyPreviewImagePath))
+            {
+                StatusMessage = "採用できる Comfy 生成画像がありません。先に画像取得を行ってください。";
+                return;
+            }
+
+            ImageSourcePathInput = CurrentComfyPreviewImagePath;
+            AssetIdInput = SelectedStillDefinition.AssetId;
+            SelectedAssetUsage = SelectedStillDefinition.Usage;
+            SelectedAssetStatus = AssetStatus.Accepted;
+            AddImageAsset();
         }
 
         private PromptRecord CreateStillPromptRecord()
