@@ -445,6 +445,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand BuildComfyWorkflowPreviewCommand { get; }
 
+        public ICommand BuildStillComfyWorkflowPreviewCommand { get; }
+
         public MainWindowModel()
         {
             characterProjectService = new CharacterProjectService();
@@ -543,6 +545,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             BuildComfyWorkflowPreviewCommand = new RelayCommand(
                 BuildComfyWorkflowPreview,
                 () => CurrentPromptRecord != null);
+            BuildStillComfyWorkflowPreviewCommand = new RelayCommand(
+                BuildStillComfyWorkflowPreview,
+                () => SelectedProfile != null && SelectedStillDefinition != null);
 
             ReloadComfySettings();
             LoadStillDefinitions();
@@ -607,6 +612,27 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 CurrentComfyWorkflowPreview = string.Empty;
                 StatusMessage = $"ComfyUI workflow preview 作成に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void BuildStillComfyWorkflowPreview()
+        {
+            if (SelectedProfile == null || SelectedStillDefinition == null)
+            {
+                return;
+            }
+
+            try
+            {
+                PromptRecord promptRecord = CurrentPromptRecord ?? new PromptRecord();
+                promptRecord.PositivePrompt = BuildStillPositivePrompt(SelectedProfile, SelectedStillDefinition);
+                CurrentComfyWorkflowPreview = comfyWorkflowService.BuildWorkflowPreview(ComfySettings, promptRecord);
+                StatusMessage = $"{SelectedStillDefinition.DisplayName} の ComfyUI workflow preview を作成しました。";
+            }
+            catch (Exception ex)
+            {
+                CurrentComfyWorkflowPreview = string.Empty;
+                StatusMessage = $"スチル ComfyUI workflow preview 作成に失敗しました: {ex.Message}";
             }
         }
 

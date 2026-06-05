@@ -400,6 +400,7 @@ workflow JSON をそのまま保存するか、workflow 名と差し込み値だ
 
 - `Prompt に反映`: 選択スチルの合成 positive prompt を `PromptRecord.PositivePrompt` に反映する
 - `画像登録欄に反映`: 選択スチルの `AssetId`、用途、初期状態を画像登録欄に反映する
+- `Comfy 作成`: 選択スチルの合成 positive prompt から ComfyUI workflow preview を作成する
 - `スチル保存`: 選択キャラクターの `profile.json` に `StillWorkItems` を保存する
 
 画像登録は、外部ツールで生成した画像を選んでアプリに登録する操作として扱う。スチル作業画面は、登録するべき `AssetId` と用途を間違えないための導線を提供する。
@@ -472,6 +473,7 @@ standing character sprite, full body, transparent background
 - 登録済み画像をプレビューする
 - `Prompt に反映` で prompt 記録へ反映する
 - `画像登録欄に反映` で画像登録タブへ登録情報を渡す
+- `Comfy 作成` で選択スチルの合成 prompt から workflow preview を作る
 
 ### スチル一覧画面
 
