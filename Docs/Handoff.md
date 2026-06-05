@@ -31,6 +31,7 @@
 - 画像登録欄へのドラッグ&ドロップ入力
 - 既存 `AssetId` への画像上書き登録と確認ダイアログ
 - 登録済み画像のプレビュー
+- 登録済み画像の Status フィルタ
 - 画像登録時の解像度、縦横比、透過 PNG 検査
 - 登録済み画像の `Accepted`, `Pending`, `Rejected` 変更と保存
 - prompt 記録保存、読み込み
@@ -48,6 +49,7 @@
 - `heroine_profile_note.md` と下書き Markdown の出力
 - Export report による件数、警告表示
 - Export 時の Accepted 画像検査と警告表示
+- Export タブで Accepted 画像だけを対象一覧に表示
 - Export 結果フォルダをアプリから開く操作
 
 ## 開発時の注意
@@ -325,7 +327,6 @@ Services/
 - スチル一覧タブを開発確認用に残すか、スチル作業タブへ統合するか判断する
 - ローカル ComfyUI 連携の設計、設定項目、workflow JSON テンプレート化
 - 会話データ作成機能の設計と Unity Editor Import 用 JSON export
-- Accepted 画像だけを一覧上で絞り込む機能
 - 画像ファイルの差し替え、削除
 
 ## ローカル ComfyUI 連携案
@@ -392,12 +393,14 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 - Export report に件数と警告が出る
 - Export タブから出力先フォルダを開ける
 - 登録済み画像を選ぶとプレビューが表示される
+- 画像タブで `All`, `Accepted`, `Pending`, `Rejected` の Status フィルタが効く
 - 登録済み画像の Status を変更して `profile.json` に保存できる
 - 画像ファイルを元画像欄へドラッグ&ドロップできる
 - 既存 `AssetId` の画像登録時に上書き確認が表示される
 - 上書き承認時に既存画像と `HeroineAsset` が更新される
 - 画像登録後に解像度、形式、透過の検査結果が表示される
 - Export 時に Accepted 画像の検査警告が `ExportReport.Warnings` に追加される
+- Export タブの対象一覧には Accepted 画像だけが表示される
 - Export 結果が `Docs/CharacterAssetGenerationToolSpec.md` の構成と一致する
 - `heroine_profile_note.md` に Unity 側で必要な参照情報が入る
 

@@ -27,6 +27,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string imageSourcePathInput;
         private AssetUsage selectedAssetUsage;
         private AssetStatus selectedAssetStatus;
+        private string selectedAssetStatusFilter;
         private HeroineAsset selectedAsset;
         private PromptTemplate selectedPromptTemplate;
         private StillDefinition selectedStillDefinition;
@@ -48,6 +49,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<AssetUsage> AssetUsages { get; }
 
         public ObservableCollection<AssetStatus> AssetStatuses { get; }
+
+        public ObservableCollection<string> AssetStatusFilters { get; }
+
+        public ObservableCollection<HeroineAsset> FilteredAssets { get; }
+
+        public ObservableCollection<HeroineAsset> AcceptedAssets { get; }
 
         public ObservableCollection<PromptTemplate> AvailablePromptTemplates { get; }
 
@@ -148,6 +155,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public string SelectedAssetStatusFilter
+        {
+            get { return selectedAssetStatusFilter; }
+            set
+            {
+                if (selectedAssetStatusFilter == value) { return; }
+                selectedAssetStatusFilter = value;
+                OnPropertyChanged(nameof(SelectedAssetStatusFilter));
+                RefreshFilteredAssets();
+            }
+        }
+
         public HeroineAsset SelectedAsset
         {
             get { return selectedAsset; }
@@ -234,11 +253,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 OnPropertyChanged(nameof(SelectedProfile));
                 OnPropertyChanged(nameof(StillPromptPreview));
                 LoadStillDefinitions();
-                SelectedAsset = null;
-                if (selectedProfile != null && selectedProfile.Assets.Count > 0)
-                {
-                    SelectedAsset = selectedProfile.Assets[0];
-                }
+                RefreshFilteredAssets();
+                RefreshAcceptedAssets();
                 RefreshSelectedStillStatus();
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -376,9 +392,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
             imageInspectionService = new ImageInspectionService();
             exportService = new ExportService(characterProjectService, imageInspectionService);
             Profiles = new ObservableCollection<HeroineProfile>();
+            FilteredAssets = new ObservableCollection<HeroineAsset>();
+            AcceptedAssets = new ObservableCollection<HeroineAsset>();
             AvailablePromptTemplates = new ObservableCollection<PromptTemplate>();
             StillDefinitions = new ObservableCollection<StillDefinition>();
             FilteredStillDefinitions = new ObservableCollection<StillDefinition>();
+            AssetStatusFilters = new ObservableCollection<string>
+            {
+                "All",
+                AssetStatus.Accepted.ToString(),
+                AssetStatus.Pending.ToString(),
+                AssetStatus.Rejected.ToString()
+            };
             StillUsageFilters = new ObservableCollection<string>
             {
                 "All",
@@ -414,6 +439,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             imageSourcePathInput = string.Empty;
             selectedAssetUsage = AssetUsage.Sprites;
             selectedAssetStatus = AssetStatus.Accepted;
+            selectedAssetStatusFilter = "All";
             selectedStillUsageFilter = "All";
             lastExportReport = new ExportReport();
             selectedAssetImagePath = string.Empty;
@@ -566,6 +592,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     SelectedAssetStatus,
                     overwriteExisting);
 
+                SelectedAssetStatusFilter = asset.Status.ToString();
+                RefreshFilteredAssets();
+                RefreshAcceptedAssets();
                 SelectedAsset = asset;
                 RefreshSelectedStillStatus();
                 string registrationMessage = overwriteExisting
@@ -674,6 +703,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             try
             {
                 characterProjectService.SaveProfile(SelectedProfile);
+                RefreshFilteredAssets();
+                RefreshAcceptedAssets();
                 RefreshSelectedStillStatus();
                 StatusMessage = $"{SelectedProfile.HeroineId} の画像情報を保存しました。";
             }
@@ -733,6 +764,58 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             ApplyStillWorkItemsToDefinitions();
             RefreshFilteredStillDefinitions();
+        }
+
+        private void RefreshFilteredAssets()
+        {
+            HeroineAsset previousSelection = SelectedAsset;
+            FilteredAssets.Clear();
+
+            if (SelectedProfile != null && SelectedProfile.Assets != null)
+            {
+                foreach (HeroineAsset asset in SelectedProfile.Assets.Where(MatchesAssetStatusFilter))
+                {
+                    FilteredAssets.Add(asset);
+                }
+            }
+
+            if (previousSelection != null && FilteredAssets.Contains(previousSelection))
+            {
+                SelectedAsset = previousSelection;
+                return;
+            }
+
+            SelectedAsset = FilteredAssets.Count > 0 ? FilteredAssets[0] : null;
+        }
+
+        private void RefreshAcceptedAssets()
+        {
+            AcceptedAssets.Clear();
+
+            if (SelectedProfile == null || SelectedProfile.Assets == null)
+            {
+                return;
+            }
+
+            foreach (HeroineAsset asset in SelectedProfile.Assets.Where(asset => asset.Status == AssetStatus.Accepted))
+            {
+                AcceptedAssets.Add(asset);
+            }
+        }
+
+        private bool MatchesAssetStatusFilter(HeroineAsset asset)
+        {
+            if (asset == null)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(SelectedAssetStatusFilter) || SelectedAssetStatusFilter == "All")
+            {
+                return true;
+            }
+
+            return asset.Status.ToString() == SelectedAssetStatusFilter;
         }
 
         private void ApplyStillWorkItemsToDefinitions()
@@ -872,6 +955,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 characterProjectService.SaveProfile(SelectedProfile);
                 AssetIdInput = asset.AssetId;
                 SelectedAssetUsage = asset.Usage;
+                SelectedAssetStatusFilter = asset.Status.ToString();
+                RefreshFilteredAssets();
+                RefreshAcceptedAssets();
+                SelectedAsset = asset;
                 RefreshSelectedStillStatus();
                 StatusMessage = $"{SelectedStillDefinition.DisplayName} の positive prompt を Prompt タブに反映しました。";
             }

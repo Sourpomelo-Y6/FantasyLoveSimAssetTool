@@ -182,12 +182,25 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="登録済み画像" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                <Grid Grid.Row="0" Grid.Column="0" Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="130"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="登録済み画像" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="Status" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <ComboBox Grid.Column="2"
+                                              ItemsSource="{Binding AssetStatusFilters}"
+                                              SelectedItem="{Binding SelectedAssetStatusFilter}"
+                                              Height="24"/>
+                                </Grid>
                                 <TextBlock Grid.Row="0" Grid.Column="2" Text="プレビュー" FontWeight="SemiBold" Margin="0,0,0,8"/>
 
                                 <DataGrid Grid.Row="1"
                                           Grid.Column="0"
-                                          ItemsSource="{Binding SelectedProfile.Assets}"
+                                          ItemsSource="{Binding FilteredAssets}"
                                           SelectedItem="{Binding SelectedAsset}"
                                           AutoGenerateColumns="False"
                                           CanUserAddRows="False"
@@ -643,12 +656,12 @@
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Export 対象" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Export 対象 (Accepted のみ)" FontWeight="SemiBold" Margin="0,0,0,8"/>
                                 <TextBlock Grid.Row="0" Grid.Column="2" Text="警告" FontWeight="SemiBold" Margin="0,0,0,8"/>
 
                                 <DataGrid Grid.Row="1"
                                           Grid.Column="0"
-                                          ItemsSource="{Binding SelectedProfile.Assets}"
+                                          ItemsSource="{Binding AcceptedAssets}"
                                           AutoGenerateColumns="False"
                                           CanUserAddRows="False"
                                           IsReadOnly="True">
