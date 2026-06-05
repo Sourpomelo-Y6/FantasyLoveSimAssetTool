@@ -47,6 +47,7 @@
 - スチル作業タブでの用途フィルタ、状態表示、画像プレビュー
 - スチル固有 prompt、合成 positive prompt、現在の negative prompt のプレビュー
 - スチル作業タブ内での positive / negative prompt を使った ComfyUI workflow preview 作成と表示
+- キャラクター基本 prompt 変更時のスチル合成 prompt 即時更新と古い Comfy preview のクリア
 - スチルから `PromptRecord.PositivePrompt` への反映
 - スチルから画像登録欄への `AssetId`、用途、状態の反映
 - スチルごとの画像登録状況、prompt 保存状況、AssetStatus 表示

@@ -287,13 +287,19 @@ namespace FantasyLoveSimAssetTool.ViewModels
             set
             {
                 if (selectedProfile == value) { return; }
+                if (selectedProfile != null)
+                {
+                    selectedProfile.PropertyChanged -= SelectedProfilePropertyChanged;
+                }
+
                 selectedProfile = value;
+                if (selectedProfile != null)
+                {
+                    selectedProfile.PropertyChanged += SelectedProfilePropertyChanged;
+                }
+
                 OnPropertyChanged(nameof(SelectedProfile));
-                OnPropertyChanged(nameof(StillPromptPreview));
-                CurrentComfyWorkflowPreview = string.Empty;
-                CurrentComfyPromptId = string.Empty;
-                CurrentComfyResultSummary = string.Empty;
-                ClearComfyPreviewImage();
+                RefreshStillPromptAfterProfilePromptChanged();
                 LoadStillDefinitions();
                 RefreshFilteredAssets();
                 RefreshAcceptedAssets();
@@ -900,6 +906,23 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        private void SelectedProfilePropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(HeroineProfile.AppearancePrompt))
+            {
+                RefreshStillPromptAfterProfilePromptChanged();
+            }
+        }
+
+        private void RefreshStillPromptAfterProfilePromptChanged()
+        {
+            OnPropertyChanged(nameof(StillPromptPreview));
+            CurrentComfyWorkflowPreview = string.Empty;
+            CurrentComfyPromptId = string.Empty;
+            CurrentComfyResultSummary = string.Empty;
+            ClearComfyPreviewImage();
+        }
+
         private void BrowseImage()
         {
             OpenFileDialog dialog = new OpenFileDialog
@@ -1469,6 +1492,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             try
             {
                 characterProjectService.SaveProfile(SelectedProfile);
+                RefreshStillPromptAfterProfilePromptChanged();
                 RefreshSelectedStillStatus();
                 StatusMessage = $"{SelectedProfile.HeroineId} を保存しました。";
             }

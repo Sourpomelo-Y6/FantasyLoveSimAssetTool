@@ -1,9 +1,12 @@
+using FantasyLoveSimAssetTool.Common;
 using System.Collections.ObjectModel;
 
 namespace FantasyLoveSimAssetTool.Models
 {
-    public class HeroineProfile
+    public class HeroineProfile : ObservableObject
     {
+        private string appearancePrompt;
+
         public string HeroineId { get; set; }
 
         public string DisplayName { get; set; }
@@ -24,7 +27,16 @@ namespace FantasyLoveSimAssetTool.Models
 
         public string Dislikes { get; set; }
 
-        public string AppearancePrompt { get; set; }
+        public string AppearancePrompt
+        {
+            get { return appearancePrompt; }
+            set
+            {
+                if (appearancePrompt == value) { return; }
+                appearancePrompt = value;
+                OnPropertyChanged(nameof(AppearancePrompt));
+            }
+        }
 
         public string ActionReactionPolicy { get; set; }
 
@@ -46,7 +58,7 @@ namespace FantasyLoveSimAssetTool.Models
             SecondPerson = string.Empty;
             Likes = string.Empty;
             Dislikes = string.Empty;
-            AppearancePrompt = string.Empty;
+            appearancePrompt = string.Empty;
             ActionReactionPolicy = string.Empty;
             EndingPolicy = string.Empty;
             Assets = new ObservableCollection<HeroineAsset>();
