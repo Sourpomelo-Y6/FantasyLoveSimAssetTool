@@ -239,6 +239,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 ApplySelectedStillWorkItem();
                 OnPropertyChanged(nameof(SelectedStillDefinition));
                 OnPropertyChanged(nameof(StillPromptPreview));
+                CurrentComfyWorkflowPreview = string.Empty;
                 RefreshSelectedStillStatus();
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -277,6 +278,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 selectedProfile = value;
                 OnPropertyChanged(nameof(SelectedProfile));
                 OnPropertyChanged(nameof(StillPromptPreview));
+                CurrentComfyWorkflowPreview = string.Empty;
                 LoadStillDefinitions();
                 RefreshFilteredAssets();
                 RefreshAcceptedAssets();
@@ -641,6 +643,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             if (e.PropertyName == nameof(StillDefinition.SpecificPrompt))
             {
                 OnPropertyChanged(nameof(StillPromptPreview));
+                CurrentComfyWorkflowPreview = string.Empty;
                 UpdateStillWorkItemFromDefinition();
             }
             else if (e.PropertyName == nameof(StillDefinition.Status))

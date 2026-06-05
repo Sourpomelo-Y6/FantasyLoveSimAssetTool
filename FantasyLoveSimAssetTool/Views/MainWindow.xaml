@@ -350,6 +350,7 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="120"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
                                     <Grid.ColumnDefinitions>
@@ -388,11 +389,23 @@
                                              IsReadOnly="True"
                                              AcceptsReturn="True"
                                              TextWrapping="Wrap"
+                                             VerticalScrollBarVisibility="Auto"
+                                             Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="workflow preview" VerticalAlignment="Top" Margin="0,4,8,0"/>
+                                    <TextBox Grid.Row="5"
+                                             Grid.Column="1"
+                                             Text="{Binding CurrentComfyWorkflowPreview, Mode=OneWay}"
+                                             IsReadOnly="True"
+                                             AcceptsReturn="True"
+                                             FontFamily="Consolas"
+                                             FontSize="12"
+                                             HorizontalScrollBarVisibility="Auto"
                                              VerticalScrollBarVisibility="Auto"/>
 
                                     <Border Grid.Row="0"
                                             Grid.Column="3"
-                                            Grid.RowSpan="5"
+                                            Grid.RowSpan="6"
                                             BorderBrush="#DDDDDD"
                                             BorderThickness="1"
                                             Padding="8">
