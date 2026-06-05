@@ -266,6 +266,7 @@ Services/
 ### PromptTemplateService
 
 - `PromptTemplates/templates.json` からスチル用途別 prompt テンプレートを読み込む
+- `templates.json` はビルド時に実行出力フォルダへコピーされる
 - JSON がない、空、不正な場合はコード内のデフォルトテンプレートへ fallback する
 - キャラクター容姿プロンプトとテンプレートの合成
 - 合成結果を `PromptRecord.PositivePrompt` に反映
@@ -273,11 +274,13 @@ Services/
 ### ComfySettingsService
 
 - `ComfySettings/comfyui.json` から ComfyUI 接続設定を読み込む
+- `comfyui.json` はビルド時に実行出力フォルダへコピーされる
 - JSON がない、空、不正な場合は `http://127.0.0.1:8188` などのデフォルト設定へ fallback する
 
 ### ComfyWorkflowService
 
 - `ComfySettings/workflow-template.json` を読み込む
+- `workflow-template.json` はビルド時に実行出力フォルダへコピーされる
 - `PromptRecord.PositivePrompt` と `PromptRecord.NegativePrompt` を workflow template の placeholder に差し込む
 - 現時点では preview 作成までで、ComfyUI への HTTP 送信は未実装
 

@@ -11,4 +11,16 @@
     <Folder Include="Models\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\PromptTemplates\templates.json" Link="PromptTemplates\templates.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ComfySettings\comfyui.json" Link="ComfySettings\comfyui.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\ComfySettings\workflow-template.json" Link="ComfySettings\workflow-template.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

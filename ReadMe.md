@@ -84,6 +84,9 @@ Docs/
   Handoff.md
 ```
 
+`PromptTemplates/` と `ComfySettings/` の JSON は、ビルド時に実行出力フォルダへコピーされます。
+Visual Studio から起動した場合も、アプリは出力先の JSON を読み込みます。
+
 ## 開発環境
 
 - Windows
