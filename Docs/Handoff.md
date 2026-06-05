@@ -289,6 +289,7 @@ Services/
 - `nodes` / `links` を持つ ComfyUI 画面用 workflow は、既知ノードを `/prompt` 用 API prompt 形式へ変換する
 - 現時点の変換対象は `CheckpointLoaderSimple`、`CLIPTextEncode`、`EmptyLatentImage`、`KSamplerAdvanced`、`VAEDecode`、`SaveImage`、`PrimitiveInt`
 - `PrimitiveInt` から `noise_seed` などの seed 入力へ負の値が渡る場合は、ComfyUI API の validation に合わせて非負のランダム seed に変換する
+- `SaveImage.filename_prefix` の `%date:<format>%` は、ComfyUI API 側では展開されない場合があるため、送信前にツール側で現在日付へ展開する
 
 ### ComfyClientService
 

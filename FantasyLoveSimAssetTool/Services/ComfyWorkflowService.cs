@@ -1,14 +1,20 @@
 using FantasyLoveSimAssetTool.Models;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace FantasyLoveSimAssetTool.Services
 {
     public class ComfyWorkflowService
     {
+        private static readonly Regex DateTokenPattern = new Regex(
+            "%date:([^%]+)%",
+            RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
         private readonly string workspaceRoot;
 
         public ComfyWorkflowService()
@@ -248,7 +254,26 @@ namespace FantasyLoveSimAssetTool.Services
                 return;
             }
 
-            inputs[inputName] = GetWidgetValue(nodeElement, widgetIndex);
+            object widgetValue = GetWidgetValue(nodeElement, widgetIndex);
+            if (inputName == "filename_prefix" && widgetValue is string filenamePrefix)
+            {
+                widgetValue = ExpandDateTokens(filenamePrefix);
+            }
+
+            inputs[inputName] = widgetValue;
+        }
+
+        private static string ExpandDateTokens(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+
+            DateTime now = DateTime.Now;
+            return DateTokenPattern.Replace(
+                value,
+                match => now.ToString(match.Groups[1].Value, CultureInfo.InvariantCulture));
         }
 
         private static object GetWidgetValue(JsonElement nodeElement, int widgetIndex)

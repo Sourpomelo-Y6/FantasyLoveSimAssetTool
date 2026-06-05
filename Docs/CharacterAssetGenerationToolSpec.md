@@ -259,6 +259,7 @@ workflow template は `ComfySettings/workflow-template.json` に置く。
 現時点では設定の読み込み、Prompt タブ上での確認、positive / negative prompt を差し込んだ workflow preview 作成、ComfyUI `/prompt` への送信、`prompt_id` 取得までを実装する。
 生成進捗取得、画像取得、登録は後続タスクとする。
 `workflow-template.json` が ComfyUI 画面用 workflow 形式の場合は、既知ノードを `/prompt` 用 API prompt 形式へ変換して送信する。
+`SaveImage.filename_prefix` に `%date:yyyy-MM-dd%` のような日付トークンがある場合は、送信前にツール側で現在日付へ展開する。
 
 ```json
 {
@@ -287,6 +288,7 @@ positive prompt は、キャラクター容姿プロンプトとスチル固有�
 negative prompt は、`PromptRecord.NegativePrompt` または用途別テンプレートから取得する。
 画面用 workflow から API prompt へ変換する場合、`CheckpointLoaderSimple`、`CLIPTextEncode`、`EmptyLatentImage`、`KSamplerAdvanced`、`VAEDecode`、`SaveImage`、`PrimitiveInt` を当面の対象にする。
 `PrimitiveInt` から `noise_seed` などの seed 入力へ負の値が渡る場合は、ComfyUI API の validation に合わせて非負のランダム seed に変換する。
+`SaveImage.filename_prefix` の `%date:<format>%` は、ComfyUI API 側では展開されない場合があるため、`DateTime.Now.ToString(<format>, InvariantCulture)` で送信前に展開する。
 
 ### 生成から登録までの流れ
 
