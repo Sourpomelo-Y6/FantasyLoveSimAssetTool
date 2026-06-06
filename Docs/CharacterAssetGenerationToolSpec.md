@@ -380,12 +380,14 @@ ComfyUI で生成した画像については、採用時に次を `PromptRecord`
 スチル定義のうち、仕様として固定される `AssetId`、用途、表示名、出力ファイル名は `StillDefinitionService` の固定定義から生成する。
 
 キャラクターごとに変わる `SpecificPrompt` と `Status` は、`HeroineProfile.StillWorkItems` として `profile.json` に保存する。これにより、アプリ再起動やキャラクター再読み込み後も、スチルごとの作業状態と追加 prompt を復元できる。
+将来はスチルごとに negative prompt を上書きできるようにする。通常は `PromptRecord.NegativePrompt` を共通 negative prompt として使い、スチル固有の避けたい要素がある場合だけ `StillWorkItem.NegativePromptOverride` などで上書きする。
 
 `StillWorkItems` は次の項目を持つ。
 
 - `AssetId`
 - `Status`
 - `SpecificPrompt`
+- 将来追加候補: `NegativePromptOverride`
 
 ### スチル作業画面
 
@@ -406,6 +408,7 @@ ComfyUI で生成した画像については、採用時に次を `PromptRecord`
 - 出力ファイル名
 - スチル固有の追加 prompt
 - キャラクター容姿 prompt と追加 prompt を合成した positive prompt
+- 現在の共通 negative prompt。将来はスチル単位の negative prompt override も表示、編集できるようにする
 - 画像登録状況: 未登録 / 登録済み / ファイルなし
 - prompt 保存状況: 未保存 / 保存済み
 - `HeroineAsset.AssetStatus`
@@ -415,7 +418,7 @@ ComfyUI で生成した画像については、採用時に次を `PromptRecord`
 
 - `Prompt に反映`: 選択スチルの合成 positive prompt を `PromptRecord.PositivePrompt` に反映する
 - `画像登録欄に反映`: 選択スチルの `AssetId`、用途、初期状態を画像登録欄に反映する
-- `Comfy 作成`: 選択スチルの合成 positive prompt と現在の negative prompt から ComfyUI workflow preview を作成し、スチル作業画面内に表示する
+- `Comfy 作成`: 選択スチルの合成 positive prompt と現在の negative prompt から ComfyUI workflow preview を作成し、スチル作業画面内に表示する。将来、スチル固有 negative prompt が設定されている場合はそれを優先する
 - `スチル保存`: 選択キャラクターの `profile.json` に `StillWorkItems` を保存する
 
 画像登録は、外部ツールで生成した画像を選んでアプリに登録する操作として扱う。スチル作業画面は、登録するべき `AssetId` と用途を間違えないための導線を提供する。
@@ -474,6 +477,8 @@ standing character sprite, full body, transparent background
 - 外部ツールで生成済みの画像ファイルも従来通り登録できる
 - 元画像欄へ画像ファイルをドラッグ&ドロップして登録元を指定する
 - 既存 `AssetId` へ登録する場合は上書き確認を表示する
+- 登録解除では `profile.json` の `HeroineAsset` から外すだけにする。画像ファイル本体と prompt JSON は削除しない
+- 登録解除後に同じ `AssetId` で再登録し、保存先画像ファイルが残っている場合は、残存画像ファイルの上書き確認を表示してから登録する
 - 採用・保留・没を管理する
 - 登録済み画像をプレビューする
 - 登録後に採用・保留・没を切り替えられる
@@ -548,7 +553,8 @@ Assets/Images/Heroines/<HeroineId>/
 - 複数ヒロイン間でプロンプトテンプレートを共有する
 - スチル用途別のデフォルトプロンプトテンプレートを編集、追加、共有する
 - ComfyUI 生成中のより詳細な進捗表示を追加する
-- 登録済み画像の差し替え、削除に対応する
+- 登録済み画像の差し替えに対応する
+- 画像ファイル本体の削除操作を確認付きで追加するか判断する。現状の登録解除ではファイル本体を削除しない
 
 ## 最初に作る最小機能
 

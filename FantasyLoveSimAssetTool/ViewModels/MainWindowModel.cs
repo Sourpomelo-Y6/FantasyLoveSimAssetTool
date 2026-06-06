@@ -581,6 +581,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand AddImageAssetCommand { get; }
 
+        public ICommand UnregisterImageAssetCommand { get; }
+
         public ICommand SaveImageAssetsCommand { get; }
 
         public ICommand SavePromptRecordCommand { get; }
@@ -712,6 +714,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RefreshProfilesCommand = new RelayCommand(LoadProfiles);
             BrowseImageCommand = new RelayCommand(BrowseImage);
             AddImageAssetCommand = new RelayCommand(AddImageAsset, () => SelectedProfile != null);
+            UnregisterImageAssetCommand = new RelayCommand(
+                UnregisterImageAsset,
+                () => SelectedProfile != null && SelectedAsset != null);
             SaveImageAssetsCommand = new RelayCommand(SaveImageAssets, () => SelectedProfile != null);
             SavePromptRecordCommand = new RelayCommand(
                 SavePromptRecord,
@@ -1415,10 +1420,54 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        private void UnregisterImageAsset()
+        {
+            if (SelectedProfile == null || SelectedAsset == null)
+            {
+                return;
+            }
+
+            HeroineAsset asset = SelectedAsset;
+            MessageBoxResult result = MessageBox.Show(
+                $"AssetId '{asset.AssetId}' の登録を解除しますか？\n画像ファイルと prompt JSON は削除されません。",
+                "画像登録解除の確認",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result != MessageBoxResult.Yes)
+            {
+                StatusMessage = "画像登録解除をキャンセルしました。";
+                return;
+            }
+
+            try
+            {
+                string storedPath = asset.StoredPath;
+                string promptPath = asset.PromptRecordPath;
+                bool unregistered = characterProjectService.UnregisterImageAsset(SelectedProfile, asset);
+                if (!unregistered)
+                {
+                    StatusMessage = $"{asset.AssetId} は登録済み画像一覧に見つかりませんでした。";
+                    return;
+                }
+
+                RefreshFilteredAssets();
+                RefreshAcceptedAssets();
+                RefreshSelectedStillStatus();
+                StatusMessage = $"{asset.AssetId} の登録を解除しました。画像ファイルと prompt JSON は残しています。画像: {storedPath} / prompt: {promptPath}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"画像登録解除に失敗しました: {ex.Message}";
+            }
+        }
+
         private HeroineAsset AddImageAssetCore()
         {
-            bool overwriteExisting = ShouldOverwriteExistingAsset();
-            if (overwriteExisting == false && HasExistingAssetId())
+            bool hasExistingAssetId = HasExistingAssetId();
+            bool hasExistingStoredFile = HasExistingStoredImageFile();
+            bool overwriteExisting = ShouldOverwriteExistingAsset(hasExistingAssetId, hasExistingStoredFile);
+            if (overwriteExisting == false && (hasExistingAssetId || hasExistingStoredFile))
             {
                 StatusMessage = "画像登録をキャンセルしました。";
                 return null;
@@ -1455,16 +1504,45 @@ namespace FantasyLoveSimAssetTool.ViewModels
             return SelectedProfile.Assets.Any(asset => asset.AssetId == assetId);
         }
 
-        private bool ShouldOverwriteExistingAsset()
+        private bool HasExistingStoredImageFile()
         {
-            if (!HasExistingAssetId())
+            string storedImagePath = BuildStoredImagePathForInput();
+            return !string.IsNullOrWhiteSpace(storedImagePath) && File.Exists(storedImagePath);
+        }
+
+        private string BuildStoredImagePathForInput()
+        {
+            if (SelectedProfile == null || string.IsNullOrWhiteSpace(AssetIdInput))
+            {
+                return string.Empty;
+            }
+
+            string extension = Path.GetExtension(ImageSourcePathInput);
+            if (string.IsNullOrWhiteSpace(extension))
+            {
+                extension = ".png";
+            }
+
+            string fileName = AssetIdInput.Trim() + extension;
+            return Path.Combine(
+                characterProjectService.GetImageUsageDirectory(SelectedProfile.HeroineId, SelectedAssetUsage),
+                fileName);
+        }
+
+        private bool ShouldOverwriteExistingAsset(bool hasExistingAssetId, bool hasExistingStoredFile)
+        {
+            if (!hasExistingAssetId && !hasExistingStoredFile)
             {
                 return false;
             }
 
+            string message = hasExistingAssetId
+                ? $"AssetId '{AssetIdInput.Trim()}' はすでに登録されています。画像と登録情報を上書きしますか？"
+                : $"AssetId '{AssetIdInput.Trim()}' の登録はありませんが、保存先画像ファイルが残っています。\n残っている画像ファイルを上書きして登録しますか？";
+
             MessageBoxResult result = MessageBox.Show(
-                $"AssetId '{AssetIdInput.Trim()}' はすでに登録されています。画像と登録情報を上書きしますか？",
-                "画像登録の上書き確認",
+                message,
+                hasExistingAssetId ? "画像登録の上書き確認" : "残存画像ファイルの上書き確認",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
 

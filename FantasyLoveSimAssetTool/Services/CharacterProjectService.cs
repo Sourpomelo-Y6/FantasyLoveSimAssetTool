@@ -158,6 +158,32 @@ namespace FantasyLoveSimAssetTool.Services
             return assetRecord;
         }
 
+        public bool UnregisterImageAsset(HeroineProfile profile, HeroineAsset asset)
+        {
+            if (profile == null)
+            {
+                throw new ArgumentNullException(nameof(profile));
+            }
+
+            if (asset == null)
+            {
+                throw new ArgumentNullException(nameof(asset));
+            }
+
+            ValidateHeroineId(profile.HeroineId);
+            profile.Assets ??= new ObservableCollection<HeroineAsset>();
+
+            HeroineAsset existingAsset = profile.Assets.FirstOrDefault(item => item.AssetId == asset.AssetId);
+            if (existingAsset == null)
+            {
+                return false;
+            }
+
+            profile.Assets.Remove(existingAsset);
+            SaveProfile(profile);
+            return true;
+        }
+
         public HeroineProfile LoadProfile(string heroineId)
         {
             ValidateHeroineId(heroineId);
