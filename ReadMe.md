@@ -20,6 +20,8 @@ Stable Diffusion などで生成した立ち絵、イベントスチル、行動
 - 採用、保留、没ステータス管理
 - prompt JSON の保存
 - キャラクター容姿プロンプトとスチル用テンプレートの合成
+- スチル作業タブを通常のスチル生成、登録、採用作業の主導線として表示
+- スチル一覧(確認用)タブで仕様上必要なスチルを表形式で確認
 - `PromptTemplates/templates.json` による prompt テンプレート管理
 - Prompt タブでのテンプレート用途選択
 - `ComfySettings/comfyui.json` による ComfyUI 設定読み込み

@@ -268,6 +268,11 @@
                                                Text="作成対象"
                                                FontWeight="SemiBold"
                                                Margin="0,0,0,8"/>
+                                    <TextBlock DockPanel.Dock="Top"
+                                               Text="通常のスチル生成、登録、採用作業はこのタブで行います。"
+                                               Foreground="Gray"
+                                               TextWrapping="Wrap"
+                                               Margin="0,0,0,8"/>
 
                                     <ComboBox DockPanel.Dock="Top"
                                               ItemsSource="{Binding StillUsageFilters}"
@@ -520,7 +525,7 @@
                         </Grid>
                     </TabItem>
 
-                    <TabItem Header="スチル一覧">
+                    <TabItem Header="スチル一覧(確認用)">
                         <Grid Margin="0,12,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -529,7 +534,7 @@
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0"
-                                       Text="仕様書で常に作成するスチル候補です。キャラクターの容姿プロンプトに SpecificPrompt を足して画像生成します。"
+                                       Text="仕様書で常に作成するスチル候補を表形式で確認するための画面です。通常の生成、登録、採用作業はスチル作業タブで行います。"
                                        Foreground="Gray"
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,12"/>

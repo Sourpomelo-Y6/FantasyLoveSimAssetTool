@@ -329,11 +329,12 @@ ComfyUI で生成した画像については、採用時に次を `PromptRecord`
 
 基本的に、この仕様書の「出力ファイル命名」にあるスチル一覧は常に描く対象として扱う。
 
-ツールには、作業向けの「スチル作業」と、確認向けの「スチル一覧」を用意する。
+ツールには、作業向けの「スチル作業」と、確認向けの「スチル一覧(確認用)」を用意する。
 
 「スチル作業」は、制作中に主に使う画面とする。用途フィルタで対象を絞り、選択したスチルの詳細、追加 prompt、合成 prompt、画像登録状況、prompt 保存状況、AssetStatus、登録済み画像プレビューを確認できるようにする。
+通常のスチル生成、画像登録、ComfyUI 生成、採用は「スチル作業」で行う。
 
-「スチル一覧」は、仕様上必要なスチルを表形式で確認する画面とする。全項目を横断的に確認したいとき、または開発中のデバッグ用に使う。
+「スチル一覧(確認用)」は、仕様上必要なスチルを表形式で確認する画面とする。全項目を横断的に確認したいとき、または開発中のデバッグ用に使う。
 
 ### 常に描きたいスチル
 
@@ -437,7 +438,7 @@ long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft an
 standing character sprite, full body, transparent background
 ```
 
-スチル作業画面またはスチル一覧タブでは、行を選択して「Prompt に反映」すると、合成後の positive prompt を選択中スチルの `PromptRecord.PositivePrompt` に反映できるようにする。
+スチル作業画面またはスチル一覧(確認用)タブでは、行を選択して「Prompt に反映」すると、合成後の positive prompt を選択中スチルの `PromptRecord.PositivePrompt` に反映できるようにする。
 
 ### 採用画像との対応
 
