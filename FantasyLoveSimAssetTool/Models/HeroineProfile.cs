@@ -6,6 +6,7 @@ namespace FantasyLoveSimAssetTool.Models
     public class HeroineProfile : ObservableObject
     {
         private string appearancePrompt;
+        private string stillCommonPositivePrompt;
 
         public string HeroineId { get; set; }
 
@@ -38,6 +39,17 @@ namespace FantasyLoveSimAssetTool.Models
             }
         }
 
+        public string StillCommonPositivePrompt
+        {
+            get { return stillCommonPositivePrompt; }
+            set
+            {
+                if (stillCommonPositivePrompt == value) { return; }
+                stillCommonPositivePrompt = value;
+                OnPropertyChanged(nameof(StillCommonPositivePrompt));
+            }
+        }
+
         public string ActionReactionPolicy { get; set; }
 
         public string EndingPolicy { get; set; }
@@ -59,6 +71,7 @@ namespace FantasyLoveSimAssetTool.Models
             Likes = string.Empty;
             Dislikes = string.Empty;
             appearancePrompt = string.Empty;
+            stillCommonPositivePrompt = "clean lines,highly detailed,masterpiece,8k,best quality,very aesthetic,absurdres,newest";
             ActionReactionPolicy = string.Empty;
             EndingPolicy = string.Empty;
             Assets = new ObservableCollection<HeroineAsset>();

@@ -81,6 +81,7 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="HeroineId" VerticalAlignment="Center" Margin="0,0,8,8"/>
@@ -116,11 +117,20 @@
                                     <TextBlock Grid.Row="10" Grid.Column="0" Text="容姿プロンプト" VerticalAlignment="Top" Margin="0,4,8,8"/>
                                     <TextBox Grid.Row="10" Grid.Column="1" Text="{Binding SelectedProfile.AppearancePrompt, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="72" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
-                                    <TextBlock Grid.Row="11" Grid.Column="0" Text="行動反応方針" VerticalAlignment="Top" Margin="0,4,8,8"/>
-                                    <TextBox Grid.Row="11" Grid.Column="1" Text="{Binding SelectedProfile.ActionReactionPolicy, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="64" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="11" Grid.Column="0" Text="スチル共通prompt" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="11"
+                                             Grid.Column="1"
+                                             Text="{Binding SelectedProfile.StillCommonPositivePrompt, UpdateSourceTrigger=PropertyChanged}"
+                                             AcceptsReturn="True"
+                                             Height="56"
+                                             TextWrapping="Wrap"
+                                             Margin="0,0,0,8"/>
 
-                                    <TextBlock Grid.Row="12" Grid.Column="0" Text="エンディング方針" VerticalAlignment="Top" Margin="0,4,8,0"/>
-                                    <TextBox Grid.Row="12" Grid.Column="1" Text="{Binding SelectedProfile.EndingPolicy, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="64" TextWrapping="Wrap"/>
+                                    <TextBlock Grid.Row="12" Grid.Column="0" Text="行動反応方針" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="12" Grid.Column="1" Text="{Binding SelectedProfile.ActionReactionPolicy, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="64" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="13" Grid.Column="0" Text="エンディング方針" VerticalAlignment="Top" Margin="0,4,8,0"/>
+                                    <TextBox Grid.Row="13" Grid.Column="1" Text="{Binding SelectedProfile.EndingPolicy, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="64" TextWrapping="Wrap"/>
                                 </Grid>
                             </ScrollViewer>
 

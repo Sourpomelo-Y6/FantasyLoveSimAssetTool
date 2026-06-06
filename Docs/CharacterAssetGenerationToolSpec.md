@@ -210,8 +210,8 @@ long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft an
 ### スチル用デフォルトテンプレート
 
 用途別に、デフォルトのスチル用プロンプトを持たせる。
-将来は、キャラクター容姿プロンプトとは別に、各スチルへ共通で追加する positive prompt も持たせる。
-これは仮に `StillCommonPositivePrompt` と呼び、画風、品質指定、背景方針、全スチルで守りたい構図ルールなどをキャラクター単位で管理する。
+キャラクター容姿プロンプトとは別に、各スチルへ共通で追加する positive prompt も持たせる。
+これは `HeroineProfile.StillCommonPositivePrompt` として保存し、画風、品質指定、背景方針、全スチルで守りたい構図ルールなどをキャラクター単位で管理する。
 
 - `Sprites`: 通常立ち絵、表情差分、衣装差分
 - `Event`: ゲーム開始、日常イベント、場所イベント
@@ -235,7 +235,7 @@ long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft an
 2. 画像用途を選ぶ
 3. 用途別のデフォルトテンプレートを選ぶ
 4. `{CharacterAppearancePrompt}` などのプレースホルダーをキャラクター固有の容姿プロンプトで置換する
-5. 将来、`StillCommonPositivePrompt` が設定されている場合は、各スチル共通の追加 positive prompt として合成する
+5. `StillCommonPositivePrompt` が設定されている場合は、各スチル共通の追加 positive prompt として合成する
 6. 生成された positive prompt を `PromptRecord` に反映する
 
 この機能により、キャラクターの外見の一貫性を保ちながら、各種スチル用のプロンプトを効率よく作れるようにする。
@@ -429,7 +429,7 @@ ComfyUI で生成した画像については、採用時に次を `PromptRecord`
 ### プロンプト合成
 
 各スチルには、キャラクターの基本プロンプトに加えて、そのスチル画像を得るための追加プロンプトを持たせる。
-将来は、キャラクター基本プロンプトとスチル固有プロンプトの間に、全スチル共通の追加 positive prompt を挟めるようにする。
+キャラクター基本プロンプトとスチル固有プロンプトの間に、全スチル共通の追加 positive prompt を挟めるようにする。
 この共通 prompt は、キャラクター単位で全スチルに共通して足したい品質指定、画風、背景ルール、構図ルールなどを管理する。
 キャラクターの基本プロンプトを変更した場合は、スチル作業画面の合成 positive prompt に即時反映し、古い ComfyUI workflow preview や生成結果表示はクリアする。
 
@@ -439,7 +439,7 @@ ComfyUI で生成した画像については、採用時に次を `PromptRecord`
 {CharacterAppearancePrompt}, {StillSpecificPrompt}
 ```
 
-将来の共通追加 prompt 対応後は、次の順序で合成する。
+共通追加 prompt が設定されている場合は、次の順序で合成する。
 
 ```text
 {CharacterAppearancePrompt}, {StillCommonPositivePrompt}, {StillSpecificPrompt}

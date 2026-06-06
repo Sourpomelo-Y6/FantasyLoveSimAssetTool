@@ -46,7 +46,8 @@ namespace FantasyLoveSimAssetTool.Services
             HeroineProfile profile = new HeroineProfile
             {
                 HeroineId = heroineId.Trim(),
-                DisplayName = string.IsNullOrWhiteSpace(displayName) ? heroineId.Trim() : displayName.Trim()
+                DisplayName = string.IsNullOrWhiteSpace(displayName) ? heroineId.Trim() : displayName.Trim(),
+                StillCommonPositivePrompt = "clean lines,highly detailed,masterpiece,8k,best quality,very aesthetic,absurdres,newest"
             };
 
             EnsureCharacterDirectories(profile.HeroineId);
@@ -63,6 +64,7 @@ namespace FantasyLoveSimAssetTool.Services
 
             ValidateHeroineId(profile.HeroineId);
             profile.AppearancePrompt ??= string.Empty;
+            profile.StillCommonPositivePrompt ??= string.Empty;
             profile.Assets ??= new ObservableCollection<HeroineAsset>();
             profile.StillWorkItems ??= new ObservableCollection<StillWorkItem>();
             EnsureCharacterDirectories(profile.HeroineId);
@@ -204,6 +206,7 @@ namespace FantasyLoveSimAssetTool.Services
             profile.Assets ??= new ObservableCollection<HeroineAsset>();
             profile.StillWorkItems ??= new ObservableCollection<StillWorkItem>();
             profile.AppearancePrompt ??= string.Empty;
+            profile.StillCommonPositivePrompt ??= string.Empty;
 
             return profile;
         }

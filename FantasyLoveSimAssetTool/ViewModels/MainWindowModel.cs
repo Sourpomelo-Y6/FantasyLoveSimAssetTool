@@ -1320,7 +1320,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private void SelectedProfilePropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(HeroineProfile.AppearancePrompt))
+            if (e.PropertyName == nameof(HeroineProfile.AppearancePrompt) ||
+                e.PropertyName == nameof(HeroineProfile.StillCommonPositivePrompt))
             {
                 RefreshStillPromptAfterProfilePromptChanged();
             }
@@ -1942,20 +1943,19 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private static string BuildStillPositivePrompt(HeroineProfile profile, StillDefinition stillDefinition)
         {
-            string appearancePrompt = (profile.AppearancePrompt ?? string.Empty).Trim().TrimEnd(',');
-            string specificPrompt = (stillDefinition.SpecificPrompt ?? string.Empty).Trim().TrimStart(',');
-
-            if (string.IsNullOrWhiteSpace(appearancePrompt))
+            string[] promptParts =
             {
-                return specificPrompt;
-            }
+                NormalizePromptPart(profile.AppearancePrompt),
+                NormalizePromptPart(profile.StillCommonPositivePrompt),
+                NormalizePromptPart(stillDefinition.SpecificPrompt)
+            };
 
-            if (string.IsNullOrWhiteSpace(specificPrompt))
-            {
-                return appearancePrompt;
-            }
+            return string.Join(", ", promptParts.Where(part => !string.IsNullOrWhiteSpace(part)));
+        }
 
-            return appearancePrompt + ", " + specificPrompt;
+        private static string NormalizePromptPart(string prompt)
+        {
+            return (prompt ?? string.Empty).Trim().Trim(',').Trim();
         }
 
         private void SavePromptRecord()
