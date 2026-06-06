@@ -393,6 +393,7 @@ Services/
 ## 次に進める候補
 
 - ComfyUI 生成中のより詳細な進捗表示
+- 全スチル共通の追加 positive prompt
 - スチルごとの negative prompt override
 - スチル一覧(確認用)タブの内容をスチル作業タブへ完全統合するか判断する
 - 会話データ作成機能の設計と Unity Editor Import 用 JSON export
@@ -480,6 +481,7 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 - 作業データの保存先をアプリ直下に固定するか、ユーザーが選べるようにするか
 - JSON の細かいスキーマ
 - `StillWorkItems` を `profile.json` に保存する現方式で十分か、将来は専用 JSON に分離するか
+- 全スチル共通の追加 positive prompt を `HeroineProfile` に持たせるか、別設定に分離するか
 - スチルごとの negative prompt override を `StillWorkItems` に持たせるか、PromptRecord 側に持たせるか
 - スチル状態 `StillStatus` と画像状態 `HeroineAsset.Status` をどの程度連動させるか
 - prompt テンプレートのプレースホルダー名をどう定義するか
