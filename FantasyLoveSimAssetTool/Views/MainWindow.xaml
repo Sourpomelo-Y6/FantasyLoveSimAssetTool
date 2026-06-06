@@ -586,7 +586,7 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="160"/>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="140"/>
+                                    <ColumnDefinition Width="330"/>
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -635,6 +635,16 @@
                                     <Button Content="作成"
                                             Command="{Binding BuildComfyWorkflowPreviewCommand}"
                                             Width="52"
+                                            Height="26"
+                                            Margin="0,0,4,0"/>
+                                    <Button Content="テンプレ読込"
+                                            Command="{Binding LoadComfyWorkflowTemplateCommand}"
+                                            Width="84"
+                                            Height="26"
+                                            Margin="0,0,4,0"/>
+                                    <Button Content="テンプレ保存"
+                                            Command="{Binding SaveComfyWorkflowTemplateCommand}"
+                                            Width="84"
                                             Height="26"/>
                                 </StackPanel>
                             </Grid>
@@ -648,6 +658,7 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
@@ -719,6 +730,20 @@
                                              IsReadOnly="True"
                                              AcceptsReturn="True"
                                              Height="140"
+                                             TextWrapping="NoWrap"
+                                             HorizontalScrollBarVisibility="Auto"
+                                             VerticalScrollBarVisibility="Auto"
+                                             Margin="0,8,0,0"/>
+
+                                    <TextBlock Grid.Row="12" Grid.Column="0" Text="workflow template" VerticalAlignment="Top" Margin="0,12,8,0"/>
+                                    <TextBox Grid.Row="12"
+                                             Grid.Column="1"
+                                             Grid.ColumnSpan="3"
+                                             Text="{Binding ComfyWorkflowTemplateEditorText, UpdateSourceTrigger=PropertyChanged}"
+                                             AcceptsReturn="True"
+                                             FontFamily="Consolas"
+                                             FontSize="12"
+                                             Height="220"
                                              TextWrapping="NoWrap"
                                              HorizontalScrollBarVisibility="Auto"
                                              VerticalScrollBarVisibility="Auto"

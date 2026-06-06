@@ -71,6 +71,45 @@ namespace FantasyLoveSimAssetTool.Services
             return ConvertUiWorkflowToApiPrompt(document.RootElement);
         }
 
+        public string LoadWorkflowTemplate(ComfySettings settings)
+        {
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
+            string templatePath = ResolveWorkflowTemplatePath(settings.WorkflowTemplatePath);
+            if (!File.Exists(templatePath))
+            {
+                throw new FileNotFoundException("ComfyUI workflow template was not found.", templatePath);
+            }
+
+            return File.ReadAllText(templatePath);
+        }
+
+        public void SaveWorkflowTemplate(ComfySettings settings, string workflowTemplateJson)
+        {
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
+            if (string.IsNullOrWhiteSpace(workflowTemplateJson))
+            {
+                throw new InvalidOperationException("ComfyUI workflow template JSON is empty.");
+            }
+
+            using JsonDocument document = JsonDocument.Parse(workflowTemplateJson);
+            string templatePath = ResolveWorkflowTemplatePath(settings.WorkflowTemplatePath);
+            string directory = Path.GetDirectoryName(templatePath);
+            if (!string.IsNullOrWhiteSpace(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            File.WriteAllText(templatePath, workflowTemplateJson);
+        }
+
         private static string ConvertUiWorkflowToApiPrompt(JsonElement rootElement)
         {
             if (!rootElement.TryGetProperty("nodes", out JsonElement nodesElement) ||

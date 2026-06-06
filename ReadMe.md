@@ -23,6 +23,7 @@ Stable Diffusion などで生成した立ち絵、イベントスチル、行動
 - `PromptTemplates/templates.json` による prompt テンプレート管理
 - Prompt タブでのテンプレート用途選択
 - `ComfySettings/comfyui.json` による ComfyUI 設定読み込み
+- Prompt タブでの ComfyUI workflow template 読み込み、JSON 検証、保存
 - ComfyUI workflow template への prompt 差し込み preview
 - スチル作業タブ内での positive / negative prompt 確認と ComfyUI workflow preview 作成、表示
 - スチル作業タブからローカル ComfyUI `/prompt` への workflow 送信と `prompt_id` 表示
@@ -209,4 +210,3 @@ Export/
 - Unity Editor 側で JSON から ScriptableObject `.asset` を生成する補助
 - Python スクリプト連携による高度な画像検査
 - ComfyUI 生成中のより詳細な進捗表示
-- ComfyUI workflow JSON のテンプレート編集画面

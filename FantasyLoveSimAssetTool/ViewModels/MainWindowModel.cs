@@ -51,6 +51,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string selectedStillImageMessage;
         private ComfySettings comfySettings;
         private string comfySettingsSummary;
+        private string comfyWorkflowTemplateEditorText;
         private string currentComfyWorkflowPreview;
         private string currentComfyPromptId;
         private string currentComfyResultSummary;
@@ -430,6 +431,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public string ComfyWorkflowTemplateEditorText
+        {
+            get { return comfyWorkflowTemplateEditorText; }
+            set
+            {
+                if (comfyWorkflowTemplateEditorText == value) { return; }
+                comfyWorkflowTemplateEditorText = value;
+                OnPropertyChanged(nameof(ComfyWorkflowTemplateEditorText));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
         public string CurrentComfyWorkflowPreview
         {
             get { return currentComfyWorkflowPreview; }
@@ -584,6 +597,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ReloadComfySettingsCommand { get; }
 
+        public ICommand LoadComfyWorkflowTemplateCommand { get; }
+
+        public ICommand SaveComfyWorkflowTemplateCommand { get; }
+
         public ICommand BuildComfyWorkflowPreviewCommand { get; }
 
         public ICommand BuildStillComfyWorkflowPreviewCommand { get; }
@@ -672,6 +689,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             selectedStillImageMessage = "スチルを選択してください。";
             comfySettings = new ComfySettings();
             comfySettingsSummary = string.Empty;
+            comfyWorkflowTemplateEditorText = string.Empty;
             currentComfyWorkflowPreview = string.Empty;
             currentComfyPromptId = string.Empty;
             currentComfyResultSummary = string.Empty;
@@ -710,6 +728,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ExportSelectedProfileCommand = new RelayCommand(ExportSelectedProfile, () => SelectedProfile != null);
             OpenExportDirectoryCommand = new RelayCommand(OpenExportDirectory);
             ReloadComfySettingsCommand = new RelayCommand(ReloadComfySettings);
+            LoadComfyWorkflowTemplateCommand = new RelayCommand(LoadComfyWorkflowTemplate);
+            SaveComfyWorkflowTemplateCommand = new RelayCommand(
+                SaveComfyWorkflowTemplate,
+                () => !string.IsNullOrWhiteSpace(ComfyWorkflowTemplateEditorText));
             BuildComfyWorkflowPreviewCommand = new RelayCommand(
                 BuildComfyWorkflowPreview,
                 () => CurrentPromptRecord != null);
@@ -771,11 +793,22 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 ComfySettings = comfySettingsService.Load();
                 ComfySettingsSummary = BuildComfySettingsSummary(ComfySettings);
                 StatusMessage = "ComfyUI 設定を読み込みました。";
+                try
+                {
+                    LoadComfyWorkflowTemplateCore();
+                    StatusMessage = "ComfyUI 設定と workflow template を読み込みました。";
+                }
+                catch (Exception templateEx)
+                {
+                    ComfyWorkflowTemplateEditorText = string.Empty;
+                    StatusMessage = $"ComfyUI 設定を読み込みました。workflow template 読み込みに失敗しました: {templateEx.Message}";
+                }
             }
             catch (Exception ex)
             {
                 ComfySettings = new ComfySettings();
                 ComfySettingsSummary = BuildComfySettingsSummary(ComfySettings);
+                ComfyWorkflowTemplateEditorText = string.Empty;
                 StatusMessage = $"ComfyUI 設定の読み込みに失敗しました: {ex.Message}";
             }
         }
@@ -788,6 +821,43 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             return $"Endpoint: {settings.EndpointUrl} / Workflow: {settings.WorkflowTemplatePath} / PositiveNode: {settings.PositivePromptNodeId} / NegativeNode: {settings.NegativePromptNodeId} / OutputNode: {settings.OutputNodeId}";
+        }
+
+        private void LoadComfyWorkflowTemplate()
+        {
+            try
+            {
+                LoadComfyWorkflowTemplateCore();
+                StatusMessage = "ComfyUI workflow template を読み込みました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"ComfyUI workflow template 読み込みに失敗しました: {ex.Message}";
+            }
+        }
+
+        private void LoadComfyWorkflowTemplateCore()
+        {
+            ComfyWorkflowTemplateEditorText = comfyWorkflowService.LoadWorkflowTemplate(ComfySettings);
+        }
+
+        private void SaveComfyWorkflowTemplate()
+        {
+            try
+            {
+                comfyWorkflowService.SaveWorkflowTemplate(ComfySettings, ComfyWorkflowTemplateEditorText);
+                CurrentComfyWorkflowPreview = string.Empty;
+                CurrentComfyPromptId = string.Empty;
+                CurrentComfyResultSummary = string.Empty;
+                currentComfySubmittedPromptRecord = null;
+                currentComfyWorkflowJson = string.Empty;
+                ClearComfyPreviewImage();
+                StatusMessage = "ComfyUI workflow template を保存しました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"ComfyUI workflow template 保存に失敗しました: {ex.Message}";
+            }
         }
 
         private void BuildComfyWorkflowPreview()
