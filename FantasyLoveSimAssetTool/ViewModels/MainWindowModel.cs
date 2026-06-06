@@ -9,6 +9,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
@@ -57,9 +59,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private ComfyOutputImage currentComfyOutputImage;
         private PromptRecord currentComfySubmittedPromptRecord;
         private string currentComfyWorkflowJson;
+        private CancellationTokenSource comfyPollingCancellation;
         private bool isComfySubmitting;
         private bool isComfyCheckingResult;
         private bool isComfyFetchingImage;
+        private bool isComfyWaitingResult;
         private string statusMessage;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
@@ -251,6 +255,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 ApplySelectedStillWorkItem();
                 OnPropertyChanged(nameof(SelectedStillDefinition));
                 OnPropertyChanged(nameof(StillPromptPreview));
+                RequestComfyPollingCancellation();
+                IsComfyWaitingResult = false;
                 CurrentComfyWorkflowPreview = string.Empty;
                 CurrentComfyPromptId = string.Empty;
                 CurrentComfyResultSummary = string.Empty;
@@ -514,6 +520,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public bool IsComfyWaitingResult
+        {
+            get { return isComfyWaitingResult; }
+            set
+            {
+                if (isComfyWaitingResult == value) { return; }
+                isComfyWaitingResult = value;
+                OnPropertyChanged(nameof(IsComfyWaitingResult));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
         public string StatusMessage
         {
             get { return statusMessage; }
@@ -556,6 +574,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ICommand BuildStillComfyWorkflowPreviewCommand { get; }
 
         public ICommand SubmitStillComfyPromptCommand { get; }
+
+        public ICommand CancelStillComfyPollingCommand { get; }
 
         public ICommand CheckStillComfyResultCommand { get; }
 
@@ -643,9 +663,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
             currentComfyOutputImage = null;
             currentComfySubmittedPromptRecord = null;
             currentComfyWorkflowJson = string.Empty;
+            comfyPollingCancellation = null;
             isComfySubmitting = false;
             isComfyCheckingResult = false;
             isComfyFetchingImage = false;
+            isComfyWaitingResult = false;
             statusMessage = string.Empty;
 
             CreateCharacterCommand = new RelayCommand(CreateCharacter);
@@ -677,17 +699,22 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedProfile != null && SelectedStillDefinition != null);
             SubmitStillComfyPromptCommand = new RelayCommand(
                 SubmitStillComfyPrompt,
-                () => SelectedProfile != null && SelectedStillDefinition != null && !IsComfySubmitting);
+                () => SelectedProfile != null && SelectedStillDefinition != null && !IsComfySubmitting && !IsComfyWaitingResult);
+            CancelStillComfyPollingCommand = new RelayCommand(
+                CancelStillComfyPolling,
+                () => IsComfyWaitingResult);
             CheckStillComfyResultCommand = new RelayCommand(
                 CheckStillComfyResult,
-                () => !string.IsNullOrWhiteSpace(CurrentComfyPromptId) && !IsComfySubmitting && !IsComfyCheckingResult);
+                () => !string.IsNullOrWhiteSpace(CurrentComfyPromptId) && !IsComfySubmitting && !IsComfyWaitingResult && !IsComfyCheckingResult);
             FetchStillComfyImageCommand = new RelayCommand(
                 FetchStillComfyImage,
-                () => currentComfyOutputImage != null && !IsComfySubmitting && !IsComfyCheckingResult && !IsComfyFetchingImage);
+                () => currentComfyOutputImage != null && !IsComfySubmitting && !IsComfyWaitingResult && !IsComfyCheckingResult && !IsComfyFetchingImage);
             AdoptStillComfyImageCommand = new RelayCommand(
                 AdoptStillComfyImage,
                 () => SelectedProfile != null &&
                     SelectedStillDefinition != null &&
+                    !IsComfyWaitingResult &&
+                    !IsComfyFetchingImage &&
                     !string.IsNullOrWhiteSpace(CurrentComfyPreviewImagePath) &&
                     File.Exists(CurrentComfyPreviewImagePath));
 
@@ -784,12 +811,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 return;
             }
 
+            RequestComfyPollingCancellation();
             IsComfySubmitting = true;
             CurrentComfyPromptId = string.Empty;
             CurrentComfyResultSummary = string.Empty;
             currentComfySubmittedPromptRecord = null;
             currentComfyWorkflowJson = string.Empty;
             ClearComfyPreviewImage();
+            string queuedPromptId = string.Empty;
+            string stillDisplayName = SelectedStillDefinition.DisplayName;
             try
             {
                 PromptRecord promptRecord = CreateStillPromptRecord();
@@ -798,7 +828,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 currentComfyWorkflowJson = workflowJson;
                 CurrentComfyWorkflowPreview = comfyWorkflowService.BuildWorkflowPreview(ComfySettings, promptRecord);
                 CurrentComfyPromptId = await comfyClientService.QueuePromptAsync(ComfySettings, workflowJson);
-                StatusMessage = $"{SelectedStillDefinition.DisplayName} を ComfyUI に送信しました。prompt_id: {CurrentComfyPromptId}";
+                queuedPromptId = CurrentComfyPromptId;
+                StatusMessage = $"{stillDisplayName} を ComfyUI に送信しました。prompt_id: {CurrentComfyPromptId}";
             }
             catch (Exception ex)
             {
@@ -807,6 +838,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
             finally
             {
                 IsComfySubmitting = false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(queuedPromptId))
+            {
+                await WaitForComfyResultAsync(queuedPromptId, stillDisplayName);
             }
         }
 
@@ -832,12 +868,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     return;
                 }
 
-                currentComfyOutputImage = images[0];
-                CurrentComfyResultSummary = string.Join(
-                    Environment.NewLine,
-                    images.Select(image => $"{image.DisplayPath} ({image.Type})"));
+                ApplyComfyOutputImages(images);
                 StatusMessage = $"ComfyUI 生成結果を {images.Count} 件取得しました。";
-                CommandManager.InvalidateRequerySuggested();
             }
             catch (Exception ex)
             {
@@ -847,6 +879,90 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 IsComfyCheckingResult = false;
             }
+        }
+
+        private void CancelStillComfyPolling()
+        {
+            if (!IsComfyWaitingResult)
+            {
+                return;
+            }
+
+            RequestComfyPollingCancellation();
+            StatusMessage = "ComfyUI 生成結果の待機をキャンセルしました。ComfyUI 側の生成処理は停止していない場合があります。";
+        }
+
+        private async Task WaitForComfyResultAsync(string promptId, string stillDisplayName)
+        {
+            RequestComfyPollingCancellation();
+            CancellationTokenSource pollingCancellation = new CancellationTokenSource();
+            comfyPollingCancellation = pollingCancellation;
+            CancellationToken cancellationToken = pollingCancellation.Token;
+            IsComfyWaitingResult = true;
+            CurrentComfyResultSummary = "ComfyUI 生成中です。生成結果を自動確認しています。";
+            StatusMessage = $"{stillDisplayName} の ComfyUI 生成結果を待機しています。";
+
+            const int maxAttempts = 120;
+            const int delayMilliseconds = 2000;
+            try
+            {
+                for (int attempt = 1; attempt <= maxAttempts; attempt++)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    System.Collections.Generic.IReadOnlyList<ComfyOutputImage> images =
+                        await comfyClientService.GetOutputImagesAsync(ComfySettings, promptId);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (images.Count > 0)
+                    {
+                        ApplyComfyOutputImages(images);
+                        StatusMessage = $"ComfyUI 生成結果を {images.Count} 件取得しました。画像取得できます。";
+                        return;
+                    }
+
+                    CurrentComfyResultSummary = $"ComfyUI 生成中です。生成結果を自動確認しています。({attempt}/{maxAttempts})";
+                    await Task.Delay(delayMilliseconds, cancellationToken);
+                }
+
+                CurrentComfyResultSummary = "ComfyUI 生成結果を時間内に取得できませんでした。必要なら結果確認を押してください。";
+                StatusMessage = "ComfyUI 生成結果の自動確認がタイムアウトしました。";
+            }
+            catch (OperationCanceledException)
+            {
+                CurrentComfyResultSummary = "ComfyUI 生成結果の自動確認をキャンセルしました。必要なら結果確認を押してください。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"ComfyUI 生成結果の自動確認に失敗しました: {ex.Message}";
+            }
+            finally
+            {
+                if (ReferenceEquals(comfyPollingCancellation, pollingCancellation))
+                {
+                    comfyPollingCancellation = null;
+                    IsComfyWaitingResult = false;
+                }
+
+                pollingCancellation.Dispose();
+            }
+        }
+
+        private void ApplyComfyOutputImages(System.Collections.Generic.IReadOnlyList<ComfyOutputImage> images)
+        {
+            currentComfyOutputImage = images[0];
+            CurrentComfyResultSummary = string.Join(
+                Environment.NewLine,
+                images.Select(image => $"{image.DisplayPath} ({image.Type})"));
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void RequestComfyPollingCancellation()
+        {
+            if (comfyPollingCancellation == null)
+            {
+                return;
+            }
+
+            comfyPollingCancellation.Cancel();
         }
 
         private async void FetchStillComfyImage()
@@ -1088,6 +1204,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private void RefreshStillPromptAfterProfilePromptChanged()
         {
+            RequestComfyPollingCancellation();
+            IsComfyWaitingResult = false;
             OnPropertyChanged(nameof(StillPromptPreview));
             CurrentComfyWorkflowPreview = string.Empty;
             CurrentComfyPromptId = string.Empty;

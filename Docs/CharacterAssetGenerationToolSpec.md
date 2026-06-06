@@ -256,9 +256,11 @@ http://127.0.0.1:8188
 
 ComfyUI 連携設定は `ComfySettings/comfyui.json` で管理する。
 workflow template は `ComfySettings/workflow-template.json` に置く。
-現時点では設定の読み込み、Prompt タブ上での確認、positive / negative prompt を差し込んだ workflow preview 作成、ComfyUI `/prompt` への送信、`prompt_id` 取得、`/history/{prompt_id}` からの出力画像ファイル情報取得、`/view` からの生成画像取得と一時保存、スチル作業タブでのプレビュー、既存画像登録処理を使った採用登録までを実装する。
+現時点では設定の読み込み、Prompt タブ上での確認、positive / negative prompt を差し込んだ workflow preview 作成、ComfyUI `/prompt` への送信、`prompt_id` 取得、`/history/{prompt_id}` からの出力画像ファイル情報の手動確認と自動確認、`/view` からの生成画像取得と一時保存、スチル作業タブでのプレビュー、既存画像登録処理を使った採用登録までを実装する。
 `workflow-template.json` が ComfyUI 画面用 workflow 形式の場合は、既知ノードを `/prompt` 用 API prompt 形式へ変換して送信する。
 `SaveImage.filename_prefix` に `%date:yyyy-MM-dd%` のような日付トークンがある場合は、送信前にツール側で現在日付へ展開する。
+`Comfy 送信` 後は一定間隔で生成履歴を自動確認し、生成結果が出たら出力画像情報を表示する。
+`待機キャンセル` はアプリ側の自動確認だけを停止する。ComfyUI 本体の生成処理停止までは行わない。
 
 ```json
 {
@@ -296,7 +298,7 @@ negative prompt は、`PromptRecord.NegativePrompt` または用途別テンプ�
 3. 必要に応じて Prompt 記録へ反映する
 4. workflow JSON に prompt と生成条件を差し込む
 5. ローカル ComfyUI に生成リクエストを送り、`prompt_id` を受け取る
-6. `/history/{prompt_id}` から生成結果の `filename`、`subfolder`、`type` を取得する
+6. `/history/{prompt_id}` を自動確認し、生成結果の `filename`、`subfolder`、`type` を取得する
 7. `/view` から生成画像を取得し、`Temp/ComfyResults/` に一時保存してツール上でプレビューする
 8. 採用する画像を選び、既存の画像登録処理に渡す
 9. 登録時は既存 `AssetId` の上書き確認を表示する
@@ -540,7 +542,8 @@ Assets/Images/Heroines/<HeroineId>/
 - 余白、立ち絵の切れ、表情差分の整合性などの高度な画像検査を追加する
 - 複数ヒロイン間でプロンプトテンプレートを共有する
 - スチル用途別のデフォルトプロンプトテンプレートを編集、追加、共有する
-- ComfyUI 生成中の進捗表示、キャンセル、同時実行制御を追加する
+- ComfyUI 本体への interrupt 送信を追加するか判断する
+- ComfyUI 生成中のより詳細な進捗表示を追加する
 - ComfyUI workflow JSON のテンプレート編集画面を追加する
 - 登録済み画像の差し替え、削除に対応する
 

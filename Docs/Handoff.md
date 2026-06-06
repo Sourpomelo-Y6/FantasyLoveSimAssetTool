@@ -41,7 +41,8 @@
 - `ComfySettings/comfyui.json` からの ComfyUI 設定読み込みと Prompt タブでの表示
 - `ComfySettings/workflow-template.json` への positive / negative prompt 差し込み preview
 - スチル作業タブからローカル ComfyUI `/prompt` への workflow 送信と `prompt_id` 表示
-- `prompt_id` からの ComfyUI 生成履歴確認と出力画像ファイル情報表示
+- `prompt_id` からの ComfyUI 生成履歴の手動確認、自動確認、出力画像ファイル情報表示
+- ComfyUI 生成結果待機中のボタン制御とアプリ側キャンセル
 - ComfyUI `/view` からの生成画像取得、一時保存、スチル作業タブでのプレビュー
 - ComfyUI 生成画像のスチル採用登録
 - ComfyUI 生成条件の `PromptRecord` への保存
@@ -374,10 +375,13 @@ Services/
 33. ComfyUI 生成画像を既存画像登録処理で採用登録する
 34. ComfyUI 生成条件を `PromptRecord` に保存する
 35. キャラクター基本 prompt 変更時にスチル合成 prompt を即時更新し、古い Comfy preview をクリアする
+36. `Comfy 送信` 後に `/history/{prompt_id}` を自動確認し、生成結果待機中は二重送信を防ぐ
+37. `待機キャンセル` でアプリ側の ComfyUI 生成結果自動確認を停止する
 
 ## 次に進める候補
 
-- ComfyUI 生成中の進捗表示、キャンセル、同時実行制御
+- ComfyUI 本体への interrupt 送信
+- ComfyUI 生成中のより詳細な進捗表示
 - ComfyUI workflow JSON のテンプレート編集画面
 - スチル一覧タブを開発確認用に残すか、スチル作業タブへ統合するか判断する
 - 会話データ作成機能の設計と Unity Editor Import 用 JSON export
@@ -467,7 +471,8 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 - スチル状態 `StillStatus` と画像状態 `HeroineAsset.Status` をどの程度連動させるか
 - prompt テンプレートのプレースホルダー名をどう定義するか
 - ComfyUI workflow JSON のテンプレートを UI から編集できるようにするか、JSON ファイル編集のままにするか
-- ComfyUI 生成中の進捗表示、キャンセル、同時実行制御をどう扱うか
+- ComfyUI 本体の生成処理を `interrupt` で停止する操作を入れるか
+- ComfyUI 生成中の詳細 progress を UI に出すか
 - 会話データ JSON のスキーマを Unity 側の `ConversationData` などとどう対応させるか
 - Unity Editor Import 拡張を別リポジトリで作るか、Unity プロジェクト側に直接置くか
 - `.asset` の直接生成を将来も避けるか、限定条件付きで対応するか
@@ -480,6 +485,6 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 
 このツールの価値は、画像生成を自動化することより、採用済み素材、生成条件、Unity 取り込み先を失わずに管理することにあります。最初の実装では外部生成した画像を登録する前提で進め、ローカル ComfyUI 連携や Python 画像検査は後から追加する方が安全です。
 
-次に優先するなら、ComfyUI 生成中の進捗表示、キャンセル、同時実行制御を小さく実装するとよいです。
+次に優先するなら、ComfyUI 本体への interrupt 送信、または workflow JSON のテンプレート編集画面を小さく実装するとよいです。
 
 その後に、画像検査、テンプレート編集画面、Export 後の導線改善を進めるとよいです。現状の MVP は外部生成した画像または ComfyUI 生成画像を登録し、採用状態と prompt 記録を管理し、Unity 向けに出力する用途には使える状態です。

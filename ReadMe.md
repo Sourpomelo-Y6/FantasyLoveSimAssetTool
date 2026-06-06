@@ -26,7 +26,8 @@ Stable Diffusion などで生成した立ち絵、イベントスチル、行動
 - ComfyUI workflow template への prompt 差し込み preview
 - スチル作業タブ内での positive / negative prompt 確認と ComfyUI workflow preview 作成、表示
 - スチル作業タブからローカル ComfyUI `/prompt` への workflow 送信と `prompt_id` 表示
-- `prompt_id` からの ComfyUI 生成履歴確認と出力画像ファイル情報表示
+- `prompt_id` からの ComfyUI 生成履歴の手動確認、自動確認、出力画像ファイル情報表示
+- ComfyUI 生成結果待機中のボタン制御とアプリ側キャンセル
 - ComfyUI `/view` からの生成画像取得、一時保存、スチル作業タブでのプレビュー
 - ComfyUI 生成画像のスチル採用登録
 - ComfyUI 生成条件の prompt JSON への記録
@@ -35,7 +36,7 @@ Stable Diffusion などで生成した立ち絵、イベントスチル、行動
 
 現状では、Stable Diffusion などの画像生成自体はアプリ内では完結せず、外部生成した画像を登録、整理、出力するツールとして動作します。
 この外部ファイル登録フローは今後も残し、将来追加するローカル ComfyUI 連携は、同じ登録処理へ生成結果を渡す任意機能として扱います。
-ComfyUI 連携は現時点では workflow 送信、`prompt_id` 取得、生成履歴からの出力画像ファイル情報取得、生成画像の一時保存、プレビュー、スチル採用登録までです。
+ComfyUI 連携は現時点では workflow 送信、`prompt_id` 取得、生成履歴の自動確認、生成画像の一時保存、プレビュー、スチル採用登録までです。待機キャンセルはアプリ側の自動確認停止であり、ComfyUI 本体の生成処理停止までは行いません。
 
 ## 想定する用途
 
@@ -206,5 +207,6 @@ Export/
 - Unity Editor Import 用の会話データ JSON export
 - Unity Editor 側で JSON から ScriptableObject `.asset` を生成する補助
 - Python スクリプト連携による高度な画像検査
-- ComfyUI 生成中の進捗表示、キャンセル、同時実行制御
+- ComfyUI 本体への interrupt 送信
+- ComfyUI 生成中のより詳細な進捗表示
 - ComfyUI workflow JSON のテンプレート編集画面
