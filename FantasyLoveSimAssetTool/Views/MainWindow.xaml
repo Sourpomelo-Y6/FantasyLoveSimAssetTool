@@ -490,6 +490,11 @@
                                             Width="110"
                                             Height="30"
                                             Margin="0,0,8,8"/>
+                                    <Button Content="Comfy 停止"
+                                            Command="{Binding InterruptComfyGenerationCommand}"
+                                            Width="100"
+                                            Height="30"
+                                            Margin="0,0,8,8"/>
                                     <Button Content="結果確認"
                                             Command="{Binding CheckStillComfyResultCommand}"
                                             Width="90"

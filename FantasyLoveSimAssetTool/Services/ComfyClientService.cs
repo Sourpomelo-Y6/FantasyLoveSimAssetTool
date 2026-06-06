@@ -137,9 +137,42 @@ namespace FantasyLoveSimAssetTool.Services
             return imageBytes;
         }
 
+        public async Task InterruptAsync(ComfySettings settings)
+        {
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
+            if (string.IsNullOrWhiteSpace(settings.EndpointUrl))
+            {
+                throw new InvalidOperationException("ComfyUI endpoint URL is empty.");
+            }
+
+            Uri endpointUri = BuildInterruptEndpointUri(settings.EndpointUrl);
+            using StringContent content = new StringContent("{}", Encoding.UTF8, "application/json");
+            using HttpResponseMessage response = await httpClient.PostAsync(endpointUri, content).ConfigureAwait(false);
+            string responseText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException($"ComfyUI interrupt returned {(int)response.StatusCode}: {TrimForMessage(responseText)}");
+            }
+        }
+
         private static Uri BuildPromptEndpointUri(string endpointUrl)
         {
             if (!Uri.TryCreate(endpointUrl.TrimEnd('/') + "/prompt", UriKind.Absolute, out Uri endpointUri))
+            {
+                throw new InvalidOperationException($"ComfyUI endpoint URL is invalid: {endpointUrl}");
+            }
+
+            return endpointUri;
+        }
+
+        private static Uri BuildInterruptEndpointUri(string endpointUrl)
+        {
+            if (!Uri.TryCreate(endpointUrl.TrimEnd('/') + "/interrupt", UriKind.Absolute, out Uri endpointUri))
             {
                 throw new InvalidOperationException($"ComfyUI endpoint URL is invalid: {endpointUrl}");
             }
