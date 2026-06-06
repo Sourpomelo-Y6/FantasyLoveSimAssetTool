@@ -67,6 +67,7 @@ namespace FantasyLoveSimAssetTool.Services
                 Usage = source.Usage,
                 FileName = source.FileName,
                 SpecificPrompt = source.SpecificPrompt,
+                NegativePromptAddition = source.NegativePromptAddition,
                 Status = source.Status
             };
         }

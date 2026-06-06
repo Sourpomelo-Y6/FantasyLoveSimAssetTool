@@ -243,7 +243,7 @@ Models/
 - `AssetId`
 - `Status`
 - `SpecificPrompt`
-- 将来追加候補: `NegativePromptOverride`
+- `NegativePromptAddition`
 
 ### StillStatus
 
@@ -390,11 +390,11 @@ Services/
 40. スチル作業タブを通常作業の主導線として明示し、スチル一覧タブを確認用としてリネームする
 41. 登録済み画像の登録解除を追加する。画像ファイルと prompt JSON は削除しない
 42. `HeroineProfile.StillCommonPositivePrompt` を追加し、全スチル共通の追加 positive prompt として合成する
+43. `StillWorkItem.NegativePromptAddition` を追加し、共通 negative prompt にスチルごとの negative prompt を追加して ComfyUI 送信に使う
 
 ## 次に進める候補
 
 - ComfyUI 生成中のより詳細な進捗表示
-- スチルごとの negative prompt override
 - スチル一覧(確認用)タブの内容をスチル作業タブへ完全統合するか判断する
 - 会話データ作成機能の設計と Unity Editor Import 用 JSON export
 - 画像ファイルの差し替え
@@ -481,7 +481,6 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 - 作業データの保存先をアプリ直下に固定するか、ユーザーが選べるようにするか
 - JSON の細かいスキーマ
 - `StillWorkItems` を `profile.json` に保存する現方式で十分か、将来は専用 JSON に分離するか
-- スチルごとの negative prompt override を `StillWorkItems` に持たせるか、PromptRecord 側に持たせるか
 - スチル状態 `StillStatus` と画像状態 `HeroineAsset.Status` をどの程度連動させるか
 - prompt テンプレートのプレースホルダー名をどう定義するか
 - ComfyUI 生成中の詳細 progress を UI に出すか

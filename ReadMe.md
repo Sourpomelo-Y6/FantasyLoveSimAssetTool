@@ -22,6 +22,7 @@ Stable Diffusion などで生成した立ち絵、イベントスチル、行動
 - prompt JSON の保存
 - キャラクター容姿プロンプトとスチル用テンプレートの合成
 - 全スチル共通の追加 positive prompt
+- スチルごとの negative prompt 追加
 - スチル作業タブを通常のスチル生成、登録、採用作業の主導線として表示
 - スチル一覧(確認用)タブで仕様上必要なスチルを表形式で確認
 - `PromptTemplates/templates.json` による prompt テンプレート管理

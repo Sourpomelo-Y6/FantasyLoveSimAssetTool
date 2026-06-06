@@ -9,6 +9,7 @@ namespace FantasyLoveSimAssetTool.Models
         private AssetUsage usage;
         private string fileName;
         private string specificPrompt;
+        private string negativePromptAddition;
         private StillStatus status;
 
         public string AssetId
@@ -66,6 +67,17 @@ namespace FantasyLoveSimAssetTool.Models
             }
         }
 
+        public string NegativePromptAddition
+        {
+            get { return negativePromptAddition; }
+            set
+            {
+                if (negativePromptAddition == value) { return; }
+                negativePromptAddition = value;
+                OnPropertyChanged(nameof(NegativePromptAddition));
+            }
+        }
+
         public StillStatus Status
         {
             get { return status; }
@@ -83,6 +95,7 @@ namespace FantasyLoveSimAssetTool.Models
             displayName = string.Empty;
             fileName = string.Empty;
             specificPrompt = string.Empty;
+            negativePromptAddition = string.Empty;
             status = StillStatus.NotGenerated;
         }
     }

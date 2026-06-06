@@ -8,11 +8,14 @@ namespace FantasyLoveSimAssetTool.Models
 
         public string SpecificPrompt { get; set; }
 
+        public string NegativePromptAddition { get; set; }
+
         public StillWorkItem()
         {
             AssetId = string.Empty;
             Status = StillStatus.NotGenerated;
             SpecificPrompt = string.Empty;
+            NegativePromptAddition = string.Empty;
         }
     }
 }

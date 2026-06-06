@@ -1300,8 +1300,24 @@ namespace FantasyLoveSimAssetTool.ViewModels
             return new PromptRecord
             {
                 PositivePrompt = BuildStillPositivePrompt(SelectedProfile, SelectedStillDefinition),
-                NegativePrompt = CurrentPromptRecord != null ? CurrentPromptRecord.NegativePrompt : string.Empty
+                NegativePrompt = BuildStillNegativePrompt()
             };
+        }
+
+        private string BuildStillNegativePrompt()
+        {
+            string commonPrompt = CurrentPromptRecord != null ? CurrentPromptRecord.NegativePrompt : string.Empty;
+            string additionPrompt = SelectedStillDefinition != null
+                ? SelectedStillDefinition.NegativePromptAddition
+                : string.Empty;
+
+            string[] promptParts =
+            {
+                NormalizePromptPart(commonPrompt),
+                NormalizePromptPart(additionPrompt)
+            };
+
+            return string.Join(", ", promptParts.Where(part => !string.IsNullOrWhiteSpace(part)));
         }
 
         private void SelectedStillDefinitionPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -1310,6 +1326,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 OnPropertyChanged(nameof(StillPromptPreview));
                 CurrentComfyWorkflowPreview = string.Empty;
+                UpdateStillWorkItemFromDefinition();
+            }
+            else if (e.PropertyName == nameof(StillDefinition.NegativePromptAddition))
+            {
+                CurrentComfyWorkflowPreview = string.Empty;
+                CurrentComfyPromptId = string.Empty;
+                CurrentComfyResultSummary = string.Empty;
+                currentComfySubmittedPromptRecord = null;
+                currentComfyWorkflowJson = string.Empty;
+                ClearComfyPreviewImage();
                 UpdateStillWorkItemFromDefinition();
             }
             else if (e.PropertyName == nameof(StillDefinition.Status))
@@ -1749,6 +1775,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 {
                     definition.SpecificPrompt = workItem.SpecificPrompt;
                 }
+
+                if (!string.IsNullOrWhiteSpace(workItem.NegativePromptAddition))
+                {
+                    definition.NegativePromptAddition = workItem.NegativePromptAddition;
+                }
             }
         }
 
@@ -1770,6 +1801,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
             if (!string.IsNullOrWhiteSpace(workItem.SpecificPrompt))
             {
                 SelectedStillDefinition.SpecificPrompt = workItem.SpecificPrompt;
+            }
+
+            if (!string.IsNullOrWhiteSpace(workItem.NegativePromptAddition))
+            {
+                SelectedStillDefinition.NegativePromptAddition = workItem.NegativePromptAddition;
             }
         }
 
@@ -1795,6 +1831,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             workItem.Status = SelectedStillDefinition.Status;
             workItem.SpecificPrompt = SelectedStillDefinition.SpecificPrompt ?? string.Empty;
+            workItem.NegativePromptAddition = SelectedStillDefinition.NegativePromptAddition ?? string.Empty;
         }
 
         private void RefreshFilteredStillDefinitions()
