@@ -137,6 +137,30 @@ namespace FantasyLoveSimAssetTool.Services
             return imageBytes;
         }
 
+        public async Task<ComfyQueueStatus> GetQueueStatusAsync(ComfySettings settings, string promptId)
+        {
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
+            if (string.IsNullOrWhiteSpace(settings.EndpointUrl))
+            {
+                throw new InvalidOperationException("ComfyUI endpoint URL is empty.");
+            }
+
+            Uri endpointUri = BuildQueueEndpointUri(settings.EndpointUrl);
+            using HttpResponseMessage response = await httpClient.GetAsync(endpointUri).ConfigureAwait(false);
+            string responseJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException($"ComfyUI queue returned {(int)response.StatusCode}: {TrimForMessage(responseJson)}");
+            }
+
+            return ParseQueueStatus(responseJson, promptId);
+        }
+
         public async Task InterruptAsync(ComfySettings settings)
         {
             if (settings == null)
@@ -173,6 +197,16 @@ namespace FantasyLoveSimAssetTool.Services
         private static Uri BuildInterruptEndpointUri(string endpointUrl)
         {
             if (!Uri.TryCreate(endpointUrl.TrimEnd('/') + "/interrupt", UriKind.Absolute, out Uri endpointUri))
+            {
+                throw new InvalidOperationException($"ComfyUI endpoint URL is invalid: {endpointUrl}");
+            }
+
+            return endpointUri;
+        }
+
+        private static Uri BuildQueueEndpointUri(string endpointUrl)
+        {
+            if (!Uri.TryCreate(endpointUrl.TrimEnd('/') + "/queue", UriKind.Absolute, out Uri endpointUri))
             {
                 throw new InvalidOperationException($"ComfyUI endpoint URL is invalid: {endpointUrl}");
             }
@@ -235,6 +269,84 @@ namespace FantasyLoveSimAssetTool.Services
             }
 
             return images;
+        }
+
+        private static ComfyQueueStatus ParseQueueStatus(string responseJson, string promptId)
+        {
+            ComfyQueueStatus status = new ComfyQueueStatus();
+            using JsonDocument document = JsonDocument.Parse(responseJson);
+            JsonElement rootElement = document.RootElement;
+
+            if (rootElement.TryGetProperty("queue_running", out JsonElement runningElement) &&
+                runningElement.ValueKind == JsonValueKind.Array)
+            {
+                status.RunningCount = runningElement.GetArrayLength();
+                status.IsTargetRunning = ContainsPromptId(runningElement, promptId);
+            }
+
+            if (rootElement.TryGetProperty("queue_pending", out JsonElement pendingElement) &&
+                pendingElement.ValueKind == JsonValueKind.Array)
+            {
+                status.PendingCount = pendingElement.GetArrayLength();
+                status.TargetPendingIndex = FindPromptIdIndex(pendingElement, promptId);
+            }
+
+            return status;
+        }
+
+        private static bool ContainsPromptId(JsonElement queueElement, string promptId)
+        {
+            return FindPromptIdIndex(queueElement, promptId) > 0;
+        }
+
+        private static int FindPromptIdIndex(JsonElement queueElement, string promptId)
+        {
+            if (string.IsNullOrWhiteSpace(promptId) || queueElement.ValueKind != JsonValueKind.Array)
+            {
+                return 0;
+            }
+
+            int index = 1;
+            foreach (JsonElement itemElement in queueElement.EnumerateArray())
+            {
+                if (QueueItemContainsPromptId(itemElement, promptId))
+                {
+                    return index;
+                }
+
+                index++;
+            }
+
+            return 0;
+        }
+
+        private static bool QueueItemContainsPromptId(JsonElement itemElement, string promptId)
+        {
+            switch (itemElement.ValueKind)
+            {
+                case JsonValueKind.String:
+                    return itemElement.GetString() == promptId;
+                case JsonValueKind.Array:
+                    foreach (JsonElement childElement in itemElement.EnumerateArray())
+                    {
+                        if (QueueItemContainsPromptId(childElement, promptId))
+                        {
+                            return true;
+                        }
+                    }
+                    break;
+                case JsonValueKind.Object:
+                    foreach (JsonProperty property in itemElement.EnumerateObject())
+                    {
+                        if (QueueItemContainsPromptId(property.Value, promptId))
+                        {
+                            return true;
+                        }
+                    }
+                    break;
+            }
+
+            return false;
         }
 
         private static string GetStringProperty(JsonElement element, string propertyName)

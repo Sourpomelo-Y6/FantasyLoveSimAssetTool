@@ -1043,7 +1043,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                         return;
                     }
 
-                    CurrentComfyResultSummary = $"ComfyUI 生成中です。生成結果を自動確認しています。({attempt}/{maxAttempts})";
+                    CurrentComfyResultSummary = await BuildComfyWaitingSummaryAsync(promptId, attempt, maxAttempts);
                     await Task.Delay(delayMilliseconds, cancellationToken);
                 }
 
@@ -1067,6 +1067,34 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 }
 
                 pollingCancellation.Dispose();
+            }
+        }
+
+        private async Task<string> BuildComfyWaitingSummaryAsync(string promptId, int attempt, int maxAttempts)
+        {
+            string baseSummary = $"ComfyUI 生成中です。生成結果を自動確認しています。({attempt}/{maxAttempts})";
+            try
+            {
+                ComfyQueueStatus queueStatus = await comfyClientService.GetQueueStatusAsync(ComfySettings, promptId);
+                string targetStatus = "対象prompt: queue内に見つかりません";
+                if (queueStatus.IsTargetRunning)
+                {
+                    targetStatus = "対象prompt: 実行中";
+                }
+                else if (queueStatus.TargetPendingIndex > 0)
+                {
+                    targetStatus = $"対象prompt: 待機中 {queueStatus.TargetPendingIndex} 番目";
+                }
+
+                return baseSummary +
+                    Environment.NewLine +
+                    $"Queue: 実行中 {queueStatus.RunningCount} 件 / 待機中 {queueStatus.PendingCount} 件 / {targetStatus}";
+            }
+            catch (Exception ex)
+            {
+                return baseSummary +
+                    Environment.NewLine +
+                    $"Queue 状態取得に失敗しました: {ex.Message}";
             }
         }
 

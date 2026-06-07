@@ -33,6 +33,7 @@ Stable Diffusion などで生成した立ち絵、イベントスチル、行動
 - スチル作業タブ内での positive / negative prompt 確認と ComfyUI workflow preview 作成、表示
 - スチル作業タブからローカル ComfyUI `/prompt` への workflow 送信と `prompt_id` 表示
 - `prompt_id` からの ComfyUI 生成履歴の手動確認、自動確認、出力画像ファイル情報表示
+- ComfyUI `/queue` による実行中、待機中、対象 prompt のキュー状態表示
 - ComfyUI 生成結果待機中のボタン制御とアプリ側キャンセル
 - ComfyUI `/interrupt` による生成停止要求
 - ComfyUI `/view` からの生成画像取得、一時保存、スチル作業タブでのプレビュー
@@ -214,4 +215,4 @@ Export/
 - Unity Editor Import 用の会話データ JSON export
 - Unity Editor 側で JSON から ScriptableObject `.asset` を生成する補助
 - Python スクリプト連携による高度な画像検査
-- ComfyUI 生成中のより詳細な進捗表示
+- ComfyUI WebSocket などによるサンプラー単位の詳細進捗表示
