@@ -497,6 +497,11 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 - `net5.0-windows` 維持を前提に、将来ターゲットフレームワーク移行を再検証するタイミング
 - 画像ファイル本体の削除操作を将来追加するか。現状の登録解除は profile から除外するだけで、画像ファイルと prompt JSON は残す
 
+## 関連ドキュメント
+
+- `Docs/CharacterAssetGenerationToolSpec.md`: WPF ツール側の仕様
+- `Docs/UnityImportPlan.md`: WPF export 結果を Unity Editor 拡張で取り込む方針
+
 ## 次の担当者へのメモ
 
 まずは見た目よりも、保存形式と export 結果を固めるのが重要です。
