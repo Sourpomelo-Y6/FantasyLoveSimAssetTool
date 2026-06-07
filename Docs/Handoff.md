@@ -46,6 +46,7 @@
 - スチル作業タブからローカル ComfyUI `/prompt` への workflow 送信と `prompt_id` 表示
 - `prompt_id` からの ComfyUI 生成履歴の手動確認、自動確認、出力画像ファイル情報表示
 - ComfyUI `/queue` からの実行中、待機中、対象 prompt のキュー状態表示
+- ComfyUI WebSocket からの生成中 node と sampler step の詳細進捗表示。接続失敗時は `/queue` と `/history` の確認を継続する
 - ComfyUI 生成結果待機中のボタン制御とアプリ側キャンセル
 - ComfyUI `/interrupt` による生成停止要求
 - ComfyUI `/view` からの生成画像取得、一時保存、スチル作業タブでのプレビュー
@@ -393,10 +394,10 @@ Services/
 42. `HeroineProfile.StillCommonPositivePrompt` を追加し、全スチル共通の追加 positive prompt として合成する
 43. `StillWorkItem.NegativePromptAddition` を追加し、共通 negative prompt にスチルごとの negative prompt を追加して ComfyUI 送信に使う
 44. ComfyUI `/queue` を参照し、生成待機中に実行中、待機中、対象 prompt のキュー状態を表示する
+45. ComfyUI WebSocket を参照し、生成待機中に実行中 node と sampler step を表示する
 
 ## 次に進める候補
 
-- ComfyUI WebSocket などによるサンプラー単位の詳細進捗表示
 - スチル一覧(確認用)タブの内容をスチル作業タブへ完全統合するか判断する
 - 会話データ作成機能の設計と Unity Editor Import 用 JSON export
 - 画像ファイルの差し替え
@@ -485,7 +486,6 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 - `StillWorkItems` を `profile.json` に保存する現方式で十分か、将来は専用 JSON に分離するか
 - スチル状態 `StillStatus` と画像状態 `HeroineAsset.Status` をどの程度連動させるか
 - prompt テンプレートのプレースホルダー名をどう定義するか
-- ComfyUI WebSocket などでサンプラー単位の詳細 progress を UI に出すか
 - 会話データ JSON のスキーマを Unity 側の `ConversationData` などとどう対応させるか
 - Unity Editor Import 拡張を別リポジトリで作るか、Unity プロジェクト側に直接置くか
 - `.asset` の直接生成を将来も避けるか、限定条件付きで対応するか
@@ -498,6 +498,6 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 
 このツールの価値は、画像生成を自動化することより、採用済み素材、生成条件、Unity 取り込み先を失わずに管理することにあります。最初の実装では外部生成した画像を登録する前提で進め、ローカル ComfyUI 連携や Python 画像検査は後から追加する方が安全です。
 
-次に優先するなら、ComfyUI 生成中の詳細 progress 表示、またはスチル一覧(確認用)タブをスチル作業タブへ完全統合するかの判断を進めるとよいです。
+次に優先するなら、スチル一覧(確認用)タブをスチル作業タブへ完全統合するかの判断、または登録済み画像の差し替え導線を進めるとよいです。
 
 その後に、画像検査、テンプレート編集画面、Export 後の導線改善を進めるとよいです。現状の MVP は外部生成した画像または ComfyUI 生成画像を登録し、採用状態と prompt 記録を管理し、Unity 向けに出力する用途には使える状態です。

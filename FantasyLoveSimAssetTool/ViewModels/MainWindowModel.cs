@@ -60,6 +60,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private ComfyOutputImage currentComfyOutputImage;
         private PromptRecord currentComfySubmittedPromptRecord;
         private string currentComfyWorkflowJson;
+        private string currentComfyProgressSummary;
         private CancellationTokenSource comfyPollingCancellation;
         private bool hasComfyInterruptRequested;
         private bool isComfySubmitting;
@@ -700,6 +701,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             currentComfyOutputImage = null;
             currentComfySubmittedPromptRecord = null;
             currentComfyWorkflowJson = string.Empty;
+            currentComfyProgressSummary = string.Empty;
             comfyPollingCancellation = null;
             hasComfyInterruptRequested = false;
             isComfySubmitting = false;
@@ -920,6 +922,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             currentComfyWorkflowJson = string.Empty;
             ClearComfyPreviewImage();
             string queuedPromptId = string.Empty;
+            string queuedClientId = string.Empty;
             string stillDisplayName = SelectedStillDefinition.DisplayName;
             try
             {
@@ -928,8 +931,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 currentComfySubmittedPromptRecord = promptRecord;
                 currentComfyWorkflowJson = workflowJson;
                 CurrentComfyWorkflowPreview = comfyWorkflowService.BuildWorkflowPreview(ComfySettings, promptRecord);
-                CurrentComfyPromptId = await comfyClientService.QueuePromptAsync(ComfySettings, workflowJson);
+                ComfyPromptQueueResult queueResult = await comfyClientService.QueuePromptWithClientAsync(ComfySettings, workflowJson);
+                CurrentComfyPromptId = queueResult.PromptId;
                 queuedPromptId = CurrentComfyPromptId;
+                queuedClientId = queueResult.ClientId;
                 StatusMessage = $"{stillDisplayName} を ComfyUI に送信しました。prompt_id: {CurrentComfyPromptId}";
             }
             catch (Exception ex)
@@ -943,7 +948,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             if (!string.IsNullOrWhiteSpace(queuedPromptId))
             {
-                await WaitForComfyResultAsync(queuedPromptId, stillDisplayName);
+                await WaitForComfyResultAsync(queuedPromptId, queuedClientId, stillDisplayName);
             }
         }
 
@@ -1016,15 +1021,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
-        private async Task WaitForComfyResultAsync(string promptId, string stillDisplayName)
+        private async Task WaitForComfyResultAsync(string promptId, string clientId, string stillDisplayName)
         {
             RequestComfyPollingCancellation();
             CancellationTokenSource pollingCancellation = new CancellationTokenSource();
             comfyPollingCancellation = pollingCancellation;
             CancellationToken cancellationToken = pollingCancellation.Token;
             IsComfyWaitingResult = true;
+            currentComfyProgressSummary = string.Empty;
             CurrentComfyResultSummary = "ComfyUI 生成中です。生成結果を自動確認しています。";
             StatusMessage = $"{stillDisplayName} の ComfyUI 生成結果を待機しています。";
+            Task progressWatchTask = StartComfyProgressWatchAsync(promptId, clientId, cancellationToken);
 
             const int maxAttempts = 120;
             const int delayMilliseconds = 2000;
@@ -1066,6 +1073,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     IsComfyWaitingResult = false;
                 }
 
+                pollingCancellation.Cancel();
+                await ObserveComfyProgressWatchCompletionAsync(progressWatchTask);
                 pollingCancellation.Dispose();
             }
         }
@@ -1073,6 +1082,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private async Task<string> BuildComfyWaitingSummaryAsync(string promptId, int attempt, int maxAttempts)
         {
             string baseSummary = $"ComfyUI 生成中です。生成結果を自動確認しています。({attempt}/{maxAttempts})";
+            if (!string.IsNullOrWhiteSpace(currentComfyProgressSummary))
+            {
+                baseSummary += Environment.NewLine + currentComfyProgressSummary;
+            }
+
             try
             {
                 ComfyQueueStatus queueStatus = await comfyClientService.GetQueueStatusAsync(ComfySettings, promptId);
@@ -1095,6 +1109,94 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 return baseSummary +
                     Environment.NewLine +
                     $"Queue 状態取得に失敗しました: {ex.Message}";
+            }
+        }
+
+        private Task StartComfyProgressWatchAsync(string promptId, string clientId, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(clientId))
+            {
+                currentComfyProgressSummary = "WebSocket: client_id がないため詳細進捗は表示しません。";
+                return Task.CompletedTask;
+            }
+
+            return WatchComfyProgressWithFallbackAsync(promptId, clientId, cancellationToken);
+        }
+
+        private async Task WatchComfyProgressWithFallbackAsync(string promptId, string clientId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await comfyClientService.WatchPromptProgressAsync(
+                    ComfySettings,
+                    promptId,
+                    clientId,
+                    update => UpdateComfyProgressSummary(update),
+                    cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                UpdateComfyProgressSummaryText($"WebSocket: 詳細進捗を取得できません。/queue と /history で確認します。({ex.Message})");
+            }
+        }
+
+        private void UpdateComfyProgressSummary(ComfyProgressUpdate update)
+        {
+            if (update == null || string.IsNullOrWhiteSpace(update.Summary))
+            {
+                return;
+            }
+
+            UpdateComfyProgressSummaryText(update.Summary);
+        }
+
+        private void UpdateComfyProgressSummaryText(string summary)
+        {
+            if (string.IsNullOrWhiteSpace(summary))
+            {
+                return;
+            }
+
+            void ApplyUpdate()
+            {
+                currentComfyProgressSummary = summary;
+                if (IsComfyWaitingResult && CurrentComfyResultSummary.StartsWith("ComfyUI 生成中です。", StringComparison.Ordinal))
+                {
+                    CurrentComfyResultSummary = "ComfyUI 生成中です。生成結果を自動確認しています。" +
+                        Environment.NewLine +
+                        summary;
+                }
+            }
+
+            if (Application.Current != null && !Application.Current.Dispatcher.CheckAccess())
+            {
+                Application.Current.Dispatcher.BeginInvoke((Action)ApplyUpdate);
+            }
+            else
+            {
+                ApplyUpdate();
+            }
+        }
+
+        private static async Task ObserveComfyProgressWatchCompletionAsync(Task progressWatchTask)
+        {
+            if (progressWatchTask == null)
+            {
+                return;
+            }
+
+            try
+            {
+                await progressWatchTask;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch
+            {
             }
         }
 

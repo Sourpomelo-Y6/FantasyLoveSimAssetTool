@@ -1,10 +1,13 @@
 using FantasyLoveSimAssetTool.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
+using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace FantasyLoveSimAssetTool.Services
@@ -24,6 +27,17 @@ namespace FantasyLoveSimAssetTool.Services
         }
 
         public async Task<string> QueuePromptAsync(ComfySettings settings, string workflowJson)
+        {
+            ComfyPromptQueueResult result = await QueuePromptWithClientAsync(settings, workflowJson).ConfigureAwait(false);
+            return result.PromptId;
+        }
+
+        public Task<ComfyPromptQueueResult> QueuePromptWithClientAsync(ComfySettings settings, string workflowJson)
+        {
+            return QueuePromptWithClientAsync(settings, workflowJson, Guid.NewGuid().ToString("N"));
+        }
+
+        public async Task<ComfyPromptQueueResult> QueuePromptWithClientAsync(ComfySettings settings, string workflowJson, string clientId)
         {
             if (settings == null)
             {
@@ -45,7 +59,7 @@ namespace FantasyLoveSimAssetTool.Services
             ComfyPromptRequest request = new ComfyPromptRequest
             {
                 Prompt = workflowDocument.RootElement.Clone(),
-                ClientId = Guid.NewGuid().ToString("N")
+                ClientId = string.IsNullOrWhiteSpace(clientId) ? Guid.NewGuid().ToString("N") : clientId
             };
 
             string requestJson = JsonSerializer.Serialize(request);
@@ -70,7 +84,11 @@ namespace FantasyLoveSimAssetTool.Services
                 throw new InvalidOperationException($"ComfyUI response included an empty prompt_id: {TrimForMessage(responseJson)}");
             }
 
-            return promptId;
+            return new ComfyPromptQueueResult
+            {
+                PromptId = promptId,
+                ClientId = request.ClientId
+            };
         }
 
         public async Task<IReadOnlyList<ComfyOutputImage>> GetOutputImagesAsync(ComfySettings settings, string promptId)
@@ -184,6 +202,73 @@ namespace FantasyLoveSimAssetTool.Services
             }
         }
 
+        public async Task WatchPromptProgressAsync(
+            ComfySettings settings,
+            string promptId,
+            string clientId,
+            Action<ComfyProgressUpdate> progressReceived,
+            CancellationToken cancellationToken)
+        {
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
+            if (string.IsNullOrWhiteSpace(settings.EndpointUrl))
+            {
+                throw new InvalidOperationException("ComfyUI endpoint URL is empty.");
+            }
+
+            if (string.IsNullOrWhiteSpace(clientId))
+            {
+                throw new InvalidOperationException("ComfyUI client_id is empty.");
+            }
+
+            Uri endpointUri = BuildWebSocketEndpointUri(settings.EndpointUrl, clientId);
+            using ClientWebSocket webSocket = new ClientWebSocket();
+            await webSocket.ConnectAsync(endpointUri, cancellationToken).ConfigureAwait(false);
+
+            byte[] buffer = new byte[8192];
+            while (webSocket.State == WebSocketState.Open)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                using MemoryStream messageStream = new MemoryStream();
+                WebSocketReceiveResult receiveResult;
+                do
+                {
+                    receiveResult = await webSocket.ReceiveAsync(
+                        new ArraySegment<byte>(buffer),
+                        cancellationToken).ConfigureAwait(false);
+
+                    if (receiveResult.MessageType == WebSocketMessageType.Close)
+                    {
+                        return;
+                    }
+
+                    messageStream.Write(buffer, 0, receiveResult.Count);
+                }
+                while (!receiveResult.EndOfMessage);
+
+                if (receiveResult.MessageType != WebSocketMessageType.Text)
+                {
+                    continue;
+                }
+
+                string messageJson = Encoding.UTF8.GetString(messageStream.ToArray());
+                ComfyProgressUpdate update = ParseProgressUpdate(messageJson, promptId);
+                if (update == null)
+                {
+                    continue;
+                }
+
+                progressReceived?.Invoke(update);
+                if (update.IsCompleted)
+                {
+                    return;
+                }
+            }
+        }
+
         private static Uri BuildPromptEndpointUri(string endpointUrl)
         {
             if (!Uri.TryCreate(endpointUrl.TrimEnd('/') + "/prompt", UriKind.Absolute, out Uri endpointUri))
@@ -212,6 +297,24 @@ namespace FantasyLoveSimAssetTool.Services
             }
 
             return endpointUri;
+        }
+
+        private static Uri BuildWebSocketEndpointUri(string endpointUrl, string clientId)
+        {
+            if (!Uri.TryCreate(endpointUrl.TrimEnd('/'), UriKind.Absolute, out Uri baseUri))
+            {
+                throw new InvalidOperationException($"ComfyUI endpoint URL is invalid: {endpointUrl}");
+            }
+
+            string scheme = baseUri.Scheme == Uri.UriSchemeHttps ? "wss" : "ws";
+            UriBuilder builder = new UriBuilder(baseUri)
+            {
+                Scheme = scheme,
+                Path = baseUri.AbsolutePath.TrimEnd('/') + "/ws",
+                Query = "clientId=" + Uri.EscapeDataString(clientId)
+            };
+
+            return builder.Uri;
         }
 
         private static Uri BuildHistoryEndpointUri(string endpointUrl, string promptId)
@@ -292,6 +395,65 @@ namespace FantasyLoveSimAssetTool.Services
             }
 
             return status;
+        }
+
+        private static ComfyProgressUpdate ParseProgressUpdate(string messageJson, string targetPromptId)
+        {
+            using JsonDocument document = JsonDocument.Parse(messageJson);
+            JsonElement rootElement = document.RootElement;
+            if (!rootElement.TryGetProperty("type", out JsonElement typeElement) ||
+                typeElement.ValueKind != JsonValueKind.String ||
+                !rootElement.TryGetProperty("data", out JsonElement dataElement) ||
+                dataElement.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            string eventType = typeElement.GetString() ?? string.Empty;
+            string promptId = GetStringProperty(dataElement, "prompt_id");
+            if (!string.IsNullOrWhiteSpace(promptId) &&
+                !string.IsNullOrWhiteSpace(targetPromptId) &&
+                promptId != targetPromptId)
+            {
+                return null;
+            }
+
+            ComfyProgressUpdate update = new ComfyProgressUpdate
+            {
+                EventType = eventType,
+                PromptId = promptId
+            };
+
+            if (dataElement.TryGetProperty("node", out JsonElement nodeElement))
+            {
+                if (nodeElement.ValueKind == JsonValueKind.String)
+                {
+                    update.NodeId = nodeElement.GetString() ?? string.Empty;
+                }
+                else if (nodeElement.ValueKind == JsonValueKind.Null)
+                {
+                    update.IsCompleted = eventType == "executing";
+                }
+            }
+
+            if (dataElement.TryGetProperty("value", out JsonElement valueElement) &&
+                valueElement.TryGetInt32(out int value))
+            {
+                update.Value = value;
+            }
+
+            if (dataElement.TryGetProperty("max", out JsonElement maxElement) &&
+                maxElement.TryGetInt32(out int max))
+            {
+                update.Max = max;
+            }
+
+            if (eventType == "progress" || eventType == "executing")
+            {
+                return update;
+            }
+
+            return null;
         }
 
         private static bool ContainsPromptId(JsonElement queueElement, string promptId)
