@@ -126,6 +126,8 @@ Export/
       Ending/
     Data/
       heroine_profile_note.md
+      heroine_profile_export.json
+      assets_export.json
       conversations_draft.md
       game_events_draft.md
       action_reactions_draft.md
@@ -335,6 +337,7 @@ Services/
 - 採用画像の export
 - prompt 記録の export
 - `heroine_profile_note.md` 生成
+- Unity Editor Import 用の `heroine_profile_export.json` と `assets_export.json` 生成
 - 下書き Markdown の生成
 - export 件数と警告の report 生成
 
@@ -395,11 +398,13 @@ Services/
 43. `StillWorkItem.NegativePromptAddition` を追加し、共通 negative prompt にスチルごとの negative prompt を追加して ComfyUI 送信に使う
 44. ComfyUI `/queue` を参照し、生成待機中に実行中、待機中、対象 prompt のキュー状態を表示する
 45. ComfyUI WebSocket を参照し、生成待機中に実行中 node と sampler step を表示する
+46. Export の `Data` 配下に Unity Editor Import 用の `heroine_profile_export.json` と `assets_export.json` を出力する
 
 ## 次に進める候補
 
-- スチル一覧(確認用)タブの内容をスチル作業タブへ完全統合するか判断する
 - 会話データ作成機能の設計と Unity Editor Import 用 JSON export
+- Unity Editor Import 拡張側で `heroine_profile_export.json` と `assets_export.json` を読み込む設計
+- スチル一覧(確認用)タブの内容をスチル作業タブへ完全統合するか判断する
 - 画像ファイルの差し替え
 - 画像ファイル本体の削除を確認付きで追加するか判断する
 

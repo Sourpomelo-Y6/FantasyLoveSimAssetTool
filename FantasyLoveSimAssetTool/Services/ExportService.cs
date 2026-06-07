@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace FantasyLoveSimAssetTool.Services
 {
@@ -104,7 +106,7 @@ namespace FantasyLoveSimAssetTool.Services
 
             AddImageInspectionWarnings(asset, sourcePath, report);
 
-            string fileName = string.IsNullOrWhiteSpace(asset.FileName) ? Path.GetFileName(sourcePath) : asset.FileName;
+            string fileName = GetExportFileName(asset, sourcePath);
             string destinationDirectory = Path.Combine(heroineExportDirectory, "Images", asset.Usage.ToString());
             Directory.CreateDirectory(destinationDirectory);
             File.Copy(sourcePath, Path.Combine(destinationDirectory, fileName), true);
@@ -151,6 +153,8 @@ namespace FantasyLoveSimAssetTool.Services
         {
             string dataDirectory = Path.Combine(heroineExportDirectory, "Data");
             File.WriteAllText(Path.Combine(dataDirectory, "heroine_profile_note.md"), BuildProfileNote(profile, acceptedAssets));
+            File.WriteAllText(Path.Combine(dataDirectory, "heroine_profile_export.json"), BuildProfileExportJson(profile));
+            File.WriteAllText(Path.Combine(dataDirectory, "assets_export.json"), BuildAssetsExportJson(profile, acceptedAssets));
             WriteDraftFile(Path.Combine(dataDirectory, "conversations_draft.md"), "会話案");
             WriteDraftFile(Path.Combine(dataDirectory, "game_events_draft.md"), "イベント案");
             WriteDraftFile(Path.Combine(dataDirectory, "action_reactions_draft.md"), "行動反応案");
@@ -193,6 +197,91 @@ namespace FantasyLoveSimAssetTool.Services
             }
 
             return builder.ToString();
+        }
+
+        private static string BuildProfileExportJson(HeroineProfile profile)
+        {
+            object exportModel = new
+            {
+                schemaVersion = 1,
+                heroineId = profile.HeroineId,
+                displayName = profile.DisplayName,
+                age = profile.Age,
+                height = profile.Height,
+                personality = profile.Personality,
+                speakingStyle = profile.SpeakingStyle,
+                firstPerson = profile.FirstPerson,
+                secondPerson = profile.SecondPerson,
+                likes = profile.Likes,
+                dislikes = profile.Dislikes,
+                appearancePrompt = profile.AppearancePrompt,
+                stillCommonPositivePrompt = profile.StillCommonPositivePrompt,
+                actionReactionPolicy = profile.ActionReactionPolicy,
+                endingPolicy = profile.EndingPolicy
+            };
+
+            return JsonSerializer.Serialize(exportModel, CreateJsonOptions());
+        }
+
+        private static string BuildAssetsExportJson(HeroineProfile profile, IReadOnlyList<HeroineAsset> acceptedAssets)
+        {
+            object exportModel = new
+            {
+                schemaVersion = 1,
+                heroineId = profile.HeroineId,
+                unityImageRoot = $"Assets/Images/Heroines/{profile.HeroineId}",
+                assets = acceptedAssets.Select(asset => new
+                {
+                    assetId = asset.AssetId,
+                    usage = asset.Usage,
+                    status = asset.Status,
+                    fileName = GetExportFileName(asset, string.Empty),
+                    memo = asset.Memo,
+                    exportImagePath = ToExportRelativePath("Images", asset.Usage.ToString(), GetExportFileName(asset, string.Empty)),
+                    exportPromptPath = string.IsNullOrWhiteSpace(asset.PromptRecordPath)
+                        ? string.Empty
+                        : ToExportRelativePath("Prompts", Path.GetFileName(asset.PromptRecordPath)),
+                    unityImagePath = ToExportRelativePath(
+                        "Assets",
+                        "Images",
+                        "Heroines",
+                        profile.HeroineId,
+                        asset.Usage.ToString(),
+                        GetExportFileName(asset, string.Empty))
+                }).ToList()
+            };
+
+            return JsonSerializer.Serialize(exportModel, CreateJsonOptions());
+        }
+
+        private static JsonSerializerOptions CreateJsonOptions()
+        {
+            JsonSerializerOptions options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+            options.Converters.Add(new JsonStringEnumConverter());
+            return options;
+        }
+
+        private static string ToExportRelativePath(params string[] segments)
+        {
+            return string.Join("/", segments.Where(segment => !string.IsNullOrWhiteSpace(segment)));
+        }
+
+        private static string GetExportFileName(HeroineAsset asset, string sourcePath)
+        {
+            if (!string.IsNullOrWhiteSpace(asset.FileName))
+            {
+                return asset.FileName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(asset.StoredPath))
+            {
+                return Path.GetFileName(asset.StoredPath);
+            }
+
+            return string.IsNullOrWhiteSpace(sourcePath) ? string.Empty : Path.GetFileName(sourcePath);
         }
 
         private static void WriteDraftFile(string path, string title)

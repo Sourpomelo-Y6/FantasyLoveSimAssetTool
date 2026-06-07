@@ -541,6 +541,8 @@ Export/
       Ending/
     Data/
       heroine_profile_note.md
+      heroine_profile_export.json
+      assets_export.json
       conversations_draft.md
       game_events_draft.md
       action_reactions_draft.md
@@ -555,7 +557,13 @@ Unity に取り込むときは、`Images` 配下を次へコピーする。
 Assets/Images/Heroines/<HeroineId>/
 ```
 
-`Data` 配下は Unity Editor 上で ScriptableObject を作るときの参照資料として使う。
+`Data/heroine_profile_export.json` と `Data/assets_export.json` は Unity Editor Import 拡張が読む入口にする。
+`heroine_profile_export.json` はキャラクター基本情報、容姿 prompt、行動反応方針、エンディング方針を持つ。
+`assets_export.json` は `Accepted` 画像だけを対象にし、`assetId`、用途、export 内画像パス、Unity 取り込み後の想定画像パス、prompt JSON への相対パスを持つ。
+`Data` 配下の Markdown は、人間が確認、加筆する参照資料として残す。
+
+WPF ツールは Unity の ScriptableObject `.asset` を直接生成しない。
+Unity Editor 拡張は `heroine_profile_export.json` と `assets_export.json` を読み、Unity Editor 内で `HeroineProfileData` などの `.asset` を生成、更新する。
 
 ## 将来の拡張
 

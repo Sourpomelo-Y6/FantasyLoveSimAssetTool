@@ -199,6 +199,8 @@ Export/
       Ending/
     Data/
       heroine_profile_note.md
+      heroine_profile_export.json
+      assets_export.json
       conversations_draft.md
       game_events_draft.md
       action_reactions_draft.md
@@ -207,7 +209,10 @@ Export/
       GameStartIntro_01.prompt.json
 ```
 
-`Images` 配下は Unity の `Assets/Images/Heroines/<HeroineId>/` へコピーし、`Data` 配下は ScriptableObject 作成時の参照資料として使います。
+`Images` 配下は Unity の `Assets/Images/Heroines/<HeroineId>/` へコピーします。
+`Data/heroine_profile_export.json` と `Data/assets_export.json` は Unity Editor Import 拡張が読む入口にします。
+WPF 側では ScriptableObject `.asset` を直接生成せず、Unity Editor 側で JSON から `HeroineProfileData` などを生成、更新する方針です。
+`Prompts` 配下の個別 prompt JSON は、生成条件の参照資料として `assets_export.json` の `exportPromptPath` から辿れるようにします。
 
 ## 今後の拡張候補
 
