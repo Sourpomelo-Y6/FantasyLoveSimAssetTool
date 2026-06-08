@@ -52,6 +52,21 @@ JSON export が追加された後も、Markdown はメモまたはレビュー�
 `imageAssetIds` は、WPF 側で登録している `HeroineAsset.AssetId` を参照する。
 Unity 側では `assets_export.json` を使って `AssetId` から画像パスへ解決する。
 
+## Unity 側で受け取る値
+
+現時点では、WPF 側の入力候補と Export 検証は次の値を基準にする。
+空文字は「条件なし」として扱う。
+Unity 側で実際の ID を変更した場合は、この一覧、WPF 側の候補、Export 検証を同時に更新する。
+
+| 項目 | 値 |
+| --- | --- |
+| `locationId` | `Forest`, `Lake`, `Cave`, `Room`, `Town` |
+| `actionId` | `Tea`, `Rest`, `Walk`, `Gift`, `Talk` |
+| `weather` | `Sunny`, `Rainy`, `Cloudy`, `Snow` |
+| `season` | `Spring`, `Summer`, `Autumn`, `Winter` |
+| `timeOfDay` | `Morning`, `Day`, `Evening`, `Night` |
+| `expression` | `Neutral`, `Smile`, `Sad`, `Angry`, `Shy`, `Surprised` |
+
 ## conversations_export.json
 
 通常会話を扱う。

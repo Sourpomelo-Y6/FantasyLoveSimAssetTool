@@ -818,55 +818,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
             FilteredStillDefinitions = new ObservableCollection<StillDefinition>();
             FilteredConversationEntries = new ObservableCollection<ConversationEntry>();
             ConversationCategorySuggestions = new ObservableCollection<string>();
-            ConversationLocationSuggestions = new ObservableCollection<string>
-            {
-                "Forest",
-                "Lake",
-                "Cave",
-                "Room",
-                "Town"
-            };
-            ConversationActionSuggestions = new ObservableCollection<string>
-            {
-                "Tea",
-                "Rest",
-                "Walk",
-                "Gift",
-                "Talk"
-            };
-            ConversationWeatherSuggestions = new ObservableCollection<string>
-            {
-                "",
-                "Sunny",
-                "Rainy",
-                "Cloudy",
-                "Snow"
-            };
-            ConversationSeasonSuggestions = new ObservableCollection<string>
-            {
-                "",
-                "Spring",
-                "Summer",
-                "Autumn",
-                "Winter"
-            };
-            ConversationTimeOfDaySuggestions = new ObservableCollection<string>
-            {
-                "",
-                "Morning",
-                "Day",
-                "Evening",
-                "Night"
-            };
-            ConversationExpressionSuggestions = new ObservableCollection<string>
-            {
-                "Neutral",
-                "Smile",
-                "Sad",
-                "Angry",
-                "Shy",
-                "Surprised"
-            };
+            ConversationLocationSuggestions = new ObservableCollection<string>(ConversationValueCatalog.Locations);
+            ConversationActionSuggestions = new ObservableCollection<string>(ConversationValueCatalog.Actions);
+            ConversationWeatherSuggestions = new ObservableCollection<string>(new[] { string.Empty }.Concat(ConversationValueCatalog.Weather));
+            ConversationSeasonSuggestions = new ObservableCollection<string>(new[] { string.Empty }.Concat(ConversationValueCatalog.Seasons));
+            ConversationTimeOfDaySuggestions = new ObservableCollection<string>(new[] { string.Empty }.Concat(ConversationValueCatalog.TimeOfDay));
+            ConversationExpressionSuggestions = new ObservableCollection<string>(ConversationValueCatalog.Expressions);
             AssetStatusFilters = new ObservableCollection<string>
             {
                 "All",

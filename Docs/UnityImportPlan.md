@@ -192,6 +192,19 @@ Data/
 Unity Editor 側で `ConversationData`、`GameEventData`、`ActionReactionData`、`EndingData` の `.asset` を生成、更新する。
 会話データの JSON スキーマと WPF 画面方針は `Docs/ConversationDataPlan.md` にまとめる。
 
+Unity 側で受け取る条件値は次を基準にする。
+WPF 側は同じ値を入力候補として表示し、Export 時に候補外の値を警告する。
+空文字は「条件なし」として扱う。
+
+| 項目 | 値 |
+| --- | --- |
+| `locationId` | `Forest`, `Lake`, `Cave`, `Room`, `Town` |
+| `actionId` | `Tea`, `Rest`, `Walk`, `Gift`, `Talk` |
+| `weather` | `Sunny`, `Rainy`, `Cloudy`, `Snow` |
+| `season` | `Spring`, `Summer`, `Autumn`, `Winter` |
+| `timeOfDay` | `Morning`, `Day`, `Evening`, `Night` |
+| `expression` | `Neutral`, `Smile`, `Sad`, `Angry`, `Shy`, `Surprised` |
+
 ## 未決事項
 
 - Unity 側の ScriptableObject 型名とフィールド名

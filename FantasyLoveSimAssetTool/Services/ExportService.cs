@@ -307,6 +307,15 @@ namespace FantasyLoveSimAssetTool.Services
                 report.Warnings.Add($"{label}: minAffection が maxAffection より大きいです。");
             }
 
+            if (entry.Conditions != null)
+            {
+                ValidateCatalogValue(label, "locationId", entry.Conditions.LocationId, ConversationValueCatalog.Locations, report);
+                ValidateCatalogValue(label, "actionId", entry.Conditions.ActionId, ConversationValueCatalog.Actions, report);
+                ValidateCatalogValue(label, "weather", entry.Conditions.Weather, ConversationValueCatalog.Weather, report);
+                ValidateCatalogValue(label, "season", entry.Conditions.Season, ConversationValueCatalog.Seasons, report);
+                ValidateCatalogValue(label, "timeOfDay", entry.Conditions.TimeOfDay, ConversationValueCatalog.TimeOfDay, report);
+            }
+
             IReadOnlyList<ConversationLine> lines = (entry.Lines ?? new System.Collections.ObjectModel.ObservableCollection<ConversationLine>()).ToList();
             if (lines.Count == 0)
             {
@@ -325,6 +334,8 @@ namespace FantasyLoveSimAssetTool.Services
                 {
                     report.Warnings.Add($"{label}: {index + 1} 行目の text が空です。");
                 }
+
+                ValidateCatalogValue(label, $"{index + 1} 行目の expression", line.Expression, ConversationValueCatalog.Expressions, report);
             }
 
             foreach (string assetId in SplitList(entry.ImageAssetIdsText))
@@ -333,6 +344,19 @@ namespace FantasyLoveSimAssetTool.Services
                 {
                     report.Warnings.Add($"{label}: imageAssetId `{assetId}` は Accepted 画像に存在しません。");
                 }
+            }
+        }
+
+        private static void ValidateCatalogValue(string label, string fieldName, string value, IReadOnlyCollection<string> allowedValues, ExportReport report)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return;
+            }
+
+            if (!allowedValues.Contains(value.Trim(), StringComparer.OrdinalIgnoreCase))
+            {
+                report.Warnings.Add($"{label}: {fieldName} `{value}` は候補外です。");
             }
         }
 
