@@ -402,10 +402,11 @@ Services/
 46. Export の `Data` 配下に Unity Editor Import 用の `heroine_profile_export.json` と `assets_export.json` を出力する
 47. `Docs/ConversationDataPlan.md` を追加し、会話、イベント、行動反応、エンディング本文の JSON export と Unity Import 方針を整理する
 48. 会話データタブを追加し、`ConversationEntries` を `profile.json` に保存、再読み込みできる最小編集機能を実装する
+49. Export 時に `ConversationEntries` から `conversations_export.json`、`game_events_export.json`、`action_reactions_export.json`、`endings_export.json` を出力する
 
 ## 次に進める候補
 
-- `conversations_export.json` などの JSON export 実装
+- 会話データ export の検証結果と件数を Export report に表示する
 - Unity Editor Import 拡張側で `heroine_profile_export.json` と `assets_export.json` を読み込む設計
 - スチル一覧(確認用)タブの内容をスチル作業タブへ完全統合するか判断する
 - 画像ファイルの差し替え

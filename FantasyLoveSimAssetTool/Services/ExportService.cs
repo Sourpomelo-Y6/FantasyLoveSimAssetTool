@@ -155,6 +155,10 @@ namespace FantasyLoveSimAssetTool.Services
             File.WriteAllText(Path.Combine(dataDirectory, "heroine_profile_note.md"), BuildProfileNote(profile, acceptedAssets));
             File.WriteAllText(Path.Combine(dataDirectory, "heroine_profile_export.json"), BuildProfileExportJson(profile));
             File.WriteAllText(Path.Combine(dataDirectory, "assets_export.json"), BuildAssetsExportJson(profile, acceptedAssets));
+            File.WriteAllText(Path.Combine(dataDirectory, "conversations_export.json"), BuildConversationExportJson(profile, ConversationDataKind.Conversations));
+            File.WriteAllText(Path.Combine(dataDirectory, "game_events_export.json"), BuildConversationExportJson(profile, ConversationDataKind.GameEvents));
+            File.WriteAllText(Path.Combine(dataDirectory, "action_reactions_export.json"), BuildConversationExportJson(profile, ConversationDataKind.ActionReactions));
+            File.WriteAllText(Path.Combine(dataDirectory, "endings_export.json"), BuildConversationExportJson(profile, ConversationDataKind.Endings));
             WriteDraftFile(Path.Combine(dataDirectory, "conversations_draft.md"), "会話案");
             WriteDraftFile(Path.Combine(dataDirectory, "game_events_draft.md"), "イベント案");
             WriteDraftFile(Path.Combine(dataDirectory, "action_reactions_draft.md"), "行動反応案");
@@ -254,6 +258,51 @@ namespace FantasyLoveSimAssetTool.Services
             return JsonSerializer.Serialize(exportModel, CreateJsonOptions());
         }
 
+        private static string BuildConversationExportJson(HeroineProfile profile, ConversationDataKind kind)
+        {
+            IReadOnlyList<ConversationEntry> entries = (profile.ConversationEntries ?? new System.Collections.ObjectModel.ObservableCollection<ConversationEntry>())
+                .Where(entry => entry.Kind == kind)
+                .ToList();
+
+            object exportModel = new
+            {
+                schemaVersion = 1,
+                heroineId = profile.HeroineId,
+                kind = kind.ToString(),
+                items = entries.Select(entry => new
+                {
+                    id = entry.Id,
+                    title = entry.Title,
+                    category = entry.Category,
+                    conditions = new
+                    {
+                        locationId = entry.Conditions == null ? string.Empty : entry.Conditions.LocationId,
+                        minAffection = entry.Conditions == null ? 0 : entry.Conditions.MinAffection,
+                        maxAffection = entry.Conditions == null ? 100 : entry.Conditions.MaxAffection,
+                        weather = entry.Conditions == null ? string.Empty : entry.Conditions.Weather,
+                        season = entry.Conditions == null ? string.Empty : entry.Conditions.Season,
+                        timeOfDay = entry.Conditions == null ? string.Empty : entry.Conditions.TimeOfDay,
+                        actionId = entry.Conditions == null ? string.Empty : entry.Conditions.ActionId,
+                        requiredItemId = entry.Conditions == null ? string.Empty : entry.Conditions.RequiredItemId,
+                        once = entry.Conditions != null && entry.Conditions.Once,
+                        requiredFlagIds = SplitList(entry.Conditions == null ? string.Empty : entry.Conditions.RequiredFlagIdsText)
+                    },
+                    lines = (entry.Lines ?? new System.Collections.ObjectModel.ObservableCollection<ConversationLine>())
+                        .Select(line => new
+                        {
+                            speaker = line.Speaker,
+                            text = line.Text,
+                            expression = line.Expression
+                        }).ToList(),
+                    imageAssetIds = SplitList(entry.ImageAssetIdsText),
+                    priority = entry.Priority,
+                    memo = entry.Memo
+                }).ToList()
+            };
+
+            return JsonSerializer.Serialize(exportModel, CreateJsonOptions());
+        }
+
         private static JsonSerializerOptions CreateJsonOptions()
         {
             JsonSerializerOptions options = new JsonSerializerOptions
@@ -267,6 +316,21 @@ namespace FantasyLoveSimAssetTool.Services
         private static string ToExportRelativePath(params string[] segments)
         {
             return string.Join("/", segments.Where(segment => !string.IsNullOrWhiteSpace(segment)));
+        }
+
+        private static IReadOnlyList<string> SplitList(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return new List<string>();
+            }
+
+            return text
+                .Split(new[] { '\r', '\n', ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(item => item.Trim())
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Distinct()
+                .ToList();
         }
 
         private static string GetExportFileName(HeroineAsset asset, string sourcePath)

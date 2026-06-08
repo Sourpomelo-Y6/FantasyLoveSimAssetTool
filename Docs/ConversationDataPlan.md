@@ -210,7 +210,8 @@ Unity 側の対応先は `EndingData` を想定する。
 画像管理やスチル作業とは分け、文章データだけを集中して編集できるようにする。
 
 現時点では、会話データタブの最小実装として `profile.json` 内に `ConversationEntries` を保存する。
-JSON export は次段階で追加する。
+Export 時は `ConversationEntries` を種別ごとに分け、`conversations_export.json`、`game_events_export.json`、`action_reactions_export.json`、`endings_export.json` として出力する。
+`ImageAssetIdsText` と `RequiredFlagIdsText` は、改行、カンマ、セミコロン区切りを配列に変換する。
 
 画面構成の候補は次の通り。
 

@@ -167,7 +167,7 @@ Unity Editor 拡張は `exportImagePath` から画像をコピーし、`unityIma
 ## 会話データの将来拡張
 
 会話データ、イベント、行動反応、エンディング本文は、現時点では Markdown 下書きとして export する。
-将来は次の JSON を追加し、Unity Editor 拡張で ScriptableObject 化する。
+WPF ツールは次の JSON も出力し、Unity Editor 拡張で ScriptableObject 化する。
 
 ```text
 Data/
