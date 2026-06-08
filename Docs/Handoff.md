@@ -492,7 +492,6 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 - スチル状態 `StillStatus` と画像状態 `HeroineAsset.Status` をどの程度連動させるか
 - prompt テンプレートのプレースホルダー名をどう定義するか
 - 会話データ JSON のスキーマを Unity 側の `ConversationData` などとどう対応させるか
-- Unity Editor Import 拡張を別リポジトリで作るか、Unity プロジェクト側に直接置くか
 - `.asset` の直接生成を将来も避けるか、限定条件付きで対応するか
 - `net5.0-windows` 維持を前提に、将来ターゲットフレームワーク移行を再検証するタイミング
 - 画像ファイル本体の削除操作を将来追加するか。現状の登録解除は profile から除外するだけで、画像ファイルと prompt JSON は残す
@@ -500,7 +499,7 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 ## 関連ドキュメント
 
 - `Docs/CharacterAssetGenerationToolSpec.md`: WPF ツール側の仕様
-- `Docs/UnityImportPlan.md`: WPF export 結果を Unity Editor 拡張で取り込む方針
+- `Docs/UnityImportPlan.md`: WPF export 結果を Unity Editor 拡張で取り込む方針と、別リポジトリ運用方針
 
 ## 次の担当者へのメモ
 

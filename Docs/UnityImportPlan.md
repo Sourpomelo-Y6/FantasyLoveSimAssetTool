@@ -7,12 +7,41 @@ WPF ツールは画像と中間 JSON を出力し、Unity Editor 拡張が Unity
 
 ## 基本方針
 
+- WPF ツールと Unity プロジェクトは、原則として別リポジトリのまま運用する。
 - WPF ツールは `Export/<HeroineId>/` を出力する。
 - Unity 側は `Export/<HeroineId>/Images/` の画像を `Assets/Images/Heroines/<HeroineId>/` へ取り込む。
 - Unity 側は `Export/<HeroineId>/Data/heroine_profile_export.json` と `Export/<HeroineId>/Data/assets_export.json` を読む。
 - Unity 側の `.asset` 生成、更新は Unity Editor 拡張が担当する。
 - `.meta`、GUID、fileID、ScriptableObject 型情報は Unity Editor に管理させる。
 - `Prompts/` 配下の prompt JSON は、生成条件の参照資料として保持する。
+
+## リポジトリ運用
+
+WPF ツールと Unity プロジェクトは、別リポジトリで管理することを推奨する。
+
+```text
+FantasyLoveSim/                 Unity 本体リポジトリ
+FantasyLoveSimAssetTool/        WPF ツールリポジトリ
+FantasyLoveSimExport/           必要なら一時 export 置き場
+```
+
+Unity プロジェクトは `Assets/`、`ProjectSettings/`、`.meta`、アセット import 設定など、Unity 固有の差分管理が多い。
+WPF ツールは通常の C# アプリとして管理できるため、同じリポジトリにまとめると履歴、差分確認、ビルド環境の責務が混ざりやすい。
+
+両者の共有点はコードではなく、Export / Import のデータ契約に限定する。
+共有する契約は次のファイルとフォルダ構成にする。
+
+- `Data/heroine_profile_export.json`
+- `Data/assets_export.json`
+- `Images/<Usage>/<FileName>`
+- `Prompts/<AssetId>.prompt.json`
+
+Unity 側は上記の契約を読み込む Editor 拡張を持つ。
+WPF 側はこの契約に沿った export を出す。
+どちらかの実装を変更する場合も、まず `Docs/UnityImportPlan.md` の契約を更新し、その後で WPF 側と Unity 側を合わせる。
+
+必要になった場合は、WPF ツール側に Unity プロジェクトの import 用フォルダへ直接 export する設定を追加する。
+この場合もリポジトリを統合する必要はなく、出力先パスを設定として持つだけでよい。
 
 ## WPF Export 構成
 

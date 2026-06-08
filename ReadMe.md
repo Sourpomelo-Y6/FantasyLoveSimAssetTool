@@ -213,7 +213,7 @@ Export/
 `Data/heroine_profile_export.json` と `Data/assets_export.json` は Unity Editor Import 拡張が読む入口にします。
 WPF 側では ScriptableObject `.asset` を直接生成せず、Unity Editor 側で JSON から `HeroineProfileData` などを生成、更新する方針です。
 `Prompts` 配下の個別 prompt JSON は、生成条件の参照資料として `assets_export.json` の `exportPromptPath` から辿れるようにします。
-Unity 側での取り込み手順は `Docs/UnityImportPlan.md` にまとめています。
+Unity 側での取り込み手順と、WPF ツールと Unity プロジェクトを別リポジトリで運用する方針は `Docs/UnityImportPlan.md` にまとめています。
 
 ## 今後の拡張候補
 
