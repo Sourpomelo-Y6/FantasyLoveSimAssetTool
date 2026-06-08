@@ -179,6 +179,7 @@ Data/
 
 このときも WPF 側から `.asset` を直接生成しない。
 Unity Editor 側で `ConversationData`、`GameEventData`、`ActionReactionData`、`EndingData` の `.asset` を生成、更新する。
+会話データの JSON スキーマ案と WPF 画面案は `Docs/ConversationDataPlan.md` にまとめる。
 
 ## 未決事項
 
@@ -187,4 +188,4 @@ Unity Editor 側で `ConversationData`、`GameEventData`、`ActionReactionData`�
 - 画像一覧を `HeroineProfileData` に直接持たせるか、別の `HeroineAssetCatalog` に分けるか
 - prompt JSON を Unity プロジェクト内へコピーするか、WPF export フォルダ参照のままにするか
 - Import 時に既存画像を上書きするか、確認ダイアログを出すか
-- 会話データ JSON のスキーマ
+- 会話データ JSON の詳細スキーマと Unity 側フィールド名

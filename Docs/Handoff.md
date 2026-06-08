@@ -399,10 +399,12 @@ Services/
 44. ComfyUI `/queue` を参照し、生成待機中に実行中、待機中、対象 prompt のキュー状態を表示する
 45. ComfyUI WebSocket を参照し、生成待機中に実行中 node と sampler step を表示する
 46. Export の `Data` 配下に Unity Editor Import 用の `heroine_profile_export.json` と `assets_export.json` を出力する
+47. `Docs/ConversationDataPlan.md` を追加し、会話、イベント、行動反応、エンディング本文の JSON export と Unity Import 方針を整理する
 
 ## 次に進める候補
 
-- 会話データ作成機能の設計と Unity Editor Import 用 JSON export
+- 会話データ作成タブの最小実装
+- `conversations_export.json` などの JSON export 実装
 - Unity Editor Import 拡張側で `heroine_profile_export.json` と `assets_export.json` を読み込む設計
 - スチル一覧(確認用)タブの内容をスチル作業タブへ完全統合するか判断する
 - 画像ファイルの差し替え
@@ -500,6 +502,7 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 
 - `Docs/CharacterAssetGenerationToolSpec.md`: WPF ツール側の仕様
 - `Docs/UnityImportPlan.md`: WPF export 結果を Unity Editor 拡張で取り込む方針と、別リポジトリ運用方針
+- `Docs/ConversationDataPlan.md`: 会話、イベント、行動反応、エンディング本文の JSON export 方針
 
 ## 次の担当者へのメモ
 
