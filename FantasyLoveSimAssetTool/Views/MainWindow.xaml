@@ -1073,11 +1073,19 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Column="0" Text="{Binding LastExportReport.AcceptedAssetCount, StringFormat=Accepted: {0}}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding LastExportReport.ExportedImageCount, StringFormat=Images: {0}}"/>
-                                <TextBlock Grid.Column="2" Text="{Binding LastExportReport.ExportedPromptCount, StringFormat=Prompts: {0}}"/>
-                                <TextBlock Grid.Column="3" Text="{Binding LastExportReport.SkippedImageCount, StringFormat=Skipped: {0}}"/>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding LastExportReport.AcceptedAssetCount, StringFormat=Accepted: {0}}"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding LastExportReport.ExportedImageCount, StringFormat=Images: {0}}"/>
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding LastExportReport.ExportedPromptCount, StringFormat=Prompts: {0}}"/>
+                                <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding LastExportReport.SkippedImageCount, StringFormat=Skipped: {0}}"/>
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding LastExportReport.ConversationCount, StringFormat=Conversations: {0}}" Margin="0,4,0,0"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LastExportReport.GameEventCount, StringFormat=Events: {0}}" Margin="0,4,0,0"/>
+                                <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding LastExportReport.ActionReactionCount, StringFormat=Reactions: {0}}" Margin="0,4,0,0"/>
+                                <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding LastExportReport.EndingCount, StringFormat=Endings: {0}}" Margin="0,4,0,0"/>
                             </Grid>
 
                             <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">

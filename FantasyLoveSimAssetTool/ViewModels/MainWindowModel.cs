@@ -2455,7 +2455,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 characterProjectService.SaveProfile(SelectedProfile);
                 LastExportReport = exportService.ExportHeroine(SelectedProfile);
-                StatusMessage = $"{SelectedProfile.HeroineId} を export しました。画像 {LastExportReport.ExportedImageCount}/{LastExportReport.AcceptedAssetCount} 件、prompt {LastExportReport.ExportedPromptCount} 件、警告 {LastExportReport.Warnings.Count} 件。";
+                StatusMessage = $"{SelectedProfile.HeroineId} を export しました。画像 {LastExportReport.ExportedImageCount}/{LastExportReport.AcceptedAssetCount} 件、prompt {LastExportReport.ExportedPromptCount} 件、会話データ {LastExportReport.TotalConversationDataCount} 件、警告 {LastExportReport.Warnings.Count} 件。";
             }
             catch (Exception ex)
             {

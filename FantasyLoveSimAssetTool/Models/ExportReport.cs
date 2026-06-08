@@ -14,6 +14,19 @@ namespace FantasyLoveSimAssetTool.Models
 
         public int SkippedImageCount { get; set; }
 
+        public int ConversationCount { get; set; }
+
+        public int GameEventCount { get; set; }
+
+        public int ActionReactionCount { get; set; }
+
+        public int EndingCount { get; set; }
+
+        public int TotalConversationDataCount
+        {
+            get { return ConversationCount + GameEventCount + ActionReactionCount + EndingCount; }
+        }
+
         public ObservableCollection<string> Warnings { get; set; }
 
         public ExportReport()

@@ -54,6 +54,7 @@ namespace FantasyLoveSimAssetTool.Services
                 ExportPath = heroineExportDirectory,
                 AcceptedAssetCount = acceptedAssets.Count
             };
+            ValidateConversationEntries(profile, acceptedAssets, report);
 
             foreach (HeroineAsset asset in acceptedAssets)
             {
@@ -256,6 +257,104 @@ namespace FantasyLoveSimAssetTool.Services
             };
 
             return JsonSerializer.Serialize(exportModel, CreateJsonOptions());
+        }
+
+        private static void ValidateConversationEntries(HeroineProfile profile, IReadOnlyList<HeroineAsset> acceptedAssets, ExportReport report)
+        {
+            IReadOnlyList<ConversationEntry> entries = (profile.ConversationEntries ?? new System.Collections.ObjectModel.ObservableCollection<ConversationEntry>())
+                .ToList();
+            HashSet<string> acceptedAssetIds = new HashSet<string>(
+                acceptedAssets.Select(asset => asset.AssetId).Where(assetId => !string.IsNullOrWhiteSpace(assetId)),
+                StringComparer.OrdinalIgnoreCase);
+
+            report.ConversationCount = entries.Count(entry => entry.Kind == ConversationDataKind.Conversations);
+            report.GameEventCount = entries.Count(entry => entry.Kind == ConversationDataKind.GameEvents);
+            report.ActionReactionCount = entries.Count(entry => entry.Kind == ConversationDataKind.ActionReactions);
+            report.EndingCount = entries.Count(entry => entry.Kind == ConversationDataKind.Endings);
+
+            foreach (IGrouping<ConversationDataKind, ConversationEntry> group in entries.GroupBy(entry => entry.Kind))
+            {
+                foreach (IGrouping<string, ConversationEntry> duplicateGroup in group
+                    .Where(entry => !string.IsNullOrWhiteSpace(entry.Id))
+                    .GroupBy(entry => entry.Id.Trim(), StringComparer.OrdinalIgnoreCase)
+                    .Where(idGroup => idGroup.Count() > 1))
+                {
+                    report.Warnings.Add($"{GetConversationKindLabel(group.Key)}: id `{duplicateGroup.Key}` が重複しています。");
+                }
+            }
+
+            foreach (ConversationEntry entry in entries)
+            {
+                ValidateConversationEntry(entry, acceptedAssetIds, report);
+            }
+        }
+
+        private static void ValidateConversationEntry(ConversationEntry entry, HashSet<string> acceptedAssetIds, ExportReport report)
+        {
+            string label = BuildConversationWarningLabel(entry);
+            if (string.IsNullOrWhiteSpace(entry.Id))
+            {
+                report.Warnings.Add($"{label}: id が空です。");
+            }
+
+            if (entry.Priority < 0)
+            {
+                report.Warnings.Add($"{label}: priority が 0 未満です。");
+            }
+
+            if (entry.Conditions != null && entry.Conditions.MinAffection > entry.Conditions.MaxAffection)
+            {
+                report.Warnings.Add($"{label}: minAffection が maxAffection より大きいです。");
+            }
+
+            IReadOnlyList<ConversationLine> lines = (entry.Lines ?? new System.Collections.ObjectModel.ObservableCollection<ConversationLine>()).ToList();
+            if (lines.Count == 0)
+            {
+                report.Warnings.Add($"{label}: 台詞行が空です。");
+            }
+
+            for (int index = 0; index < lines.Count; index++)
+            {
+                ConversationLine line = lines[index];
+                if (string.IsNullOrWhiteSpace(line.Speaker))
+                {
+                    report.Warnings.Add($"{label}: {index + 1} 行目の speaker が空です。");
+                }
+
+                if (string.IsNullOrWhiteSpace(line.Text))
+                {
+                    report.Warnings.Add($"{label}: {index + 1} 行目の text が空です。");
+                }
+            }
+
+            foreach (string assetId in SplitList(entry.ImageAssetIdsText))
+            {
+                if (!acceptedAssetIds.Contains(assetId))
+                {
+                    report.Warnings.Add($"{label}: imageAssetId `{assetId}` は Accepted 画像に存在しません。");
+                }
+            }
+        }
+
+        private static string BuildConversationWarningLabel(ConversationEntry entry)
+        {
+            string id = string.IsNullOrWhiteSpace(entry.Id) ? "(id未設定)" : entry.Id;
+            return $"{GetConversationKindLabel(entry.Kind)} `{id}`";
+        }
+
+        private static string GetConversationKindLabel(ConversationDataKind kind)
+        {
+            switch (kind)
+            {
+                case ConversationDataKind.GameEvents:
+                    return "イベント";
+                case ConversationDataKind.ActionReactions:
+                    return "行動反応";
+                case ConversationDataKind.Endings:
+                    return "エンディング";
+                default:
+                    return "会話";
+            }
         }
 
         private static string BuildConversationExportJson(HeroineProfile profile, ConversationDataKind kind)

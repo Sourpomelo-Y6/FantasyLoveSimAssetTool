@@ -404,10 +404,10 @@ Services/
 48. 会話データタブを追加し、`ConversationEntries` を `profile.json` に保存、再読み込みできる最小編集機能を実装する
 49. Export 時に `ConversationEntries` から `conversations_export.json`、`game_events_export.json`、`action_reactions_export.json`、`endings_export.json` を出力する
 50. 会話データタブにカテゴリ、条件、表情、画像 AssetId、ID 自動生成の入力補助を追加する
+51. Export report に会話データ種別ごとの件数と、id 重複、空台詞、未採用画像参照などの検証警告を追加する
 
 ## 次に進める候補
 
-- 会話データ export の検証結果と件数を Export report に表示する
 - Unity Editor Import 拡張側で `heroine_profile_export.json` と `assets_export.json` を読み込む設計
 - スチル一覧(確認用)タブの内容をスチル作業タブへ完全統合するか判断する
 - 画像ファイルの差し替え
