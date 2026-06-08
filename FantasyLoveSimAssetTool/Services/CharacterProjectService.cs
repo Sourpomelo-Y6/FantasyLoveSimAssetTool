@@ -67,6 +67,8 @@ namespace FantasyLoveSimAssetTool.Services
             profile.StillCommonPositivePrompt ??= string.Empty;
             profile.Assets ??= new ObservableCollection<HeroineAsset>();
             profile.StillWorkItems ??= new ObservableCollection<StillWorkItem>();
+            profile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
+            NormalizeConversationEntries(profile.ConversationEntries);
             EnsureCharacterDirectories(profile.HeroineId);
 
             string json = JsonSerializer.Serialize(profile, jsonOptions);
@@ -205,8 +207,10 @@ namespace FantasyLoveSimAssetTool.Services
 
             profile.Assets ??= new ObservableCollection<HeroineAsset>();
             profile.StillWorkItems ??= new ObservableCollection<StillWorkItem>();
+            profile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
             profile.AppearancePrompt ??= string.Empty;
             profile.StillCommonPositivePrompt ??= string.Empty;
+            NormalizeConversationEntries(profile.ConversationEntries);
 
             return profile;
         }
@@ -265,6 +269,34 @@ namespace FantasyLoveSimAssetTool.Services
             if (heroineId.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
             {
                 throw new ArgumentException("HeroineId contains invalid file name characters.", nameof(heroineId));
+            }
+        }
+
+        private static void NormalizeConversationEntries(ObservableCollection<ConversationEntry> entries)
+        {
+            foreach (ConversationEntry entry in entries)
+            {
+                entry.Id ??= string.Empty;
+                entry.Title ??= string.Empty;
+                entry.Category ??= string.Empty;
+                entry.Conditions ??= new ConversationCondition();
+                entry.Lines ??= new ObservableCollection<ConversationLine>();
+                entry.ImageAssetIdsText ??= string.Empty;
+                entry.Memo ??= string.Empty;
+                entry.Conditions.LocationId ??= string.Empty;
+                entry.Conditions.Weather ??= string.Empty;
+                entry.Conditions.Season ??= string.Empty;
+                entry.Conditions.TimeOfDay ??= string.Empty;
+                entry.Conditions.ActionId ??= string.Empty;
+                entry.Conditions.RequiredItemId ??= string.Empty;
+                entry.Conditions.RequiredFlagIdsText ??= string.Empty;
+
+                foreach (ConversationLine line in entry.Lines)
+                {
+                    line.Speaker ??= string.Empty;
+                    line.Text ??= string.Empty;
+                    line.Expression ??= string.Empty;
+                }
             }
         }
 

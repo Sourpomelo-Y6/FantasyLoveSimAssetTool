@@ -39,6 +39,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private PromptTemplate selectedPromptTemplate;
         private StillDefinition selectedStillDefinition;
         private string selectedStillUsageFilter;
+        private ConversationDataKind selectedConversationDataKind;
+        private ConversationEntry selectedConversationEntry;
+        private ConversationLine selectedConversationLine;
         private PromptRecord currentPromptRecord;
         private HeroineProfile selectedProfile;
         private ExportReport lastExportReport;
@@ -91,6 +94,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<string> StillUsageFilters { get; }
 
         public ObservableCollection<StillStatus> StillStatuses { get; }
+
+        public ObservableCollection<ConversationDataKind> ConversationDataKinds { get; }
+
+        public ObservableCollection<ConversationEntry> FilteredConversationEntries { get; }
 
         public string StillPromptPreview
         {
@@ -283,6 +290,45 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public ConversationDataKind SelectedConversationDataKind
+        {
+            get { return selectedConversationDataKind; }
+            set
+            {
+                if (selectedConversationDataKind == value) { return; }
+                selectedConversationDataKind = value;
+                OnPropertyChanged(nameof(SelectedConversationDataKind));
+                RefreshFilteredConversationEntries();
+            }
+        }
+
+        public ConversationEntry SelectedConversationEntry
+        {
+            get { return selectedConversationEntry; }
+            set
+            {
+                if (selectedConversationEntry == value) { return; }
+                selectedConversationEntry = value;
+                SelectedConversationLine = selectedConversationEntry == null || selectedConversationEntry.Lines == null
+                    ? null
+                    : selectedConversationEntry.Lines.FirstOrDefault();
+                OnPropertyChanged(nameof(SelectedConversationEntry));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public ConversationLine SelectedConversationLine
+        {
+            get { return selectedConversationLine; }
+            set
+            {
+                if (selectedConversationLine == value) { return; }
+                selectedConversationLine = value;
+                OnPropertyChanged(nameof(SelectedConversationLine));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
         public PromptRecord CurrentPromptRecord
         {
             get { return currentPromptRecord; }
@@ -317,6 +363,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 LoadStillDefinitions();
                 RefreshFilteredAssets();
                 RefreshAcceptedAssets();
+                RefreshFilteredConversationEntries();
                 RefreshSelectedStillStatus();
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -620,6 +667,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand AdoptStillComfyImageCommand { get; }
 
+        public ICommand AddConversationEntryCommand { get; }
+
+        public ICommand RemoveConversationEntryCommand { get; }
+
+        public ICommand AddConversationLineCommand { get; }
+
+        public ICommand RemoveConversationLineCommand { get; }
+
+        public ICommand SaveConversationDataCommand { get; }
+
         public MainWindowModel()
         {
             characterProjectService = new CharacterProjectService();
@@ -637,6 +694,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             AvailablePromptTemplates = new ObservableCollection<PromptTemplate>();
             StillDefinitions = new ObservableCollection<StillDefinition>();
             FilteredStillDefinitions = new ObservableCollection<StillDefinition>();
+            FilteredConversationEntries = new ObservableCollection<ConversationEntry>();
             AssetStatusFilters = new ObservableCollection<string>
             {
                 "All",
@@ -673,6 +731,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 StillStatus.NeedsFix,
                 StillStatus.NotNeeded
             };
+            ConversationDataKinds = new ObservableCollection<ConversationDataKind>
+            {
+                ConversationDataKind.Conversations,
+                ConversationDataKind.GameEvents,
+                ConversationDataKind.ActionReactions,
+                ConversationDataKind.Endings
+            };
             heroineIdInput = "TestHeroine";
             displayNameInput = "テストヒロイン";
             assetIdInput = "Heroine_Normal";
@@ -682,6 +747,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             selectedAssetStatusFilter = "All";
             selectedPromptTemplateUsage = AssetUsage.Sprites;
             selectedStillUsageFilter = "All";
+            selectedConversationDataKind = ConversationDataKind.Conversations;
+            selectedConversationEntry = null;
+            selectedConversationLine = null;
             lastExportReport = new ExportReport();
             selectedAssetImagePath = string.Empty;
             selectedAssetImageMessage = "画像を選択してください。";
@@ -771,6 +839,21 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     !IsComfyFetchingImage &&
                     !string.IsNullOrWhiteSpace(CurrentComfyPreviewImagePath) &&
                     File.Exists(CurrentComfyPreviewImagePath));
+            AddConversationEntryCommand = new RelayCommand(
+                AddConversationEntry,
+                () => SelectedProfile != null);
+            RemoveConversationEntryCommand = new RelayCommand(
+                RemoveConversationEntry,
+                () => SelectedProfile != null && SelectedConversationEntry != null);
+            AddConversationLineCommand = new RelayCommand(
+                AddConversationLine,
+                () => SelectedConversationEntry != null);
+            RemoveConversationLineCommand = new RelayCommand(
+                RemoveConversationLine,
+                () => SelectedConversationEntry != null && SelectedConversationLine != null);
+            SaveConversationDataCommand = new RelayCommand(
+                SaveConversationData,
+                () => SelectedProfile != null);
 
             ReloadComfySettings();
             LoadStillDefinitions();
@@ -2181,6 +2264,174 @@ namespace FantasyLoveSimAssetTool.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = $"export に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void AddConversationEntry()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            SelectedProfile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
+            ConversationEntry entry = CreateConversationEntry(SelectedConversationDataKind, SelectedProfile.ConversationEntries);
+            SelectedProfile.ConversationEntries.Add(entry);
+            RefreshFilteredConversationEntries();
+            SelectedConversationEntry = entry;
+            StatusMessage = $"{GetConversationKindDisplayName(SelectedConversationDataKind)}を追加しました。";
+        }
+
+        private void RemoveConversationEntry()
+        {
+            if (SelectedProfile == null || SelectedConversationEntry == null)
+            {
+                return;
+            }
+
+            ConversationEntry entry = SelectedConversationEntry;
+            SelectedProfile.ConversationEntries.Remove(entry);
+            RefreshFilteredConversationEntries();
+            SelectedConversationEntry = FilteredConversationEntries.FirstOrDefault();
+            StatusMessage = $"{entry.Id} を削除しました。保存すると profile.json に反映されます。";
+        }
+
+        private void AddConversationLine()
+        {
+            if (SelectedConversationEntry == null)
+            {
+                return;
+            }
+
+            SelectedConversationEntry.Lines ??= new ObservableCollection<ConversationLine>();
+            ConversationLine line = new ConversationLine();
+            SelectedConversationEntry.Lines.Add(line);
+            SelectedConversationLine = line;
+            OnPropertyChanged(nameof(SelectedConversationEntry));
+            StatusMessage = "台詞行を追加しました。";
+        }
+
+        private void RemoveConversationLine()
+        {
+            if (SelectedConversationEntry == null || SelectedConversationLine == null)
+            {
+                return;
+            }
+
+            ConversationLine line = SelectedConversationLine;
+            SelectedConversationEntry.Lines.Remove(line);
+            SelectedConversationLine = SelectedConversationEntry.Lines.FirstOrDefault();
+            OnPropertyChanged(nameof(SelectedConversationEntry));
+            StatusMessage = "台詞行を削除しました。保存すると profile.json に反映されます。";
+        }
+
+        private void SaveConversationData()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                characterProjectService.SaveProfile(SelectedProfile);
+                StatusMessage = $"{SelectedProfile.HeroineId} の会話データを保存しました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"会話データ保存に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void RefreshFilteredConversationEntries()
+        {
+            FilteredConversationEntries.Clear();
+            if (SelectedProfile == null)
+            {
+                SelectedConversationEntry = null;
+                return;
+            }
+
+            SelectedProfile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
+            foreach (ConversationEntry entry in SelectedProfile.ConversationEntries.Where(entry => entry.Kind == SelectedConversationDataKind))
+            {
+                entry.Conditions ??= new ConversationCondition();
+                entry.Lines ??= new ObservableCollection<ConversationLine>();
+                FilteredConversationEntries.Add(entry);
+            }
+
+            if (SelectedConversationEntry == null || SelectedConversationEntry.Kind != SelectedConversationDataKind || !FilteredConversationEntries.Contains(SelectedConversationEntry))
+            {
+                SelectedConversationEntry = FilteredConversationEntries.FirstOrDefault();
+            }
+
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private static ConversationEntry CreateConversationEntry(ConversationDataKind kind, ObservableCollection<ConversationEntry> existingEntries)
+        {
+            int nextNumber = existingEntries.Count(entry => entry.Kind == kind) + 1;
+            ConversationEntry entry = new ConversationEntry
+            {
+                Kind = kind,
+                Id = CreateConversationEntryId(kind, nextNumber),
+                Title = GetConversationKindDisplayName(kind) + " " + nextNumber,
+                Category = CreateDefaultConversationCategory(kind),
+                Priority = 100
+            };
+            entry.Lines.Add(new ConversationLine());
+            return entry;
+        }
+
+        private static string CreateConversationEntryId(ConversationDataKind kind, int number)
+        {
+            string prefix;
+            switch (kind)
+            {
+                case ConversationDataKind.GameEvents:
+                    prefix = "Event";
+                    break;
+                case ConversationDataKind.ActionReactions:
+                    prefix = "Reaction";
+                    break;
+                case ConversationDataKind.Endings:
+                    prefix = "Ending";
+                    break;
+                default:
+                    prefix = "Talk";
+                    break;
+            }
+
+            return prefix + "_" + number.ToString("D2");
+        }
+
+        private static string CreateDefaultConversationCategory(ConversationDataKind kind)
+        {
+            switch (kind)
+            {
+                case ConversationDataKind.GameEvents:
+                    return "GameStart";
+                case ConversationDataKind.ActionReactions:
+                    return "Action";
+                case ConversationDataKind.Endings:
+                    return "Good";
+                default:
+                    return "LocationTalk";
+            }
+        }
+
+        private static string GetConversationKindDisplayName(ConversationDataKind kind)
+        {
+            switch (kind)
+            {
+                case ConversationDataKind.GameEvents:
+                    return "イベント";
+                case ConversationDataKind.ActionReactions:
+                    return "行動反応";
+                case ConversationDataKind.Endings:
+                    return "エンディング";
+                default:
+                    return "会話";
             }
         }
 

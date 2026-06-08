@@ -43,6 +43,7 @@ Unity 取り込み方針は [Docs/UnityImportPlan.md](Docs/UnityImportPlan.md)�
 - ComfyUI 生成条件の prompt JSON への記録
 - Unity 向け Export
 - Export 件数と警告の表示
+- 会話、イベント、行動反応、エンディング本文の最小編集と `profile.json` 保存
 
 現状では、Stable Diffusion などの画像生成自体はアプリ内では完結せず、外部生成した画像を登録、整理、出力するツールとして動作します。
 この外部ファイル登録フローは今後も残し、将来追加するローカル ComfyUI 連携は、同じ登録処理へ生成結果を渡す任意機能として扱います。
@@ -89,6 +90,10 @@ FantasyLoveSimAssetTool/
     ComfyOutputImage.cs
     StillDefinition.cs
     StillWorkItem.cs
+    ConversationEntry.cs
+    ConversationLine.cs
+    ConversationCondition.cs
+    ConversationDataKind.cs
   ViewModels/
     MainWindowModel.cs
   Services/

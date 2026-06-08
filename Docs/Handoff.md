@@ -17,7 +17,7 @@
 - ターゲットフレームワーク: `net5.0-windows`
 - UI: `Views/MainWindow.xaml`
 - ViewModel: `ViewModels/MainWindowModel.cs`
-- モデル: `Models/HeroineProfile.cs`, `Models/HeroineAsset.cs`, `Models/PromptRecord.cs`, `Models/PromptTemplate.cs`, `Models/ExportReport.cs`, `Models/ImageInspectionResult.cs`, `Models/ComfySettings.cs`, `Models/ComfyOutputImage.cs`, `Models/StillDefinition.cs`, `Models/StillWorkItem.cs`
+- モデル: `Models/HeroineProfile.cs`, `Models/HeroineAsset.cs`, `Models/PromptRecord.cs`, `Models/PromptTemplate.cs`, `Models/ExportReport.cs`, `Models/ImageInspectionResult.cs`, `Models/ComfySettings.cs`, `Models/ComfyOutputImage.cs`, `Models/StillDefinition.cs`, `Models/StillWorkItem.cs`, `Models/ConversationEntry.cs`, `Models/ConversationLine.cs`, `Models/ConversationCondition.cs`, `Models/ConversationDataKind.cs`
 - サービス: `Services/CharacterProjectService.cs`, `Services/PromptRecordService.cs`, `Services/PromptTemplateService.cs`, `Services/StillDefinitionService.cs`, `Services/ImageInspectionService.cs`, `Services/ComfySettingsService.cs`, `Services/ComfyWorkflowService.cs`, `Services/ComfyClientService.cs`, `Services/ExportService.cs`
 - 共通基盤: `Common/ObservableObject.cs`, `Common/RelayCommand.cs`
 
@@ -65,6 +65,7 @@
 - スチルの `Status` と `SpecificPrompt` をキャラクターごとの `StillWorkItems` として `profile.json` に保存
 - スチル作業タブからのスチル保存
 - Unity 向け export
+- 会話データタブでの会話、イベント、行動反応、エンディング本文の最小編集と `profile.json` 保存
 - `heroine_profile_note.md` と下書き Markdown の出力
 - Export report による件数、警告表示
 - Export 時の Accepted 画像検査と警告表示
@@ -400,10 +401,10 @@ Services/
 45. ComfyUI WebSocket を参照し、生成待機中に実行中 node と sampler step を表示する
 46. Export の `Data` 配下に Unity Editor Import 用の `heroine_profile_export.json` と `assets_export.json` を出力する
 47. `Docs/ConversationDataPlan.md` を追加し、会話、イベント、行動反応、エンディング本文の JSON export と Unity Import 方針を整理する
+48. 会話データタブを追加し、`ConversationEntries` を `profile.json` に保存、再読み込みできる最小編集機能を実装する
 
 ## 次に進める候補
 
-- 会話データ作成タブの最小実装
 - `conversations_export.json` などの JSON export 実装
 - Unity Editor Import 拡張側で `heroine_profile_export.json` と `assets_export.json` を読み込む設計
 - スチル一覧(確認用)タブの内容をスチル作業タブへ完全統合するか判断する

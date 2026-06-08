@@ -138,6 +138,189 @@
                         </Grid>
                     </TabItem>
 
+                    <TabItem Header="会話データ">
+                        <Grid Margin="0,12,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0" Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="220"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="100"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" Text="データ種別" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <ComboBox Grid.Column="1"
+                                          ItemsSource="{Binding ConversationDataKinds}"
+                                          SelectedItem="{Binding SelectedConversationDataKind}"
+                                          Height="26"
+                                          Margin="0,0,12,0"/>
+                                <TextBlock Grid.Column="2"
+                                           Text="会話、イベント、行動反応、エンディング本文を profile.json に保存します。"
+                                           Foreground="Gray"
+                                           VerticalAlignment="Center"/>
+                                <Button Grid.Column="3"
+                                        Content="追加"
+                                        Command="{Binding AddConversationEntryCommand}"
+                                        Height="26"
+                                        Margin="0,0,8,0"/>
+                                <Button Grid.Column="4"
+                                        Content="削除"
+                                        Command="{Binding RemoveConversationEntryCommand}"
+                                        Height="26"/>
+                            </Grid>
+
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="3*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <DataGrid Grid.Column="0"
+                                          ItemsSource="{Binding FilteredConversationEntries}"
+                                          SelectedItem="{Binding SelectedConversationEntry}"
+                                          AutoGenerateColumns="False"
+                                          CanUserAddRows="False"
+                                          IsReadOnly="False">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="140"/>
+                                        <DataGridTextColumn Header="タイトル" Binding="{Binding Title}" Width="180"/>
+                                        <DataGridTextColumn Header="カテゴリ" Binding="{Binding Category}" Width="120"/>
+                                        <DataGridTextColumn Header="優先度" Binding="{Binding Priority}" Width="70"/>
+                                        <DataGridTextColumn Header="先頭行" Binding="{Binding FirstLinePreview}" Width="*" IsReadOnly="True"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="120"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Id" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedConversationEntry.Id, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="タイトル" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedConversationEntry.Title, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="カテゴリ" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedConversationEntry.Category, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="場所" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding SelectedConversationEntry.Conditions.LocationId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="好感度" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                        <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.MinAffection, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                                            <TextBlock Text=" -" VerticalAlignment="Center" Margin="8,0,8,0"/>
+                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.MaxAffection, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                                            <CheckBox Content="一度だけ"
+                                                      IsChecked="{Binding SelectedConversationEntry.Conditions.Once}"
+                                                      VerticalAlignment="Center"
+                                                      Margin="24,0,0,0"/>
+                                        </StackPanel>
+
+                                        <TextBlock Grid.Row="5" Grid.Column="0" Text="天候/季節/時間" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                        <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.Weather, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="0,0,8,0"/>
+                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.Season, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="0,0,8,0"/>
+                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.TimeOfDay, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
+                                        </StackPanel>
+
+                                        <TextBlock Grid.Row="6" Grid.Column="0" Text="行動/必要Item" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                        <StackPanel Grid.Row="6" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.ActionId, UpdateSourceTrigger=PropertyChanged}" Width="180" Margin="0,0,8,0"/>
+                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.RequiredItemId, UpdateSourceTrigger=PropertyChanged}" Width="180"/>
+                                        </StackPanel>
+
+                                        <TextBlock Grid.Row="7" Grid.Column="0" Text="必要フラグ" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                        <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding SelectedConversationEntry.Conditions.RequiredFlagIdsText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                                        <TextBlock Grid.Row="8" Grid.Column="0" Text="画像AssetId" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                        <TextBox Grid.Row="8"
+                                                 Grid.Column="1"
+                                                 Text="{Binding SelectedConversationEntry.ImageAssetIdsText, UpdateSourceTrigger=PropertyChanged}"
+                                                 AcceptsReturn="True"
+                                                 Height="48"
+                                                 TextWrapping="Wrap"
+                                                 Margin="0,0,0,8"/>
+
+                                        <TextBlock Grid.Row="9" Grid.Column="0" Text="優先度" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                        <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding SelectedConversationEntry.Priority, UpdateSourceTrigger=PropertyChanged}" Width="100" HorizontalAlignment="Left" Margin="0,0,0,8"/>
+
+                                        <Grid Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="100"/>
+                                                <ColumnDefinition Width="100"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="台詞行" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <Button Grid.Column="1" Content="行追加" Command="{Binding AddConversationLineCommand}" Height="26" Margin="0,0,8,0"/>
+                                            <Button Grid.Column="2" Content="行削除" Command="{Binding RemoveConversationLineCommand}" Height="26"/>
+                                        </Grid>
+
+                                        <DataGrid Grid.Row="11"
+                                                  Grid.Column="0"
+                                                  Grid.ColumnSpan="2"
+                                                  ItemsSource="{Binding SelectedConversationEntry.Lines}"
+                                                  SelectedItem="{Binding SelectedConversationLine}"
+                                                  AutoGenerateColumns="False"
+                                                  CanUserAddRows="False"
+                                                  MinHeight="160"
+                                                  Margin="0,0,0,8">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="話者" Binding="{Binding Speaker}" Width="100"/>
+                                                <DataGridTextColumn Header="表情" Binding="{Binding Expression}" Width="100"/>
+                                                <DataGridTextColumn Header="本文" Binding="{Binding Text}" Width="*"/>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+
+                                        <TextBlock Grid.Row="12" Grid.Column="0" Text="メモ" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                        <TextBox Grid.Row="12"
+                                                 Grid.Column="1"
+                                                 Text="{Binding SelectedConversationEntry.Memo, UpdateSourceTrigger=PropertyChanged}"
+                                                 AcceptsReturn="True"
+                                                 Height="72"
+                                                 TextWrapping="Wrap"
+                                                 Margin="0,0,0,8"/>
+                                    </Grid>
+                                </ScrollViewer>
+                            </Grid>
+
+                            <Button Grid.Row="2"
+                                    Content="会話データ保存"
+                                    Command="{Binding SaveConversationDataCommand}"
+                                    Width="140"
+                                    Height="30"
+                                    HorizontalAlignment="Right"
+                                    Margin="0,12,0,0"/>
+                        </Grid>
+                    </TabItem>
+
                     <TabItem Header="画像">
                         <Grid Margin="0,12,0,0">
                             <Grid.RowDefinitions>
