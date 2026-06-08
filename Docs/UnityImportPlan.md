@@ -57,6 +57,10 @@ Export/
       heroine_profile_note.md
       heroine_profile_export.json
       assets_export.json
+      conversations_export.json
+      game_events_export.json
+      action_reactions_export.json
+      endings_export.json
       conversations_draft.md
       game_events_draft.md
       action_reactions_draft.md
@@ -151,8 +155,11 @@ Unity Editor 拡張は `exportImagePath` から画像をコピーし、`unityIma
 8. 既存 `.asset` があれば更新し、なければ作成する。
 9. `assets_export.json` の各 `asset` から画像参照を設定する。
 10. 必要に応じて `HeroineAssetCatalog.asset` のような画像一覧 ScriptableObject を作る。
-11. `Prompts/` 配下の prompt JSON は参照資料としてコピーまたはパスだけ記録する。
-12. `AssetDatabase.SaveAssets` で保存する。
+11. `conversations_export.json`、`game_events_export.json`、`action_reactions_export.json`、`endings_export.json` を読み込む。
+12. 会話、イベント、行動反応、エンディング本文の ScriptableObject `.asset` を生成、更新する。
+13. 会話データ内の `imageAssetIds` は `assets_export.json` から Unity asset path に解決する。
+14. `Prompts/` 配下の prompt JSON は参照資料としてコピーまたはパスだけ記録する。
+15. `AssetDatabase.SaveAssets` で保存する。
 
 ## 対応関係
 
@@ -161,13 +168,17 @@ Unity Editor 拡張は `exportImagePath` から画像をコピーし、`unityIma
 | `Images/<Usage>/<FileName>` | Unity に取り込む画像ファイル |
 | `Data/heroine_profile_export.json` | `HeroineProfileData` 生成、更新 |
 | `Data/assets_export.json` | 画像一覧、用途、Unity asset path の生成 |
+| `Data/conversations_export.json` | 通常会話データの生成、更新 |
+| `Data/game_events_export.json` | ゲームイベント本文データの生成、更新 |
+| `Data/action_reactions_export.json` | 行動反応本文データの生成、更新 |
+| `Data/endings_export.json` | エンディング本文データの生成、更新 |
 | `Prompts/<AssetId>.prompt.json` | 生成条件の確認、再生成用メモ |
-| `Data/*_draft.md` | 会話、イベント、行動反応、エンディングの下書き |
+| `Data/*_draft.md` | 会話、イベント、行動反応、エンディングの確認用下書き |
 
-## 会話データの将来拡張
+## 会話データ
 
-会話データ、イベント、行動反応、エンディング本文は、現時点では Markdown 下書きとして export する。
-WPF ツールは次の JSON も出力し、Unity Editor 拡張で ScriptableObject 化する。
+会話データ、イベント、行動反応、エンディング本文は、WPF ツールから次の JSON として export する。
+Markdown 下書きは、人間が内容を確認するための補助として併存させる。
 
 ```text
 Data/
@@ -179,7 +190,7 @@ Data/
 
 このときも WPF 側から `.asset` を直接生成しない。
 Unity Editor 側で `ConversationData`、`GameEventData`、`ActionReactionData`、`EndingData` の `.asset` を生成、更新する。
-会話データの JSON スキーマ案と WPF 画面案は `Docs/ConversationDataPlan.md` にまとめる。
+会話データの JSON スキーマと WPF 画面方針は `Docs/ConversationDataPlan.md` にまとめる。
 
 ## 未決事項
 
