@@ -42,6 +42,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private ConversationDataKind selectedConversationDataKind;
         private ConversationEntry selectedConversationEntry;
         private ConversationLine selectedConversationLine;
+        private string selectedConversationCategorySuggestion;
+        private string selectedConversationLocationSuggestion;
+        private string selectedConversationActionSuggestion;
+        private string selectedConversationWeatherSuggestion;
+        private string selectedConversationSeasonSuggestion;
+        private string selectedConversationTimeOfDaySuggestion;
+        private string selectedConversationExpressionSuggestion;
+        private HeroineAsset selectedConversationImageAsset;
         private PromptRecord currentPromptRecord;
         private HeroineProfile selectedProfile;
         private ExportReport lastExportReport;
@@ -98,6 +106,20 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<ConversationDataKind> ConversationDataKinds { get; }
 
         public ObservableCollection<ConversationEntry> FilteredConversationEntries { get; }
+
+        public ObservableCollection<string> ConversationCategorySuggestions { get; }
+
+        public ObservableCollection<string> ConversationLocationSuggestions { get; }
+
+        public ObservableCollection<string> ConversationActionSuggestions { get; }
+
+        public ObservableCollection<string> ConversationWeatherSuggestions { get; }
+
+        public ObservableCollection<string> ConversationSeasonSuggestions { get; }
+
+        public ObservableCollection<string> ConversationTimeOfDaySuggestions { get; }
+
+        public ObservableCollection<string> ConversationExpressionSuggestions { get; }
 
         public string StillPromptPreview
         {
@@ -298,6 +320,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedConversationDataKind == value) { return; }
                 selectedConversationDataKind = value;
                 OnPropertyChanged(nameof(SelectedConversationDataKind));
+                RefreshConversationCategorySuggestions();
                 RefreshFilteredConversationEntries();
             }
         }
@@ -325,6 +348,95 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedConversationLine == value) { return; }
                 selectedConversationLine = value;
                 OnPropertyChanged(nameof(SelectedConversationLine));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public string SelectedConversationCategorySuggestion
+        {
+            get { return selectedConversationCategorySuggestion; }
+            set
+            {
+                if (selectedConversationCategorySuggestion == value) { return; }
+                selectedConversationCategorySuggestion = value;
+                OnPropertyChanged(nameof(SelectedConversationCategorySuggestion));
+            }
+        }
+
+        public string SelectedConversationLocationSuggestion
+        {
+            get { return selectedConversationLocationSuggestion; }
+            set
+            {
+                if (selectedConversationLocationSuggestion == value) { return; }
+                selectedConversationLocationSuggestion = value;
+                OnPropertyChanged(nameof(SelectedConversationLocationSuggestion));
+            }
+        }
+
+        public string SelectedConversationActionSuggestion
+        {
+            get { return selectedConversationActionSuggestion; }
+            set
+            {
+                if (selectedConversationActionSuggestion == value) { return; }
+                selectedConversationActionSuggestion = value;
+                OnPropertyChanged(nameof(SelectedConversationActionSuggestion));
+            }
+        }
+
+        public string SelectedConversationWeatherSuggestion
+        {
+            get { return selectedConversationWeatherSuggestion; }
+            set
+            {
+                if (selectedConversationWeatherSuggestion == value) { return; }
+                selectedConversationWeatherSuggestion = value;
+                OnPropertyChanged(nameof(SelectedConversationWeatherSuggestion));
+            }
+        }
+
+        public string SelectedConversationSeasonSuggestion
+        {
+            get { return selectedConversationSeasonSuggestion; }
+            set
+            {
+                if (selectedConversationSeasonSuggestion == value) { return; }
+                selectedConversationSeasonSuggestion = value;
+                OnPropertyChanged(nameof(SelectedConversationSeasonSuggestion));
+            }
+        }
+
+        public string SelectedConversationTimeOfDaySuggestion
+        {
+            get { return selectedConversationTimeOfDaySuggestion; }
+            set
+            {
+                if (selectedConversationTimeOfDaySuggestion == value) { return; }
+                selectedConversationTimeOfDaySuggestion = value;
+                OnPropertyChanged(nameof(SelectedConversationTimeOfDaySuggestion));
+            }
+        }
+
+        public string SelectedConversationExpressionSuggestion
+        {
+            get { return selectedConversationExpressionSuggestion; }
+            set
+            {
+                if (selectedConversationExpressionSuggestion == value) { return; }
+                selectedConversationExpressionSuggestion = value;
+                OnPropertyChanged(nameof(SelectedConversationExpressionSuggestion));
+            }
+        }
+
+        public HeroineAsset SelectedConversationImageAsset
+        {
+            get { return selectedConversationImageAsset; }
+            set
+            {
+                if (selectedConversationImageAsset == value) { return; }
+                selectedConversationImageAsset = value;
+                OnPropertyChanged(nameof(SelectedConversationImageAsset));
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -677,6 +789,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand SaveConversationDataCommand { get; }
 
+        public ICommand ApplyConversationCategorySuggestionCommand { get; }
+
+        public ICommand ApplyConversationConditionSuggestionsCommand { get; }
+
+        public ICommand ApplyConversationExpressionSuggestionCommand { get; }
+
+        public ICommand AddConversationImageAssetCommand { get; }
+
+        public ICommand GenerateConversationIdCommand { get; }
+
         public MainWindowModel()
         {
             characterProjectService = new CharacterProjectService();
@@ -695,6 +817,56 @@ namespace FantasyLoveSimAssetTool.ViewModels
             StillDefinitions = new ObservableCollection<StillDefinition>();
             FilteredStillDefinitions = new ObservableCollection<StillDefinition>();
             FilteredConversationEntries = new ObservableCollection<ConversationEntry>();
+            ConversationCategorySuggestions = new ObservableCollection<string>();
+            ConversationLocationSuggestions = new ObservableCollection<string>
+            {
+                "Forest",
+                "Lake",
+                "Cave",
+                "Room",
+                "Town"
+            };
+            ConversationActionSuggestions = new ObservableCollection<string>
+            {
+                "Tea",
+                "Rest",
+                "Walk",
+                "Gift",
+                "Talk"
+            };
+            ConversationWeatherSuggestions = new ObservableCollection<string>
+            {
+                "",
+                "Sunny",
+                "Rainy",
+                "Cloudy",
+                "Snow"
+            };
+            ConversationSeasonSuggestions = new ObservableCollection<string>
+            {
+                "",
+                "Spring",
+                "Summer",
+                "Autumn",
+                "Winter"
+            };
+            ConversationTimeOfDaySuggestions = new ObservableCollection<string>
+            {
+                "",
+                "Morning",
+                "Day",
+                "Evening",
+                "Night"
+            };
+            ConversationExpressionSuggestions = new ObservableCollection<string>
+            {
+                "Neutral",
+                "Smile",
+                "Sad",
+                "Angry",
+                "Shy",
+                "Surprised"
+            };
             AssetStatusFilters = new ObservableCollection<string>
             {
                 "All",
@@ -750,6 +922,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
             selectedConversationDataKind = ConversationDataKind.Conversations;
             selectedConversationEntry = null;
             selectedConversationLine = null;
+            selectedConversationCategorySuggestion = string.Empty;
+            selectedConversationLocationSuggestion = string.Empty;
+            selectedConversationActionSuggestion = string.Empty;
+            selectedConversationWeatherSuggestion = string.Empty;
+            selectedConversationSeasonSuggestion = string.Empty;
+            selectedConversationTimeOfDaySuggestion = string.Empty;
+            selectedConversationExpressionSuggestion = "Neutral";
+            selectedConversationImageAsset = null;
             lastExportReport = new ExportReport();
             selectedAssetImagePath = string.Empty;
             selectedAssetImageMessage = "画像を選択してください。";
@@ -854,8 +1034,24 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SaveConversationDataCommand = new RelayCommand(
                 SaveConversationData,
                 () => SelectedProfile != null);
+            ApplyConversationCategorySuggestionCommand = new RelayCommand(
+                ApplyConversationCategorySuggestion,
+                () => SelectedConversationEntry != null && !string.IsNullOrWhiteSpace(SelectedConversationCategorySuggestion));
+            ApplyConversationConditionSuggestionsCommand = new RelayCommand(
+                ApplyConversationConditionSuggestions,
+                () => SelectedConversationEntry != null);
+            ApplyConversationExpressionSuggestionCommand = new RelayCommand(
+                ApplyConversationExpressionSuggestion,
+                () => SelectedConversationLine != null && !string.IsNullOrWhiteSpace(SelectedConversationExpressionSuggestion));
+            AddConversationImageAssetCommand = new RelayCommand(
+                AddConversationImageAsset,
+                () => SelectedConversationEntry != null && SelectedConversationImageAsset != null);
+            GenerateConversationIdCommand = new RelayCommand(
+                GenerateConversationId,
+                () => SelectedProfile != null && SelectedConversationEntry != null);
 
             ReloadComfySettings();
+            RefreshConversationCategorySuggestions();
             LoadStillDefinitions();
             LoadProfiles();
             StatusMessage = "キャラクター基本情報の保存準備ができています。";
@@ -2343,6 +2539,96 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        private void ApplyConversationCategorySuggestion()
+        {
+            if (SelectedConversationEntry == null || string.IsNullOrWhiteSpace(SelectedConversationCategorySuggestion))
+            {
+                return;
+            }
+
+            SelectedConversationEntry.Category = SelectedConversationCategorySuggestion;
+            OnPropertyChanged(nameof(SelectedConversationEntry));
+            StatusMessage = "カテゴリ候補を反映しました。";
+        }
+
+        private void ApplyConversationConditionSuggestions()
+        {
+            if (SelectedConversationEntry == null)
+            {
+                return;
+            }
+
+            SelectedConversationEntry.Conditions ??= new ConversationCondition();
+            if (!string.IsNullOrWhiteSpace(SelectedConversationLocationSuggestion))
+            {
+                SelectedConversationEntry.Conditions.LocationId = SelectedConversationLocationSuggestion;
+            }
+
+            if (!string.IsNullOrWhiteSpace(SelectedConversationActionSuggestion))
+            {
+                SelectedConversationEntry.Conditions.ActionId = SelectedConversationActionSuggestion;
+            }
+
+            SelectedConversationEntry.Conditions.Weather = SelectedConversationWeatherSuggestion ?? string.Empty;
+            SelectedConversationEntry.Conditions.Season = SelectedConversationSeasonSuggestion ?? string.Empty;
+            SelectedConversationEntry.Conditions.TimeOfDay = SelectedConversationTimeOfDaySuggestion ?? string.Empty;
+            OnPropertyChanged(nameof(SelectedConversationEntry));
+            StatusMessage = "条件候補を反映しました。";
+        }
+
+        private void ApplyConversationExpressionSuggestion()
+        {
+            if (SelectedConversationLine == null || string.IsNullOrWhiteSpace(SelectedConversationExpressionSuggestion))
+            {
+                return;
+            }
+
+            SelectedConversationLine.Expression = SelectedConversationExpressionSuggestion;
+            OnPropertyChanged(nameof(SelectedConversationLine));
+            OnPropertyChanged(nameof(SelectedConversationEntry));
+            StatusMessage = "表情候補を反映しました。";
+        }
+
+        private void AddConversationImageAsset()
+        {
+            if (SelectedConversationEntry == null || SelectedConversationImageAsset == null)
+            {
+                return;
+            }
+
+            string assetId = SelectedConversationImageAsset.AssetId;
+            string[] existingIds = SplitConversationList(SelectedConversationEntry.ImageAssetIdsText).ToArray();
+            if (!existingIds.Contains(assetId, StringComparer.OrdinalIgnoreCase))
+            {
+                SelectedConversationEntry.ImageAssetIdsText = string.Join(Environment.NewLine, existingIds.Concat(new[] { assetId }));
+                OnPropertyChanged(nameof(SelectedConversationEntry));
+                StatusMessage = $"{assetId} を関連画像 AssetId に追加しました。";
+                return;
+            }
+
+            StatusMessage = $"{assetId} は既に関連画像 AssetId に含まれています。";
+        }
+
+        private void GenerateConversationId()
+        {
+            if (SelectedProfile == null || SelectedConversationEntry == null)
+            {
+                return;
+            }
+
+            string category = string.IsNullOrWhiteSpace(SelectedConversationEntry.Category)
+                ? CreateDefaultConversationCategory(SelectedConversationDataKind)
+                : SelectedConversationEntry.Category;
+            SelectedConversationEntry.Id = CreateConversationEntryId(
+                SelectedConversationDataKind,
+                category,
+                SelectedProfile.ConversationEntries ?? new ObservableCollection<ConversationEntry>(),
+                SelectedConversationEntry);
+            OnPropertyChanged(nameof(SelectedConversationEntry));
+            RefreshFilteredConversationEntries();
+            StatusMessage = $"Id を {SelectedConversationEntry.Id} に更新しました。";
+        }
+
         private void RefreshFilteredConversationEntries()
         {
             FilteredConversationEntries.Clear();
@@ -2366,6 +2652,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void RefreshConversationCategorySuggestions()
+        {
+            ConversationCategorySuggestions.Clear();
+            foreach (string category in GetConversationCategorySuggestions(SelectedConversationDataKind))
+            {
+                ConversationCategorySuggestions.Add(category);
+            }
+
+            SelectedConversationCategorySuggestion = ConversationCategorySuggestions.FirstOrDefault() ?? string.Empty;
         }
 
         private static ConversationEntry CreateConversationEntry(ConversationDataKind kind, ObservableCollection<ConversationEntry> existingEntries)
@@ -2403,6 +2700,69 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             return prefix + "_" + number.ToString("D2");
+        }
+
+        private static string CreateConversationEntryId(ConversationDataKind kind, string category, ObservableCollection<ConversationEntry> existingEntries, ConversationEntry currentEntry)
+        {
+            string prefix;
+            switch (kind)
+            {
+                case ConversationDataKind.GameEvents:
+                    prefix = "Event";
+                    break;
+                case ConversationDataKind.ActionReactions:
+                    prefix = "Reaction";
+                    break;
+                case ConversationDataKind.Endings:
+                    prefix = "Ending";
+                    break;
+                default:
+                    prefix = "Talk";
+                    break;
+            }
+
+            string normalizedCategory = NormalizeIdPart(category);
+            int nextNumber = existingEntries.Count(entry => !ReferenceEquals(entry, currentEntry) && entry.Kind == kind && (entry.Id ?? string.Empty).StartsWith(prefix + "_" + normalizedCategory, StringComparison.OrdinalIgnoreCase)) + 1;
+            return prefix + "_" + normalizedCategory + "_" + nextNumber.ToString("D2");
+        }
+
+        private static string NormalizeIdPart(string value)
+        {
+            string text = string.IsNullOrWhiteSpace(value) ? "General" : value.Trim();
+            char[] chars = text
+                .Where(ch => char.IsLetterOrDigit(ch) || ch == '_')
+                .ToArray();
+            return chars.Length == 0 ? "General" : new string(chars);
+        }
+
+        private static string[] GetConversationCategorySuggestions(ConversationDataKind kind)
+        {
+            switch (kind)
+            {
+                case ConversationDataKind.GameEvents:
+                    return new[] { "GameStart", "DayStart", "LocationEvent", "ScheduledEvent" };
+                case ConversationDataKind.ActionReactions:
+                    return new[] { "Tea", "Rest", "Walk", "Gift", "Talk" };
+                case ConversationDataKind.Endings:
+                    return new[] { "Good", "Normal", "Bad" };
+                default:
+                    return new[] { "LocationTalk", "AffectionTalk", "WeatherTalk", "SeasonTalk", "TimeTalk" };
+            }
+        }
+
+        private static string[] SplitConversationList(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return Array.Empty<string>();
+            }
+
+            return text
+                .Split(new[] { '\r', '\n', ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(item => item.Trim())
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Distinct()
+                .ToArray();
         }
 
         private static string CreateDefaultConversationCategory(ConversationDataKind kind)

@@ -403,6 +403,7 @@ Services/
 47. `Docs/ConversationDataPlan.md` を追加し、会話、イベント、行動反応、エンディング本文の JSON export と Unity Import 方針を整理する
 48. 会話データタブを追加し、`ConversationEntries` を `profile.json` に保存、再読み込みできる最小編集機能を実装する
 49. Export 時に `ConversationEntries` から `conversations_export.json`、`game_events_export.json`、`action_reactions_export.json`、`endings_export.json` を出力する
+50. 会話データタブにカテゴリ、条件、表情、画像 AssetId、ID 自動生成の入力補助を追加する
 
 ## 次に進める候補
 

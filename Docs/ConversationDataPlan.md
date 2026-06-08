@@ -212,6 +212,7 @@ Unity 側の対応先は `EndingData` を想定する。
 現時点では、会話データタブの最小実装として `profile.json` 内に `ConversationEntries` を保存する。
 Export 時は `ConversationEntries` を種別ごとに分け、`conversations_export.json`、`game_events_export.json`、`action_reactions_export.json`、`endings_export.json` として出力する。
 `ImageAssetIdsText` と `RequiredFlagIdsText` は、改行、カンマ、セミコロン区切りを配列に変換する。
+入力補助として、種別ごとのカテゴリ候補、場所、行動、天候、季節、時間帯、表情の候補、Accepted 画像 AssetId の追加、カテゴリに基づく ID 自動生成を用意する。
 
 画面構成の候補は次の通り。
 
@@ -237,6 +238,8 @@ Export 時は `ConversationEntries` を種別ごとに分け、`conversations_ex
 - 関連画像 AssetId
 - `priority`
 - `memo`
+- カテゴリ、条件、表情、画像 AssetId の候補反映
+- 種別とカテゴリに基づく ID 自動生成
 
 複雑な分岐、選択肢、演出命令、音声参照は後回しにする。
 
