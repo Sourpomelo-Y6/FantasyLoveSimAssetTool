@@ -3,6 +3,7 @@ using FantasyLoveSimAssetTool.Models;
 using FantasyLoveSimAssetTool.Services;
 using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -44,6 +45,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private ConversationLine selectedConversationLine;
         private string conversationSearchText;
         private string selectedConversationCategoryFilter;
+        private string selectedConversationImageFilter;
+        private bool showOnlyConversationWarnings;
         private string selectedConversationCategorySuggestion;
         private string selectedConversationLocationSuggestion;
         private string selectedConversationActionSuggestion;
@@ -112,6 +115,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<string> ConversationCategorySuggestions { get; }
 
         public ObservableCollection<string> ConversationCategoryFilters { get; }
+
+        public ObservableCollection<string> ConversationImageFilters { get; }
 
         public ObservableCollection<string> ConversationLocationSuggestions { get; }
 
@@ -364,6 +369,30 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedConversationCategoryFilter == value) { return; }
                 selectedConversationCategoryFilter = value;
                 OnPropertyChanged(nameof(SelectedConversationCategoryFilter));
+                RefreshFilteredConversationEntries();
+            }
+        }
+
+        public string SelectedConversationImageFilter
+        {
+            get { return selectedConversationImageFilter; }
+            set
+            {
+                if (selectedConversationImageFilter == value) { return; }
+                selectedConversationImageFilter = value;
+                OnPropertyChanged(nameof(SelectedConversationImageFilter));
+                RefreshFilteredConversationEntries();
+            }
+        }
+
+        public bool ShowOnlyConversationWarnings
+        {
+            get { return showOnlyConversationWarnings; }
+            set
+            {
+                if (showOnlyConversationWarnings == value) { return; }
+                showOnlyConversationWarnings = value;
+                OnPropertyChanged(nameof(ShowOnlyConversationWarnings));
                 RefreshFilteredConversationEntries();
             }
         }
@@ -848,6 +877,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
             FilteredConversationEntries = new ObservableCollection<ConversationEntry>();
             ConversationCategorySuggestions = new ObservableCollection<string>();
             ConversationCategoryFilters = new ObservableCollection<string>();
+            ConversationImageFilters = new ObservableCollection<string>
+            {
+                "All",
+                "画像あり",
+                "画像なし"
+            };
             ConversationLocationSuggestions = new ObservableCollection<string>(ConversationValueCatalog.Locations);
             ConversationActionSuggestions = new ObservableCollection<string>(ConversationValueCatalog.Actions);
             ConversationWeatherSuggestions = new ObservableCollection<string>(new[] { string.Empty }.Concat(ConversationValueCatalog.Weather));
@@ -911,6 +946,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             selectedConversationLine = null;
             conversationSearchText = string.Empty;
             selectedConversationCategoryFilter = "All";
+            selectedConversationImageFilter = "All";
+            showOnlyConversationWarnings = false;
             selectedConversationCategorySuggestion = string.Empty;
             selectedConversationLocationSuggestion = string.Empty;
             selectedConversationActionSuggestion = string.Empty;
@@ -2135,6 +2172,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 AcceptedAssets.Add(asset);
             }
+
+            RefreshFilteredConversationEntries();
         }
 
         private bool MatchesAssetStatusFilter(HeroineAsset asset)
@@ -2632,7 +2671,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 entry.Conditions ??= new ConversationCondition();
                 entry.Lines ??= new ObservableCollection<ConversationLine>();
-                if (MatchesConversationCategoryFilter(entry) && MatchesConversationSearch(entry))
+                if (MatchesConversationCategoryFilter(entry)
+                    && MatchesConversationImageFilter(entry)
+                    && MatchesConversationWarningFilter(entry)
+                    && MatchesConversationSearch(entry))
                 {
                     FilteredConversationEntries.Add(entry);
                 }
@@ -2651,6 +2693,25 @@ namespace FantasyLoveSimAssetTool.ViewModels
             return string.IsNullOrWhiteSpace(SelectedConversationCategoryFilter)
                 || SelectedConversationCategoryFilter == "All"
                 || string.Equals(entry.Category, SelectedConversationCategoryFilter, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool MatchesConversationImageFilter(ConversationEntry entry)
+        {
+            bool hasImages = SplitConversationList(entry.ImageAssetIdsText).Length > 0;
+            switch (SelectedConversationImageFilter)
+            {
+                case "画像あり":
+                    return hasImages;
+                case "画像なし":
+                    return !hasImages;
+                default:
+                    return true;
+            }
+        }
+
+        private bool MatchesConversationWarningFilter(ConversationEntry entry)
+        {
+            return !ShowOnlyConversationWarnings || HasConversationWarning(entry);
         }
 
         private bool MatchesConversationSearch(ConversationEntry entry)
@@ -2693,6 +2754,69 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             return !string.IsNullOrWhiteSpace(value)
                 && value.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private bool HasConversationWarning(ConversationEntry entry)
+        {
+            if (string.IsNullOrWhiteSpace(entry.Id)
+                || string.IsNullOrWhiteSpace(entry.Category)
+                || HasDuplicateConversationId(entry)
+                || entry.Priority < 0)
+            {
+                return true;
+            }
+
+            if (entry.Conditions != null)
+            {
+                if (entry.Conditions.MinAffection > entry.Conditions.MaxAffection
+                    || IsUnexpectedConversationValue(entry.Conditions.LocationId, ConversationValueCatalog.Locations)
+                    || IsUnexpectedConversationValue(entry.Conditions.ActionId, ConversationValueCatalog.Actions)
+                    || IsUnexpectedConversationValue(entry.Conditions.Weather, ConversationValueCatalog.Weather)
+                    || IsUnexpectedConversationValue(entry.Conditions.Season, ConversationValueCatalog.Seasons)
+                    || IsUnexpectedConversationValue(entry.Conditions.TimeOfDay, ConversationValueCatalog.TimeOfDay))
+                {
+                    return true;
+                }
+            }
+
+            ObservableCollection<ConversationLine> lines = entry.Lines ?? new ObservableCollection<ConversationLine>();
+            if (lines.Count == 0)
+            {
+                return true;
+            }
+
+            if (lines.Any(line => string.IsNullOrWhiteSpace(line.Speaker)
+                || string.IsNullOrWhiteSpace(line.Text)
+                || IsUnexpectedConversationValue(line.Expression, ConversationValueCatalog.Expressions)))
+            {
+                return true;
+            }
+
+            HashSet<string> acceptedAssetIds = new HashSet<string>(
+                AcceptedAssets.Select(asset => asset.AssetId).Where(assetId => !string.IsNullOrWhiteSpace(assetId)),
+                StringComparer.OrdinalIgnoreCase);
+            return SplitConversationList(entry.ImageAssetIdsText)
+                .Any(assetId => !acceptedAssetIds.Contains(assetId));
+        }
+
+        private bool HasDuplicateConversationId(ConversationEntry entry)
+        {
+            if (SelectedProfile == null
+                || SelectedProfile.ConversationEntries == null
+                || string.IsNullOrWhiteSpace(entry.Id))
+            {
+                return false;
+            }
+
+            return SelectedProfile.ConversationEntries
+                .Count(other => other.Kind == entry.Kind
+                    && string.Equals(other.Id, entry.Id, StringComparison.OrdinalIgnoreCase)) > 1;
+        }
+
+        private static bool IsUnexpectedConversationValue(string value, string[] allowedValues)
+        {
+            return !string.IsNullOrWhiteSpace(value)
+                && !allowedValues.Contains(value.Trim(), StringComparer.OrdinalIgnoreCase);
         }
 
         private void RefreshConversationCategorySuggestions()

@@ -46,7 +46,7 @@ Unity 取り込み方針は [Docs/UnityImportPlan.md](Docs/UnityImportPlan.md)�
 - 会話、イベント、行動反応、エンディング本文の最小編集と `profile.json` 保存
 - 会話データの `conversations_export.json`、`game_events_export.json`、`action_reactions_export.json`、`endings_export.json` 出力
 - 会話データ入力時のカテゴリ、条件、表情、画像 AssetId、ID 自動生成補助
-- 会話データ一覧の検索とカテゴリ絞り込み
+- 会話データ一覧の検索、カテゴリ、警告あり、画像あり/なし絞り込み
 - Export 時の会話データ件数表示と検証警告
 - Unity 側で受け取る会話条件値、表情値に合わせた候補表示と候補外警告
 - Unity 側 ScriptableObject 保存先と会話 JSON フィールド対応表の整理

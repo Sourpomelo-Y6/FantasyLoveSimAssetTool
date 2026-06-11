@@ -272,7 +272,7 @@ Export 時は `ConversationEntries` を種別ごとに分け、`conversations_ex
 - 中央: 選択中データ種別の一覧
 - 右側: 選択 item の詳細編集
 - 下部: JSON export preview または検証結果
-- 一覧上部: `id`、`title`、`category`、条件値、本文、表情を対象にした検索と、カテゴリ絞り込み
+- 一覧上部: `id`、`title`、`category`、条件値、本文、表情を対象にした検索と、カテゴリ、警告あり、画像あり/なし絞り込み
 
 データ種別は次に分ける。
 
