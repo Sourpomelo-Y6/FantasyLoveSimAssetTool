@@ -22,7 +22,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly CharacterProjectService characterProjectService;
         private readonly PromptRecordService promptRecordService;
         private readonly PromptTemplateService promptTemplateService;
-        private readonly StillDefinitionService stillDefinitionService;
+        private readonly DefinitionCatalogService definitionCatalogService;
+        private StillDefinitionService stillDefinitionService;
         private readonly ImageInspectionService imageInspectionService;
         private readonly ComfySettingsService comfySettingsService;
         private readonly ComfyWorkflowService comfyWorkflowService;
@@ -55,6 +56,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string selectedConversationTimeOfDaySuggestion;
         private string selectedConversationExpressionSuggestion;
         private HeroineAsset selectedConversationImageAsset;
+        private ExpressionDefinition selectedExpressionDefinition;
+        private CostumeDefinition selectedCostumeDefinition;
+        private LayerAssetDefinition selectedLayerAssetDefinition;
         private PromptRecord currentPromptRecord;
         private HeroineProfile selectedProfile;
         private ExportReport lastExportReport;
@@ -129,6 +133,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<string> ConversationTimeOfDaySuggestions { get; }
 
         public ObservableCollection<string> ConversationExpressionSuggestions { get; }
+
+        public ObservableCollection<ExpressionDefinition> ExpressionDefinitions { get; }
+
+        public ObservableCollection<CostumeDefinition> CostumeDefinitions { get; }
+
+        public ObservableCollection<LayerAssetDefinition> LayerAssetDefinitions { get; }
 
         public string StillPromptPreview
         {
@@ -498,6 +508,42 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public ExpressionDefinition SelectedExpressionDefinition
+        {
+            get { return selectedExpressionDefinition; }
+            set
+            {
+                if (selectedExpressionDefinition == value) { return; }
+                selectedExpressionDefinition = value;
+                OnPropertyChanged(nameof(SelectedExpressionDefinition));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public CostumeDefinition SelectedCostumeDefinition
+        {
+            get { return selectedCostumeDefinition; }
+            set
+            {
+                if (selectedCostumeDefinition == value) { return; }
+                selectedCostumeDefinition = value;
+                OnPropertyChanged(nameof(SelectedCostumeDefinition));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public LayerAssetDefinition SelectedLayerAssetDefinition
+        {
+            get { return selectedLayerAssetDefinition; }
+            set
+            {
+                if (selectedLayerAssetDefinition == value) { return; }
+                selectedLayerAssetDefinition = value;
+                OnPropertyChanged(nameof(SelectedLayerAssetDefinition));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
         public PromptRecord CurrentPromptRecord
         {
             get { return currentPromptRecord; }
@@ -857,11 +903,28 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand GenerateConversationIdCommand { get; }
 
+        public ICommand AddExpressionDefinitionCommand { get; }
+
+        public ICommand RemoveExpressionDefinitionCommand { get; }
+
+        public ICommand AddCostumeDefinitionCommand { get; }
+
+        public ICommand RemoveCostumeDefinitionCommand { get; }
+
+        public ICommand AddLayerAssetDefinitionCommand { get; }
+
+        public ICommand RemoveLayerAssetDefinitionCommand { get; }
+
+        public ICommand SaveDefinitionCatalogCommand { get; }
+
+        public ICommand ReloadDefinitionCatalogCommand { get; }
+
         public MainWindowModel()
         {
             characterProjectService = new CharacterProjectService();
             promptRecordService = new PromptRecordService(characterProjectService);
             promptTemplateService = new PromptTemplateService(characterProjectService.WorkspaceRoot);
+            definitionCatalogService = new DefinitionCatalogService(characterProjectService.WorkspaceRoot);
             stillDefinitionService = new StillDefinitionService(characterProjectService.WorkspaceRoot);
             imageInspectionService = new ImageInspectionService();
             comfySettingsService = new ComfySettingsService(characterProjectService.WorkspaceRoot);
@@ -889,6 +952,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ConversationSeasonSuggestions = new ObservableCollection<string>(new[] { string.Empty }.Concat(ConversationValueCatalog.Seasons));
             ConversationTimeOfDaySuggestions = new ObservableCollection<string>(new[] { string.Empty }.Concat(ConversationValueCatalog.TimeOfDay));
             ConversationExpressionSuggestions = new ObservableCollection<string>(ConversationValueCatalog.Expressions);
+            ExpressionDefinitions = new ObservableCollection<ExpressionDefinition>();
+            CostumeDefinitions = new ObservableCollection<CostumeDefinition>();
+            LayerAssetDefinitions = new ObservableCollection<LayerAssetDefinition>();
             AssetStatusFilters = new ObservableCollection<string>
             {
                 "All",
@@ -956,6 +1022,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             selectedConversationTimeOfDaySuggestion = string.Empty;
             selectedConversationExpressionSuggestion = "Neutral";
             selectedConversationImageAsset = null;
+            selectedExpressionDefinition = null;
+            selectedCostumeDefinition = null;
+            selectedLayerAssetDefinition = null;
             lastExportReport = new ExportReport();
             selectedAssetImagePath = string.Empty;
             selectedAssetImageMessage = "画像を選択してください。";
@@ -1075,8 +1144,23 @@ namespace FantasyLoveSimAssetTool.ViewModels
             GenerateConversationIdCommand = new RelayCommand(
                 GenerateConversationId,
                 () => SelectedProfile != null && SelectedConversationEntry != null);
+            AddExpressionDefinitionCommand = new RelayCommand(AddExpressionDefinition);
+            RemoveExpressionDefinitionCommand = new RelayCommand(
+                RemoveExpressionDefinition,
+                () => SelectedExpressionDefinition != null);
+            AddCostumeDefinitionCommand = new RelayCommand(AddCostumeDefinition);
+            RemoveCostumeDefinitionCommand = new RelayCommand(
+                RemoveCostumeDefinition,
+                () => SelectedCostumeDefinition != null);
+            AddLayerAssetDefinitionCommand = new RelayCommand(AddLayerAssetDefinition);
+            RemoveLayerAssetDefinitionCommand = new RelayCommand(
+                RemoveLayerAssetDefinition,
+                () => SelectedLayerAssetDefinition != null);
+            SaveDefinitionCatalogCommand = new RelayCommand(SaveDefinitionCatalog);
+            ReloadDefinitionCatalogCommand = new RelayCommand(ReloadDefinitionCatalog);
 
             ReloadComfySettings();
+            LoadDefinitionCatalog();
             RefreshConversationCategorySuggestions();
             LoadStillDefinitions();
             LoadProfiles();
@@ -2123,6 +2207,202 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 SelectedPromptTemplate = AvailablePromptTemplates[0];
             }
+        }
+
+        private void LoadDefinitionCatalog()
+        {
+            try
+            {
+                ExpressionDefinitions.Clear();
+                foreach (ExpressionDefinition expression in definitionCatalogService.LoadExpressionDefinitionFile().Expressions)
+                {
+                    ExpressionDefinitions.Add(expression);
+                }
+
+                CostumeDefinitions.Clear();
+                foreach (CostumeDefinition costume in definitionCatalogService.LoadCostumeDefinitionFile().Costumes)
+                {
+                    CostumeDefinitions.Add(costume);
+                }
+
+                LayerAssetDefinitions.Clear();
+                foreach (LayerAssetDefinition layer in definitionCatalogService.LoadLayerAssetDefinitionFile().Layers)
+                {
+                    LayerAssetDefinitions.Add(layer);
+                }
+
+                SelectedExpressionDefinition = ExpressionDefinitions.FirstOrDefault();
+                SelectedCostumeDefinition = CostumeDefinitions.FirstOrDefault();
+                SelectedLayerAssetDefinition = LayerAssetDefinitions.FirstOrDefault();
+                RefreshConversationExpressionSuggestionsFromDefinitions();
+                StatusMessage = "差分定義を読み込みました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"差分定義の読み込みに失敗しました: {ex.Message}";
+            }
+        }
+
+        private void ReloadDefinitionCatalog()
+        {
+            LoadDefinitionCatalog();
+            stillDefinitionService = new StillDefinitionService(characterProjectService.WorkspaceRoot);
+            LoadStillDefinitions();
+        }
+
+        private void SaveDefinitionCatalog()
+        {
+            try
+            {
+                definitionCatalogService.SaveExpressionDefinitionFile(ExpressionDefinitions);
+                definitionCatalogService.SaveCostumeDefinitionFile(CostumeDefinitions);
+                definitionCatalogService.SaveLayerAssetDefinitionFile(LayerAssetDefinitions);
+                stillDefinitionService = new StillDefinitionService(characterProjectService.WorkspaceRoot);
+                RefreshConversationExpressionSuggestionsFromDefinitions();
+                LoadStillDefinitions();
+                StatusMessage = "差分定義を保存しました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"差分定義の保存に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void AddExpressionDefinition()
+        {
+            ExpressionDefinition expression = new ExpressionDefinition
+            {
+                ExpressionId = BuildUniqueId("Expression", ExpressionDefinitions.Select(item => item.ExpressionId)),
+                DisplayName = "新しい表情",
+                Prompt = "neutral expression",
+                UnityExpressionId = string.Empty
+            };
+            ExpressionDefinitions.Add(expression);
+            SelectedExpressionDefinition = expression;
+            StatusMessage = "表情定義を追加しました。";
+        }
+
+        private void RemoveExpressionDefinition()
+        {
+            if (SelectedExpressionDefinition == null)
+            {
+                return;
+            }
+
+            ExpressionDefinitions.Remove(SelectedExpressionDefinition);
+            SelectedExpressionDefinition = ExpressionDefinitions.FirstOrDefault();
+            StatusMessage = "表情定義を削除しました。";
+        }
+
+        private void AddCostumeDefinition()
+        {
+            CostumeDefinition costume = new CostumeDefinition
+            {
+                CostumeId = BuildUniqueId("Costume", CostumeDefinitions.Select(item => item.CostumeId)),
+                DisplayName = "新しい衣装",
+                Prompt = "default outfit",
+                UnityCostumeId = string.Empty
+            };
+            CostumeDefinitions.Add(costume);
+            SelectedCostumeDefinition = costume;
+            StatusMessage = "衣装定義を追加しました。";
+        }
+
+        private void RemoveCostumeDefinition()
+        {
+            if (SelectedCostumeDefinition == null)
+            {
+                return;
+            }
+
+            CostumeDefinitions.Remove(SelectedCostumeDefinition);
+            SelectedCostumeDefinition = CostumeDefinitions.FirstOrDefault();
+            StatusMessage = "衣装定義を削除しました。";
+        }
+
+        private void AddLayerAssetDefinition()
+        {
+            string expressionId = SelectedExpressionDefinition?.ExpressionId ?? string.Empty;
+            string costumeId = SelectedCostumeDefinition?.CostumeId ?? string.Empty;
+            string layerKind = string.IsNullOrWhiteSpace(expressionId) ? "Costume" : "Expression";
+            string baseId = layerKind == "Expression"
+                ? "Expression_" + (string.IsNullOrWhiteSpace(expressionId) ? "New" : expressionId)
+                : "Costume_" + (string.IsNullOrWhiteSpace(costumeId) ? "New" : costumeId);
+            LayerAssetDefinition layer = new LayerAssetDefinition
+            {
+                AssetId = BuildUniqueId(baseId, LayerAssetDefinitions.Select(item => item.AssetId)),
+                LayerKind = layerKind,
+                CostumeId = layerKind == "Costume" ? costumeId : string.Empty,
+                ExpressionId = layerKind == "Expression" ? expressionId : string.Empty,
+                DisplayName = layerKind == "Expression" ? "レイヤー: 表情" : "レイヤー: 衣装",
+                FileName = baseId + ".png",
+                DrawOrder = layerKind == "Expression" ? 200 : 100,
+                Prompt = "transparent background, isolated sprite layer"
+            };
+            LayerAssetDefinitions.Add(layer);
+            SelectedLayerAssetDefinition = layer;
+            StatusMessage = "レイヤー素材定義を追加しました。";
+        }
+
+        private void RemoveLayerAssetDefinition()
+        {
+            if (SelectedLayerAssetDefinition == null)
+            {
+                return;
+            }
+
+            LayerAssetDefinitions.Remove(SelectedLayerAssetDefinition);
+            SelectedLayerAssetDefinition = LayerAssetDefinitions.FirstOrDefault();
+            StatusMessage = "レイヤー素材定義を削除しました。";
+        }
+
+        private void RefreshConversationExpressionSuggestionsFromDefinitions()
+        {
+            string previous = SelectedConversationExpressionSuggestion;
+            ConversationExpressionSuggestions.Clear();
+
+            IEnumerable<string> expressionIds = ExpressionDefinitions
+                .Select(expression => expression.ExpressionId)
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Select(id => id.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+            foreach (string expressionId in expressionIds)
+            {
+                ConversationExpressionSuggestions.Add(expressionId);
+            }
+
+            if (ConversationExpressionSuggestions.Count == 0)
+            {
+                foreach (string expressionId in ConversationValueCatalog.Expressions)
+                {
+                    ConversationExpressionSuggestions.Add(expressionId);
+                }
+            }
+
+            SelectedConversationExpressionSuggestion = ConversationExpressionSuggestions.Contains(previous)
+                ? previous
+                : ConversationExpressionSuggestions.FirstOrDefault() ?? string.Empty;
+        }
+
+        private static string BuildUniqueId(string baseId, IEnumerable<string> existingIds)
+        {
+            string normalizedBaseId = string.IsNullOrWhiteSpace(baseId) ? "New" : baseId.Trim();
+            HashSet<string> existing = new HashSet<string>(
+                existingIds.Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id.Trim()),
+                StringComparer.OrdinalIgnoreCase);
+
+            if (!existing.Contains(normalizedBaseId))
+            {
+                return normalizedBaseId;
+            }
+
+            int index = 2;
+            while (existing.Contains(normalizedBaseId + "_" + index))
+            {
+                index++;
+            }
+
+            return normalizedBaseId + "_" + index;
         }
 
         private void LoadStillDefinitions()

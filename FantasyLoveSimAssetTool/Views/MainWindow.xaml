@@ -852,6 +852,153 @@
                         </Grid>
                     </TabItem>
 
+                    <TabItem Header="差分定義">
+                        <Grid Margin="0,12,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Text="表情、衣装、透過レイヤー素材の共通定義を編集します。保存すると Definitions/*.json に反映され、スチル作業タブと Export に使われます。"
+                                       Foreground="Gray"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,12"/>
+
+                            <Grid Grid.Row="1">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="12"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="12"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <Grid Grid.Row="0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <DockPanel Grid.Row="0" Margin="0,0,0,6" LastChildFill="False">
+                                        <TextBlock Text="表情定義" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                                            <Button Content="追加"
+                                                    Command="{Binding AddExpressionDefinitionCommand}"
+                                                    Width="70"
+                                                    Height="26"
+                                                    Margin="8,0,0,0"/>
+                                            <Button Content="削除"
+                                                    Command="{Binding RemoveExpressionDefinitionCommand}"
+                                                    Width="70"
+                                                    Height="26"
+                                                    Margin="8,0,0,0"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                    <DataGrid Grid.Row="1"
+                                              ItemsSource="{Binding ExpressionDefinitions}"
+                                              SelectedItem="{Binding SelectedExpressionDefinition}"
+                                              AutoGenerateColumns="False"
+                                              CanUserAddRows="False"
+                                              IsReadOnly="False">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="ExpressionId" Binding="{Binding ExpressionId, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+                                            <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+                                            <DataGridTextColumn Header="Unity ID" Binding="{Binding UnityExpressionId, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+                                            <DataGridTextColumn Header="Prompt" Binding="{Binding Prompt, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+
+                                <Grid Grid.Row="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <DockPanel Grid.Row="0" Margin="0,0,0,6" LastChildFill="False">
+                                        <TextBlock Text="衣装定義" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                                            <Button Content="追加"
+                                                    Command="{Binding AddCostumeDefinitionCommand}"
+                                                    Width="70"
+                                                    Height="26"
+                                                    Margin="8,0,0,0"/>
+                                            <Button Content="削除"
+                                                    Command="{Binding RemoveCostumeDefinitionCommand}"
+                                                    Width="70"
+                                                    Height="26"
+                                                    Margin="8,0,0,0"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                    <DataGrid Grid.Row="1"
+                                              ItemsSource="{Binding CostumeDefinitions}"
+                                              SelectedItem="{Binding SelectedCostumeDefinition}"
+                                              AutoGenerateColumns="False"
+                                              CanUserAddRows="False"
+                                              IsReadOnly="False">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="CostumeId" Binding="{Binding CostumeId, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+                                            <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+                                            <DataGridTextColumn Header="Unity ID" Binding="{Binding UnityCostumeId, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+                                            <DataGridTextColumn Header="Prompt" Binding="{Binding Prompt, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+
+                                <Grid Grid.Row="4">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <DockPanel Grid.Row="0" Margin="0,0,0,6" LastChildFill="False">
+                                        <TextBlock Text="透過レイヤー素材定義" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                                            <Button Content="追加"
+                                                    Command="{Binding AddLayerAssetDefinitionCommand}"
+                                                    Width="70"
+                                                    Height="26"
+                                                    Margin="8,0,0,0"/>
+                                            <Button Content="削除"
+                                                    Command="{Binding RemoveLayerAssetDefinitionCommand}"
+                                                    Width="70"
+                                                    Height="26"
+                                                    Margin="8,0,0,0"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                    <DataGrid Grid.Row="1"
+                                              ItemsSource="{Binding LayerAssetDefinitions}"
+                                              SelectedItem="{Binding SelectedLayerAssetDefinition}"
+                                              AutoGenerateColumns="False"
+                                              CanUserAddRows="False"
+                                              IsReadOnly="False">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+                                            <DataGridTextColumn Header="種類" Binding="{Binding LayerKind, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+                                            <DataGridTextColumn Header="衣装ID" Binding="{Binding CostumeId, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
+                                            <DataGridTextColumn Header="表情ID" Binding="{Binding ExpressionId, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
+                                            <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                                            <DataGridTextColumn Header="ファイル名" Binding="{Binding FileName, UpdateSourceTrigger=PropertyChanged}" Width="170"/>
+                                            <DataGridTextColumn Header="描画順" Binding="{Binding DrawOrder, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                                            <DataGridTextColumn Header="Prompt" Binding="{Binding Prompt, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+                            </Grid>
+
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                                <Button Content="再読み込み"
+                                        Command="{Binding ReloadDefinitionCatalogCommand}"
+                                        Width="120"
+                                        Height="30"
+                                        Margin="0,0,8,0"/>
+                                <Button Content="保存"
+                                        Command="{Binding SaveDefinitionCatalogCommand}"
+                                        Width="120"
+                                        Height="30"/>
+                            </StackPanel>
+                        </Grid>
+                    </TabItem>
+
                     <TabItem Header="スチル一覧(確認用)">
                         <Grid Margin="0,12,0,0">
                             <Grid.RowDefinitions>

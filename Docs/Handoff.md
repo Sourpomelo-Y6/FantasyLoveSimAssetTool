@@ -64,6 +64,7 @@
 - スチルごとの画像登録状況、prompt 保存状況、AssetStatus 表示
 - スチルの `Status` と `SpecificPrompt` をキャラクターごとの `StillWorkItems` として `profile.json` に保存
 - スチル作業タブからのスチル保存
+- 差分定義タブで `Definitions/expressions.json`、`costumes.json`、`layer_assets.json` の表情、衣装、透過レイヤー素材定義を編集、保存、再読み込みする操作
 - Unity 向け export
 - 会話データタブでの会話、イベント、行動反応、エンディング本文の最小編集と `profile.json` 保存
 - `heroine_profile_note.md` と下書き Markdown の出力
@@ -416,6 +417,7 @@ Services/
 55. `Docs/ExpressionCostumeVariantRoadmap.md` を追加し、表情差分、衣装差分の元データ作成と外部 JSON 化、GUI 編集へのロードマップを整理する
 56. `Definitions/expressions.json`、`costumes.json`、`layer_assets.json` を追加し、`StillDefinitionService` が透過レイヤー素材定義を固定スチル定義と併用して読み込めるようにする
 57. Export の `Data` 配下に透過レイヤー素材用の `sprite_layers_export.json` を出力し、未採用レイヤー素材を警告に出す
+58. 差分定義タブと `DefinitionCatalogService` を追加し、表情、衣装、透過レイヤー素材定義 JSON を GUI から編集できるようにする
 
 ## 次に進める候補
 
