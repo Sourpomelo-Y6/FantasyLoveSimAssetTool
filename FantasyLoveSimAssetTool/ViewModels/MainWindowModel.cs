@@ -42,6 +42,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private ConversationDataKind selectedConversationDataKind;
         private ConversationEntry selectedConversationEntry;
         private ConversationLine selectedConversationLine;
+        private string conversationSearchText;
+        private string selectedConversationCategoryFilter;
         private string selectedConversationCategorySuggestion;
         private string selectedConversationLocationSuggestion;
         private string selectedConversationActionSuggestion;
@@ -108,6 +110,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<ConversationEntry> FilteredConversationEntries { get; }
 
         public ObservableCollection<string> ConversationCategorySuggestions { get; }
+
+        public ObservableCollection<string> ConversationCategoryFilters { get; }
 
         public ObservableCollection<string> ConversationLocationSuggestions { get; }
 
@@ -340,6 +344,30 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public string ConversationSearchText
+        {
+            get { return conversationSearchText; }
+            set
+            {
+                if (conversationSearchText == value) { return; }
+                conversationSearchText = value;
+                OnPropertyChanged(nameof(ConversationSearchText));
+                RefreshFilteredConversationEntries();
+            }
+        }
+
+        public string SelectedConversationCategoryFilter
+        {
+            get { return selectedConversationCategoryFilter; }
+            set
+            {
+                if (selectedConversationCategoryFilter == value) { return; }
+                selectedConversationCategoryFilter = value;
+                OnPropertyChanged(nameof(SelectedConversationCategoryFilter));
+                RefreshFilteredConversationEntries();
+            }
+        }
+
         public ConversationLine SelectedConversationLine
         {
             get { return selectedConversationLine; }
@@ -475,6 +503,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 LoadStillDefinitions();
                 RefreshFilteredAssets();
                 RefreshAcceptedAssets();
+                RefreshConversationCategorySuggestions();
                 RefreshFilteredConversationEntries();
                 RefreshSelectedStillStatus();
                 CommandManager.InvalidateRequerySuggested();
@@ -818,6 +847,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             FilteredStillDefinitions = new ObservableCollection<StillDefinition>();
             FilteredConversationEntries = new ObservableCollection<ConversationEntry>();
             ConversationCategorySuggestions = new ObservableCollection<string>();
+            ConversationCategoryFilters = new ObservableCollection<string>();
             ConversationLocationSuggestions = new ObservableCollection<string>(ConversationValueCatalog.Locations);
             ConversationActionSuggestions = new ObservableCollection<string>(ConversationValueCatalog.Actions);
             ConversationWeatherSuggestions = new ObservableCollection<string>(new[] { string.Empty }.Concat(ConversationValueCatalog.Weather));
@@ -879,6 +909,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             selectedConversationDataKind = ConversationDataKind.Conversations;
             selectedConversationEntry = null;
             selectedConversationLine = null;
+            conversationSearchText = string.Empty;
+            selectedConversationCategoryFilter = "All";
             selectedConversationCategorySuggestion = string.Empty;
             selectedConversationLocationSuggestion = string.Empty;
             selectedConversationActionSuggestion = string.Empty;
@@ -2600,7 +2632,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 entry.Conditions ??= new ConversationCondition();
                 entry.Lines ??= new ObservableCollection<ConversationLine>();
-                FilteredConversationEntries.Add(entry);
+                if (MatchesConversationCategoryFilter(entry) && MatchesConversationSearch(entry))
+                {
+                    FilteredConversationEntries.Add(entry);
+                }
             }
 
             if (SelectedConversationEntry == null || SelectedConversationEntry.Kind != SelectedConversationDataKind || !FilteredConversationEntries.Contains(SelectedConversationEntry))
@@ -2611,15 +2646,84 @@ namespace FantasyLoveSimAssetTool.ViewModels
             CommandManager.InvalidateRequerySuggested();
         }
 
+        private bool MatchesConversationCategoryFilter(ConversationEntry entry)
+        {
+            return string.IsNullOrWhiteSpace(SelectedConversationCategoryFilter)
+                || SelectedConversationCategoryFilter == "All"
+                || string.Equals(entry.Category, SelectedConversationCategoryFilter, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool MatchesConversationSearch(ConversationEntry entry)
+        {
+            if (string.IsNullOrWhiteSpace(ConversationSearchText))
+            {
+                return true;
+            }
+
+            string query = ConversationSearchText.Trim();
+            return ContainsSearchText(entry.Id, query)
+                || ContainsSearchText(entry.Title, query)
+                || ContainsSearchText(entry.Category, query)
+                || ContainsSearchText(entry.Memo, query)
+                || ContainsSearchText(entry.ImageAssetIdsText, query)
+                || MatchesConversationConditionSearch(entry.Conditions, query)
+                || (entry.Lines ?? new ObservableCollection<ConversationLine>())
+                    .Any(line => ContainsSearchText(line.Speaker, query)
+                        || ContainsSearchText(line.Text, query)
+                        || ContainsSearchText(line.Expression, query));
+        }
+
+        private static bool MatchesConversationConditionSearch(ConversationCondition condition, string query)
+        {
+            if (condition == null)
+            {
+                return false;
+            }
+
+            return ContainsSearchText(condition.LocationId, query)
+                || ContainsSearchText(condition.Weather, query)
+                || ContainsSearchText(condition.Season, query)
+                || ContainsSearchText(condition.TimeOfDay, query)
+                || ContainsSearchText(condition.ActionId, query)
+                || ContainsSearchText(condition.RequiredItemId, query)
+                || ContainsSearchText(condition.RequiredFlagIdsText, query);
+        }
+
+        private static bool ContainsSearchText(string value, string query)
+        {
+            return !string.IsNullOrWhiteSpace(value)
+                && value.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         private void RefreshConversationCategorySuggestions()
         {
             ConversationCategorySuggestions.Clear();
+            ConversationCategoryFilters.Clear();
+            ConversationCategoryFilters.Add("All");
             foreach (string category in GetConversationCategorySuggestions(SelectedConversationDataKind))
             {
                 ConversationCategorySuggestions.Add(category);
+                ConversationCategoryFilters.Add(category);
+            }
+
+            if (SelectedProfile != null && SelectedProfile.ConversationEntries != null)
+            {
+                foreach (string category in SelectedProfile.ConversationEntries
+                    .Where(entry => entry.Kind == SelectedConversationDataKind)
+                    .Select(entry => entry.Category)
+                    .Where(category => !string.IsNullOrWhiteSpace(category))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(category => category))
+                {
+                    if (!ConversationCategoryFilters.Contains(category, StringComparer.OrdinalIgnoreCase))
+                    {
+                        ConversationCategoryFilters.Add(category);
+                    }
+                }
             }
 
             SelectedConversationCategorySuggestion = ConversationCategorySuggestions.FirstOrDefault() ?? string.Empty;
+            SelectedConversationCategoryFilter = "All";
         }
 
         private static ConversationEntry CreateConversationEntry(ConversationDataKind kind, ObservableCollection<ConversationEntry> existingEntries)

@@ -183,20 +183,45 @@
                                     <ColumnDefinition Width="3*"/>
                                 </Grid.ColumnDefinitions>
 
-                                <DataGrid Grid.Column="0"
-                                          ItemsSource="{Binding FilteredConversationEntries}"
-                                          SelectedItem="{Binding SelectedConversationEntry}"
-                                          AutoGenerateColumns="False"
-                                          CanUserAddRows="False"
-                                          IsReadOnly="False">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="140"/>
-                                        <DataGridTextColumn Header="タイトル" Binding="{Binding Title}" Width="180"/>
-                                        <DataGridTextColumn Header="カテゴリ" Binding="{Binding Category}" Width="120"/>
-                                        <DataGridTextColumn Header="優先度" Binding="{Binding Priority}" Width="70"/>
-                                        <DataGridTextColumn Header="先頭行" Binding="{Binding FirstLinePreview}" Width="*" IsReadOnly="True"/>
-                                    </DataGrid.Columns>
-                                </DataGrid>
+                                <Grid Grid.Column="0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="40"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="140"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="検索" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBox Grid.Column="1"
+                                                 Text="{Binding ConversationSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                                 Margin="0,0,8,0"/>
+                                        <TextBlock Grid.Column="2" Text="カテゴリ" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <ComboBox Grid.Column="3"
+                                                  ItemsSource="{Binding ConversationCategoryFilters}"
+                                                  SelectedItem="{Binding SelectedConversationCategoryFilter}"
+                                                  Height="26"/>
+                                    </Grid>
+
+                                    <DataGrid Grid.Row="1"
+                                              ItemsSource="{Binding FilteredConversationEntries}"
+                                              SelectedItem="{Binding SelectedConversationEntry}"
+                                              AutoGenerateColumns="False"
+                                              CanUserAddRows="False"
+                                              IsReadOnly="False">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="140"/>
+                                            <DataGridTextColumn Header="タイトル" Binding="{Binding Title}" Width="180"/>
+                                            <DataGridTextColumn Header="カテゴリ" Binding="{Binding Category}" Width="120"/>
+                                            <DataGridTextColumn Header="優先度" Binding="{Binding Priority}" Width="70"/>
+                                            <DataGridTextColumn Header="先頭行" Binding="{Binding FirstLinePreview}" Width="*" IsReadOnly="True"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
 
                                 <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
                                     <Grid>

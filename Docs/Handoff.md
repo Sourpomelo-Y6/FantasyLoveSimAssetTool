@@ -407,6 +407,7 @@ Services/
 51. Export report に会話データ種別ごとの件数と、id 重複、空台詞、未採用画像参照などの検証警告を追加する
 52. Unity 側で受け取る `locationId`、`actionId`、`weather`、`season`、`timeOfDay`、`expression` の候補値をカタログ化し、入力候補と Export 警告を同じ値に揃える
 53. Unity 側 ScriptableObject の保存先、会話 JSON と Unity フィールドの対応表をドキュメント化し、Export 警告に category 空チェックを追加する
+54. 会話データ一覧に検索欄とカテゴリ絞り込みを追加する
 
 ## 次に進める候補
 
