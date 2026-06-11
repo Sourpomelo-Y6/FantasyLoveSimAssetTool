@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "expressions": [
+    {
+      "expressionId": "Neutral",
+      "displayName": "通常",
+      "prompt": "neutral expression",
+      "unityExpressionId": "Neutral"
+    },
+    {
+      "expressionId": "Smile",
+      "displayName": "笑顔",
+      "prompt": "gentle smile",
+      "unityExpressionId": "Smile"
+    },
+    {
+      "expressionId": "Sad",
+      "displayName": "悲しみ",
+      "prompt": "sad expression",
+      "unityExpressionId": "Sad"
+    },
+    {
+      "expressionId": "Angry",
+      "displayName": "怒り",
+      "prompt": "angry expression",
+      "unityExpressionId": "Angry"
+    },
+    {
+      "expressionId": "Shy",
+      "displayName": "照れ",
+      "prompt": "shy expression, slight blush",
+      "unityExpressionId": "Shy"
+    },
+    {
+      "expressionId": "Surprised",
+      "displayName": "驚き",
+      "prompt": "surprised expression",
+      "unityExpressionId": "Surprised"
+    }
+  ]
+}

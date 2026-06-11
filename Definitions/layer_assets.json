@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "layers": [
+    {
+      "assetId": "Heroine_BaseBody",
+      "layerKind": "BaseBody",
+      "displayName": "レイヤー: ベース体",
+      "fileName": "Heroine_BaseBody.png",
+      "drawOrder": 0,
+      "prompt": "full body base character, neutral face area, transparent background"
+    },
+    {
+      "assetId": "Costume_Default",
+      "layerKind": "Costume",
+      "costumeId": "Default",
+      "displayName": "レイヤー: 通常服",
+      "fileName": "Costume_Default.png",
+      "drawOrder": 10,
+      "prompt": "default outfit layer only, transparent background, aligned to base body"
+    },
+    {
+      "assetId": "Costume_Summer",
+      "layerKind": "Costume",
+      "costumeId": "Summer",
+      "displayName": "レイヤー: 夏服",
+      "fileName": "Costume_Summer.png",
+      "drawOrder": 10,
+      "prompt": "summer outfit layer only, transparent background, aligned to base body"
+    },
+    {
+      "assetId": "Expression_Neutral",
+      "layerKind": "Expression",
+      "expressionId": "Neutral",
+      "displayName": "レイヤー: 表情 通常",
+      "fileName": "Expression_Neutral.png",
+      "drawOrder": 20,
+      "prompt": "neutral face expression layer only, transparent background, aligned to base body"
+    },
+    {
+      "assetId": "Expression_Smile",
+      "layerKind": "Expression",
+      "expressionId": "Smile",
+      "displayName": "レイヤー: 表情 笑顔",
+      "fileName": "Expression_Smile.png",
+      "drawOrder": 20,
+      "prompt": "smiling face expression layer only, transparent background, aligned to base body"
+    }
+  ]
+}

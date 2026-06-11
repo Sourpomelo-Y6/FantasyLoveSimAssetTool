@@ -21,6 +21,15 @@
     <Content Include="..\ComfySettings\workflow-template.json" Link="ComfySettings\workflow-template.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\Definitions\expressions.json" Link="Definitions\expressions.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Definitions\costumes.json" Link="Definitions\costumes.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Definitions\layer_assets.json" Link="Definitions\layer_assets.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

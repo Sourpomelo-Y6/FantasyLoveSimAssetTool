@@ -409,6 +409,7 @@ Services/
 53. Unity 側 ScriptableObject の保存先、会話 JSON と Unity フィールドの対応表をドキュメント化し、Export 警告に category 空チェックを追加する
 54. 会話データ一覧に検索欄、カテゴリ、警告あり、画像あり/なし絞り込みを追加する
 55. `Docs/ExpressionCostumeVariantRoadmap.md` を追加し、表情差分、衣装差分の元データ作成と外部 JSON 化、GUI 編集へのロードマップを整理する
+56. `Definitions/expressions.json`、`costumes.json`、`layer_assets.json` を追加し、`StillDefinitionService` が透過レイヤー素材定義を固定スチル定義と併用して読み込めるようにする
 
 ## 次に進める候補
 

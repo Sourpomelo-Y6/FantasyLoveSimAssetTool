@@ -862,7 +862,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             characterProjectService = new CharacterProjectService();
             promptRecordService = new PromptRecordService(characterProjectService);
             promptTemplateService = new PromptTemplateService(characterProjectService.WorkspaceRoot);
-            stillDefinitionService = new StillDefinitionService();
+            stillDefinitionService = new StillDefinitionService(characterProjectService.WorkspaceRoot);
             imageInspectionService = new ImageInspectionService();
             comfySettingsService = new ComfySettingsService(characterProjectService.WorkspaceRoot);
             comfyWorkflowService = new ComfyWorkflowService(characterProjectService.WorkspaceRoot);

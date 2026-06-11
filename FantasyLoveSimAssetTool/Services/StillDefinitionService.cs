@@ -1,14 +1,28 @@
 using FantasyLoveSimAssetTool.Models;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 
 namespace FantasyLoveSimAssetTool.Services
 {
     public class StillDefinitionService
     {
+        private const string DefinitionDirectoryName = "Definitions";
+        private const string ExpressionDefinitionFileName = "expressions.json";
+        private const string CostumeDefinitionFileName = "costumes.json";
+        private const string LayerAssetDefinitionFileName = "layer_assets.json";
+
         private readonly IReadOnlyList<StillDefinition> defaultDefinitions;
+        private readonly IReadOnlyList<StillDefinition> layerDefinitions;
 
         public StillDefinitionService()
+            : this(Directory.GetCurrentDirectory())
+        {
+        }
+
+        public StillDefinitionService(string workspaceRoot)
         {
             defaultDefinitions = new List<StillDefinition>
             {
@@ -38,11 +52,18 @@ namespace FantasyLoveSimAssetTool.Services
                 Create("NormalEnding_01", "エンディング: Normal", AssetUsage.Ending, "NormalEnding_01.png", "normal ending still, bittersweet smile, calm atmosphere, soft lighting"),
                 Create("BadEnding_01", "エンディング: Bad", AssetUsage.Ending, "BadEnding_01.png", "bad ending still, distant expression, lonely atmosphere, subdued lighting")
             };
+            Dictionary<string, ExpressionDefinition> expressions = LoadExpressionDefinitions(workspaceRoot);
+            Dictionary<string, CostumeDefinition> costumes = LoadCostumeDefinitions(workspaceRoot);
+            layerDefinitions = LoadLayerDefinitions(workspaceRoot, expressions, costumes);
         }
 
         public IReadOnlyList<StillDefinition> GetDefaultDefinitions()
         {
-            return defaultDefinitions.Select(Clone).ToList();
+            return defaultDefinitions
+                .Concat(layerDefinitions)
+                .GroupBy(definition => definition.AssetId)
+                .Select(group => Clone(group.First()))
+                .ToList();
         }
 
         private static StillDefinition Create(string assetId, string displayName, AssetUsage usage, string fileName, string specificPrompt)
@@ -70,6 +91,211 @@ namespace FantasyLoveSimAssetTool.Services
                 NegativePromptAddition = source.NegativePromptAddition,
                 Status = source.Status
             };
+        }
+
+        private static IReadOnlyList<StillDefinition> LoadLayerDefinitions(
+            string workspaceRoot,
+            Dictionary<string, ExpressionDefinition> expressions,
+            Dictionary<string, CostumeDefinition> costumes)
+        {
+            string path = Path.Combine(workspaceRoot, DefinitionDirectoryName, LayerAssetDefinitionFileName);
+            if (!File.Exists(path))
+            {
+                return new List<StillDefinition>();
+            }
+
+            try
+            {
+                JsonSerializerOptions options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                LayerAssetDefinitionFile definitionFile = JsonSerializer.Deserialize<LayerAssetDefinitionFile>(
+                    File.ReadAllText(path),
+                    options);
+                if (definitionFile == null || definitionFile.Layers == null)
+                {
+                    return new List<StillDefinition>();
+                }
+
+                return definitionFile.Layers
+                    .Where(IsValidLayerDefinition)
+                    .Select(layer => Create(
+                        layer.AssetId.Trim(),
+                        layer.DisplayName.Trim(),
+                        AssetUsage.Sprites,
+                        layer.FileName.Trim(),
+                        BuildLayerPrompt(layer, expressions, costumes)))
+                    .ToList();
+            }
+            catch
+            {
+                return new List<StillDefinition>();
+            }
+        }
+
+        private static bool IsValidLayerDefinition(LayerAssetDefinition layer)
+        {
+            return layer != null
+                && !string.IsNullOrWhiteSpace(layer.AssetId)
+                && !string.IsNullOrWhiteSpace(layer.DisplayName)
+                && !string.IsNullOrWhiteSpace(layer.FileName)
+                && !string.IsNullOrWhiteSpace(layer.Prompt);
+        }
+
+        private static Dictionary<string, ExpressionDefinition> LoadExpressionDefinitions(string workspaceRoot)
+        {
+            string path = Path.Combine(workspaceRoot, DefinitionDirectoryName, ExpressionDefinitionFileName);
+            if (!File.Exists(path))
+            {
+                return new Dictionary<string, ExpressionDefinition>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            try
+            {
+                JsonSerializerOptions options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                ExpressionDefinitionFile definitionFile = JsonSerializer.Deserialize<ExpressionDefinitionFile>(
+                    File.ReadAllText(path),
+                    options);
+
+                return (definitionFile?.Expressions ?? new List<ExpressionDefinition>())
+                    .Where(expression => expression != null && !string.IsNullOrWhiteSpace(expression.ExpressionId))
+                    .GroupBy(expression => expression.ExpressionId.Trim(), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return new Dictionary<string, ExpressionDefinition>(StringComparer.OrdinalIgnoreCase);
+            }
+        }
+
+        private static Dictionary<string, CostumeDefinition> LoadCostumeDefinitions(string workspaceRoot)
+        {
+            string path = Path.Combine(workspaceRoot, DefinitionDirectoryName, CostumeDefinitionFileName);
+            if (!File.Exists(path))
+            {
+                return new Dictionary<string, CostumeDefinition>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            try
+            {
+                JsonSerializerOptions options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                CostumeDefinitionFile definitionFile = JsonSerializer.Deserialize<CostumeDefinitionFile>(
+                    File.ReadAllText(path),
+                    options);
+
+                return (definitionFile?.Costumes ?? new List<CostumeDefinition>())
+                    .Where(costume => costume != null && !string.IsNullOrWhiteSpace(costume.CostumeId))
+                    .GroupBy(costume => costume.CostumeId.Trim(), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return new Dictionary<string, CostumeDefinition>(StringComparer.OrdinalIgnoreCase);
+            }
+        }
+
+        private static string BuildLayerPrompt(
+            LayerAssetDefinition layer,
+            Dictionary<string, ExpressionDefinition> expressions,
+            Dictionary<string, CostumeDefinition> costumes)
+        {
+            List<string> parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(layer.LayerKind))
+            {
+                parts.Add("sprite layer kind: " + layer.LayerKind.Trim());
+            }
+
+            if (!string.IsNullOrWhiteSpace(layer.CostumeId))
+            {
+                parts.Add("costume id: " + layer.CostumeId.Trim());
+                if (costumes.TryGetValue(layer.CostumeId.Trim(), out CostumeDefinition costume)
+                    && !string.IsNullOrWhiteSpace(costume.Prompt))
+                {
+                    parts.Add(costume.Prompt.Trim());
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(layer.ExpressionId))
+            {
+                parts.Add("expression id: " + layer.ExpressionId.Trim());
+                if (expressions.TryGetValue(layer.ExpressionId.Trim(), out ExpressionDefinition expression)
+                    && !string.IsNullOrWhiteSpace(expression.Prompt))
+                {
+                    parts.Add(expression.Prompt.Trim());
+                }
+            }
+
+            parts.Add(layer.Prompt.Trim());
+            return string.Join(", ", parts);
+        }
+
+        private class LayerAssetDefinitionFile
+        {
+            public int SchemaVersion { get; set; }
+
+            public List<LayerAssetDefinition> Layers { get; set; }
+        }
+
+        private class LayerAssetDefinition
+        {
+            public string AssetId { get; set; }
+
+            public string LayerKind { get; set; }
+
+            public string CostumeId { get; set; }
+
+            public string ExpressionId { get; set; }
+
+            public string DisplayName { get; set; }
+
+            public string FileName { get; set; }
+
+            public int DrawOrder { get; set; }
+
+            public string Prompt { get; set; }
+        }
+
+        private class ExpressionDefinitionFile
+        {
+            public int SchemaVersion { get; set; }
+
+            public List<ExpressionDefinition> Expressions { get; set; }
+        }
+
+        private class ExpressionDefinition
+        {
+            public string ExpressionId { get; set; }
+
+            public string DisplayName { get; set; }
+
+            public string Prompt { get; set; }
+
+            public string UnityExpressionId { get; set; }
+        }
+
+        private class CostumeDefinitionFile
+        {
+            public int SchemaVersion { get; set; }
+
+            public List<CostumeDefinition> Costumes { get; set; }
+        }
+
+        private class CostumeDefinition
+        {
+            public string CostumeId { get; set; }
+
+            public string DisplayName { get; set; }
+
+            public string Prompt { get; set; }
+
+            public string UnityCostumeId { get; set; }
         }
     }
 }

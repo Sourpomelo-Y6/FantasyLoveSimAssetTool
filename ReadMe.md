@@ -26,6 +26,7 @@ Unity 取り込み方針は [Docs/UnityImportPlan.md](Docs/UnityImportPlan.md)�
 - スチルごとの negative prompt 追加
 - スチル作業タブを通常のスチル生成、登録、採用作業の主導線として表示
 - スチル一覧(確認用)タブで仕様上必要なスチルを表形式で確認
+- `Definitions/*.json` による表情、衣装、透過レイヤー素材の元データ定義
 - `PromptTemplates/templates.json` による prompt テンプレート管理
 - Prompt タブでのテンプレート用途選択
 - `ComfySettings/comfyui.json` による ComfyUI 設定読み込み

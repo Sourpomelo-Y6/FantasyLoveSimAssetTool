@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "costumes": [
+    {
+      "costumeId": "Default",
+      "displayName": "通常服",
+      "prompt": "default outfit",
+      "unityCostumeId": "Default"
+    },
+    {
+      "costumeId": "Spring",
+      "displayName": "春服",
+      "prompt": "spring outfit",
+      "unityCostumeId": "Spring"
+    },
+    {
+      "costumeId": "Summer",
+      "displayName": "夏服",
+      "prompt": "summer outfit",
+      "unityCostumeId": "Summer"
+    },
+    {
+      "costumeId": "Autumn",
+      "displayName": "秋服",
+      "prompt": "autumn outfit",
+      "unityCostumeId": "Autumn"
+    },
+    {
+      "costumeId": "Winter",
+      "displayName": "冬服",
+      "prompt": "winter outfit",
+      "unityCostumeId": "Winter"
+    },
+    {
+      "costumeId": "Dress",
+      "displayName": "ドレス",
+      "prompt": "elegant dress",
+      "unityCostumeId": "Dress"
+    },
+    {
+      "costumeId": "NightDress",
+      "displayName": "ナイトドレス",
+      "prompt": "night dress",
+      "unityCostumeId": "NightDress"
+    },
+    {
+      "costumeId": "Raincoat",
+      "displayName": "レインコート",
+      "prompt": "raincoat",
+      "unityCostumeId": "Raincoat"
+    }
+  ]
+}
