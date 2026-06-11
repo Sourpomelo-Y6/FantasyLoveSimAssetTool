@@ -973,9 +973,18 @@
                                               IsReadOnly="False">
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
-                                            <DataGridTextColumn Header="種類" Binding="{Binding LayerKind, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
-                                            <DataGridTextColumn Header="衣装ID" Binding="{Binding CostumeId, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
-                                            <DataGridTextColumn Header="表情ID" Binding="{Binding ExpressionId, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
+                                            <DataGridComboBoxColumn Header="種類"
+                                                                    SelectedItemBinding="{Binding LayerKind, UpdateSourceTrigger=PropertyChanged}"
+                                                                    ItemsSource="{Binding Data.LayerKindOptions, Source={StaticResource ViewModelProxy}}"
+                                                                    Width="110"/>
+                                            <DataGridComboBoxColumn Header="衣装ID"
+                                                                    SelectedItemBinding="{Binding CostumeId, UpdateSourceTrigger=PropertyChanged}"
+                                                                    ItemsSource="{Binding Data.CostumeIdOptions, Source={StaticResource ViewModelProxy}}"
+                                                                    Width="130"/>
+                                            <DataGridComboBoxColumn Header="表情ID"
+                                                                    SelectedItemBinding="{Binding ExpressionId, UpdateSourceTrigger=PropertyChanged}"
+                                                                    ItemsSource="{Binding Data.ExpressionIdOptions, Source={StaticResource ViewModelProxy}}"
+                                                                    Width="130"/>
                                             <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
                                             <DataGridTextColumn Header="ファイル名" Binding="{Binding FileName, UpdateSourceTrigger=PropertyChanged}" Width="170"/>
                                             <DataGridTextColumn Header="描画順" Binding="{Binding DrawOrder, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
@@ -985,17 +994,35 @@
                                 </Grid>
                             </Grid>
 
-                            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-                                <Button Content="再読み込み"
-                                        Command="{Binding ReloadDefinitionCatalogCommand}"
-                                        Width="120"
-                                        Height="30"
-                                        Margin="0,0,8,0"/>
-                                <Button Content="保存"
-                                        Command="{Binding SaveDefinitionCatalogCommand}"
-                                        Width="120"
-                                        Height="30"/>
-                            </StackPanel>
+                            <Grid Grid.Row="2" Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="252"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox Grid.Column="0"
+                                         Text="{Binding DefinitionCatalogValidationMessage}"
+                                         IsReadOnly="True"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         VerticalScrollBarVisibility="Auto"
+                                         Height="64"
+                                         Foreground="#B00020"
+                                         BorderBrush="#E0B4B4"/>
+
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                                    <Button Content="再読み込み"
+                                            Command="{Binding ReloadDefinitionCatalogCommand}"
+                                            Width="120"
+                                            Height="30"
+                                            Margin="0,0,8,0"/>
+                                    <Button Content="保存"
+                                            Command="{Binding SaveDefinitionCatalogCommand}"
+                                            Width="120"
+                                            Height="30"/>
+                                </StackPanel>
+                            </Grid>
                         </Grid>
                     </TabItem>
 

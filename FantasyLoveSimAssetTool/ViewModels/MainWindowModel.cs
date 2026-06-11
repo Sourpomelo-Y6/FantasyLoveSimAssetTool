@@ -59,6 +59,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private ExpressionDefinition selectedExpressionDefinition;
         private CostumeDefinition selectedCostumeDefinition;
         private LayerAssetDefinition selectedLayerAssetDefinition;
+        private string definitionCatalogValidationMessage;
         private PromptRecord currentPromptRecord;
         private HeroineProfile selectedProfile;
         private ExportReport lastExportReport;
@@ -139,6 +140,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<CostumeDefinition> CostumeDefinitions { get; }
 
         public ObservableCollection<LayerAssetDefinition> LayerAssetDefinitions { get; }
+
+        public ObservableCollection<string> LayerKindOptions { get; }
+
+        public ObservableCollection<string> ExpressionIdOptions { get; }
+
+        public ObservableCollection<string> CostumeIdOptions { get; }
 
         public string StillPromptPreview
         {
@@ -541,6 +548,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 selectedLayerAssetDefinition = value;
                 OnPropertyChanged(nameof(SelectedLayerAssetDefinition));
                 CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public string DefinitionCatalogValidationMessage
+        {
+            get { return definitionCatalogValidationMessage; }
+            set
+            {
+                if (definitionCatalogValidationMessage == value) { return; }
+                definitionCatalogValidationMessage = value;
+                OnPropertyChanged(nameof(DefinitionCatalogValidationMessage));
             }
         }
 
@@ -955,6 +973,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ExpressionDefinitions = new ObservableCollection<ExpressionDefinition>();
             CostumeDefinitions = new ObservableCollection<CostumeDefinition>();
             LayerAssetDefinitions = new ObservableCollection<LayerAssetDefinition>();
+            LayerKindOptions = new ObservableCollection<string>
+            {
+                "BaseBody",
+                "Costume",
+                "Expression",
+                "Accessory"
+            };
+            ExpressionIdOptions = new ObservableCollection<string>();
+            CostumeIdOptions = new ObservableCollection<string>();
             AssetStatusFilters = new ObservableCollection<string>
             {
                 "All",
@@ -1025,6 +1052,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             selectedExpressionDefinition = null;
             selectedCostumeDefinition = null;
             selectedLayerAssetDefinition = null;
+            definitionCatalogValidationMessage = string.Empty;
             lastExportReport = new ExportReport();
             selectedAssetImagePath = string.Empty;
             selectedAssetImageMessage = "画像を選択してください。";
@@ -2234,6 +2262,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 SelectedExpressionDefinition = ExpressionDefinitions.FirstOrDefault();
                 SelectedCostumeDefinition = CostumeDefinitions.FirstOrDefault();
                 SelectedLayerAssetDefinition = LayerAssetDefinitions.FirstOrDefault();
+                RefreshDefinitionCatalogOptions();
+                DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
                 RefreshConversationExpressionSuggestionsFromDefinitions();
                 StatusMessage = "差分定義を読み込みました。";
             }
@@ -2254,6 +2284,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             try
             {
+                RefreshDefinitionCatalogOptions();
+                DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
+                if (!string.IsNullOrWhiteSpace(DefinitionCatalogValidationMessage))
+                {
+                    StatusMessage = "差分定義に警告があります。保存前に修正してください。";
+                    return;
+                }
+
                 definitionCatalogService.SaveExpressionDefinitionFile(ExpressionDefinitions);
                 definitionCatalogService.SaveCostumeDefinitionFile(CostumeDefinitions);
                 definitionCatalogService.SaveLayerAssetDefinitionFile(LayerAssetDefinitions);
@@ -2272,13 +2310,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             ExpressionDefinition expression = new ExpressionDefinition
             {
-                ExpressionId = BuildUniqueId("Expression", ExpressionDefinitions.Select(item => item.ExpressionId)),
+                ExpressionId = BuildUniqueId(
+                    "Expression",
+                    ExpressionDefinitions.Where(item => item != null).Select(item => item.ExpressionId)),
                 DisplayName = "新しい表情",
                 Prompt = "neutral expression",
                 UnityExpressionId = string.Empty
             };
             ExpressionDefinitions.Add(expression);
             SelectedExpressionDefinition = expression;
+            RefreshDefinitionCatalogOptions();
+            DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
             StatusMessage = "表情定義を追加しました。";
         }
 
@@ -2291,6 +2333,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             ExpressionDefinitions.Remove(SelectedExpressionDefinition);
             SelectedExpressionDefinition = ExpressionDefinitions.FirstOrDefault();
+            RefreshDefinitionCatalogOptions();
+            DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
             StatusMessage = "表情定義を削除しました。";
         }
 
@@ -2298,13 +2342,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             CostumeDefinition costume = new CostumeDefinition
             {
-                CostumeId = BuildUniqueId("Costume", CostumeDefinitions.Select(item => item.CostumeId)),
+                CostumeId = BuildUniqueId(
+                    "Costume",
+                    CostumeDefinitions.Where(item => item != null).Select(item => item.CostumeId)),
                 DisplayName = "新しい衣装",
                 Prompt = "default outfit",
                 UnityCostumeId = string.Empty
             };
             CostumeDefinitions.Add(costume);
             SelectedCostumeDefinition = costume;
+            RefreshDefinitionCatalogOptions();
+            DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
             StatusMessage = "衣装定義を追加しました。";
         }
 
@@ -2317,6 +2365,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             CostumeDefinitions.Remove(SelectedCostumeDefinition);
             SelectedCostumeDefinition = CostumeDefinitions.FirstOrDefault();
+            RefreshDefinitionCatalogOptions();
+            DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
             StatusMessage = "衣装定義を削除しました。";
         }
 
@@ -2330,7 +2380,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 : "Costume_" + (string.IsNullOrWhiteSpace(costumeId) ? "New" : costumeId);
             LayerAssetDefinition layer = new LayerAssetDefinition
             {
-                AssetId = BuildUniqueId(baseId, LayerAssetDefinitions.Select(item => item.AssetId)),
+                AssetId = BuildUniqueId(
+                    baseId,
+                    LayerAssetDefinitions.Where(item => item != null).Select(item => item.AssetId)),
                 LayerKind = layerKind,
                 CostumeId = layerKind == "Costume" ? costumeId : string.Empty,
                 ExpressionId = layerKind == "Expression" ? expressionId : string.Empty,
@@ -2341,6 +2393,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             };
             LayerAssetDefinitions.Add(layer);
             SelectedLayerAssetDefinition = layer;
+            DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
             StatusMessage = "レイヤー素材定義を追加しました。";
         }
 
@@ -2353,7 +2406,238 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             LayerAssetDefinitions.Remove(SelectedLayerAssetDefinition);
             SelectedLayerAssetDefinition = LayerAssetDefinitions.FirstOrDefault();
+            DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
             StatusMessage = "レイヤー素材定義を削除しました。";
+        }
+
+        private void RefreshDefinitionCatalogOptions()
+        {
+            RefreshStringOptions(
+                ExpressionIdOptions,
+                ExpressionDefinitions.Where(expression => expression != null).Select(expression => expression.ExpressionId),
+                includeEmpty: true);
+            RefreshStringOptions(
+                CostumeIdOptions,
+                CostumeDefinitions.Where(costume => costume != null).Select(costume => costume.CostumeId),
+                includeEmpty: true);
+        }
+
+        private static void RefreshStringOptions(ObservableCollection<string> target, IEnumerable<string> values, bool includeEmpty)
+        {
+            target.Clear();
+            if (includeEmpty)
+            {
+                target.Add(string.Empty);
+            }
+
+            foreach (string value in values
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Select(item => item.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(item => item))
+            {
+                target.Add(value);
+            }
+        }
+
+        private string BuildDefinitionCatalogValidationMessage()
+        {
+            List<string> warnings = new List<string>();
+            ValidateExpressionDefinitions(warnings);
+            ValidateCostumeDefinitions(warnings);
+            ValidateLayerAssetDefinitions(warnings);
+
+            if (warnings.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            return string.Join(Environment.NewLine, warnings);
+        }
+
+        private void ValidateExpressionDefinitions(List<string> warnings)
+        {
+            foreach (ExpressionDefinition expression in ExpressionDefinitions)
+            {
+                if (expression == null)
+                {
+                    warnings.Add("表情定義: 空の定義があります。");
+                    continue;
+                }
+
+                string label = string.IsNullOrWhiteSpace(expression.ExpressionId)
+                    ? "(ExpressionId 未入力)"
+                    : expression.ExpressionId.Trim();
+                if (string.IsNullOrWhiteSpace(expression.ExpressionId))
+                {
+                    warnings.Add("表情定義: ExpressionId が空です。");
+                }
+
+                if (string.IsNullOrWhiteSpace(expression.DisplayName))
+                {
+                    warnings.Add($"表情定義 {label}: 表示名が空です。");
+                }
+
+                if (string.IsNullOrWhiteSpace(expression.Prompt))
+                {
+                    warnings.Add($"表情定義 {label}: Prompt が空です。");
+                }
+            }
+
+            AddDuplicateWarnings(
+                warnings,
+                "表情定義",
+                "ExpressionId",
+                ExpressionDefinitions.Where(expression => expression != null).Select(expression => expression.ExpressionId));
+        }
+
+        private void ValidateCostumeDefinitions(List<string> warnings)
+        {
+            foreach (CostumeDefinition costume in CostumeDefinitions)
+            {
+                if (costume == null)
+                {
+                    warnings.Add("衣装定義: 空の定義があります。");
+                    continue;
+                }
+
+                string label = string.IsNullOrWhiteSpace(costume.CostumeId)
+                    ? "(CostumeId 未入力)"
+                    : costume.CostumeId.Trim();
+                if (string.IsNullOrWhiteSpace(costume.CostumeId))
+                {
+                    warnings.Add("衣装定義: CostumeId が空です。");
+                }
+
+                if (string.IsNullOrWhiteSpace(costume.DisplayName))
+                {
+                    warnings.Add($"衣装定義 {label}: 表示名が空です。");
+                }
+
+                if (string.IsNullOrWhiteSpace(costume.Prompt))
+                {
+                    warnings.Add($"衣装定義 {label}: Prompt が空です。");
+                }
+            }
+
+            AddDuplicateWarnings(
+                warnings,
+                "衣装定義",
+                "CostumeId",
+                CostumeDefinitions.Where(costume => costume != null).Select(costume => costume.CostumeId));
+        }
+
+        private void ValidateLayerAssetDefinitions(List<string> warnings)
+        {
+            HashSet<string> expressionIds = new HashSet<string>(
+                ExpressionDefinitions
+                    .Where(expression => expression != null)
+                    .Select(expression => expression.ExpressionId)
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .Select(id => id.Trim()),
+                StringComparer.OrdinalIgnoreCase);
+            HashSet<string> costumeIds = new HashSet<string>(
+                CostumeDefinitions
+                    .Where(costume => costume != null)
+                    .Select(costume => costume.CostumeId)
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .Select(id => id.Trim()),
+                StringComparer.OrdinalIgnoreCase);
+            HashSet<string> layerKinds = new HashSet<string>(LayerKindOptions, StringComparer.OrdinalIgnoreCase);
+
+            foreach (LayerAssetDefinition layer in LayerAssetDefinitions)
+            {
+                if (layer == null)
+                {
+                    warnings.Add("レイヤー素材定義: 空の定義があります。");
+                    continue;
+                }
+
+                string label = string.IsNullOrWhiteSpace(layer.AssetId)
+                    ? "(AssetId 未入力)"
+                    : layer.AssetId.Trim();
+                string layerKind = layer.LayerKind?.Trim() ?? string.Empty;
+                string expressionId = layer.ExpressionId?.Trim() ?? string.Empty;
+                string costumeId = layer.CostumeId?.Trim() ?? string.Empty;
+
+                if (string.IsNullOrWhiteSpace(layer.AssetId))
+                {
+                    warnings.Add("レイヤー素材定義: AssetId が空です。");
+                }
+
+                if (string.IsNullOrWhiteSpace(layerKind))
+                {
+                    warnings.Add($"レイヤー素材定義 {label}: 種類が空です。");
+                }
+                else if (!layerKinds.Contains(layerKind))
+                {
+                    warnings.Add($"レイヤー素材定義 {label}: 種類 '{layerKind}' は候補外です。");
+                }
+
+                if (string.IsNullOrWhiteSpace(layer.DisplayName))
+                {
+                    warnings.Add($"レイヤー素材定義 {label}: 表示名が空です。");
+                }
+
+                if (string.IsNullOrWhiteSpace(layer.FileName))
+                {
+                    warnings.Add($"レイヤー素材定義 {label}: ファイル名が空です。");
+                }
+                else if (!layer.FileName.Trim().EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                {
+                    warnings.Add($"レイヤー素材定義 {label}: ファイル名は .png を推奨します。");
+                }
+
+                if (string.IsNullOrWhiteSpace(layer.Prompt))
+                {
+                    warnings.Add($"レイヤー素材定義 {label}: Prompt が空です。");
+                }
+
+                if (!string.IsNullOrWhiteSpace(expressionId) && !expressionIds.Contains(expressionId))
+                {
+                    warnings.Add($"レイヤー素材定義 {label}: 表情ID '{expressionId}' が表情定義にありません。");
+                }
+
+                if (!string.IsNullOrWhiteSpace(costumeId) && !costumeIds.Contains(costumeId))
+                {
+                    warnings.Add($"レイヤー素材定義 {label}: 衣装ID '{costumeId}' が衣装定義にありません。");
+                }
+
+                if (string.Equals(layerKind, "Expression", StringComparison.OrdinalIgnoreCase)
+                    && string.IsNullOrWhiteSpace(expressionId))
+                {
+                    warnings.Add($"レイヤー素材定義 {label}: 種類が Expression の場合は表情IDを指定してください。");
+                }
+
+                if (string.Equals(layerKind, "Costume", StringComparison.OrdinalIgnoreCase)
+                    && string.IsNullOrWhiteSpace(costumeId))
+                {
+                    warnings.Add($"レイヤー素材定義 {label}: 種類が Costume の場合は衣装IDを指定してください。");
+                }
+            }
+
+            AddDuplicateWarnings(
+                warnings,
+                "レイヤー素材定義",
+                "AssetId",
+                LayerAssetDefinitions.Where(layer => layer != null).Select(layer => layer.AssetId));
+        }
+
+        private static void AddDuplicateWarnings(
+            List<string> warnings,
+            string targetName,
+            string keyName,
+            IEnumerable<string> values)
+        {
+            foreach (string duplicate in values
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .Select(value => value.Trim())
+                .GroupBy(value => value, StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > 1)
+                .Select(group => group.Key))
+            {
+                warnings.Add($"{targetName}: {keyName} '{duplicate}' が重複しています。");
+            }
         }
 
         private void RefreshConversationExpressionSuggestionsFromDefinitions()
@@ -2362,6 +2646,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ConversationExpressionSuggestions.Clear();
 
             IEnumerable<string> expressionIds = ExpressionDefinitions
+                .Where(expression => expression != null)
                 .Select(expression => expression.ExpressionId)
                 .Where(id => !string.IsNullOrWhiteSpace(id))
                 .Select(id => id.Trim())
