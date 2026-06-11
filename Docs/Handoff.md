@@ -424,6 +424,7 @@ Services/
 60. レイヤープレビュータブを追加し、Accepted 済みの透過レイヤー素材を `DrawOrder` 順に重ねて確認できるようにする
 61. `Docs/UnityImportPlan.md` に `sprite_layers_export.json` の詳細契約、Unity 側 `HeroineLayeredSpriteData` 案、Import 手順、fallback ルール、追加警告候補を整理する
 62. WPF Export warning に BaseBody、Default 衣装、Neutral 表情、重複レイヤー、透過 PNG、BaseBody とのキャンバスサイズ、縦横比の検証を追加する
+63. `Docs/UnityEditorImportImplementationPlan.md` を追加し、Unity Editor Import 拡張の配置、ScriptableObject 型、Import 手順、warning、更新ルールを整理する
 
 ## 次に進める候補
 
@@ -524,6 +525,7 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 
 - `Docs/CharacterAssetGenerationToolSpec.md`: WPF ツール側の仕様
 - `Docs/UnityImportPlan.md`: WPF export 結果を Unity Editor 拡張で取り込む方針と、別リポジトリ運用方針
+- `Docs/UnityEditorImportImplementationPlan.md`: Unity Editor Import 拡張の実装計画
 - `Docs/ConversationDataPlan.md`: 会話、イベント、行動反応、エンディング本文の JSON export と Unity Import 方針
 - `Docs/ExpressionCostumeVariantRoadmap.md`: 表情差分、衣装差分の元データ作成、外部 JSON 化、GUI 編集へのロードマップ
 - `Docs/ConversationDataPlan.md`: 会話、イベント、行動反応、エンディング本文の JSON export 方針

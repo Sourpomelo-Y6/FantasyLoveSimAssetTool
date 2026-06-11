@@ -5,7 +5,7 @@
 Stable Diffusion などで生成した立ち絵、イベントスチル、行動スチル、エンディングスチルと、それぞれのプロンプト記録をキャラクター単位で整理し、Unity に取り込みやすいフォルダ構成へ export することを目的にしています。
 
 詳細仕様は [Docs/CharacterAssetGenerationToolSpec.md](Docs/CharacterAssetGenerationToolSpec.md) を参照してください。
-Unity 取り込み方針は [Docs/UnityImportPlan.md](Docs/UnityImportPlan.md)、会話データ拡張案は [Docs/ConversationDataPlan.md](Docs/ConversationDataPlan.md)、表情・衣装差分ロードマップは [Docs/ExpressionCostumeVariantRoadmap.md](Docs/ExpressionCostumeVariantRoadmap.md) を参照してください。
+Unity 取り込み方針は [Docs/UnityImportPlan.md](Docs/UnityImportPlan.md)、Unity Editor 側の実装計画は [Docs/UnityEditorImportImplementationPlan.md](Docs/UnityEditorImportImplementationPlan.md)、会話データ拡張案は [Docs/ConversationDataPlan.md](Docs/ConversationDataPlan.md)、表情・衣装差分ロードマップは [Docs/ExpressionCostumeVariantRoadmap.md](Docs/ExpressionCostumeVariantRoadmap.md) を参照してください。
 
 ## 現在の状態
 
