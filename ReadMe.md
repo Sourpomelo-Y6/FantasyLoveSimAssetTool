@@ -52,6 +52,7 @@ Unity 取り込み方針は [Docs/UnityImportPlan.md](Docs/UnityImportPlan.md)�
 - Unity 側で受け取る会話条件値、表情値に合わせた候補表示と候補外警告
 - Unity 側 ScriptableObject 保存先と会話 JSON フィールド対応表の整理
 - 差分定義タブによる表情、衣装、透過レイヤー素材定義 JSON の編集、候補選択、保存前検証
+- レイヤープレビュータブによる Accepted 済み透過レイヤー素材の重ね合わせ確認
 - 透過レイヤー素材の `sprite_layers_export.json` 出力
 
 現状では、Stable Diffusion などの画像生成自体はアプリ内では完結せず、外部生成した画像を登録、整理、出力するツールとして動作します。

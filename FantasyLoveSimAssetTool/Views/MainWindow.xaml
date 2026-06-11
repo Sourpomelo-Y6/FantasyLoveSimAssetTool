@@ -1026,6 +1026,108 @@
                         </Grid>
                     </TabItem>
 
+                    <TabItem Header="レイヤープレビュー">
+                        <Grid Margin="0,12,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Text="Accepted 済みの透過レイヤー素材を DrawOrder 順に重ねて確認します。BaseBody、Costume、Expression を選び、Unity に渡す前に位置ずれと描画順を確認します。"
+                                       Foreground="Gray"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,12"/>
+
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="260"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="360"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="12">
+                                    <StackPanel>
+                                        <TextBlock Text="組み合わせ" FontWeight="SemiBold" Margin="0,0,0,12"/>
+
+                                        <TextBlock Text="BaseBody"/>
+                                        <ComboBox ItemsSource="{Binding LayerPreviewBaseBodyOptions}"
+                                                  SelectedItem="{Binding SelectedLayerPreviewBaseBodyId}"
+                                                  Height="26"
+                                                  Margin="0,4,0,12"/>
+
+                                        <TextBlock Text="Costume"/>
+                                        <ComboBox ItemsSource="{Binding LayerPreviewCostumeOptions}"
+                                                  SelectedItem="{Binding SelectedLayerPreviewCostumeId}"
+                                                  Height="26"
+                                                  Margin="0,4,0,12"/>
+
+                                        <TextBlock Text="Expression"/>
+                                        <ComboBox ItemsSource="{Binding LayerPreviewExpressionOptions}"
+                                                  SelectedItem="{Binding SelectedLayerPreviewExpressionId}"
+                                                  Height="26"
+                                                  Margin="0,4,0,12"/>
+
+                                        <Button Content="更新"
+                                                Command="{Binding RefreshLayerPreviewCommand}"
+                                                Height="30"
+                                                Margin="0,4,0,12"/>
+
+                                        <TextBlock Text="{Binding LayerPreviewMessage}"
+                                                   Foreground="Gray"
+                                                   TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Column="2"
+                                        BorderBrush="#DDDDDD"
+                                        BorderThickness="1"
+                                        Padding="12">
+                                    <Grid Background="#F7F7F7">
+                                        <ItemsControl ItemsSource="{Binding LayerPreviewItems}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <Grid/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Image Source="{Binding ImagePath, Converter={StaticResource StringToImageSourceConverter}}"
+                                                           Stretch="Uniform"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Grid>
+                                </Border>
+
+                                <Border Grid.Column="4" BorderBrush="#DDDDDD" BorderThickness="1" Padding="12">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Text="表示中レイヤー" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                        <DataGrid Grid.Row="1"
+                                                  ItemsSource="{Binding LayerPreviewItems}"
+                                                  AutoGenerateColumns="False"
+                                                  IsReadOnly="True"
+                                                  CanUserAddRows="False">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="順" Binding="{Binding DrawOrder}" Width="50"/>
+                                                <DataGridTextColumn Header="種類" Binding="{Binding LayerKind}" Width="90"/>
+                                                <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId}" Width="150"/>
+                                                <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName}" Width="*"/>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Grid>
+                    </TabItem>
+
                     <TabItem Header="スチル一覧(確認用)">
                         <Grid Margin="0,12,0,0">
                             <Grid.RowDefinitions>

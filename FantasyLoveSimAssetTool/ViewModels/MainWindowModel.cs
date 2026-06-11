@@ -60,6 +60,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private CostumeDefinition selectedCostumeDefinition;
         private LayerAssetDefinition selectedLayerAssetDefinition;
         private string definitionCatalogValidationMessage;
+        private string selectedLayerPreviewBaseBodyId;
+        private string selectedLayerPreviewCostumeId;
+        private string selectedLayerPreviewExpressionId;
+        private string layerPreviewMessage;
         private PromptRecord currentPromptRecord;
         private HeroineProfile selectedProfile;
         private ExportReport lastExportReport;
@@ -146,6 +150,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<string> ExpressionIdOptions { get; }
 
         public ObservableCollection<string> CostumeIdOptions { get; }
+
+        public ObservableCollection<string> LayerPreviewBaseBodyOptions { get; }
+
+        public ObservableCollection<string> LayerPreviewCostumeOptions { get; }
+
+        public ObservableCollection<string> LayerPreviewExpressionOptions { get; }
+
+        public ObservableCollection<LayerPreviewItem> LayerPreviewItems { get; }
 
         public string StillPromptPreview
         {
@@ -562,6 +574,53 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public string SelectedLayerPreviewBaseBodyId
+        {
+            get { return selectedLayerPreviewBaseBodyId; }
+            set
+            {
+                if (selectedLayerPreviewBaseBodyId == value) { return; }
+                selectedLayerPreviewBaseBodyId = value;
+                OnPropertyChanged(nameof(SelectedLayerPreviewBaseBodyId));
+                RefreshLayerPreview();
+            }
+        }
+
+        public string SelectedLayerPreviewCostumeId
+        {
+            get { return selectedLayerPreviewCostumeId; }
+            set
+            {
+                if (selectedLayerPreviewCostumeId == value) { return; }
+                selectedLayerPreviewCostumeId = value;
+                OnPropertyChanged(nameof(SelectedLayerPreviewCostumeId));
+                RefreshLayerPreview();
+            }
+        }
+
+        public string SelectedLayerPreviewExpressionId
+        {
+            get { return selectedLayerPreviewExpressionId; }
+            set
+            {
+                if (selectedLayerPreviewExpressionId == value) { return; }
+                selectedLayerPreviewExpressionId = value;
+                OnPropertyChanged(nameof(SelectedLayerPreviewExpressionId));
+                RefreshLayerPreview();
+            }
+        }
+
+        public string LayerPreviewMessage
+        {
+            get { return layerPreviewMessage; }
+            set
+            {
+                if (layerPreviewMessage == value) { return; }
+                layerPreviewMessage = value;
+                OnPropertyChanged(nameof(LayerPreviewMessage));
+            }
+        }
+
         public PromptRecord CurrentPromptRecord
         {
             get { return currentPromptRecord; }
@@ -596,6 +655,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 LoadStillDefinitions();
                 RefreshFilteredAssets();
                 RefreshAcceptedAssets();
+                RefreshLayerPreviewOptions();
+                RefreshLayerPreview();
                 RefreshConversationCategorySuggestions();
                 RefreshFilteredConversationEntries();
                 RefreshSelectedStillStatus();
@@ -937,6 +998,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ReloadDefinitionCatalogCommand { get; }
 
+        public ICommand RefreshLayerPreviewCommand { get; }
+
         public MainWindowModel()
         {
             characterProjectService = new CharacterProjectService();
@@ -982,6 +1045,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             };
             ExpressionIdOptions = new ObservableCollection<string>();
             CostumeIdOptions = new ObservableCollection<string>();
+            LayerPreviewBaseBodyOptions = new ObservableCollection<string>();
+            LayerPreviewCostumeOptions = new ObservableCollection<string>();
+            LayerPreviewExpressionOptions = new ObservableCollection<string>();
+            LayerPreviewItems = new ObservableCollection<LayerPreviewItem>();
             AssetStatusFilters = new ObservableCollection<string>
             {
                 "All",
@@ -1053,6 +1120,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             selectedCostumeDefinition = null;
             selectedLayerAssetDefinition = null;
             definitionCatalogValidationMessage = string.Empty;
+            selectedLayerPreviewBaseBodyId = string.Empty;
+            selectedLayerPreviewCostumeId = string.Empty;
+            selectedLayerPreviewExpressionId = string.Empty;
+            layerPreviewMessage = "キャラクターとレイヤーを選択してください。";
             lastExportReport = new ExportReport();
             selectedAssetImagePath = string.Empty;
             selectedAssetImageMessage = "画像を選択してください。";
@@ -1186,6 +1257,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedLayerAssetDefinition != null);
             SaveDefinitionCatalogCommand = new RelayCommand(SaveDefinitionCatalog);
             ReloadDefinitionCatalogCommand = new RelayCommand(ReloadDefinitionCatalog);
+            RefreshLayerPreviewCommand = new RelayCommand(RefreshLayerPreview);
 
             ReloadComfySettings();
             LoadDefinitionCatalog();
@@ -2264,6 +2336,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 SelectedLayerAssetDefinition = LayerAssetDefinitions.FirstOrDefault();
                 RefreshDefinitionCatalogOptions();
                 DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
+                RefreshLayerPreviewOptions();
+                RefreshLayerPreview();
                 RefreshConversationExpressionSuggestionsFromDefinitions();
                 StatusMessage = "差分定義を読み込みました。";
             }
@@ -2298,6 +2372,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 stillDefinitionService = new StillDefinitionService(characterProjectService.WorkspaceRoot);
                 RefreshConversationExpressionSuggestionsFromDefinitions();
                 LoadStillDefinitions();
+                RefreshLayerPreviewOptions();
+                RefreshLayerPreview();
                 StatusMessage = "差分定義を保存しました。";
             }
             catch (Exception ex)
@@ -2321,6 +2397,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SelectedExpressionDefinition = expression;
             RefreshDefinitionCatalogOptions();
             DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
+            RefreshLayerPreviewOptions();
             StatusMessage = "表情定義を追加しました。";
         }
 
@@ -2335,6 +2412,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SelectedExpressionDefinition = ExpressionDefinitions.FirstOrDefault();
             RefreshDefinitionCatalogOptions();
             DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
+            RefreshLayerPreviewOptions();
+            RefreshLayerPreview();
             StatusMessage = "表情定義を削除しました。";
         }
 
@@ -2353,6 +2432,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SelectedCostumeDefinition = costume;
             RefreshDefinitionCatalogOptions();
             DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
+            RefreshLayerPreviewOptions();
             StatusMessage = "衣装定義を追加しました。";
         }
 
@@ -2367,6 +2447,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SelectedCostumeDefinition = CostumeDefinitions.FirstOrDefault();
             RefreshDefinitionCatalogOptions();
             DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
+            RefreshLayerPreviewOptions();
+            RefreshLayerPreview();
             StatusMessage = "衣装定義を削除しました。";
         }
 
@@ -2394,6 +2476,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             LayerAssetDefinitions.Add(layer);
             SelectedLayerAssetDefinition = layer;
             DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
+            RefreshLayerPreviewOptions();
             StatusMessage = "レイヤー素材定義を追加しました。";
         }
 
@@ -2407,6 +2490,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             LayerAssetDefinitions.Remove(SelectedLayerAssetDefinition);
             SelectedLayerAssetDefinition = LayerAssetDefinitions.FirstOrDefault();
             DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
+            RefreshLayerPreviewOptions();
+            RefreshLayerPreview();
             StatusMessage = "レイヤー素材定義を削除しました。";
         }
 
@@ -2420,6 +2505,180 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 CostumeIdOptions,
                 CostumeDefinitions.Where(costume => costume != null).Select(costume => costume.CostumeId),
                 includeEmpty: true);
+        }
+
+        private void RefreshLayerPreviewOptions()
+        {
+            string previousBaseBody = SelectedLayerPreviewBaseBodyId;
+            string previousCostume = SelectedLayerPreviewCostumeId;
+            string previousExpression = SelectedLayerPreviewExpressionId;
+
+            RefreshStringOptions(
+                LayerPreviewBaseBodyOptions,
+                LayerAssetDefinitions
+                    .Where(layer => layer != null && IsLayerKind(layer, "BaseBody"))
+                    .Select(layer => layer.AssetId),
+                includeEmpty: true);
+            RefreshStringOptions(
+                LayerPreviewCostumeOptions,
+                CostumeDefinitions
+                    .Where(costume => costume != null)
+                    .Select(costume => costume.CostumeId),
+                includeEmpty: true);
+            RefreshStringOptions(
+                LayerPreviewExpressionOptions,
+                ExpressionDefinitions
+                    .Where(expression => expression != null)
+                    .Select(expression => expression.ExpressionId),
+                includeEmpty: true);
+
+            selectedLayerPreviewBaseBodyId = SelectExistingOrFirst(previousBaseBody, LayerPreviewBaseBodyOptions);
+            selectedLayerPreviewCostumeId = SelectExistingOrFirst(previousCostume, LayerPreviewCostumeOptions);
+            selectedLayerPreviewExpressionId = SelectExistingOrFirst(previousExpression, LayerPreviewExpressionOptions);
+            OnPropertyChanged(nameof(SelectedLayerPreviewBaseBodyId));
+            OnPropertyChanged(nameof(SelectedLayerPreviewCostumeId));
+            OnPropertyChanged(nameof(SelectedLayerPreviewExpressionId));
+        }
+
+        private void RefreshLayerPreview()
+        {
+            LayerPreviewItems.Clear();
+
+            if (SelectedProfile == null)
+            {
+                LayerPreviewMessage = "キャラクターを選択してください。";
+                return;
+            }
+
+            List<LayerAssetDefinition> targetLayers = BuildSelectedLayerPreviewDefinitions();
+            if (targetLayers.Count == 0)
+            {
+                LayerPreviewMessage = "プレビュー対象のレイヤーを選択してください。";
+                return;
+            }
+
+            List<string> warnings = new List<string>();
+            Dictionary<string, HeroineAsset> acceptedAssets = BuildAcceptedAssetDictionary();
+            foreach (LayerAssetDefinition layer in targetLayers.OrderBy(layer => layer.DrawOrder))
+            {
+                if (!acceptedAssets.TryGetValue(layer.AssetId, out HeroineAsset asset))
+                {
+                    warnings.Add($"{layer.AssetId}: Accepted 画像が登録されていません。");
+                    continue;
+                }
+
+                string imagePath = BuildStoredImagePath(asset);
+                if (string.IsNullOrWhiteSpace(imagePath) || !File.Exists(imagePath))
+                {
+                    warnings.Add($"{layer.AssetId}: 画像ファイルが見つかりません。");
+                    continue;
+                }
+
+                LayerPreviewItems.Add(new LayerPreviewItem
+                {
+                    AssetId = layer.AssetId,
+                    DisplayName = layer.DisplayName,
+                    LayerKind = layer.LayerKind,
+                    DrawOrder = layer.DrawOrder,
+                    ImagePath = imagePath
+                });
+            }
+
+            if (LayerPreviewItems.Count == 0)
+            {
+                LayerPreviewMessage = warnings.Count == 0
+                    ? "表示できるレイヤー画像がありません。"
+                    : string.Join(Environment.NewLine, warnings);
+                return;
+            }
+
+            string summary = $"{LayerPreviewItems.Count} 件のレイヤーを表示しています。";
+            LayerPreviewMessage = warnings.Count == 0
+                ? summary
+                : summary + Environment.NewLine + string.Join(Environment.NewLine, warnings);
+        }
+
+        private List<LayerAssetDefinition> BuildSelectedLayerPreviewDefinitions()
+        {
+            List<LayerAssetDefinition> layers = new List<LayerAssetDefinition>();
+            AddSelectedLayer(layers, layer => IsLayerKind(layer, "BaseBody")
+                && string.Equals(layer.AssetId, SelectedLayerPreviewBaseBodyId, StringComparison.OrdinalIgnoreCase));
+            AddSelectedLayer(layers, layer => IsLayerKind(layer, "Costume")
+                && string.Equals(layer.CostumeId, SelectedLayerPreviewCostumeId, StringComparison.OrdinalIgnoreCase));
+            AddSelectedLayer(layers, layer => IsLayerKind(layer, "Expression")
+                && string.Equals(layer.ExpressionId, SelectedLayerPreviewExpressionId, StringComparison.OrdinalIgnoreCase));
+
+            foreach (LayerAssetDefinition accessory in LayerAssetDefinitions
+                .Where(layer => layer != null && IsLayerKind(layer, "Accessory"))
+                .OrderBy(layer => layer.DrawOrder))
+            {
+                layers.Add(accessory);
+            }
+
+            return layers
+                .Where(layer => layer != null)
+                .GroupBy(layer => layer.AssetId, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
+                .OrderBy(layer => layer.DrawOrder)
+                .ToList();
+        }
+
+        private void AddSelectedLayer(List<LayerAssetDefinition> layers, Func<LayerAssetDefinition, bool> predicate)
+        {
+            LayerAssetDefinition layer = LayerAssetDefinitions
+                .Where(item => item != null)
+                .OrderBy(item => item.DrawOrder)
+                .FirstOrDefault(predicate);
+            if (layer != null)
+            {
+                layers.Add(layer);
+            }
+        }
+
+        private Dictionary<string, HeroineAsset> BuildAcceptedAssetDictionary()
+        {
+            if (SelectedProfile == null || SelectedProfile.Assets == null)
+            {
+                return new Dictionary<string, HeroineAsset>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            return SelectedProfile.Assets
+                .Where(asset => asset != null
+                    && asset.Status == AssetStatus.Accepted
+                    && !string.IsNullOrWhiteSpace(asset.AssetId))
+                .GroupBy(asset => asset.AssetId.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+        }
+
+        private string BuildStoredImagePath(HeroineAsset asset)
+        {
+            if (SelectedProfile == null || asset == null || string.IsNullOrWhiteSpace(asset.StoredPath))
+            {
+                return string.Empty;
+            }
+
+            return Path.Combine(
+                characterProjectService.GetCharacterDirectory(SelectedProfile.HeroineId),
+                asset.StoredPath);
+        }
+
+        private static bool IsLayerKind(LayerAssetDefinition layer, string layerKind)
+        {
+            return layer != null
+                && string.Equals(layer.LayerKind?.Trim(), layerKind, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string SelectExistingOrFirst(string previousValue, ObservableCollection<string> options)
+        {
+            if (!string.IsNullOrWhiteSpace(previousValue)
+                && options.Contains(previousValue, StringComparer.OrdinalIgnoreCase))
+            {
+                return previousValue;
+            }
+
+            return options.FirstOrDefault(option => !string.IsNullOrWhiteSpace(option))
+                ?? options.FirstOrDefault()
+                ?? string.Empty;
         }
 
         private static void RefreshStringOptions(ObservableCollection<string> target, IEnumerable<string> values, bool includeEmpty)
@@ -2738,6 +2997,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 AcceptedAssets.Add(asset);
             }
 
+            RefreshLayerPreview();
             RefreshFilteredConversationEntries();
         }
 
