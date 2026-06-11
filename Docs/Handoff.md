@@ -66,6 +66,7 @@
 - スチル作業タブからのスチル保存
 - 差分定義タブで `Definitions/expressions.json`、`costumes.json`、`layer_assets.json` の表情、衣装、透過レイヤー素材定義を編集、候補選択、保存前検証、保存、再読み込みする操作
 - レイヤープレビュータブで Accepted 済みの BaseBody、Costume、Expression、Accessory レイヤー画像を `DrawOrder` 順に重ねて確認する操作
+- Export 時の透過レイヤー素材検証。BaseBody、Default 衣装、Neutral 表情、重複定義、透過 PNG、BaseBody とのキャンバスサイズ、縦横比を warning に出す
 - Unity 向け export
 - 会話データタブでの会話、イベント、行動反応、エンディング本文の最小編集と `profile.json` 保存
 - `heroine_profile_note.md` と下書き Markdown の出力
@@ -422,10 +423,10 @@ Services/
 59. 差分定義タブで `LayerKind`、`ExpressionId`、`CostumeId` を候補選択できるようにし、保存前に空欄、重複、未定義参照を検証する
 60. レイヤープレビュータブを追加し、Accepted 済みの透過レイヤー素材を `DrawOrder` 順に重ねて確認できるようにする
 61. `Docs/UnityImportPlan.md` に `sprite_layers_export.json` の詳細契約、Unity 側 `HeroineLayeredSpriteData` 案、Import 手順、fallback ルール、追加警告候補を整理する
+62. WPF Export warning に BaseBody、Default 衣装、Neutral 表情、重複レイヤー、透過 PNG、BaseBody とのキャンバスサイズ、縦横比の検証を追加する
 
 ## 次に進める候補
 
-- WPF Export warning に BaseBody、Default 衣装、Neutral 表情、重複レイヤー、透過 PNG、キャンバスサイズ一致の検証を追加する
 - Unity Editor Import 拡張側で `heroine_profile_export.json` と `assets_export.json` を読み込む設計
 - スチル一覧(確認用)タブの内容をスチル作業タブへ完全統合するか判断する
 - 画像ファイルの差し替え

@@ -54,6 +54,7 @@ Unity 取り込み方針は [Docs/UnityImportPlan.md](Docs/UnityImportPlan.md)�
 - 差分定義タブによる表情、衣装、透過レイヤー素材定義 JSON の編集、候補選択、保存前検証
 - レイヤープレビュータブによる Accepted 済み透過レイヤー素材の重ね合わせ確認
 - 透過レイヤー素材の `sprite_layers_export.json` 出力
+- Export 時の透過レイヤー素材検証と warning 表示
 
 現状では、Stable Diffusion などの画像生成自体はアプリ内では完結せず、外部生成した画像を登録、整理、出力するツールとして動作します。
 この外部ファイル登録フローは今後も残し、将来追加するローカル ComfyUI 連携は、同じ登録処理へ生成結果を渡す任意機能として扱います。

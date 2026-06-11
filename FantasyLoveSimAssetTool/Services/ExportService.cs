@@ -271,6 +271,8 @@ namespace FantasyLoveSimAssetTool.Services
                 .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
             List<object> exportedLayers = new List<object>();
 
+            ValidateSpriteLayerDefinitions(profile, layerDefinitions, acceptedAssetById, report);
+
             foreach (LayerAssetDefinition layer in layerDefinitions)
             {
                 if (!acceptedAssetById.TryGetValue(layer.AssetId, out HeroineAsset asset))
@@ -314,6 +316,240 @@ namespace FantasyLoveSimAssetTool.Services
             };
 
             return JsonSerializer.Serialize(exportModel, CreateJsonOptions());
+        }
+
+        private void ValidateSpriteLayerDefinitions(
+            HeroineProfile profile,
+            IReadOnlyList<LayerAssetDefinition> layerDefinitions,
+            Dictionary<string, HeroineAsset> acceptedAssetById,
+            ExportReport report)
+        {
+            if (layerDefinitions == null || layerDefinitions.Count == 0)
+            {
+                return;
+            }
+
+            ValidateLayerDuplicateKeys(layerDefinitions, report);
+            ValidateLayerRequiredFields(layerDefinitions, report);
+            ValidateRequiredAcceptedLayers(layerDefinitions, acceptedAssetById, report);
+            ValidateLayerImages(profile, layerDefinitions, acceptedAssetById, report);
+        }
+
+        private static void ValidateLayerDuplicateKeys(IReadOnlyList<LayerAssetDefinition> layerDefinitions, ExportReport report)
+        {
+            foreach (IGrouping<string, LayerAssetDefinition> group in layerDefinitions
+                .Where(layer => layer != null && !string.IsNullOrWhiteSpace(layer.AssetId))
+                .GroupBy(layer => layer.AssetId.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > 1))
+            {
+                report.Warnings.Add($"sprite_layers_export: assetId `{group.Key}` のレイヤー定義が重複しています。");
+            }
+
+            foreach (IGrouping<string, LayerAssetDefinition> group in layerDefinitions
+                .Where(layer => layer != null && !string.IsNullOrWhiteSpace(layer.LayerKind))
+                .GroupBy(BuildLayerDisplayKey, StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > 1))
+            {
+                report.Warnings.Add($"sprite_layers_export: layerKind + costumeId + expressionId `{group.Key}` のレイヤー定義が重複しています。");
+            }
+        }
+
+        private static void ValidateLayerRequiredFields(IReadOnlyList<LayerAssetDefinition> layerDefinitions, ExportReport report)
+        {
+            foreach (LayerAssetDefinition layer in layerDefinitions.Where(layer => layer != null))
+            {
+                string label = BuildLayerWarningLabel(layer);
+                string layerKind = layer.LayerKind?.Trim() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(layerKind))
+                {
+                    report.Warnings.Add($"{label}: layerKind が空です。");
+                }
+                else if (!IsKnownLayerKind(layerKind))
+                {
+                    report.Warnings.Add($"{label}: layerKind `{layerKind}` は候補外です。");
+                }
+
+                if (string.Equals(layerKind, "Costume", StringComparison.OrdinalIgnoreCase)
+                    && string.IsNullOrWhiteSpace(layer.CostumeId))
+                {
+                    report.Warnings.Add($"{label}: layerKind が Costume なのに costumeId が空です。");
+                }
+
+                if (string.Equals(layerKind, "Expression", StringComparison.OrdinalIgnoreCase)
+                    && string.IsNullOrWhiteSpace(layer.ExpressionId))
+                {
+                    report.Warnings.Add($"{label}: layerKind が Expression なのに expressionId が空です。");
+                }
+            }
+        }
+
+        private static void ValidateRequiredAcceptedLayers(
+            IReadOnlyList<LayerAssetDefinition> layerDefinitions,
+            Dictionary<string, HeroineAsset> acceptedAssetById,
+            ExportReport report)
+        {
+            if (!HasAcceptedLayer(layerDefinitions, acceptedAssetById, layer => IsLayerKind(layer, "BaseBody")))
+            {
+                report.Warnings.Add("sprite_layers_export: Accepted 済みの BaseBody レイヤーがありません。");
+            }
+
+            if (!HasAcceptedLayer(layerDefinitions, acceptedAssetById, layer =>
+                    IsLayerKind(layer, "Costume")
+                    && string.Equals(layer.CostumeId?.Trim(), "Default", StringComparison.OrdinalIgnoreCase)))
+            {
+                report.Warnings.Add("sprite_layers_export: Accepted 済みの Default 衣装レイヤーがありません。");
+            }
+
+            if (!HasAcceptedLayer(layerDefinitions, acceptedAssetById, layer =>
+                    IsLayerKind(layer, "Expression")
+                    && string.Equals(layer.ExpressionId?.Trim(), "Neutral", StringComparison.OrdinalIgnoreCase)))
+            {
+                report.Warnings.Add("sprite_layers_export: Accepted 済みの Neutral 表情レイヤーがありません。");
+            }
+        }
+
+        private void ValidateLayerImages(
+            HeroineProfile profile,
+            IReadOnlyList<LayerAssetDefinition> layerDefinitions,
+            Dictionary<string, HeroineAsset> acceptedAssetById,
+            ExportReport report)
+        {
+            Dictionary<string, ImageInspectionResult> inspectionByAssetId = new Dictionary<string, ImageInspectionResult>(StringComparer.OrdinalIgnoreCase);
+            foreach (LayerAssetDefinition layer in layerDefinitions.Where(layer => layer != null && !string.IsNullOrWhiteSpace(layer.AssetId)))
+            {
+                if (!acceptedAssetById.TryGetValue(layer.AssetId, out HeroineAsset asset))
+                {
+                    continue;
+                }
+
+                string imagePath = BuildStoredImagePath(profile, asset);
+                if (string.IsNullOrWhiteSpace(imagePath) || !File.Exists(imagePath))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    ImageInspectionResult result = imageInspectionService.Inspect(imagePath, asset.Usage);
+                    inspectionByAssetId[layer.AssetId] = result;
+                    if (!string.Equals(result.FileFormat, "PNG", StringComparison.OrdinalIgnoreCase))
+                    {
+                        report.Warnings.Add($"{layer.AssetId}: レイヤー画像は透過 PNG が想定です。現在: {result.FileFormat}");
+                    }
+
+                    if (!result.HasTransparentPixels)
+                    {
+                        report.Warnings.Add($"{layer.AssetId}: レイヤー画像に透過ピクセルが見つかりません。");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    report.Warnings.Add($"{layer.AssetId}: レイヤー画像検査に失敗しました: {ex.Message}");
+                }
+            }
+
+            ImageInspectionResult baseBodyResult = FindBaseBodyInspection(layerDefinitions, inspectionByAssetId);
+            if (baseBodyResult == null)
+            {
+                return;
+            }
+
+            foreach (LayerAssetDefinition layer in layerDefinitions.Where(layer => layer != null && !IsLayerKind(layer, "BaseBody")))
+            {
+                if (string.IsNullOrWhiteSpace(layer.AssetId)
+                    || !inspectionByAssetId.TryGetValue(layer.AssetId, out ImageInspectionResult result))
+                {
+                    continue;
+                }
+
+                if (result.PixelWidth != baseBodyResult.PixelWidth || result.PixelHeight != baseBodyResult.PixelHeight)
+                {
+                    report.Warnings.Add($"{layer.AssetId}: レイヤー画像のキャンバスサイズが BaseBody と一致しません。BaseBody {baseBodyResult.PixelWidth}x{baseBodyResult.PixelHeight} / 現在 {result.PixelWidth}x{result.PixelHeight}");
+                }
+
+                if (!HasSameAspectRatio(result, baseBodyResult))
+                {
+                    report.Warnings.Add($"{layer.AssetId}: レイヤー画像の縦横比が BaseBody と一致しません。");
+                }
+            }
+        }
+
+        private string BuildStoredImagePath(HeroineProfile profile, HeroineAsset asset)
+        {
+            if (profile == null || asset == null || string.IsNullOrWhiteSpace(asset.StoredPath))
+            {
+                return string.Empty;
+            }
+
+            return Path.Combine(characterProjectService.GetCharacterDirectory(profile.HeroineId), asset.StoredPath);
+        }
+
+        private static ImageInspectionResult FindBaseBodyInspection(
+            IReadOnlyList<LayerAssetDefinition> layerDefinitions,
+            Dictionary<string, ImageInspectionResult> inspectionByAssetId)
+        {
+            LayerAssetDefinition baseBodyLayer = layerDefinitions
+                .Where(layer => layer != null && IsLayerKind(layer, "BaseBody") && !string.IsNullOrWhiteSpace(layer.AssetId))
+                .OrderBy(layer => layer.DrawOrder)
+                .FirstOrDefault(layer => inspectionByAssetId.ContainsKey(layer.AssetId));
+
+            if (baseBodyLayer == null)
+            {
+                return null;
+            }
+
+            return inspectionByAssetId[baseBodyLayer.AssetId];
+        }
+
+        private static bool HasAcceptedLayer(
+            IReadOnlyList<LayerAssetDefinition> layerDefinitions,
+            Dictionary<string, HeroineAsset> acceptedAssetById,
+            Func<LayerAssetDefinition, bool> predicate)
+        {
+            return layerDefinitions
+                .Where(layer => layer != null && !string.IsNullOrWhiteSpace(layer.AssetId))
+                .Any(layer => predicate(layer) && acceptedAssetById.ContainsKey(layer.AssetId));
+        }
+
+        private static string BuildLayerDisplayKey(LayerAssetDefinition layer)
+        {
+            return string.Join(
+                "|",
+                layer.LayerKind?.Trim() ?? string.Empty,
+                layer.CostumeId?.Trim() ?? string.Empty,
+                layer.ExpressionId?.Trim() ?? string.Empty);
+        }
+
+        private static string BuildLayerWarningLabel(LayerAssetDefinition layer)
+        {
+            string assetId = string.IsNullOrWhiteSpace(layer.AssetId) ? "(assetId未設定)" : layer.AssetId.Trim();
+            return $"sprite_layers_export `{assetId}`";
+        }
+
+        private static bool IsLayerKind(LayerAssetDefinition layer, string layerKind)
+        {
+            return layer != null
+                && string.Equals(layer.LayerKind?.Trim(), layerKind, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsKnownLayerKind(string layerKind)
+        {
+            return string.Equals(layerKind, "BaseBody", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(layerKind, "Costume", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(layerKind, "Expression", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(layerKind, "Accessory", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool HasSameAspectRatio(ImageInspectionResult first, ImageInspectionResult second)
+        {
+            if (first.PixelHeight == 0 || second.PixelHeight == 0)
+            {
+                return true;
+            }
+
+            double firstRatio = (double)first.PixelWidth / first.PixelHeight;
+            double secondRatio = (double)second.PixelWidth / second.PixelHeight;
+            return Math.Abs(firstRatio - secondRatio) < 0.001;
         }
 
         private static void ValidateConversationEntries(HeroineProfile profile, IReadOnlyList<HeroineAsset> acceptedAssets, ExportReport report)
