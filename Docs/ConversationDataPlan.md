@@ -52,6 +52,43 @@ JSON export が追加された後も、Markdown はメモまたはレビュー�
 `imageAssetIds` は、WPF 側で登録している `HeroineAsset.AssetId` を参照する。
 Unity 側では `assets_export.json` を使って `AssetId` から画像パスへ解決する。
 
+## Unity 側フィールド対応
+
+Unity 側では、各 JSON ファイルごとに1つの ScriptableObject `.asset` を生成、更新する。
+会話 item ごとに個別 `.asset` を分けず、まずはキャラクター単位、種別単位のデータとして扱う。
+
+| JSON | Unity 側 ScriptableObject | 保存先 |
+| --- | --- | --- |
+| `conversations_export.json` | `ConversationData` | `Assets/Resources/Heroines/<HeroineId>/Conversations.asset` |
+| `game_events_export.json` | `GameEventData` | `Assets/Resources/Heroines/<HeroineId>/GameEvents.asset` |
+| `action_reactions_export.json` | `ActionReactionData` | `Assets/Resources/Heroines/<HeroineId>/ActionReactions.asset` |
+| `endings_export.json` | `EndingData` | `Assets/Resources/Heroines/<HeroineId>/Endings.asset` |
+
+JSON item と Unity 側 item のフィールド対応は次を基本にする。
+Unity 側の実装で別名を使う場合も、WPF 側の JSON 名はこの表の左列を維持する。
+
+| JSON field | Unity field | 備考 |
+| --- | --- | --- |
+| `id` | `entryId` | 一意 ID。Unity 側の検索、更新キー |
+| `title` | `title` | Editor 表示用 |
+| `category` | `category` | 会話分類、イベント分類。空は警告対象 |
+| `conditions.locationId` | `condition.locationId` | 空は条件なし |
+| `conditions.minAffection` | `condition.minAffection` | 最小好感度 |
+| `conditions.maxAffection` | `condition.maxAffection` | 最大好感度 |
+| `conditions.weather` | `condition.weather` | 空は条件なし |
+| `conditions.season` | `condition.season` | 空は条件なし |
+| `conditions.timeOfDay` | `condition.timeOfDay` | 空は条件なし |
+| `conditions.actionId` | `condition.actionId` | 行動反応用。空は条件なし |
+| `conditions.requiredItemId` | `condition.requiredItemId` | 空は条件なし |
+| `conditions.once` | `condition.once` | 1回限りイベント用 |
+| `conditions.requiredFlagIds` | `condition.requiredFlagIds` | 空配列は条件なし |
+| `lines[].speaker` | `lines[].speaker` | 例: `Heroine`, `Player` |
+| `lines[].text` | `lines[].text` | 本文。空は警告対象 |
+| `lines[].expression` | `lines[].expression` | 表情 ID。空は通常表情扱い |
+| `imageAssetIds[]` | `imageAssetIds[]` | `assets_export.json` から画像参照へ解決 |
+| `priority` | `priority` | 同条件で複数候補がある場合の優先度 |
+| `memo` | `memo` | Editor 用メモ。ゲーム実行時には使わなくてもよい |
+
 ## Unity 側で受け取る値
 
 現時点では、WPF 側の入力候補と Export 検証は次の値を基準にする。
@@ -288,9 +325,6 @@ Unity Editor 拡張は、既存の画像 import と同じ `Export/<HeroineId>/Da
 
 ## 未決事項
 
-- Unity 側の `ConversationData` などの正確なフィールド名
-- 条件キーの確定
 - `speaker` を文字列にするか enum にするか
 - 表情を `expression` 文字列で持つか、画像差分 AssetId で持つか
 - 選択肢、分岐、イベントフラグ更新を最初から入れるか
-- 会話データをキャラクター単位でまとめるか、item ごとに `.asset` を分けるか

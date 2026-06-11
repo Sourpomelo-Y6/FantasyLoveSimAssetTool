@@ -33,6 +33,10 @@ WPF ツールは通常の C# アプリとして管理できるため、同じリ
 
 - `Data/heroine_profile_export.json`
 - `Data/assets_export.json`
+- `Data/conversations_export.json`
+- `Data/game_events_export.json`
+- `Data/action_reactions_export.json`
+- `Data/endings_export.json`
 - `Images/<Usage>/<FileName>`
 - `Prompts/<AssetId>.prompt.json`
 
@@ -81,17 +85,31 @@ Assets/Images/Heroines/<HeroineId>/
   Ending/
 ```
 
-ScriptableObject の保存先は、Unity プロジェクト側の既存設計に合わせる。
-未確定の場合は次を候補にする。
+ScriptableObject の保存先は次を基本にする。
 
 ```text
 Assets/Resources/Heroines/<HeroineId>/
   HeroineProfileData.asset
   HeroineAssetCatalog.asset
+  Conversations.asset
+  GameEvents.asset
+  ActionReactions.asset
+  Endings.asset
 ```
 
 画像は `assets_export.json` の `unityImagePath` を基準に参照する。
 WPF 側の export では `unityImagePath` を `Assets/Images/Heroines/<HeroineId>/<Usage>/<FileName>` として出力する。
+
+Unity 側の ScriptableObject 型は次を基本にする。
+
+| WPF export | Unity 側 ScriptableObject | 保存先 |
+| --- | --- | --- |
+| `heroine_profile_export.json` | `HeroineProfileData` | `Assets/Resources/Heroines/<HeroineId>/HeroineProfileData.asset` |
+| `assets_export.json` | `HeroineAssetCatalog` | `Assets/Resources/Heroines/<HeroineId>/HeroineAssetCatalog.asset` |
+| `conversations_export.json` | `ConversationData` | `Assets/Resources/Heroines/<HeroineId>/Conversations.asset` |
+| `game_events_export.json` | `GameEventData` | `Assets/Resources/Heroines/<HeroineId>/GameEvents.asset` |
+| `action_reactions_export.json` | `ActionReactionData` | `Assets/Resources/Heroines/<HeroineId>/ActionReactions.asset` |
+| `endings_export.json` | `EndingData` | `Assets/Resources/Heroines/<HeroineId>/Endings.asset` |
 
 ## heroine_profile_export.json
 
@@ -192,6 +210,10 @@ Data/
 Unity Editor 側で `ConversationData`、`GameEventData`、`ActionReactionData`、`EndingData` の `.asset` を生成、更新する。
 会話データの JSON スキーマと WPF 画面方針は `Docs/ConversationDataPlan.md` にまとめる。
 
+会話データの ScriptableObject は、各 JSON ファイルごとに1つの `.asset` を作る。
+各 `.asset` は `heroineId` と `items` 相当のリストを持つ。
+会話 item ごとに個別 `.asset` を分ける運用は、件数が増えてから必要性を再判断する。
+
 Unity 側で受け取る条件値は次を基準にする。
 WPF 側は同じ値を入力候補として表示し、Export 時に候補外の値を警告する。
 空文字は「条件なし」として扱う。
@@ -207,9 +229,6 @@ WPF 側は同じ値を入力候補として表示し、Export 時に候補外の
 
 ## 未決事項
 
-- Unity 側の ScriptableObject 型名とフィールド名
-- `HeroineProfileData.asset` の保存先
 - 画像一覧を `HeroineProfileData` に直接持たせるか、別の `HeroineAssetCatalog` に分けるか
 - prompt JSON を Unity プロジェクト内へコピーするか、WPF export フォルダ参照のままにするか
 - Import 時に既存画像を上書きするか、確認ダイアログを出すか
-- 会話データ JSON の詳細スキーマと Unity 側フィールド名

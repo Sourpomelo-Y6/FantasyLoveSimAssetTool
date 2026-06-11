@@ -297,6 +297,11 @@ namespace FantasyLoveSimAssetTool.Services
                 report.Warnings.Add($"{label}: id が空です。");
             }
 
+            if (string.IsNullOrWhiteSpace(entry.Category))
+            {
+                report.Warnings.Add($"{label}: category が空です。");
+            }
+
             if (entry.Priority < 0)
             {
                 report.Warnings.Add($"{label}: priority が 0 未満です。");
