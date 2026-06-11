@@ -10,7 +10,7 @@ WPF ツールは画像と中間 JSON を出力し、Unity Editor 拡張が Unity
 - WPF ツールと Unity プロジェクトは、原則として別リポジトリのまま運用する。
 - WPF ツールは `Export/<HeroineId>/` を出力する。
 - Unity 側は `Export/<HeroineId>/Images/` の画像を `Assets/Images/Heroines/<HeroineId>/` へ取り込む。
-- Unity 側は `Export/<HeroineId>/Data/heroine_profile_export.json` と `Export/<HeroineId>/Data/assets_export.json` を読む。
+- Unity 側は `Export/<HeroineId>/Data/heroine_profile_export.json`、`assets_export.json`、必要に応じて `sprite_layers_export.json` と会話データ JSON を読む。
 - Unity 側の `.asset` 生成、更新は Unity Editor 拡張が担当する。
 - `.meta`、GUID、fileID、ScriptableObject 型情報は Unity Editor に管理させる。
 - `Prompts/` 配下の prompt JSON は、生成条件の参照資料として保持する。
@@ -61,6 +61,7 @@ Export/
       heroine_profile_note.md
       heroine_profile_export.json
       assets_export.json
+      sprite_layers_export.json
       conversations_export.json
       game_events_export.json
       action_reactions_export.json
@@ -173,11 +174,12 @@ Unity Editor 拡張は `exportImagePath` から画像をコピーし、`unityIma
 8. 既存 `.asset` があれば更新し、なければ作成する。
 9. `assets_export.json` の各 `asset` から画像参照を設定する。
 10. 必要に応じて `HeroineAssetCatalog.asset` のような画像一覧 ScriptableObject を作る。
-11. `conversations_export.json`、`game_events_export.json`、`action_reactions_export.json`、`endings_export.json` を読み込む。
-12. 会話、イベント、行動反応、エンディング本文の ScriptableObject `.asset` を生成、更新する。
-13. 会話データ内の `imageAssetIds` は `assets_export.json` から Unity asset path に解決する。
-14. `Prompts/` 配下の prompt JSON は参照資料としてコピーまたはパスだけ記録する。
-15. `AssetDatabase.SaveAssets` で保存する。
+11. `sprite_layers_export.json` があれば読み込み、透過レイヤー素材の ScriptableObject `.asset` を生成、更新する。
+12. `conversations_export.json`、`game_events_export.json`、`action_reactions_export.json`、`endings_export.json` を読み込む。
+13. 会話、イベント、行動反応、エンディング本文の ScriptableObject `.asset` を生成、更新する。
+14. 会話データ内の `imageAssetIds` は `assets_export.json` から Unity asset path に解決する。
+15. `Prompts/` 配下の prompt JSON は参照資料としてコピーまたはパスだけ記録する。
+16. `AssetDatabase.SaveAssets` で保存する。
 
 ## 対応関係
 
@@ -186,6 +188,7 @@ Unity Editor 拡張は `exportImagePath` から画像をコピーし、`unityIma
 | `Images/<Usage>/<FileName>` | Unity に取り込む画像ファイル |
 | `Data/heroine_profile_export.json` | `HeroineProfileData` 生成、更新 |
 | `Data/assets_export.json` | 画像一覧、用途、Unity asset path の生成 |
+| `Data/sprite_layers_export.json` | 透過レイヤー素材一覧、描画順、表情、衣装 ID の生成 |
 | `Data/conversations_export.json` | 通常会話データの生成、更新 |
 | `Data/game_events_export.json` | ゲームイベント本文データの生成、更新 |
 | `Data/action_reactions_export.json` | 行動反応本文データの生成、更新 |
@@ -237,12 +240,38 @@ WPF 側は同じ値を入力候補として表示し、Export 時に候補外の
 
 表情差分、衣装差分を完成済み立ち絵ではなく透過 PNG レイヤーとして扱う場合は、Unity 側にレイヤー合成用の ScriptableObject と表示コンポーネントを追加する。
 
-追加 export 候補:
+追加 export:
 
 ```text
 Data/
   sprite_layers_export.json
 ```
+
+`sprite_layers_export.json` は次の形で出力する。
+
+```json
+{
+  "schemaVersion": 1,
+  "heroineId": "TestHeroine",
+  "unityImageRoot": "Assets/Images/Heroines/TestHeroine",
+  "layers": [
+    {
+      "assetId": "Expression_Smile",
+      "layerKind": "Expression",
+      "costumeId": "",
+      "expressionId": "Smile",
+      "displayName": "レイヤー: 表情 笑顔",
+      "drawOrder": 20,
+      "fileName": "Expression_Smile.png",
+      "exportImagePath": "Images/Sprites/Expression_Smile.png",
+      "unityImagePath": "Assets/Images/Heroines/TestHeroine/Sprites/Expression_Smile.png"
+    }
+  ]
+}
+```
+
+WPF 側では、`Definitions/layer_assets.json` に定義され、かつ Accepted 画像として登録されているレイヤー素材だけを `layers` に出力する。
+未採用のレイヤー素材は Export warning に表示する。
 
 Unity 側の想定:
 

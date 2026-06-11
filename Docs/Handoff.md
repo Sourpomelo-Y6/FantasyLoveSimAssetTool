@@ -129,6 +129,11 @@ Export/
       heroine_profile_note.md
       heroine_profile_export.json
       assets_export.json
+      sprite_layers_export.json
+      conversations_export.json
+      game_events_export.json
+      action_reactions_export.json
+      endings_export.json
       conversations_draft.md
       game_events_draft.md
       action_reactions_draft.md
@@ -410,6 +415,7 @@ Services/
 54. 会話データ一覧に検索欄、カテゴリ、警告あり、画像あり/なし絞り込みを追加する
 55. `Docs/ExpressionCostumeVariantRoadmap.md` を追加し、表情差分、衣装差分の元データ作成と外部 JSON 化、GUI 編集へのロードマップを整理する
 56. `Definitions/expressions.json`、`costumes.json`、`layer_assets.json` を追加し、`StillDefinitionService` が透過レイヤー素材定義を固定スチル定義と併用して読み込めるようにする
+57. Export の `Data` 配下に透過レイヤー素材用の `sprite_layers_export.json` を出力し、未採用レイヤー素材を警告に出す
 
 ## 次に進める候補
 

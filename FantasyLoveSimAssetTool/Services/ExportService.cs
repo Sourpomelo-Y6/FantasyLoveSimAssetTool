@@ -13,6 +13,7 @@ namespace FantasyLoveSimAssetTool.Services
     {
         private readonly CharacterProjectService characterProjectService;
         private readonly ImageInspectionService imageInspectionService;
+        private readonly StillDefinitionService stillDefinitionService;
 
         public string ExportDirectory
         {
@@ -28,6 +29,7 @@ namespace FantasyLoveSimAssetTool.Services
         {
             this.characterProjectService = characterProjectService ?? throw new ArgumentNullException(nameof(characterProjectService));
             this.imageInspectionService = imageInspectionService ?? throw new ArgumentNullException(nameof(imageInspectionService));
+            stillDefinitionService = new StillDefinitionService(this.characterProjectService.WorkspaceRoot);
         }
 
         public ExportReport ExportHeroine(HeroineProfile profile)
@@ -73,7 +75,7 @@ namespace FantasyLoveSimAssetTool.Services
                 }
             }
 
-            WriteDataFiles(profile, acceptedAssets, heroineExportDirectory);
+            WriteDataFiles(profile, acceptedAssets, heroineExportDirectory, report);
 
             return report;
         }
@@ -150,12 +152,13 @@ namespace FantasyLoveSimAssetTool.Services
             return true;
         }
 
-        private void WriteDataFiles(HeroineProfile profile, IReadOnlyList<HeroineAsset> acceptedAssets, string heroineExportDirectory)
+        private void WriteDataFiles(HeroineProfile profile, IReadOnlyList<HeroineAsset> acceptedAssets, string heroineExportDirectory, ExportReport report)
         {
             string dataDirectory = Path.Combine(heroineExportDirectory, "Data");
             File.WriteAllText(Path.Combine(dataDirectory, "heroine_profile_note.md"), BuildProfileNote(profile, acceptedAssets));
             File.WriteAllText(Path.Combine(dataDirectory, "heroine_profile_export.json"), BuildProfileExportJson(profile));
             File.WriteAllText(Path.Combine(dataDirectory, "assets_export.json"), BuildAssetsExportJson(profile, acceptedAssets));
+            File.WriteAllText(Path.Combine(dataDirectory, "sprite_layers_export.json"), BuildSpriteLayersExportJson(profile, acceptedAssets, report));
             File.WriteAllText(Path.Combine(dataDirectory, "conversations_export.json"), BuildConversationExportJson(profile, ConversationDataKind.Conversations));
             File.WriteAllText(Path.Combine(dataDirectory, "game_events_export.json"), BuildConversationExportJson(profile, ConversationDataKind.GameEvents));
             File.WriteAllText(Path.Combine(dataDirectory, "action_reactions_export.json"), BuildConversationExportJson(profile, ConversationDataKind.ActionReactions));
@@ -254,6 +257,60 @@ namespace FantasyLoveSimAssetTool.Services
                         asset.Usage.ToString(),
                         GetExportFileName(asset, string.Empty))
                 }).ToList()
+            };
+
+            return JsonSerializer.Serialize(exportModel, CreateJsonOptions());
+        }
+
+        private string BuildSpriteLayersExportJson(HeroineProfile profile, IReadOnlyList<HeroineAsset> acceptedAssets, ExportReport report)
+        {
+            IReadOnlyList<LayerAssetDefinition> layerDefinitions = stillDefinitionService.GetLayerAssetDefinitions();
+            Dictionary<string, HeroineAsset> acceptedAssetById = acceptedAssets
+                .Where(asset => !string.IsNullOrWhiteSpace(asset.AssetId))
+                .GroupBy(asset => asset.AssetId.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+            List<object> exportedLayers = new List<object>();
+
+            foreach (LayerAssetDefinition layer in layerDefinitions)
+            {
+                if (!acceptedAssetById.TryGetValue(layer.AssetId, out HeroineAsset asset))
+                {
+                    report.Warnings.Add($"{layer.AssetId}: レイヤー素材が Accepted 画像として登録されていません。");
+                    continue;
+                }
+
+                if (asset.Usage != AssetUsage.Sprites)
+                {
+                    report.Warnings.Add($"{layer.AssetId}: レイヤー素材の用途は Sprites が想定です。現在: {asset.Usage}");
+                }
+
+                string fileName = GetExportFileName(asset, string.Empty);
+                exportedLayers.Add(new
+                {
+                    assetId = layer.AssetId,
+                    layerKind = layer.LayerKind,
+                    costumeId = layer.CostumeId,
+                    expressionId = layer.ExpressionId,
+                    displayName = layer.DisplayName,
+                    drawOrder = layer.DrawOrder,
+                    fileName,
+                    exportImagePath = ToExportRelativePath("Images", asset.Usage.ToString(), fileName),
+                    unityImagePath = ToExportRelativePath(
+                        "Assets",
+                        "Images",
+                        "Heroines",
+                        profile.HeroineId,
+                        asset.Usage.ToString(),
+                        fileName)
+                });
+            }
+
+            object exportModel = new
+            {
+                schemaVersion = 1,
+                heroineId = profile.HeroineId,
+                unityImageRoot = $"Assets/Images/Heroines/{profile.HeroineId}",
+                layers = exportedLayers
             };
 
             return JsonSerializer.Serialize(exportModel, CreateJsonOptions());

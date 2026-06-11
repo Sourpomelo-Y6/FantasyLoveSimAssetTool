@@ -16,6 +16,7 @@ namespace FantasyLoveSimAssetTool.Services
 
         private readonly IReadOnlyList<StillDefinition> defaultDefinitions;
         private readonly IReadOnlyList<StillDefinition> layerDefinitions;
+        private readonly IReadOnlyList<LayerAssetDefinition> layerAssetDefinitions;
 
         public StillDefinitionService()
             : this(Directory.GetCurrentDirectory())
@@ -54,7 +55,8 @@ namespace FantasyLoveSimAssetTool.Services
             };
             Dictionary<string, ExpressionDefinition> expressions = LoadExpressionDefinitions(workspaceRoot);
             Dictionary<string, CostumeDefinition> costumes = LoadCostumeDefinitions(workspaceRoot);
-            layerDefinitions = LoadLayerDefinitions(workspaceRoot, expressions, costumes);
+            layerAssetDefinitions = LoadLayerAssetDefinitions(workspaceRoot);
+            layerDefinitions = BuildLayerDefinitions(layerAssetDefinitions, expressions, costumes);
         }
 
         public IReadOnlyList<StillDefinition> GetDefaultDefinitions()
@@ -64,6 +66,11 @@ namespace FantasyLoveSimAssetTool.Services
                 .GroupBy(definition => definition.AssetId)
                 .Select(group => Clone(group.First()))
                 .ToList();
+        }
+
+        public IReadOnlyList<LayerAssetDefinition> GetLayerAssetDefinitions()
+        {
+            return layerAssetDefinitions.ToList();
         }
 
         private static StillDefinition Create(string assetId, string displayName, AssetUsage usage, string fileName, string specificPrompt)
@@ -93,15 +100,28 @@ namespace FantasyLoveSimAssetTool.Services
             };
         }
 
-        private static IReadOnlyList<StillDefinition> LoadLayerDefinitions(
-            string workspaceRoot,
+        private static IReadOnlyList<StillDefinition> BuildLayerDefinitions(
+            IReadOnlyList<LayerAssetDefinition> layerAssetDefinitions,
             Dictionary<string, ExpressionDefinition> expressions,
             Dictionary<string, CostumeDefinition> costumes)
+        {
+            return layerAssetDefinitions
+                .Where(IsValidLayerDefinition)
+                .Select(layer => Create(
+                    layer.AssetId.Trim(),
+                    layer.DisplayName.Trim(),
+                    AssetUsage.Sprites,
+                    layer.FileName.Trim(),
+                    BuildLayerPrompt(layer, expressions, costumes)))
+                .ToList();
+        }
+
+        private static IReadOnlyList<LayerAssetDefinition> LoadLayerAssetDefinitions(string workspaceRoot)
         {
             string path = Path.Combine(workspaceRoot, DefinitionDirectoryName, LayerAssetDefinitionFileName);
             if (!File.Exists(path))
             {
-                return new List<StillDefinition>();
+                return new List<LayerAssetDefinition>();
             }
 
             try
@@ -115,22 +135,17 @@ namespace FantasyLoveSimAssetTool.Services
                     options);
                 if (definitionFile == null || definitionFile.Layers == null)
                 {
-                    return new List<StillDefinition>();
+                    return new List<LayerAssetDefinition>();
                 }
 
                 return definitionFile.Layers
                     .Where(IsValidLayerDefinition)
-                    .Select(layer => Create(
-                        layer.AssetId.Trim(),
-                        layer.DisplayName.Trim(),
-                        AssetUsage.Sprites,
-                        layer.FileName.Trim(),
-                        BuildLayerPrompt(layer, expressions, costumes)))
+                    .Select(CloneLayerDefinition)
                     .ToList();
             }
             catch
             {
-                return new List<StillDefinition>();
+                return new List<LayerAssetDefinition>();
             }
         }
 
@@ -236,66 +251,19 @@ namespace FantasyLoveSimAssetTool.Services
             return string.Join(", ", parts);
         }
 
-        private class LayerAssetDefinitionFile
+        private static LayerAssetDefinition CloneLayerDefinition(LayerAssetDefinition source)
         {
-            public int SchemaVersion { get; set; }
-
-            public List<LayerAssetDefinition> Layers { get; set; }
-        }
-
-        private class LayerAssetDefinition
-        {
-            public string AssetId { get; set; }
-
-            public string LayerKind { get; set; }
-
-            public string CostumeId { get; set; }
-
-            public string ExpressionId { get; set; }
-
-            public string DisplayName { get; set; }
-
-            public string FileName { get; set; }
-
-            public int DrawOrder { get; set; }
-
-            public string Prompt { get; set; }
-        }
-
-        private class ExpressionDefinitionFile
-        {
-            public int SchemaVersion { get; set; }
-
-            public List<ExpressionDefinition> Expressions { get; set; }
-        }
-
-        private class ExpressionDefinition
-        {
-            public string ExpressionId { get; set; }
-
-            public string DisplayName { get; set; }
-
-            public string Prompt { get; set; }
-
-            public string UnityExpressionId { get; set; }
-        }
-
-        private class CostumeDefinitionFile
-        {
-            public int SchemaVersion { get; set; }
-
-            public List<CostumeDefinition> Costumes { get; set; }
-        }
-
-        private class CostumeDefinition
-        {
-            public string CostumeId { get; set; }
-
-            public string DisplayName { get; set; }
-
-            public string Prompt { get; set; }
-
-            public string UnityCostumeId { get; set; }
+            return new LayerAssetDefinition
+            {
+                AssetId = source.AssetId.Trim(),
+                LayerKind = source.LayerKind ?? string.Empty,
+                CostumeId = source.CostumeId ?? string.Empty,
+                ExpressionId = source.ExpressionId ?? string.Empty,
+                DisplayName = source.DisplayName.Trim(),
+                FileName = source.FileName.Trim(),
+                DrawOrder = source.DrawOrder,
+                Prompt = source.Prompt.Trim()
+            };
         }
     }
 }

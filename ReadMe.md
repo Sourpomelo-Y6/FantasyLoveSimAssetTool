@@ -51,6 +51,7 @@ Unity 取り込み方針は [Docs/UnityImportPlan.md](Docs/UnityImportPlan.md)�
 - Export 時の会話データ件数表示と検証警告
 - Unity 側で受け取る会話条件値、表情値に合わせた候補表示と候補外警告
 - Unity 側 ScriptableObject 保存先と会話 JSON フィールド対応表の整理
+- 透過レイヤー素材の `sprite_layers_export.json` 出力
 
 現状では、Stable Diffusion などの画像生成自体はアプリ内では完結せず、外部生成した画像を登録、整理、出力するツールとして動作します。
 この外部ファイル登録フローは今後も残し、将来追加するローカル ComfyUI 連携は、同じ登録処理へ生成結果を渡す任意機能として扱います。
@@ -214,6 +215,11 @@ Export/
       heroine_profile_note.md
       heroine_profile_export.json
       assets_export.json
+      sprite_layers_export.json
+      conversations_export.json
+      game_events_export.json
+      action_reactions_export.json
+      endings_export.json
       conversations_draft.md
       game_events_draft.md
       action_reactions_draft.md
