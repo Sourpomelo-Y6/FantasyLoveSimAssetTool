@@ -232,3 +232,30 @@ WPF 側は同じ値を入力候補として表示し、Export 時に候補外の
 - 画像一覧を `HeroineProfileData` に直接持たせるか、別の `HeroineAssetCatalog` に分けるか
 - prompt JSON を Unity プロジェクト内へコピーするか、WPF export フォルダ参照のままにするか
 - Import 時に既存画像を上書きするか、確認ダイアログを出すか
+
+## 表情、衣装の透過レイヤー方式
+
+表情差分、衣装差分を完成済み立ち絵ではなく透過 PNG レイヤーとして扱う場合は、Unity 側にレイヤー合成用の ScriptableObject と表示コンポーネントを追加する。
+
+追加 export 候補:
+
+```text
+Data/
+  sprite_layers_export.json
+```
+
+Unity 側の想定:
+
+- `HeroineLayeredSpriteData.asset`
+  - `BaseBody`
+  - `Costume` layers
+  - `Expression` layers
+  - `Accessory` layers
+- `HeroineLayeredSpriteView`
+  - 現在の `costumeId` と `expressionId` から表示レイヤーを選ぶ
+  - `drawOrder` 順に重ねる
+  - 表情がない場合は `Neutral`、衣装がない場合は `Default` へ fallback する
+
+この方式では、会話データの `expression` は完成画像の `AssetId` ではなく、表情レイヤーの `expressionId` として扱う。
+衣装は会話本文ではなく、ゲーム状態、季節、イベント、プレイヤー操作などから現在衣装として決める。
+詳細は `Docs/ExpressionCostumeVariantRoadmap.md` を参照する。

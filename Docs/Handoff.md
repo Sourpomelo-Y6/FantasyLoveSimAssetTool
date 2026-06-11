@@ -408,6 +408,7 @@ Services/
 52. Unity 側で受け取る `locationId`、`actionId`、`weather`、`season`、`timeOfDay`、`expression` の候補値をカタログ化し、入力候補と Export 警告を同じ値に揃える
 53. Unity 側 ScriptableObject の保存先、会話 JSON と Unity フィールドの対応表をドキュメント化し、Export 警告に category 空チェックを追加する
 54. 会話データ一覧に検索欄、カテゴリ、警告あり、画像あり/なし絞り込みを追加する
+55. `Docs/ExpressionCostumeVariantRoadmap.md` を追加し、表情差分、衣装差分の元データ作成と外部 JSON 化、GUI 編集へのロードマップを整理する
 
 ## 次に進める候補
 
@@ -508,6 +509,8 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 
 - `Docs/CharacterAssetGenerationToolSpec.md`: WPF ツール側の仕様
 - `Docs/UnityImportPlan.md`: WPF export 結果を Unity Editor 拡張で取り込む方針と、別リポジトリ運用方針
+- `Docs/ConversationDataPlan.md`: 会話、イベント、行動反応、エンディング本文の JSON export と Unity Import 方針
+- `Docs/ExpressionCostumeVariantRoadmap.md`: 表情差分、衣装差分の元データ作成、外部 JSON 化、GUI 編集へのロードマップ
 - `Docs/ConversationDataPlan.md`: 会話、イベント、行動反応、エンディング本文の JSON export 方針
 
 ## 次の担当者へのメモ
