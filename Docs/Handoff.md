@@ -421,9 +421,11 @@ Services/
 58. 差分定義タブと `DefinitionCatalogService` を追加し、表情、衣装、透過レイヤー素材定義 JSON を GUI から編集できるようにする
 59. 差分定義タブで `LayerKind`、`ExpressionId`、`CostumeId` を候補選択できるようにし、保存前に空欄、重複、未定義参照を検証する
 60. レイヤープレビュータブを追加し、Accepted 済みの透過レイヤー素材を `DrawOrder` 順に重ねて確認できるようにする
+61. `Docs/UnityImportPlan.md` に `sprite_layers_export.json` の詳細契約、Unity 側 `HeroineLayeredSpriteData` 案、Import 手順、fallback ルール、追加警告候補を整理する
 
 ## 次に進める候補
 
+- WPF Export warning に BaseBody、Default 衣装、Neutral 表情、重複レイヤー、透過 PNG、キャンバスサイズ一致の検証を追加する
 - Unity Editor Import 拡張側で `heroine_profile_export.json` と `assets_export.json` を読み込む設計
 - スチル一覧(確認用)タブの内容をスチル作業タブへ完全統合するか判断する
 - 画像ファイルの差し替え
