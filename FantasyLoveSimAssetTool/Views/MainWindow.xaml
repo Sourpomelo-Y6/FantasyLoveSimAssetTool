@@ -10,6 +10,11 @@
     <Window.Resources>
         <local:BindingProxy x:Key="ViewModelProxy" Data="{Binding}"/>
         <local:StringToImageSourceConverter x:Key="StringToImageSourceConverter"/>
+        <local:EmptyStringToIntConverter x:Key="EmptyStringToIntConverter"/>
+        <Style TargetType="{x:Type ComboBoxItem}">
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
     </Window.Resources>
     <Window.DataContext>
         <vm:MainWindowModel/>
@@ -987,7 +992,9 @@
                                                                     Width="130"/>
                                             <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
                                             <DataGridTextColumn Header="ファイル名" Binding="{Binding FileName, UpdateSourceTrigger=PropertyChanged}" Width="170"/>
-                                            <DataGridTextColumn Header="描画順" Binding="{Binding DrawOrder, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                                            <DataGridTextColumn Header="描画順"
+                                                                Binding="{Binding DrawOrder, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource EmptyStringToIntConverter}}"
+                                                                Width="80"/>
                                             <DataGridTextColumn Header="Prompt" Binding="{Binding Prompt, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
                                         </DataGrid.Columns>
                                     </DataGrid>
