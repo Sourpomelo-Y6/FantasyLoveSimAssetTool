@@ -93,7 +93,8 @@ Assets/Resources/Heroines/<HeroineId>/
   HeroineProfileData.asset
   HeroineAssetCatalog.asset
   Conversations.asset
-  GameEvents.asset
+  GameEvents/
+    <EventId>.asset
   ActionReactions.asset
   Endings.asset
 ```
@@ -108,7 +109,7 @@ Unity 側の ScriptableObject 型は次を基本にする。
 | `heroine_profile_export.json` | `HeroineProfileData` | `Assets/Resources/Heroines/<HeroineId>/HeroineProfileData.asset` |
 | `assets_export.json` | `HeroineAssetCatalog` | `Assets/Resources/Heroines/<HeroineId>/HeroineAssetCatalog.asset` |
 | `conversations_export.json` | `ConversationData` | `Assets/Resources/Heroines/<HeroineId>/Conversations.asset` |
-| `game_events_export.json` | `GameEventData` | `Assets/Resources/Heroines/<HeroineId>/GameEvents.asset` |
+| `game_events_export.json` | `GameEventData` | `Assets/Resources/Heroines/<HeroineId>/GameEvents/<EventId>.asset` |
 | `action_reactions_export.json` | `ActionReactionData` | `Assets/Resources/Heroines/<HeroineId>/ActionReactions.asset` |
 | `endings_export.json` | `EndingData` | `Assets/Resources/Heroines/<HeroineId>/Endings.asset` |
 | `sprite_layers_export.json` | `HeroineLayeredSpriteData` | `Assets/Resources/Heroines/<HeroineId>/HeroineLayeredSpriteData.asset` |
@@ -174,7 +175,7 @@ Unity Editor 拡張は `exportImagePath` から画像をコピーし、`unityIma
 7. `heroineId` に対応する `HeroineProfileData.asset` を検索する。
 8. 既存 `.asset` があれば更新し、なければ作成する。
 9. `assets_export.json` の各 `asset` から画像参照を設定する。
-10. 必要に応じて `HeroineAssetCatalog.asset` のような画像一覧 ScriptableObject を作る。
+10. `HeroineAssetCatalog.asset` に画像一覧と Sprite 参照を保存する。
 11. `sprite_layers_export.json` があれば読み込み、透過レイヤー素材の ScriptableObject `.asset` を生成、更新する。
 12. `conversations_export.json`、`game_events_export.json`、`action_reactions_export.json`、`endings_export.json` を読み込む。
 13. 会話、イベント、行動反応、エンディング本文の ScriptableObject `.asset` を生成、更新する。
@@ -233,7 +234,6 @@ WPF 側は同じ値を入力候補として表示し、Export 時に候補外の
 
 ## 未決事項
 
-- 画像一覧を `HeroineProfileData` に直接持たせるか、別の `HeroineAssetCatalog` に分けるか
 - prompt JSON を Unity プロジェクト内へコピーするか、WPF export フォルダ参照のままにするか
 - Import 時に既存画像を上書きするか、確認ダイアログを出すか
 

@@ -127,14 +127,16 @@ Tools/FantasyLoveSim/Import Heroine Export...
 
 ### ConversationData 系
 
-会話、イベント、行動反応、エンディングは、まず JSON ファイルごとに1つの `.asset` を作る。
+会話は JSON ファイルごとに1つの `.asset` を作る。
+ゲームイベントは既存の `GameManager` が `Resources.LoadAll<GameEventData>` で読むため、item ごとに個別 `.asset` を作る。
+行動反応、エンディングは今後の実装時に container 方式か個別 asset 方式を決める。
 
 - `conversations_export.json` -> `Conversations.asset`
-- `game_events_export.json` -> `GameEvents.asset`
+- `game_events_export.json` -> `GameEvents/<EventId>.asset`
 - `action_reactions_export.json` -> `ActionReactions.asset`
 - `endings_export.json` -> `Endings.asset`
 
-個別 item ごとに `.asset` を分ける運用は、件数が増えてから検討する。
+個別 item ごとに `.asset` を分ける運用は、実行時ローダーとの相性を優先する。
 
 ## Import 処理順
 
@@ -177,7 +179,8 @@ Assets/Resources/Heroines/<HeroineId>/
   HeroineAssetCatalog.asset
   HeroineLayeredSpriteData.asset
   Conversations.asset
-  GameEvents.asset
+  GameEvents/
+    <EventId>.asset
   ActionReactions.asset
   Endings.asset
 ```
@@ -229,12 +232,13 @@ Sprite が取れない場合の確認事項:
 6. 条件に合う `Accessory` を追加する。
 7. `drawOrder` 昇順で SpriteRenderer または UI Image に割り当てる。
 
-最初は UI Image より SpriteRenderer の方が確認しやすい。
-会話 UI に乗せる段階で UI Image 版を検討する。
+現在の Unity 側実装は UI Image 版を採用している。
+`HeroineLayeredSpriteView` に `BaseBodyImage`、`CostumeImage`、`ExpressionImage`、`AccessoryImage` を割り当て、`drawOrder` に応じて sibling order を調整する。
 
 ## Warning
 
-Import report は warning の一覧を持つ。
+Import report は warning の一覧と import 件数を持つ。
+Unity 側の現状実装では、`HeroineImportReport` が copied images、catalog assets、layers、conversations、warning 件数を集計し、完了時に Console summary と `EditorUtility.DisplayDialog` で表示する。
 最初に必要な warning は次の通り。
 
 - export root が不正
@@ -274,10 +278,24 @@ Unity 側で手編集する項目が増えた場合は、上書きしてよい�
 2. `HeroineAssetCatalog`
 3. 画像コピー
 4. Sprite 解決
-5. `HeroineLayeredSpriteData`
-6. Import report
+5. Import report
+6. `HeroineLayeredSpriteData`
 
 会話系 ScriptableObject は、画像とレイヤー取り込みが安定してから実装してよい。
+
+`HeroineLayeredSpriteData` は実装済み。
+`sprite_layers_export.json` がある場合、`BaseBody`、`Costume`、`Expression`、`Accessory` の各リストに振り分け、`assetId` から `HeroineAssetCatalog` の Sprite を参照する。
+表示用の `HeroineLayeredSpriteView` は実装済み。
+`OutfitManager` が現在衣装を `costumeId` として保持し、会話表示時に `ConversationData.lines[].expressionId` を渡して表情レイヤーを切り替える。
+実行時 fallback は、指定衣装がなければ `Default`、指定表情がなければ `Neutral` を使う。
+`BaseBody` がない場合は warning を出し、表示不能として扱う。
+
+次の確認は、WPF export の `sprite_layers_export.json` に `Default` 衣装、`Neutral` / `Smile` / `Sad` 表情を入れ、Unity 側の1つの会話で `Neutral -> Smile -> Sad` の順に表示が切り替わるかを見る。
+
+`game_events_export.json` import は実装済み。
+`category` を `GameEventTriggerType` に変換し、`lines[]` を `GameEventData.pages` に変換する。
+`imageAssetIds[0]` は `HeroineAssetCatalog` から Sprite 解決し、最初のページのスチルとして設定する。
+イベントページの `expressionId` は会話と同じ表情切り替えに使う。
 
 ## WPF 側との境界
 
