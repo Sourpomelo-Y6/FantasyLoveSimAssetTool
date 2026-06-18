@@ -2369,11 +2369,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 definitionCatalogService.SaveExpressionDefinitionFile(ExpressionDefinitions);
                 definitionCatalogService.SaveCostumeDefinitionFile(CostumeDefinitions);
                 definitionCatalogService.SaveLayerAssetDefinitionFile(LayerAssetDefinitions);
+                LoadDefinitionCatalog();
                 stillDefinitionService = new StillDefinitionService(characterProjectService.WorkspaceRoot);
-                RefreshConversationExpressionSuggestionsFromDefinitions();
                 LoadStillDefinitions();
-                RefreshLayerPreviewOptions();
-                RefreshLayerPreview();
                 StatusMessage = "差分定義を保存しました。";
             }
             catch (Exception ex)
@@ -2811,6 +2809,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     warnings.Add("レイヤー素材定義: 空の定義があります。");
                     continue;
                 }
+
+                DefinitionCatalogService.NormalizeLayerAssetDefinition(layer);
 
                 string label = string.IsNullOrWhiteSpace(layer.AssetId)
                     ? "(AssetId 未入力)"

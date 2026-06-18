@@ -49,6 +49,10 @@ namespace FantasyLoveSimAssetTool.Services
             LayerAssetDefinitionFile file = LoadFile<LayerAssetDefinitionFile>(path);
             file.SchemaVersion = file.SchemaVersion <= 0 ? 1 : file.SchemaVersion;
             file.Layers ??= new List<LayerAssetDefinition>();
+            foreach (LayerAssetDefinition layer in file.Layers)
+            {
+                NormalizeLayerAssetDefinition(layer);
+            }
             return file;
         }
 
@@ -101,6 +105,56 @@ namespace FantasyLoveSimAssetTool.Services
         {
             Directory.CreateDirectory(definitionDirectory);
             File.WriteAllText(path, JsonSerializer.Serialize(file, serializerOptions));
+        }
+
+        public static void NormalizeLayerAssetDefinition(LayerAssetDefinition layer)
+        {
+            if (layer == null)
+            {
+                return;
+            }
+
+            layer.AssetId = layer.AssetId ?? string.Empty;
+            layer.LayerKind = layer.LayerKind ?? string.Empty;
+            layer.CostumeId = layer.CostumeId ?? string.Empty;
+            layer.ExpressionId = layer.ExpressionId ?? string.Empty;
+            layer.DisplayName = layer.DisplayName ?? string.Empty;
+            layer.FileName = layer.FileName ?? string.Empty;
+            layer.Prompt = layer.Prompt ?? string.Empty;
+
+            if (string.Equals(layer.LayerKind.Trim(), "Costume", System.StringComparison.OrdinalIgnoreCase)
+                && string.IsNullOrWhiteSpace(layer.CostumeId))
+            {
+                layer.CostumeId = InferLayerId(layer, "Costume_");
+            }
+
+            if (string.Equals(layer.LayerKind.Trim(), "Expression", System.StringComparison.OrdinalIgnoreCase)
+                && string.IsNullOrWhiteSpace(layer.ExpressionId))
+            {
+                layer.ExpressionId = InferLayerId(layer, "Expression_");
+            }
+        }
+
+        private static string InferLayerId(LayerAssetDefinition layer, string prefix)
+        {
+            string id = InferLayerIdFromValue(layer.AssetId, prefix);
+            if (!string.IsNullOrWhiteSpace(id))
+            {
+                return id;
+            }
+
+            return InferLayerIdFromValue(Path.GetFileNameWithoutExtension(layer.FileName), prefix);
+        }
+
+        private static string InferLayerIdFromValue(string value, string prefix)
+        {
+            if (string.IsNullOrWhiteSpace(value)
+                || !value.Trim().StartsWith(prefix, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Empty;
+            }
+
+            return value.Trim().Substring(prefix.Length).Trim();
         }
     }
 }

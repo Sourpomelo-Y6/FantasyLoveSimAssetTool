@@ -140,6 +140,11 @@ namespace FantasyLoveSimAssetTool.Services
 
                 return definitionFile.Layers
                     .Where(IsValidLayerDefinition)
+                    .Select(layer =>
+                    {
+                        DefinitionCatalogService.NormalizeLayerAssetDefinition(layer);
+                        return layer;
+                    })
                     .Select(CloneLayerDefinition)
                     .ToList();
             }
