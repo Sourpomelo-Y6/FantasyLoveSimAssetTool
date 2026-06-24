@@ -75,6 +75,7 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="140"/>
                                         <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="260"/>
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -140,6 +141,54 @@
 
                                     <TextBlock Grid.Row="13" Grid.Column="0" Text="エンディング方針" VerticalAlignment="Top" Margin="0,4,8,0"/>
                                     <TextBox Grid.Row="13" Grid.Column="1" Text="{Binding SelectedProfile.EndingPolicy, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="64" TextWrapping="Wrap"/>
+
+                                    <Border Grid.Row="0"
+                                            Grid.Column="2"
+                                            Grid.RowSpan="14"
+                                            BorderBrush="#DDDDDD"
+                                            BorderThickness="1"
+                                            Padding="10"
+                                            Margin="16,0,0,0">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Grid.Row="0"
+                                                       Text="キャラクター画像"
+                                                       FontWeight="SemiBold"
+                                                       Margin="0,0,0,8"/>
+
+                                            <Grid Grid.Row="1"
+                                                  Background="#F7F7F7"
+                                                  MinHeight="360"
+                                                  ClipToBounds="True">
+                                                <Image Source="{Binding ProfilePreviewImagePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}"
+                                                       Stretch="Uniform"/>
+                                                <ItemsControl ItemsSource="{Binding ProfilePreviewItems}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <Grid/>
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Image Source="{Binding ImagePath, Converter={StaticResource StringToImageSourceConverter}}"
+                                                                   Stretch="Uniform"/>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </Grid>
+
+                                            <TextBlock Grid.Row="2"
+                                                       Text="{Binding ProfilePreviewMessage}"
+                                                       Foreground="Gray"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,8,0,0"/>
+                                        </Grid>
+                                    </Border>
                                 </Grid>
                             </ScrollViewer>
 

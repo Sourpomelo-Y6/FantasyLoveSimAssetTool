@@ -64,6 +64,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string selectedLayerPreviewCostumeId;
         private string selectedLayerPreviewExpressionId;
         private string layerPreviewMessage;
+        private string profilePreviewImagePath;
+        private string profilePreviewMessage;
         private PromptRecord currentPromptRecord;
         private HeroineProfile selectedProfile;
         private ExportReport lastExportReport;
@@ -158,6 +160,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<string> LayerPreviewExpressionOptions { get; }
 
         public ObservableCollection<LayerPreviewItem> LayerPreviewItems { get; }
+
+        public ObservableCollection<LayerPreviewItem> ProfilePreviewItems { get; }
 
         public string StillPromptPreview
         {
@@ -621,6 +625,28 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public string ProfilePreviewImagePath
+        {
+            get { return profilePreviewImagePath; }
+            set
+            {
+                if (profilePreviewImagePath == value) { return; }
+                profilePreviewImagePath = value;
+                OnPropertyChanged(nameof(ProfilePreviewImagePath));
+            }
+        }
+
+        public string ProfilePreviewMessage
+        {
+            get { return profilePreviewMessage; }
+            set
+            {
+                if (profilePreviewMessage == value) { return; }
+                profilePreviewMessage = value;
+                OnPropertyChanged(nameof(ProfilePreviewMessage));
+            }
+        }
+
         public PromptRecord CurrentPromptRecord
         {
             get { return currentPromptRecord; }
@@ -657,6 +683,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 RefreshAcceptedAssets();
                 RefreshLayerPreviewOptions();
                 RefreshLayerPreview();
+                RefreshProfilePreview();
                 RefreshConversationCategorySuggestions();
                 RefreshFilteredConversationEntries();
                 RefreshSelectedStillStatus();
@@ -1049,6 +1076,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             LayerPreviewCostumeOptions = new ObservableCollection<string>();
             LayerPreviewExpressionOptions = new ObservableCollection<string>();
             LayerPreviewItems = new ObservableCollection<LayerPreviewItem>();
+            ProfilePreviewItems = new ObservableCollection<LayerPreviewItem>();
             AssetStatusFilters = new ObservableCollection<string>
             {
                 "All",
@@ -2596,6 +2624,172 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 : summary + Environment.NewLine + string.Join(Environment.NewLine, warnings);
         }
 
+        private void RefreshProfilePreview()
+        {
+            ProfilePreviewItems.Clear();
+            ProfilePreviewImagePath = string.Empty;
+
+            if (SelectedProfile == null)
+            {
+                ProfilePreviewMessage = "キャラクターを選択してください。";
+                return;
+            }
+
+            List<LayerPreviewItem> defaultLayerItems = BuildDefaultProfilePreviewItems();
+            if (defaultLayerItems.Count > 0)
+            {
+                foreach (LayerPreviewItem item in defaultLayerItems)
+                {
+                    ProfilePreviewItems.Add(item);
+                }
+
+                ProfilePreviewMessage = "着せ替えデータの Default 衣装 / Neutral 表情を表示しています。";
+                return;
+            }
+
+            HeroineAsset normalAsset = FindProfileFallbackImageAsset();
+            if (normalAsset == null)
+            {
+                ProfilePreviewMessage = "表示できる通常立ち絵がありません。";
+                return;
+            }
+
+            string imagePath = BuildStoredImagePath(normalAsset);
+            if (string.IsNullOrWhiteSpace(imagePath) || !File.Exists(imagePath))
+            {
+                ProfilePreviewMessage = "通常立ち絵の画像ファイルが見つかりません。";
+                return;
+            }
+
+            ProfilePreviewImagePath = imagePath;
+            ProfilePreviewMessage = $"{normalAsset.AssetId} を表示しています。";
+        }
+
+        private List<LayerPreviewItem> BuildDefaultProfilePreviewItems()
+        {
+            List<LayerPreviewItem> items = new List<LayerPreviewItem>();
+            Dictionary<string, HeroineAsset> profileAssets = BuildProfilePreviewAssetDictionary();
+
+            LayerAssetDefinition baseBody = FindDefaultLayer(layer => IsLayerKind(layer, "BaseBody"));
+            LayerAssetDefinition defaultCostume = FindDefaultLayer(layer => IsLayerKind(layer, "Costume")
+                && string.Equals(layer.CostumeId, "Default", StringComparison.OrdinalIgnoreCase));
+            LayerAssetDefinition neutralExpression = FindDefaultLayer(layer => IsLayerKind(layer, "Expression")
+                && string.Equals(layer.ExpressionId, "Neutral", StringComparison.OrdinalIgnoreCase));
+
+            if (baseBody == null || defaultCostume == null || neutralExpression == null)
+            {
+                return items;
+            }
+
+            if (!TryAddProfilePreviewItem(items, baseBody, profileAssets)
+                || !TryAddProfilePreviewItem(items, defaultCostume, profileAssets)
+                || !TryAddProfilePreviewItem(items, neutralExpression, profileAssets))
+            {
+                items.Clear();
+                return items;
+            }
+
+            foreach (LayerAssetDefinition accessory in LayerAssetDefinitions
+                .Where(layer => layer != null && IsLayerKind(layer, "Accessory"))
+                .OrderBy(layer => layer.DrawOrder))
+            {
+                TryAddProfilePreviewItem(items, accessory, profileAssets);
+            }
+
+            return items
+                .GroupBy(item => item.AssetId, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
+                .OrderBy(item => item.DrawOrder)
+                .ToList();
+        }
+
+        private LayerAssetDefinition FindDefaultLayer(Func<LayerAssetDefinition, bool> predicate)
+        {
+            return LayerAssetDefinitions
+                .Where(layer => layer != null)
+                .OrderBy(layer => layer.DrawOrder)
+                .FirstOrDefault(predicate);
+        }
+
+        private bool TryAddProfilePreviewItem(
+            List<LayerPreviewItem> items,
+            LayerAssetDefinition layer,
+            Dictionary<string, HeroineAsset> profileAssets)
+        {
+            if (layer == null
+                || string.IsNullOrWhiteSpace(layer.AssetId)
+                || !profileAssets.TryGetValue(layer.AssetId, out HeroineAsset asset))
+            {
+                return false;
+            }
+
+            string imagePath = BuildStoredImagePath(asset);
+            if (string.IsNullOrWhiteSpace(imagePath) || !File.Exists(imagePath))
+            {
+                return false;
+            }
+
+            items.Add(new LayerPreviewItem
+            {
+                AssetId = layer.AssetId,
+                DisplayName = layer.DisplayName,
+                LayerKind = layer.LayerKind,
+                DrawOrder = layer.DrawOrder,
+                ImagePath = imagePath
+            });
+            return true;
+        }
+
+        private Dictionary<string, HeroineAsset> BuildProfilePreviewAssetDictionary()
+        {
+            if (SelectedProfile == null || SelectedProfile.Assets == null)
+            {
+                return new Dictionary<string, HeroineAsset>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            return SelectedProfile.Assets
+                .Where(asset => asset != null && !string.IsNullOrWhiteSpace(asset.AssetId))
+                .OrderBy(asset => asset.Status == AssetStatus.Accepted ? 0 : 1)
+                .GroupBy(asset => asset.AssetId.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+        }
+
+        private HeroineAsset FindProfileFallbackImageAsset()
+        {
+            if (SelectedProfile == null || SelectedProfile.Assets == null)
+            {
+                return null;
+            }
+
+            return SelectedProfile.Assets
+                .Where(asset => asset != null)
+                .OrderBy(asset => GetProfileFallbackImagePriority(asset))
+                .ThenBy(asset => asset.Status == AssetStatus.Accepted ? 0 : 1)
+                .ThenBy(asset => asset.AssetId)
+                .FirstOrDefault(asset => GetProfileFallbackImagePriority(asset) < int.MaxValue);
+        }
+
+        private static int GetProfileFallbackImagePriority(HeroineAsset asset)
+        {
+            if (asset == null || string.IsNullOrWhiteSpace(asset.AssetId))
+            {
+                return int.MaxValue;
+            }
+
+            if (string.Equals(asset.AssetId, "Heroine_Normal", StringComparison.OrdinalIgnoreCase))
+            {
+                return 0;
+            }
+
+            if (asset.Usage == AssetUsage.Sprites
+                && asset.AssetId.IndexOf("normal", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return 1;
+            }
+
+            return asset.Usage == AssetUsage.Sprites ? 2 : int.MaxValue;
+        }
+
         private List<LayerAssetDefinition> BuildSelectedLayerPreviewDefinitions()
         {
             List<LayerAssetDefinition> layers = new List<LayerAssetDefinition>();
@@ -2998,6 +3192,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             RefreshLayerPreview();
+            RefreshProfilePreview();
             RefreshFilteredConversationEntries();
         }
 
