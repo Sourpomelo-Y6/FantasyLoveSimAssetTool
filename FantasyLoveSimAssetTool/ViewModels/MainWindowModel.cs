@@ -48,6 +48,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string selectedConversationCategoryFilter;
         private string selectedConversationImageFilter;
         private bool showOnlyConversationWarnings;
+        private bool showOnlyMatchingGameEvents;
+        private string gameEventTestLocationId;
+        private string gameEventTestAffection;
+        private string gameEventTestWeather;
+        private string gameEventTestSeason;
+        private string gameEventTestTimeOfDay;
+        private string gameEventTestActionId;
+        private string gameEventTestItemId;
+        private string gameEventTestFlagIdsText;
         private string selectedConversationCategorySuggestion;
         private string selectedConversationLocationSuggestion;
         private string selectedConversationActionSuggestion;
@@ -427,6 +436,114 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (showOnlyConversationWarnings == value) { return; }
                 showOnlyConversationWarnings = value;
                 OnPropertyChanged(nameof(ShowOnlyConversationWarnings));
+                RefreshFilteredConversationEntries();
+            }
+        }
+
+        public bool ShowOnlyMatchingGameEvents
+        {
+            get { return showOnlyMatchingGameEvents; }
+            set
+            {
+                if (showOnlyMatchingGameEvents == value) { return; }
+                showOnlyMatchingGameEvents = value;
+                OnPropertyChanged(nameof(ShowOnlyMatchingGameEvents));
+                RefreshFilteredConversationEntries();
+            }
+        }
+
+        public string GameEventTestLocationId
+        {
+            get { return gameEventTestLocationId; }
+            set
+            {
+                if (gameEventTestLocationId == value) { return; }
+                gameEventTestLocationId = value;
+                OnPropertyChanged(nameof(GameEventTestLocationId));
+                RefreshFilteredConversationEntries();
+            }
+        }
+
+        public string GameEventTestAffection
+        {
+            get { return gameEventTestAffection; }
+            set
+            {
+                if (gameEventTestAffection == value) { return; }
+                gameEventTestAffection = value;
+                OnPropertyChanged(nameof(GameEventTestAffection));
+                RefreshFilteredConversationEntries();
+            }
+        }
+
+        public string GameEventTestWeather
+        {
+            get { return gameEventTestWeather; }
+            set
+            {
+                if (gameEventTestWeather == value) { return; }
+                gameEventTestWeather = value;
+                OnPropertyChanged(nameof(GameEventTestWeather));
+                RefreshFilteredConversationEntries();
+            }
+        }
+
+        public string GameEventTestSeason
+        {
+            get { return gameEventTestSeason; }
+            set
+            {
+                if (gameEventTestSeason == value) { return; }
+                gameEventTestSeason = value;
+                OnPropertyChanged(nameof(GameEventTestSeason));
+                RefreshFilteredConversationEntries();
+            }
+        }
+
+        public string GameEventTestTimeOfDay
+        {
+            get { return gameEventTestTimeOfDay; }
+            set
+            {
+                if (gameEventTestTimeOfDay == value) { return; }
+                gameEventTestTimeOfDay = value;
+                OnPropertyChanged(nameof(GameEventTestTimeOfDay));
+                RefreshFilteredConversationEntries();
+            }
+        }
+
+        public string GameEventTestActionId
+        {
+            get { return gameEventTestActionId; }
+            set
+            {
+                if (gameEventTestActionId == value) { return; }
+                gameEventTestActionId = value;
+                OnPropertyChanged(nameof(GameEventTestActionId));
+                RefreshFilteredConversationEntries();
+            }
+        }
+
+        public string GameEventTestItemId
+        {
+            get { return gameEventTestItemId; }
+            set
+            {
+                if (gameEventTestItemId == value) { return; }
+                gameEventTestItemId = value;
+                OnPropertyChanged(nameof(GameEventTestItemId));
+                RefreshFilteredConversationEntries();
+            }
+        }
+
+        public string GameEventTestFlagIdsText
+        {
+            get { return gameEventTestFlagIdsText; }
+            set
+            {
+                if (gameEventTestFlagIdsText == value) { return; }
+                gameEventTestFlagIdsText = value;
+                OnPropertyChanged(nameof(GameEventTestFlagIdsText));
                 RefreshFilteredConversationEntries();
             }
         }
@@ -1136,6 +1253,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
             selectedConversationEntry = null;
             selectedConversationLine = null;
             conversationSearchText = string.Empty;
+            gameEventTestLocationId = string.Empty;
+            gameEventTestAffection = string.Empty;
+            gameEventTestWeather = string.Empty;
+            gameEventTestSeason = string.Empty;
+            gameEventTestTimeOfDay = string.Empty;
+            gameEventTestActionId = string.Empty;
+            gameEventTestItemId = string.Empty;
+            gameEventTestFlagIdsText = string.Empty;
             selectedConversationCategoryFilter = "All";
             selectedConversationImageFilter = "All";
             showOnlyConversationWarnings = false;
@@ -3844,9 +3969,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 entry.Conditions ??= new ConversationCondition();
                 entry.Lines ??= new ObservableCollection<ConversationLine>();
                 entry.ValidationWarningText = BuildConversationWarningText(entry);
+                bool matchesGameEventTest = MatchesGameEventTestConditions(entry);
+                entry.TriggerCandidateText = SelectedConversationDataKind == ConversationDataKind.GameEvents
+                    ? matchesGameEventTest ? "候補" : "対象外"
+                    : string.Empty;
                 if (MatchesConversationCategoryFilter(entry)
                     && MatchesConversationImageFilter(entry)
                     && MatchesConversationWarningFilter(entry)
+                    && MatchesGameEventCandidateFilter(entry, matchesGameEventTest)
                     && MatchesConversationSearch(entry))
                 {
                     FilteredConversationEntries.Add(entry);
@@ -3885,6 +4015,68 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private bool MatchesConversationWarningFilter(ConversationEntry entry)
         {
             return !ShowOnlyConversationWarnings || !string.IsNullOrWhiteSpace(entry.ValidationWarningText);
+        }
+
+        private bool MatchesGameEventCandidateFilter(ConversationEntry entry, bool matchesGameEventTest)
+        {
+            return !ShowOnlyMatchingGameEvents
+                || SelectedConversationDataKind != ConversationDataKind.GameEvents
+                || matchesGameEventTest;
+        }
+
+        private bool MatchesGameEventTestConditions(ConversationEntry entry)
+        {
+            if (entry == null || entry.Kind != ConversationDataKind.GameEvents)
+            {
+                return false;
+            }
+
+            ConversationCondition conditions = entry.Conditions ?? new ConversationCondition();
+            if (!MatchesOptionalCondition(conditions.LocationId, GameEventTestLocationId))
+            {
+                return false;
+            }
+
+            if (!MatchesOptionalCondition(conditions.Weather, GameEventTestWeather)
+                || !MatchesOptionalCondition(conditions.Season, GameEventTestSeason)
+                || !MatchesOptionalCondition(conditions.TimeOfDay, GameEventTestTimeOfDay)
+                || !MatchesOptionalCondition(conditions.ActionId, GameEventTestActionId)
+                || !MatchesOptionalCondition(conditions.RequiredItemId, GameEventTestItemId))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(GameEventTestAffection))
+            {
+                if (!int.TryParse(GameEventTestAffection.Trim(), out int affection))
+                {
+                    return false;
+                }
+
+                if (affection < conditions.MinAffection || affection > conditions.MaxAffection)
+                {
+                    return false;
+                }
+            }
+
+            HashSet<string> currentFlagIds = new HashSet<string>(
+                SplitConversationList(GameEventTestFlagIdsText),
+                StringComparer.OrdinalIgnoreCase);
+            foreach (string requiredFlagId in SplitConversationList(conditions.RequiredFlagIdsText))
+            {
+                if (!currentFlagIds.Contains(requiredFlagId))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool MatchesOptionalCondition(string requiredValue, string currentValue)
+        {
+            return string.IsNullOrWhiteSpace(requiredValue)
+                || string.Equals(requiredValue.Trim(), (currentValue ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase);
         }
 
         private bool MatchesConversationSearch(ConversationEntry entry)

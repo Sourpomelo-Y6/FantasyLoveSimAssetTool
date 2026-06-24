@@ -257,6 +257,8 @@
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         <TextBlock Grid.Row="0" Grid.Column="0" Text="検索" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                         <TextBox Grid.Row="0"
@@ -283,6 +285,40 @@
                                                   SelectedItem="{Binding SelectedConversationImageFilter}"
                                                   Height="26"
                                                   Margin="0,6,0,0"/>
+                                        <StackPanel Grid.Row="2"
+                                                    Grid.Column="0"
+                                                    Grid.ColumnSpan="4"
+                                                    Orientation="Horizontal"
+                                                    HorizontalAlignment="Right"
+                                                    Margin="0,6,0,0">
+                                            <CheckBox Content="発火候補のみ"
+                                                      IsChecked="{Binding ShowOnlyMatchingGameEvents}"
+                                                      VerticalAlignment="Center"
+                                                      Margin="0,0,12,0"/>
+                                            <TextBlock Text="場所" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <TextBox Text="{Binding GameEventTestLocationId, UpdateSourceTrigger=PropertyChanged}" Width="72" Margin="0,0,8,0"/>
+                                            <TextBlock Text="好感度" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <TextBox Text="{Binding GameEventTestAffection, UpdateSourceTrigger=PropertyChanged}" Width="54" Margin="0,0,8,0"/>
+                                            <TextBlock Text="天候" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <TextBox Text="{Binding GameEventTestWeather, UpdateSourceTrigger=PropertyChanged}" Width="72"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Row="3"
+                                                    Grid.Column="0"
+                                                    Grid.ColumnSpan="4"
+                                                    Orientation="Horizontal"
+                                                    HorizontalAlignment="Right"
+                                                    Margin="0,6,0,0">
+                                            <TextBlock Text="季節" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <TextBox Text="{Binding GameEventTestSeason, UpdateSourceTrigger=PropertyChanged}" Width="72" Margin="0,0,8,0"/>
+                                            <TextBlock Text="時間" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <TextBox Text="{Binding GameEventTestTimeOfDay, UpdateSourceTrigger=PropertyChanged}" Width="72" Margin="0,0,8,0"/>
+                                            <TextBlock Text="行動" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <TextBox Text="{Binding GameEventTestActionId, UpdateSourceTrigger=PropertyChanged}" Width="72" Margin="0,0,8,0"/>
+                                            <TextBlock Text="Item" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <TextBox Text="{Binding GameEventTestItemId, UpdateSourceTrigger=PropertyChanged}" Width="72" Margin="0,0,8,0"/>
+                                            <TextBlock Text="Flags" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <TextBox Text="{Binding GameEventTestFlagIdsText, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
+                                        </StackPanel>
                                     </Grid>
 
                                     <DataGrid Grid.Row="1"
@@ -296,6 +332,7 @@
                                             <DataGridTextColumn Header="タイトル" Binding="{Binding Title}" Width="180"/>
                                             <DataGridTextColumn Header="カテゴリ" Binding="{Binding Category}" Width="120"/>
                                             <DataGridTextColumn Header="優先度" Binding="{Binding Priority}" Width="70"/>
+                                            <DataGridTextColumn Header="候補" Binding="{Binding TriggerCandidateText}" Width="70" IsReadOnly="True"/>
                                             <DataGridTextColumn Header="警告" Binding="{Binding ValidationWarningText}" Width="180" IsReadOnly="True"/>
                                             <DataGridTextColumn Header="先頭行" Binding="{Binding FirstLinePreview}" Width="*" IsReadOnly="True"/>
                                         </DataGrid.Columns>

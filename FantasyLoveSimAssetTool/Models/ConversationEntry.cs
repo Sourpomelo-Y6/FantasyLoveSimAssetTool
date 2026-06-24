@@ -37,6 +37,9 @@ namespace FantasyLoveSimAssetTool.Models
         [JsonIgnore]
         public string ValidationWarningText { get; set; }
 
+        [JsonIgnore]
+        public string TriggerCandidateText { get; set; }
+
         public ConversationEntry()
         {
             Id = string.Empty;
@@ -48,6 +51,7 @@ namespace FantasyLoveSimAssetTool.Models
             Priority = 100;
             Memo = string.Empty;
             ValidationWarningText = string.Empty;
+            TriggerCandidateText = string.Empty;
         }
     }
 }
