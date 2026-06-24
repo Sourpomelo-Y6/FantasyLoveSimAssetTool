@@ -210,6 +210,7 @@
                                     <ColumnDefinition Width="220"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="140"/>
+                                    <ColumnDefinition Width="140"/>
                                     <ColumnDefinition Width="100"/>
                                     <ColumnDefinition Width="100"/>
                                 </Grid.ColumnDefinitions>
@@ -230,11 +231,16 @@
                                         Height="26"
                                         Margin="0,0,8,0"/>
                                 <Button Grid.Column="4"
+                                        Content="Unity 会話読込"
+                                        Command="{Binding ImportConversationsFromUnityCommand}"
+                                        Height="26"
+                                        Margin="0,0,8,0"/>
+                                <Button Grid.Column="5"
                                         Content="追加"
                                         Command="{Binding AddConversationEntryCommand}"
                                         Height="26"
                                         Margin="0,0,8,0"/>
-                                <Button Grid.Column="5"
+                                <Button Grid.Column="6"
                                         Content="削除"
                                         Command="{Binding RemoveConversationEntryCommand}"
                                         Height="26"/>
