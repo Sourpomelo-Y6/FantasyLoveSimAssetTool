@@ -1121,6 +1121,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ImportConversationsFromUnityCommand { get; }
 
+        public ICommand ImportGameEventsFromUnityCommand { get; }
+
         public ICommand ApplyConversationCategorySuggestionCommand { get; }
 
         public ICommand ApplyConversationEventTemplateCommand { get; }
@@ -1393,6 +1395,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedProfile != null);
             ImportConversationsFromUnityCommand = new RelayCommand(
                 ImportConversationsFromUnity,
+                () => SelectedProfile != null);
+            ImportGameEventsFromUnityCommand = new RelayCommand(
+                ImportGameEventsFromUnity,
                 () => SelectedProfile != null);
             ApplyConversationCategorySuggestionCommand = new RelayCommand(
                 ApplyConversationCategorySuggestion,
@@ -4092,6 +4097,177 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private static string BuildFromUnityConversationMemo(FromUnityConversationItem item)
         {
             List<string> parts = new List<string> { "FromUnity conversations import" };
+            if (!string.IsNullOrWhiteSpace(item.Memo))
+            {
+                parts.Add(item.Memo.Trim());
+            }
+
+            return string.Join(Environment.NewLine, parts);
+        }
+
+        private void ImportGameEventsFromUnity()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            OpenFileDialog dialog = new OpenFileDialog
+            {
+                Title = "game_events_from_unity.json を選択",
+                Filter = "game_events_from_unity.json|game_events_from_unity.json|JSON files (*.json)|*.json|All files (*.*)|*.*"
+            };
+
+            if (dialog.ShowDialog() != true)
+            {
+                StatusMessage = "FromUnity game events import をキャンセルしました。";
+                return;
+            }
+
+            try
+            {
+                ImportGameEventsFromUnityFile(dialog.FileName);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"FromUnity game events import に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void ImportGameEventsFromUnityFile(string filePath)
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            JsonSerializerOptions options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            FromUnityGameEventDataFile eventData = JsonSerializer.Deserialize<FromUnityGameEventDataFile>(
+                File.ReadAllText(filePath),
+                options);
+
+            if (eventData == null)
+            {
+                throw new InvalidOperationException("game_events_from_unity.json を読み込めませんでした。");
+            }
+
+            if (eventData.SchemaVersion != 1)
+            {
+                throw new InvalidOperationException($"未対応の schemaVersion です: {eventData.SchemaVersion}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(eventData.HeroineId)
+                && !string.Equals(eventData.HeroineId, SelectedProfile.HeroineId, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException($"HeroineId が選択中のキャラクターと一致しません。JSON: {eventData.HeroineId} / Selected: {SelectedProfile.HeroineId}");
+            }
+
+            SelectedProfile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
+            List<ConversationEntry> importedEntries = new List<ConversationEntry>();
+            int skippedCount = 0;
+
+            foreach (FromUnityGameEventItem item in eventData.Items ?? new List<FromUnityGameEventItem>())
+            {
+                if (item == null || string.IsNullOrWhiteSpace(item.Id))
+                {
+                    skippedCount++;
+                    continue;
+                }
+
+                if (HasExistingConversationEntry(ConversationDataKind.GameEvents, item.Id.Trim()))
+                {
+                    skippedCount++;
+                    continue;
+                }
+
+                ConversationEntry entry = CreateGameEventFromUnityGameEvent(item);
+                SelectedProfile.ConversationEntries.Add(entry);
+                importedEntries.Add(entry);
+            }
+
+            characterProjectService.SaveProfile(SelectedProfile);
+            SelectedConversationDataKind = ConversationDataKind.GameEvents;
+            RefreshConversationCategorySuggestions();
+            RefreshFilteredConversationEntries();
+            if (importedEntries.Count > 0)
+            {
+                SelectedConversationEntry = importedEntries[0];
+            }
+
+            StatusMessage = $"FromUnity game events を取り込みました。追加 {importedEntries.Count} 件、スキップ {skippedCount} 件。";
+        }
+
+        private static ConversationEntry CreateGameEventFromUnityGameEvent(FromUnityGameEventItem item)
+        {
+            ConversationEntry entry = new ConversationEntry
+            {
+                Kind = ConversationDataKind.GameEvents,
+                Id = item.Id.Trim(),
+                Title = string.IsNullOrWhiteSpace(item.Title) ? item.Id.Trim() : item.Title.Trim(),
+                Category = string.IsNullOrWhiteSpace(item.Category) ? "Manual" : item.Category.Trim(),
+                ImageAssetIdsText = JoinImportList(item.ImageAssetIds),
+                Priority = item.Priority,
+                Memo = BuildFromUnityGameEventMemo(item)
+            };
+
+            ApplyFromUnityGameEventCondition(entry.Conditions, item.Conditions);
+
+            entry.Lines.Clear();
+            foreach (FromUnityGameEventLine line in item.Lines ?? new List<FromUnityGameEventLine>())
+            {
+                if (line == null)
+                {
+                    continue;
+                }
+
+                entry.Lines.Add(new ConversationLine
+                {
+                    Speaker = string.IsNullOrWhiteSpace(line.Speaker) ? "Heroine" : line.Speaker.Trim(),
+                    Text = line.Text ?? string.Empty,
+                    Expression = line.Expression ?? string.Empty
+                });
+            }
+
+            if (entry.Lines.Count == 0)
+            {
+                entry.Lines.Add(new ConversationLine
+                {
+                    Speaker = "Heroine",
+                    Text = string.Empty,
+                    Expression = string.Empty
+                });
+            }
+
+            return entry;
+        }
+
+        private static void ApplyFromUnityGameEventCondition(
+            ConversationCondition target,
+            FromUnityGameEventCondition source)
+        {
+            if (target == null || source == null)
+            {
+                return;
+            }
+
+            target.LocationId = source.LocationId ?? string.Empty;
+            target.MinAffection = source.MinAffection;
+            target.MaxAffection = source.MaxAffection == 0 ? 100 : source.MaxAffection;
+            target.Weather = source.Weather ?? string.Empty;
+            target.Season = source.Season ?? string.Empty;
+            target.TimeOfDay = source.TimeOfDay ?? string.Empty;
+            target.ActionId = source.ActionId ?? string.Empty;
+            target.RequiredItemId = source.RequiredItemId ?? string.Empty;
+            target.Once = source.Once;
+            target.RequiredFlagIdsText = JoinImportList(source.RequiredFlagIds);
+        }
+
+        private static string BuildFromUnityGameEventMemo(FromUnityGameEventItem item)
+        {
+            List<string> parts = new List<string> { "FromUnity game events import" };
             if (!string.IsNullOrWhiteSpace(item.Memo))
             {
                 parts.Add(item.Memo.Trim());

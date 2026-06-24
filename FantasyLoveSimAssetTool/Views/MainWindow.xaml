@@ -209,10 +209,7 @@
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="220"/>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="140"/>
-                                    <ColumnDefinition Width="140"/>
-                                    <ColumnDefinition Width="100"/>
-                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="420"/>
                                 </Grid.ColumnDefinitions>
 
                                 <TextBlock Grid.Column="0" Text="データ種別" VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -225,25 +222,36 @@
                                            Text="会話、イベント、行動反応、エンディング本文を profile.json に保存します。"
                                            Foreground="Gray"
                                            VerticalAlignment="Center"/>
-                                <Button Grid.Column="3"
-                                        Content="Unity Action読込"
-                                        Command="{Binding ImportActionsFromUnityCommand}"
-                                        Height="26"
-                                        Margin="0,0,8,0"/>
-                                <Button Grid.Column="4"
-                                        Content="Unity 会話読込"
-                                        Command="{Binding ImportConversationsFromUnityCommand}"
-                                        Height="26"
-                                        Margin="0,0,8,0"/>
-                                <Button Grid.Column="5"
-                                        Content="追加"
-                                        Command="{Binding AddConversationEntryCommand}"
-                                        Height="26"
-                                        Margin="0,0,8,0"/>
-                                <Button Grid.Column="6"
-                                        Content="削除"
-                                        Command="{Binding RemoveConversationEntryCommand}"
-                                        Height="26"/>
+                                <ScrollViewer Grid.Column="3"
+                                              HorizontalScrollBarVisibility="Auto"
+                                              VerticalScrollBarVisibility="Disabled">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="Unity Action読込"
+                                                Command="{Binding ImportActionsFromUnityCommand}"
+                                                Height="26"
+                                                MinWidth="132"
+                                                Margin="0,0,8,0"/>
+                                        <Button Content="Unity 会話読込"
+                                                Command="{Binding ImportConversationsFromUnityCommand}"
+                                                Height="26"
+                                                MinWidth="132"
+                                                Margin="0,0,8,0"/>
+                                        <Button Content="Unity Event読込"
+                                                Command="{Binding ImportGameEventsFromUnityCommand}"
+                                                Height="26"
+                                                MinWidth="132"
+                                                Margin="0,0,8,0"/>
+                                        <Button Content="追加"
+                                                Command="{Binding AddConversationEntryCommand}"
+                                                Height="26"
+                                                MinWidth="72"
+                                                Margin="0,0,8,0"/>
+                                        <Button Content="削除"
+                                                Command="{Binding RemoveConversationEntryCommand}"
+                                                Height="26"
+                                                MinWidth="72"/>
+                                    </StackPanel>
+                                </ScrollViewer>
                             </Grid>
 
                             <Grid Grid.Row="1">

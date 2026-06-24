@@ -155,6 +155,8 @@ Unity Editor 拡張側で型付き ScriptableObject を読むため、WPF Tool �
 同じ `Id` または同じ `ActionId` が既に存在する場合は上書きせずスキップする。
 `Unity 会話読込` から `conversations_from_unity.json` を選んだ場合は、`Conversations` の `ConversationEntry` として新規追加する。
 同じ `Id` の通常会話が既に存在する場合は上書きせずスキップする。
+`Unity Event読込` から `game_events_from_unity.json` を選んだ場合は、`GameEvents` の `ConversationEntry` として新規追加する。
+同じ `Id` のイベントが既に存在する場合は上書きせずスキップする。
 差分表示、既存データの選択更新、削除同期はまだ行わない。
 
 ## Merge 方針
