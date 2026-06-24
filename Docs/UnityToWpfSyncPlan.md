@@ -151,6 +151,10 @@ Unity Editor 拡張側で型付き ScriptableObject を読むため、WPF Tool �
 - 差分 summary をテキスト表示する。
 - 反映は手作業または限定的な `新規のみ追加` にする。
 
+現在の WPF Tool 側の初期実装では、`会話データ` タブの `Unity Action読込` から `actions_from_unity.json` を選び、`ActionReactions` の `ConversationEntry` として新規追加する。
+同じ `Id` または同じ `ActionId` が既に存在する場合は上書きせずスキップする。
+差分表示、既存データの選択更新、削除同期はまだ行わない。
+
 ## Merge 方針
 
 同じ ID がある場合は、無条件上書きしない。

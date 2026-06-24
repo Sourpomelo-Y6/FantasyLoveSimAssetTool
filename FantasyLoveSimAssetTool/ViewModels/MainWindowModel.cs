@@ -1117,6 +1117,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand SaveConversationDataCommand { get; }
 
+        public ICommand ImportActionsFromUnityCommand { get; }
+
         public ICommand ApplyConversationCategorySuggestionCommand { get; }
 
         public ICommand ApplyConversationEventTemplateCommand { get; }
@@ -1383,6 +1385,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedConversationEntry != null && SelectedConversationLine != null);
             SaveConversationDataCommand = new RelayCommand(
                 SaveConversationData,
+                () => SelectedProfile != null);
+            ImportActionsFromUnityCommand = new RelayCommand(
+                ImportActionsFromUnity,
                 () => SelectedProfile != null);
             ApplyConversationCategorySuggestionCommand = new RelayCommand(
                 ApplyConversationCategorySuggestion,
@@ -3718,6 +3723,193 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 StatusMessage = $"会話データ保存に失敗しました: {ex.Message}";
             }
+        }
+
+        private void ImportActionsFromUnity()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            OpenFileDialog dialog = new OpenFileDialog
+            {
+                Title = "actions_from_unity.json を選択",
+                Filter = "actions_from_unity.json|actions_from_unity.json|JSON files (*.json)|*.json|All files (*.*)|*.*"
+            };
+
+            if (dialog.ShowDialog() != true)
+            {
+                StatusMessage = "FromUnity actions import をキャンセルしました。";
+                return;
+            }
+
+            try
+            {
+                ImportActionsFromUnityFile(dialog.FileName);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"FromUnity actions import に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void ImportActionsFromUnityFile(string filePath)
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            JsonSerializerOptions options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            FromUnityActionDataFile actionData = JsonSerializer.Deserialize<FromUnityActionDataFile>(
+                File.ReadAllText(filePath),
+                options);
+
+            if (actionData == null)
+            {
+                throw new InvalidOperationException("actions_from_unity.json を読み込めませんでした。");
+            }
+
+            if (actionData.SchemaVersion != 1)
+            {
+                throw new InvalidOperationException($"未対応の schemaVersion です: {actionData.SchemaVersion}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(actionData.HeroineId)
+                && !string.Equals(actionData.HeroineId, SelectedProfile.HeroineId, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException($"HeroineId が選択中のキャラクターと一致しません。JSON: {actionData.HeroineId} / Selected: {SelectedProfile.HeroineId}");
+            }
+
+            SelectedProfile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
+            List<ConversationEntry> importedEntries = new List<ConversationEntry>();
+            int skippedCount = 0;
+
+            foreach (FromUnityActionDataItem item in actionData.Items ?? new List<FromUnityActionDataItem>())
+            {
+                if (item == null || string.IsNullOrWhiteSpace(item.Id))
+                {
+                    skippedCount++;
+                    continue;
+                }
+
+                string actionId = item.Id.Trim();
+                if (HasExistingActionReaction(actionId))
+                {
+                    skippedCount++;
+                    continue;
+                }
+
+                ConversationEntry entry = CreateActionReactionFromUnityAction(item);
+                SelectedProfile.ConversationEntries.Add(entry);
+                importedEntries.Add(entry);
+            }
+
+            characterProjectService.SaveProfile(SelectedProfile);
+            SelectedConversationDataKind = ConversationDataKind.ActionReactions;
+            RefreshConversationCategorySuggestions();
+            RefreshFilteredConversationEntries();
+            if (importedEntries.Count > 0)
+            {
+                SelectedConversationEntry = importedEntries[0];
+            }
+
+            StatusMessage = $"FromUnity actions を取り込みました。追加 {importedEntries.Count} 件、スキップ {skippedCount} 件。";
+        }
+
+        private bool HasExistingActionReaction(string actionId)
+        {
+            if (SelectedProfile == null || SelectedProfile.ConversationEntries == null)
+            {
+                return false;
+            }
+
+            string generatedId = CreateActionReactionEntryId(actionId);
+            return SelectedProfile.ConversationEntries.Any(entry => entry != null
+                && entry.Kind == ConversationDataKind.ActionReactions
+                && (string.Equals(entry.Id, generatedId, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(entry.Conditions?.ActionId, actionId, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        private static ConversationEntry CreateActionReactionFromUnityAction(FromUnityActionDataItem item)
+        {
+            string actionId = item.Id.Trim();
+            ConversationEntry entry = new ConversationEntry
+            {
+                Kind = ConversationDataKind.ActionReactions,
+                Id = CreateActionReactionEntryId(actionId),
+                Title = string.IsNullOrWhiteSpace(item.DisplayName) ? actionId : item.DisplayName.Trim(),
+                Category = string.IsNullOrWhiteSpace(item.Category) ? actionId : item.Category.Trim(),
+                ImageAssetIdsText = JoinImportList(item.ImageAssetIds),
+                Priority = item.Priority,
+                Memo = BuildFromUnityActionMemo(item)
+            };
+            entry.Conditions.ActionId = actionId;
+            entry.Conditions.RequiredItemId = item.RequiredItemId ?? string.Empty;
+            entry.Conditions.RequiredFlagIdsText = JoinImportList(item.RequiredFlagIds);
+
+            entry.Lines.Clear();
+            foreach (FromUnityActionLine line in item.ResultLines ?? new List<FromUnityActionLine>())
+            {
+                if (line == null)
+                {
+                    continue;
+                }
+
+                entry.Lines.Add(new ConversationLine
+                {
+                    Speaker = string.IsNullOrWhiteSpace(line.Speaker) ? "Heroine" : line.Speaker.Trim(),
+                    Text = line.Text ?? string.Empty,
+                    Expression = line.Expression ?? string.Empty
+                });
+            }
+
+            if (entry.Lines.Count == 0)
+            {
+                entry.Lines.Add(new ConversationLine
+                {
+                    Speaker = "Heroine",
+                    Text = string.Empty,
+                    Expression = string.Empty
+                });
+            }
+
+            return entry;
+        }
+
+        private static string CreateActionReactionEntryId(string actionId)
+        {
+            return "Reaction_" + NormalizeIdPart(actionId) + "_01";
+        }
+
+        private static string JoinImportList(IEnumerable<string> values)
+        {
+            if (values == null)
+            {
+                return string.Empty;
+            }
+
+            return string.Join(
+                Environment.NewLine,
+                values
+                    .Where(value => !string.IsNullOrWhiteSpace(value))
+                    .Select(value => value.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase));
+        }
+
+        private static string BuildFromUnityActionMemo(FromUnityActionDataItem item)
+        {
+            List<string> parts = new List<string> { "FromUnity actions import" };
+            if (!string.IsNullOrWhiteSpace(item.Memo))
+            {
+                parts.Add(item.Memo.Trim());
+            }
+
+            return string.Join(Environment.NewLine, parts);
         }
 
         private void ApplyConversationCategorySuggestion()
