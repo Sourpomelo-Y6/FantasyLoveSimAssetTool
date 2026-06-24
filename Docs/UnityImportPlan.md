@@ -214,6 +214,7 @@ Data/
 このときも WPF 側から `.asset` を直接生成しない。
 Unity Editor 側で `ConversationData`、`GameEventData`、`ActionReactionData`、`EndingData` の `.asset` を生成、更新する。
 会話データの JSON スキーマと WPF 画面方針は `Docs/ConversationDataPlan.md` にまとめる。
+`GameEvents` のカテゴリ、条件、発火判定、イベントスチル参照の運用は `Docs/GameEventDataGuide.md` にまとめる。
 
 会話データの ScriptableObject は、各 JSON ファイルごとに1つの `.asset` を作る。
 各 `.asset` は `heroineId` と `items` 相当のリストを持つ。

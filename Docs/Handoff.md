@@ -528,6 +528,7 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 - `Docs/UnityImportPlan.md`: WPF export 結果を Unity Editor 拡張で取り込む方針と、別リポジトリ運用方針
 - `Docs/UnityEditorImportImplementationPlan.md`: Unity Editor Import 拡張の実装計画
 - `Docs/ConversationDataPlan.md`: 会話、イベント、行動反応、エンディング本文の JSON export と Unity Import 方針
+- `Docs/GameEventDataGuide.md`: `GameEvents` のカテゴリ、条件、発火判定、イベントスチル参照の運用
 - `Docs/ExpressionCostumeVariantRoadmap.md`: 表情差分、衣装差分の元データ作成、外部 JSON 化、GUI 編集へのロードマップ
 - `Docs/TransparentLayerAssetWorkflow.md`: 透過レイヤー素材の作成、登録、確認手順
 - `Docs/ConversationDataPlan.md`: 会話、イベント、行動反応、エンディング本文の JSON export 方針
