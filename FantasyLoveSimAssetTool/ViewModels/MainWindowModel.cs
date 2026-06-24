@@ -3641,8 +3641,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 SelectedConversationLine = SelectedConversationEntry.Lines.FirstOrDefault();
             }
 
+            ConversationEntry appliedEntry = SelectedConversationEntry;
             OnPropertyChanged(nameof(SelectedConversationEntry));
             RefreshFilteredConversationEntries();
+            SelectedConversationEntry = appliedEntry;
             StatusMessage = $"{category} のイベント雛形を反映しました。";
         }
 
