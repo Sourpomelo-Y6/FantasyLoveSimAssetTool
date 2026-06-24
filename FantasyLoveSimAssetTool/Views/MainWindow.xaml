@@ -343,6 +343,7 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="180"/>
                                                 <ColumnDefinition Width="80"/>
+                                                <ColumnDefinition Width="110"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBox Grid.Column="0" Text="{Binding SelectedConversationEntry.Category, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,0"/>
                                             <ComboBox Grid.Column="1"
@@ -351,6 +352,11 @@
                                                       Height="26"
                                                       Margin="0,0,8,0"/>
                                             <Button Grid.Column="2" Content="反映" Command="{Binding ApplyConversationCategorySuggestionCommand}" Height="26"/>
+                                            <Button Grid.Column="3"
+                                                    Content="イベント雛形"
+                                                    Command="{Binding ApplyConversationEventTemplateCommand}"
+                                                    Height="26"
+                                                    Margin="8,0,0,0"/>
                                         </Grid>
 
                                         <TextBlock Grid.Row="3" Grid.Column="0" Text="場所" VerticalAlignment="Center" Margin="0,0,8,8"/>

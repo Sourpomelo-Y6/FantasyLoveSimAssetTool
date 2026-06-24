@@ -364,6 +364,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 OnPropertyChanged(nameof(SelectedConversationDataKind));
                 RefreshConversationCategorySuggestions();
                 RefreshFilteredConversationEntries();
+                CommandManager.InvalidateRequerySuggested();
             }
         }
 
@@ -1001,6 +1002,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ApplyConversationCategorySuggestionCommand { get; }
 
+        public ICommand ApplyConversationEventTemplateCommand { get; }
+
         public ICommand ApplyConversationConditionSuggestionsCommand { get; }
 
         public ICommand ApplyConversationExpressionSuggestionCommand { get; }
@@ -1259,6 +1262,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ApplyConversationCategorySuggestionCommand = new RelayCommand(
                 ApplyConversationCategorySuggestion,
                 () => SelectedConversationEntry != null && !string.IsNullOrWhiteSpace(SelectedConversationCategorySuggestion));
+            ApplyConversationEventTemplateCommand = new RelayCommand(
+                ApplyConversationEventTemplate,
+                () => SelectedProfile != null
+                    && SelectedConversationEntry != null
+                    && SelectedConversationDataKind == ConversationDataKind.GameEvents);
             ApplyConversationConditionSuggestionsCommand = new RelayCommand(
                 ApplyConversationConditionSuggestions,
                 () => SelectedConversationEntry != null);
@@ -3599,6 +3607,148 @@ namespace FantasyLoveSimAssetTool.ViewModels
             StatusMessage = "カテゴリ候補を反映しました。";
         }
 
+        private void ApplyConversationEventTemplate()
+        {
+            if (SelectedProfile == null || SelectedConversationEntry == null)
+            {
+                return;
+            }
+
+            string category = string.IsNullOrWhiteSpace(SelectedConversationCategorySuggestion)
+                ? CreateDefaultConversationCategory(ConversationDataKind.GameEvents)
+                : SelectedConversationCategorySuggestion;
+
+            SelectedConversationEntry.Kind = ConversationDataKind.GameEvents;
+            SelectedConversationEntry.Category = category;
+            SelectedConversationEntry.Conditions ??= new ConversationCondition();
+            ApplyEventTemplateConditions(SelectedConversationEntry.Conditions, category);
+
+            SelectedConversationEntry.Id = CreateConversationEntryId(
+                ConversationDataKind.GameEvents,
+                category,
+                SelectedProfile.ConversationEntries ?? new ObservableCollection<ConversationEntry>(),
+                SelectedConversationEntry);
+
+            if (string.IsNullOrWhiteSpace(SelectedConversationEntry.Title)
+                || SelectedConversationEntry.Title.StartsWith(GetConversationKindDisplayName(ConversationDataKind.GameEvents), StringComparison.OrdinalIgnoreCase))
+            {
+                SelectedConversationEntry.Title = CreateEventTemplateTitle(category);
+            }
+
+            if (IsConversationLinesEmpty(SelectedConversationEntry.Lines))
+            {
+                SelectedConversationEntry.Lines = CreateEventTemplateLines(SelectedProfile, category);
+                SelectedConversationLine = SelectedConversationEntry.Lines.FirstOrDefault();
+            }
+
+            OnPropertyChanged(nameof(SelectedConversationEntry));
+            RefreshFilteredConversationEntries();
+            StatusMessage = $"{category} のイベント雛形を反映しました。";
+        }
+
+        private static void ApplyEventTemplateConditions(ConversationCondition conditions, string category)
+        {
+            string normalizedCategory = NormalizeIdPart(category);
+            conditions.Once = string.Equals(normalizedCategory, "Intro", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(normalizedCategory, "Quest", StringComparison.OrdinalIgnoreCase);
+
+            switch (normalizedCategory)
+            {
+                case "Intro":
+                    conditions.LocationId = "Room";
+                    conditions.TimeOfDay = "Morning";
+                    break;
+                case "DayStart":
+                    conditions.TimeOfDay = "Morning";
+                    break;
+                case "Location":
+                    conditions.LocationId = string.IsNullOrWhiteSpace(conditions.LocationId) ? "Forest" : conditions.LocationId;
+                    conditions.TimeOfDay = string.IsNullOrWhiteSpace(conditions.TimeOfDay) ? "Day" : conditions.TimeOfDay;
+                    break;
+                case "Date":
+                    conditions.ActionId = string.IsNullOrWhiteSpace(conditions.ActionId) ? "Walk" : conditions.ActionId;
+                    conditions.TimeOfDay = string.IsNullOrWhiteSpace(conditions.TimeOfDay) ? "Day" : conditions.TimeOfDay;
+                    break;
+                case "Quest":
+                    conditions.ActionId = string.IsNullOrWhiteSpace(conditions.ActionId) ? "Talk" : conditions.ActionId;
+                    conditions.RequiredFlagIdsText = string.IsNullOrWhiteSpace(conditions.RequiredFlagIdsText)
+                        ? "QuestAvailable"
+                        : conditions.RequiredFlagIdsText;
+                    break;
+                case "Weather":
+                    conditions.Weather = string.IsNullOrWhiteSpace(conditions.Weather) ? "Rainy" : conditions.Weather;
+                    break;
+                case "Season":
+                    conditions.Season = string.IsNullOrWhiteSpace(conditions.Season) ? "Spring" : conditions.Season;
+                    break;
+                case "Scheduled":
+                    conditions.TimeOfDay = string.IsNullOrWhiteSpace(conditions.TimeOfDay) ? "Day" : conditions.TimeOfDay;
+                    break;
+            }
+        }
+
+        private static string CreateEventTemplateTitle(string category)
+        {
+            switch (NormalizeIdPart(category))
+            {
+                case "Intro":
+                    return "導入イベント";
+                case "DayStart":
+                    return "一日の開始イベント";
+                case "Location":
+                    return "場所イベント";
+                case "Date":
+                    return "デートイベント";
+                case "Quest":
+                    return "クエストイベント";
+                case "Weather":
+                    return "天候イベント";
+                case "Season":
+                    return "季節イベント";
+                case "Scheduled":
+                    return "予定イベント";
+                default:
+                    return "イベント";
+            }
+        }
+
+        private static bool IsConversationLinesEmpty(ObservableCollection<ConversationLine> lines)
+        {
+            return lines == null
+                || lines.Count == 0
+                || lines.All(line => line == null
+                    || (string.IsNullOrWhiteSpace(line.Speaker)
+                        && string.IsNullOrWhiteSpace(line.Text)
+                        && string.IsNullOrWhiteSpace(line.Expression)));
+        }
+
+        private static ObservableCollection<ConversationLine> CreateEventTemplateLines(HeroineProfile profile, string category)
+        {
+            string heroineName = string.IsNullOrWhiteSpace(profile?.DisplayName) ? "ヒロイン" : profile.DisplayName;
+            string categoryName = CreateEventTemplateTitle(category);
+            return new ObservableCollection<ConversationLine>
+            {
+                new ConversationLine
+                {
+                    Speaker = "主人公",
+                    Expression = "Neutral",
+                    Text = categoryName + "を開始する。"
+                },
+                new ConversationLine
+                {
+                    Speaker = heroineName,
+                    Expression = "Smile",
+                    Text = "ここにヒロインの反応を入力する。"
+                },
+                new ConversationLine
+                {
+                    Speaker = heroineName,
+                    Expression = "Neutral",
+                    Text = "ここにイベントの締めの台詞を入力する。"
+                }
+            };
+        }
+
         private void ApplyConversationConditionSuggestions()
         {
             if (SelectedConversationEntry == null)
@@ -3945,7 +4095,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             switch (kind)
             {
                 case ConversationDataKind.GameEvents:
-                    return new[] { "GameStart", "DayStart", "LocationEvent", "ScheduledEvent" };
+                    return new[] { "Intro", "DayStart", "Location", "Date", "Quest", "Weather", "Season", "Scheduled" };
                 case ConversationDataKind.ActionReactions:
                     return new[] { "Tea", "Rest", "Walk", "Gift", "Talk" };
                 case ConversationDataKind.Endings:
@@ -3975,7 +4125,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             switch (kind)
             {
                 case ConversationDataKind.GameEvents:
-                    return "GameStart";
+                    return "Intro";
                 case ConversationDataKind.ActionReactions:
                     return "Action";
                 case ConversationDataKind.Endings:
