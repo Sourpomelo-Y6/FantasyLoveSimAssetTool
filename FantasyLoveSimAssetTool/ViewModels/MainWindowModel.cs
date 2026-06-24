@@ -3843,6 +3843,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 entry.Conditions ??= new ConversationCondition();
                 entry.Lines ??= new ObservableCollection<ConversationLine>();
+                entry.ValidationWarningText = BuildConversationWarningText(entry);
                 if (MatchesConversationCategoryFilter(entry)
                     && MatchesConversationImageFilter(entry)
                     && MatchesConversationWarningFilter(entry)
@@ -3883,7 +3884,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private bool MatchesConversationWarningFilter(ConversationEntry entry)
         {
-            return !ShowOnlyConversationWarnings || HasConversationWarning(entry);
+            return !ShowOnlyConversationWarnings || !string.IsNullOrWhiteSpace(entry.ValidationWarningText);
         }
 
         private bool MatchesConversationSearch(ConversationEntry entry)
@@ -3928,47 +3929,115 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 && value.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
-        private bool HasConversationWarning(ConversationEntry entry)
+        private string BuildConversationWarningText(ConversationEntry entry)
         {
-            if (string.IsNullOrWhiteSpace(entry.Id)
-                || string.IsNullOrWhiteSpace(entry.Category)
-                || HasDuplicateConversationId(entry)
-                || entry.Priority < 0)
+            return string.Join(" / ", BuildConversationWarningMessages(entry));
+        }
+
+        private IReadOnlyList<string> BuildConversationWarningMessages(ConversationEntry entry)
+        {
+            List<string> warnings = new List<string>();
+            if (entry == null)
             {
-                return true;
+                warnings.Add("データが空です");
+                return warnings;
             }
 
-            if (entry.Conditions != null)
+            if (string.IsNullOrWhiteSpace(entry.Id))
             {
-                if (entry.Conditions.MinAffection > entry.Conditions.MaxAffection
-                    || IsUnexpectedConversationValue(entry.Conditions.LocationId, ConversationValueCatalog.Locations)
-                    || IsUnexpectedConversationValue(entry.Conditions.ActionId, ConversationValueCatalog.Actions)
-                    || IsUnexpectedConversationValue(entry.Conditions.Weather, ConversationValueCatalog.Weather)
-                    || IsUnexpectedConversationValue(entry.Conditions.Season, ConversationValueCatalog.Seasons)
-                    || IsUnexpectedConversationValue(entry.Conditions.TimeOfDay, ConversationValueCatalog.TimeOfDay))
+                warnings.Add("Id 空欄");
+            }
+
+            if (string.IsNullOrWhiteSpace(entry.Title))
+            {
+                warnings.Add("タイトル空欄");
+            }
+
+            if (string.IsNullOrWhiteSpace(entry.Category))
+            {
+                warnings.Add("カテゴリ空欄");
+            }
+
+            if (HasDuplicateConversationId(entry))
+            {
+                warnings.Add("Id 重複");
+            }
+
+            if (entry.Priority < 0)
+            {
+                warnings.Add("優先度が 0 未満");
+            }
+
+            ConversationCondition conditions = entry.Conditions;
+            if (conditions != null)
+            {
+                if (conditions.MinAffection > conditions.MaxAffection)
                 {
-                    return true;
+                    warnings.Add("好感度範囲が不正");
                 }
+
+                if (entry.Kind == ConversationDataKind.GameEvents
+                    && conditions.Once
+                    && string.IsNullOrWhiteSpace(conditions.RequiredFlagIdsText))
+                {
+                    warnings.Add("一度だけイベントの必要フラグ空欄");
+                }
+
+                AddUnexpectedValueWarning(warnings, "場所", conditions.LocationId, ConversationValueCatalog.Locations);
+                AddUnexpectedValueWarning(warnings, "行動", conditions.ActionId, ConversationValueCatalog.Actions);
+                AddUnexpectedValueWarning(warnings, "天候", conditions.Weather, ConversationValueCatalog.Weather);
+                AddUnexpectedValueWarning(warnings, "季節", conditions.Season, ConversationValueCatalog.Seasons);
+                AddUnexpectedValueWarning(warnings, "時間", conditions.TimeOfDay, ConversationValueCatalog.TimeOfDay);
             }
 
             ObservableCollection<ConversationLine> lines = entry.Lines ?? new ObservableCollection<ConversationLine>();
             if (lines.Count == 0)
             {
-                return true;
+                warnings.Add("台詞行なし");
             }
 
-            if (lines.Any(line => string.IsNullOrWhiteSpace(line.Speaker)
-                || string.IsNullOrWhiteSpace(line.Text)
-                || IsUnexpectedConversationValue(line.Expression, ConversationValueCatalog.Expressions)))
+            for (int index = 0; index < lines.Count; index++)
             {
-                return true;
+                ConversationLine line = lines[index];
+                if (line == null)
+                {
+                    warnings.Add($"{index + 1} 行目が空");
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(line.Speaker))
+                {
+                    warnings.Add($"{index + 1} 行目 話者空欄");
+                }
+
+                if (string.IsNullOrWhiteSpace(line.Text))
+                {
+                    warnings.Add($"{index + 1} 行目 本文空欄");
+                }
+
+                AddUnexpectedValueWarning(warnings, $"{index + 1} 行目 表情", line.Expression, ConversationValueCatalog.Expressions);
             }
 
             HashSet<string> acceptedAssetIds = new HashSet<string>(
                 AcceptedAssets.Select(asset => asset.AssetId).Where(assetId => !string.IsNullOrWhiteSpace(assetId)),
                 StringComparer.OrdinalIgnoreCase);
-            return SplitConversationList(entry.ImageAssetIdsText)
-                .Any(assetId => !acceptedAssetIds.Contains(assetId));
+            foreach (string assetId in SplitConversationList(entry.ImageAssetIdsText))
+            {
+                if (!acceptedAssetIds.Contains(assetId))
+                {
+                    warnings.Add($"画像未Accepted: {assetId}");
+                }
+            }
+
+            return warnings;
+        }
+
+        private static void AddUnexpectedValueWarning(List<string> warnings, string label, string value, string[] allowedValues)
+        {
+            if (IsUnexpectedConversationValue(value, allowedValues))
+            {
+                warnings.Add($"{label}候補外: {value}");
+            }
         }
 
         private bool HasDuplicateConversationId(ConversationEntry entry)

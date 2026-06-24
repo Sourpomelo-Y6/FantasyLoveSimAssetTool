@@ -34,6 +34,9 @@ namespace FantasyLoveSimAssetTool.Models
             }
         }
 
+        [JsonIgnore]
+        public string ValidationWarningText { get; set; }
+
         public ConversationEntry()
         {
             Id = string.Empty;
@@ -44,6 +47,7 @@ namespace FantasyLoveSimAssetTool.Models
             ImageAssetIdsText = string.Empty;
             Priority = 100;
             Memo = string.Empty;
+            ValidationWarningText = string.Empty;
         }
     }
 }

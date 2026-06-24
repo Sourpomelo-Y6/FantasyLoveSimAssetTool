@@ -296,6 +296,7 @@
                                             <DataGridTextColumn Header="タイトル" Binding="{Binding Title}" Width="180"/>
                                             <DataGridTextColumn Header="カテゴリ" Binding="{Binding Category}" Width="120"/>
                                             <DataGridTextColumn Header="優先度" Binding="{Binding Priority}" Width="70"/>
+                                            <DataGridTextColumn Header="警告" Binding="{Binding ValidationWarningText}" Width="180" IsReadOnly="True"/>
                                             <DataGridTextColumn Header="先頭行" Binding="{Binding FirstLinePreview}" Width="*" IsReadOnly="True"/>
                                         </DataGrid.Columns>
                                     </DataGrid>

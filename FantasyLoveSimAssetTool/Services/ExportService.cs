@@ -590,6 +590,11 @@ namespace FantasyLoveSimAssetTool.Services
                 report.Warnings.Add($"{label}: id が空です。");
             }
 
+            if (string.IsNullOrWhiteSpace(entry.Title))
+            {
+                report.Warnings.Add($"{label}: title が空です。");
+            }
+
             if (string.IsNullOrWhiteSpace(entry.Category))
             {
                 report.Warnings.Add($"{label}: category が空です。");
@@ -607,6 +612,13 @@ namespace FantasyLoveSimAssetTool.Services
 
             if (entry.Conditions != null)
             {
+                if (entry.Kind == ConversationDataKind.GameEvents
+                    && entry.Conditions.Once
+                    && string.IsNullOrWhiteSpace(entry.Conditions.RequiredFlagIdsText))
+                {
+                    report.Warnings.Add($"{label}: once が true のイベントは requiredFlagIds を指定してください。");
+                }
+
                 ValidateCatalogValue(label, "locationId", entry.Conditions.LocationId, ConversationValueCatalog.Locations, report);
                 ValidateCatalogValue(label, "actionId", entry.Conditions.ActionId, ConversationValueCatalog.Actions, report);
                 ValidateCatalogValue(label, "weather", entry.Conditions.Weather, ConversationValueCatalog.Weather, report);
