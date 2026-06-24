@@ -380,6 +380,7 @@
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
 
                                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Id" VerticalAlignment="Center" Margin="0,0,8,8"/>
@@ -534,8 +535,35 @@
                                             </DataGrid.Columns>
                                         </DataGrid>
 
-                                        <TextBlock Grid.Row="12" Grid.Column="0" Text="メモ" VerticalAlignment="Top" Margin="0,4,8,8"/>
-                                        <TextBox Grid.Row="12"
+                                        <Grid Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="100"/>
+                                                <ColumnDefinition Width="100"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="選択肢" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <Button Grid.Column="1" Content="選択肢追加" Command="{Binding AddConversationChoiceCommand}" Height="26" Margin="0,0,8,0"/>
+                                            <Button Grid.Column="2" Content="選択肢削除" Command="{Binding RemoveConversationChoiceCommand}" Height="26"/>
+                                        </Grid>
+
+                                        <DataGrid Grid.Row="13"
+                                                  Grid.Column="0"
+                                                  Grid.ColumnSpan="2"
+                                                  ItemsSource="{Binding SelectedConversationEntry.Choices}"
+                                                  SelectedItem="{Binding SelectedConversationChoice}"
+                                                  AutoGenerateColumns="False"
+                                                  CanUserAddRows="False"
+                                                  MinHeight="120"
+                                                  Margin="0,0,0,8">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="選択肢" Binding="{Binding ChoiceText}" Width="2*"/>
+                                                <DataGridTextColumn Header="返答" Binding="{Binding ResponseText}" Width="3*"/>
+                                                <DataGridTextColumn Header="好感度" Binding="{Binding AffectionChange}" Width="80"/>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+
+                                        <TextBlock Grid.Row="14" Grid.Column="0" Text="メモ" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                        <TextBox Grid.Row="14"
                                                  Grid.Column="1"
                                                  Text="{Binding SelectedConversationEntry.Memo, UpdateSourceTrigger=PropertyChanged}"
                                                  AcceptsReturn="True"

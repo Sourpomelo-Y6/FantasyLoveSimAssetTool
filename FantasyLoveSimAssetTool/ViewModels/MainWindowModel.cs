@@ -44,6 +44,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private ConversationDataKind selectedConversationDataKind;
         private ConversationEntry selectedConversationEntry;
         private ConversationLine selectedConversationLine;
+        private ConversationChoice selectedConversationChoice;
         private string conversationSearchText;
         private string selectedConversationCategoryFilter;
         private string selectedConversationImageFilter;
@@ -387,6 +388,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 SelectedConversationLine = selectedConversationEntry == null || selectedConversationEntry.Lines == null
                     ? null
                     : selectedConversationEntry.Lines.FirstOrDefault();
+                SelectedConversationChoice = selectedConversationEntry == null || selectedConversationEntry.Choices == null
+                    ? null
+                    : selectedConversationEntry.Choices.FirstOrDefault();
                 OnPropertyChanged(nameof(SelectedConversationEntry));
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -556,6 +560,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedConversationLine == value) { return; }
                 selectedConversationLine = value;
                 OnPropertyChanged(nameof(SelectedConversationLine));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public ConversationChoice SelectedConversationChoice
+        {
+            get { return selectedConversationChoice; }
+            set
+            {
+                if (selectedConversationChoice == value) { return; }
+                selectedConversationChoice = value;
+                OnPropertyChanged(nameof(SelectedConversationChoice));
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -1115,6 +1131,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand RemoveConversationLineCommand { get; }
 
+        public ICommand AddConversationChoiceCommand { get; }
+
+        public ICommand RemoveConversationChoiceCommand { get; }
+
         public ICommand SaveConversationDataCommand { get; }
 
         public ICommand ImportActionsFromUnityCommand { get; }
@@ -1258,6 +1278,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             selectedConversationDataKind = ConversationDataKind.Conversations;
             selectedConversationEntry = null;
             selectedConversationLine = null;
+            selectedConversationChoice = null;
             conversationSearchText = string.Empty;
             gameEventTestLocationId = string.Empty;
             gameEventTestAffection = string.Empty;
@@ -1387,6 +1408,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RemoveConversationLineCommand = new RelayCommand(
                 RemoveConversationLine,
                 () => SelectedConversationEntry != null && SelectedConversationLine != null);
+            AddConversationChoiceCommand = new RelayCommand(
+                AddConversationChoice,
+                () => SelectedConversationEntry != null);
+            RemoveConversationChoiceCommand = new RelayCommand(
+                RemoveConversationChoice,
+                () => SelectedConversationEntry != null && SelectedConversationChoice != null);
             SaveConversationDataCommand = new RelayCommand(
                 SaveConversationData,
                 () => SelectedProfile != null);
@@ -3717,6 +3744,35 @@ namespace FantasyLoveSimAssetTool.ViewModels
             StatusMessage = "台詞行を削除しました。保存すると profile.json に反映されます。";
         }
 
+        private void AddConversationChoice()
+        {
+            if (SelectedConversationEntry == null)
+            {
+                return;
+            }
+
+            SelectedConversationEntry.Choices ??= new ObservableCollection<ConversationChoice>();
+            ConversationChoice choice = new ConversationChoice();
+            SelectedConversationEntry.Choices.Add(choice);
+            SelectedConversationChoice = choice;
+            OnPropertyChanged(nameof(SelectedConversationEntry));
+            StatusMessage = "選択肢を追加しました。";
+        }
+
+        private void RemoveConversationChoice()
+        {
+            if (SelectedConversationEntry == null || SelectedConversationChoice == null)
+            {
+                return;
+            }
+
+            ConversationChoice choice = SelectedConversationChoice;
+            SelectedConversationEntry.Choices.Remove(choice);
+            SelectedConversationChoice = SelectedConversationEntry.Choices.FirstOrDefault();
+            OnPropertyChanged(nameof(SelectedConversationEntry));
+            StatusMessage = "選択肢を削除しました。保存すると profile.json に反映されます。";
+        }
+
         private void SaveConversationData()
         {
             if (SelectedProfile == null)
@@ -4043,6 +4099,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             };
 
             ApplyFromUnityConversationCondition(entry.Conditions, item.Conditions);
+            ApplyFromUnityConversationChoices(entry.Choices, item.SourceMetadata?.Choices);
 
             entry.Lines.Clear();
             foreach (FromUnityConversationLine line in item.Lines ?? new List<FromUnityConversationLine>())
@@ -4103,6 +4160,32 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             return string.Join(Environment.NewLine, parts);
+        }
+
+        private static void ApplyFromUnityConversationChoices(
+            ObservableCollection<ConversationChoice> target,
+            IEnumerable<FromUnityConversationChoice> source)
+        {
+            if (target == null || source == null)
+            {
+                return;
+            }
+
+            target.Clear();
+            foreach (FromUnityConversationChoice choice in source)
+            {
+                if (choice == null)
+                {
+                    continue;
+                }
+
+                target.Add(new ConversationChoice
+                {
+                    ChoiceText = choice.ChoiceText ?? string.Empty,
+                    ResponseText = choice.ResponseText ?? string.Empty,
+                    AffectionChange = choice.AffectionChange
+                });
+            }
         }
 
         private void ImportGameEventsFromUnity()
@@ -4214,6 +4297,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             };
 
             ApplyFromUnityGameEventCondition(entry.Conditions, item.Conditions);
+            ApplyFromUnityGameEventChoices(entry.Choices, item.SourceMetadata?.Choices);
 
             entry.Lines.Clear();
             foreach (FromUnityGameEventLine line in item.Lines ?? new List<FromUnityGameEventLine>())
@@ -4274,6 +4358,32 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             return string.Join(Environment.NewLine, parts);
+        }
+
+        private static void ApplyFromUnityGameEventChoices(
+            ObservableCollection<ConversationChoice> target,
+            IEnumerable<FromUnityGameEventChoice> source)
+        {
+            if (target == null || source == null)
+            {
+                return;
+            }
+
+            target.Clear();
+            foreach (FromUnityGameEventChoice choice in source)
+            {
+                if (choice == null)
+                {
+                    continue;
+                }
+
+                target.Add(new ConversationChoice
+                {
+                    ChoiceText = choice.ChoiceText ?? string.Empty,
+                    ResponseText = choice.ResponseText ?? string.Empty,
+                    AffectionChange = choice.AffectionChange
+                });
+            }
         }
 
         private void ApplyConversationCategorySuggestion()
@@ -4652,7 +4762,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 || (entry.Lines ?? new ObservableCollection<ConversationLine>())
                     .Any(line => ContainsSearchText(line.Speaker, query)
                         || ContainsSearchText(line.Text, query)
-                        || ContainsSearchText(line.Expression, query));
+                        || ContainsSearchText(line.Expression, query))
+                || (entry.Choices ?? new ObservableCollection<ConversationChoice>())
+                    .Any(choice => ContainsSearchText(choice.ChoiceText, query)
+                        || ContainsSearchText(choice.ResponseText, query)
+                        || ContainsSearchText(choice.AffectionChange.ToString(), query));
         }
 
         private static bool MatchesConversationConditionSearch(ConversationCondition condition, string query)
@@ -4774,6 +4888,27 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (!acceptedAssetIds.Contains(assetId))
                 {
                     warnings.Add($"画像未Accepted: {assetId}");
+                }
+            }
+
+            ObservableCollection<ConversationChoice> choices = entry.Choices ?? new ObservableCollection<ConversationChoice>();
+            for (int index = 0; index < choices.Count; index++)
+            {
+                ConversationChoice choice = choices[index];
+                if (choice == null)
+                {
+                    warnings.Add($"{index + 1} 番目の選択肢が空");
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(choice.ChoiceText))
+                {
+                    warnings.Add($"{index + 1} 番目の選択肢本文空欄");
+                }
+
+                if (string.IsNullOrWhiteSpace(choice.ResponseText))
+                {
+                    warnings.Add($"{index + 1} 番目の選択後返答空欄");
                 }
             }
 

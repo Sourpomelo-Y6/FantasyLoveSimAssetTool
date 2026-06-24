@@ -655,6 +655,21 @@ namespace FantasyLoveSimAssetTool.Services
                     report.Warnings.Add($"{label}: imageAssetId `{assetId}` は Accepted 画像に存在しません。");
                 }
             }
+
+            IReadOnlyList<ConversationChoice> choices = (entry.Choices ?? new System.Collections.ObjectModel.ObservableCollection<ConversationChoice>()).ToList();
+            for (int index = 0; index < choices.Count; index++)
+            {
+                ConversationChoice choice = choices[index];
+                if (string.IsNullOrWhiteSpace(choice.ChoiceText))
+                {
+                    report.Warnings.Add($"{label}: {index + 1} 番目の choiceText が空です。");
+                }
+
+                if (string.IsNullOrWhiteSpace(choice.ResponseText))
+                {
+                    report.Warnings.Add($"{label}: {index + 1} 番目の responseText が空です。");
+                }
+            }
         }
 
         private static void ValidateCatalogValue(string label, string fieldName, string value, IReadOnlyCollection<string> allowedValues, ExportReport report)
@@ -726,6 +741,13 @@ namespace FantasyLoveSimAssetTool.Services
                             speaker = line.Speaker,
                             text = line.Text,
                             expression = line.Expression
+                        }).ToList(),
+                    choices = (entry.Choices ?? new System.Collections.ObjectModel.ObservableCollection<ConversationChoice>())
+                        .Select(choice => new
+                        {
+                            choiceText = choice.ChoiceText,
+                            responseText = choice.ResponseText,
+                            affectionChange = choice.AffectionChange ?? 0
                         }).ToList(),
                     imageAssetIds = SplitList(entry.ImageAssetIdsText),
                     priority = entry.Priority,

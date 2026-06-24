@@ -18,6 +18,8 @@ namespace FantasyLoveSimAssetTool.Models
 
         public ObservableCollection<ConversationLine> Lines { get; set; }
 
+        public ObservableCollection<ConversationChoice> Choices { get; set; }
+
         public string ImageAssetIdsText { get; set; }
 
         public int Priority { get; set; }
@@ -47,6 +49,7 @@ namespace FantasyLoveSimAssetTool.Models
             Category = string.Empty;
             Conditions = new ConversationCondition();
             Lines = new ObservableCollection<ConversationLine>();
+            Choices = new ObservableCollection<ConversationChoice>();
             ImageAssetIdsText = string.Empty;
             Priority = 100;
             Memo = string.Empty;

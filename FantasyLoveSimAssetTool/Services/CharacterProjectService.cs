@@ -281,6 +281,7 @@ namespace FantasyLoveSimAssetTool.Services
                 entry.Category ??= string.Empty;
                 entry.Conditions ??= new ConversationCondition();
                 entry.Lines ??= new ObservableCollection<ConversationLine>();
+                entry.Choices ??= new ObservableCollection<ConversationChoice>();
                 entry.ImageAssetIdsText ??= string.Empty;
                 entry.Memo ??= string.Empty;
                 entry.Conditions.LocationId ??= string.Empty;
@@ -296,6 +297,12 @@ namespace FantasyLoveSimAssetTool.Services
                     line.Speaker ??= string.Empty;
                     line.Text ??= string.Empty;
                     line.Expression ??= string.Empty;
+                }
+
+                foreach (ConversationChoice choice in entry.Choices)
+                {
+                    choice.ChoiceText ??= string.Empty;
+                    choice.ResponseText ??= string.Empty;
                 }
             }
         }

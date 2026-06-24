@@ -157,6 +157,8 @@ Unity Editor 拡張側で型付き ScriptableObject を読むため、WPF Tool �
 同じ `Id` の通常会話が既に存在する場合は上書きせずスキップする。
 `Unity Event読込` から `game_events_from_unity.json` を選んだ場合は、`GameEvents` の `ConversationEntry` として新規追加する。
 同じ `Id` のイベントが既に存在する場合は上書きせずスキップする。
+Unity 側 exporter が `sourceMetadata.choices` に退避した選択肢は、WPF 側の `Choices` に取り込む。
+保持する項目は `choiceText`、`responseText`、`affectionChange` とする。
 差分表示、既存データの選択更新、削除同期はまだ行わない。
 
 ## Merge 方針

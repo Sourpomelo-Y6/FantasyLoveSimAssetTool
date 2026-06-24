@@ -29,6 +29,8 @@ namespace FantasyLoveSimAssetTool.Models
 
         public List<string> ImageAssetIds { get; set; }
 
+        public FromUnityGameEventSourceMetadata SourceMetadata { get; set; }
+
         public int Priority { get; set; }
 
         public string Memo { get; set; }
@@ -64,5 +66,19 @@ namespace FantasyLoveSimAssetTool.Models
         public string Text { get; set; }
 
         public string Expression { get; set; }
+    }
+
+    public class FromUnityGameEventSourceMetadata
+    {
+        public List<FromUnityGameEventChoice> Choices { get; set; }
+    }
+
+    public class FromUnityGameEventChoice
+    {
+        public string ChoiceText { get; set; }
+
+        public string ResponseText { get; set; }
+
+        public int AffectionChange { get; set; }
     }
 }
