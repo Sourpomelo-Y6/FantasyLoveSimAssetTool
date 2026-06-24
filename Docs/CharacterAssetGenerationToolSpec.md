@@ -109,7 +109,9 @@ Heroine_Summer.png
 Heroine_Autumn.png
 Heroine_Winter.png
 Heroine_Dress.png
-Heroine_NightDress.png
+Heroine_Adventure.png
+Heroine_Town.png
+Heroine_Room.png
 Heroine_Raincoat.png
 ```
 
@@ -352,7 +354,9 @@ ComfyUI で生成した画像については、採用時に次を `PromptRecord`
 - `Heroine_Autumn`
 - `Heroine_Winter`
 - `Heroine_Dress`
-- `Heroine_NightDress`
+- `Heroine_Adventure`
+- `Heroine_Town`
+- `Heroine_Room`
 - `Heroine_Raincoat`
 - `GameStartIntro_01`
 - `DayStart_Routine_01`

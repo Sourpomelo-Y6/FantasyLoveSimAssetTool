@@ -28,6 +28,78 @@
       "prompt": "summer outfit layer only, transparent background, aligned to base body"
     },
     {
+      "assetId": "Costume_Spring",
+      "layerKind": "Costume",
+      "costumeId": "Spring",
+      "displayName": "レイヤー: 春服",
+      "fileName": "Costume_Spring.png",
+      "drawOrder": 10,
+      "prompt": "spring outfit layer only, transparent background, aligned to base body"
+    },
+    {
+      "assetId": "Costume_Autumn",
+      "layerKind": "Costume",
+      "costumeId": "Autumn",
+      "displayName": "レイヤー: 秋服",
+      "fileName": "Costume_Autumn.png",
+      "drawOrder": 10,
+      "prompt": "autumn outfit layer only, transparent background, aligned to base body"
+    },
+    {
+      "assetId": "Costume_Winter",
+      "layerKind": "Costume",
+      "costumeId": "Winter",
+      "displayName": "レイヤー: 冬服",
+      "fileName": "Costume_Winter.png",
+      "drawOrder": 10,
+      "prompt": "winter outfit layer only, transparent background, aligned to base body"
+    },
+    {
+      "assetId": "Costume_Raincoat",
+      "layerKind": "Costume",
+      "costumeId": "Raincoat",
+      "displayName": "レイヤー: レインコート",
+      "fileName": "Costume_Raincoat.png",
+      "drawOrder": 10,
+      "prompt": "raincoat layer only, transparent background, aligned to base body"
+    },
+    {
+      "assetId": "Costume_Dress",
+      "layerKind": "Costume",
+      "costumeId": "Dress",
+      "displayName": "レイヤー: ドレス",
+      "fileName": "Costume_Dress.png",
+      "drawOrder": 10,
+      "prompt": "dress layer only, transparent background, aligned to base body"
+    },
+    {
+      "assetId": "Costume_Adventure",
+      "layerKind": "Costume",
+      "costumeId": "Adventure",
+      "displayName": "レイヤー: 冒険用衣装",
+      "fileName": "Costume_Adventure.png",
+      "drawOrder": 10,
+      "prompt": "adventure outfit layer only, transparent background, aligned to base body"
+    },
+    {
+      "assetId": "Costume_Town",
+      "layerKind": "Costume",
+      "costumeId": "Town",
+      "displayName": "レイヤー: 街用衣装",
+      "fileName": "Costume_Town.png",
+      "drawOrder": 10,
+      "prompt": "town outfit layer only, transparent background, aligned to base body"
+    },
+    {
+      "assetId": "Costume_Room",
+      "layerKind": "Costume",
+      "costumeId": "Room",
+      "displayName": "レイヤー: 部屋着",
+      "fileName": "Costume_Room.png",
+      "drawOrder": 10,
+      "prompt": "room outfit layer only, transparent background, aligned to base body"
+    },
+    {
       "assetId": "Expression_Neutral",
       "layerKind": "Expression",
       "expressionId": "Neutral",

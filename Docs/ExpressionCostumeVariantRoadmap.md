@@ -225,7 +225,7 @@ Heroine_Summer_Smile.png
 
 ### Phase 3: 衣装マスタを作る
 
-- `Default`, `Spring`, `Summer`, `Autumn`, `Winter`, `Dress`, `NightDress`, `Raincoat` などを衣装マスタへ移す。
+- `Default`, `Spring`, `Summer`, `Autumn`, `Winter`, `Dress`, `Adventure`, `Town`, `Room`, `Raincoat` などを衣装マスタへ移す。
 - 衣装ごとに表示名、prompt、Unity 側 ID を持たせる。
 - 既存の `Heroine_Spring`, `Heroine_Summer` などは、衣装マスタから生成されるスチルとして扱う。
 

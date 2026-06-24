@@ -38,10 +38,22 @@
       "unityCostumeId": "Dress"
     },
     {
-      "costumeId": "NightDress",
-      "displayName": "ナイトドレス",
-      "prompt": "night dress",
-      "unityCostumeId": "NightDress"
+      "costumeId": "Adventure",
+      "displayName": "冒険用衣装",
+      "prompt": "adventure outfit",
+      "unityCostumeId": "Adventure"
+    },
+    {
+      "costumeId": "Town",
+      "displayName": "街用衣装",
+      "prompt": "town outfit",
+      "unityCostumeId": "Town"
+    },
+    {
+      "costumeId": "Room",
+      "displayName": "部屋着",
+      "prompt": "room outfit, relaxed indoor clothes",
+      "unityCostumeId": "Room"
     },
     {
       "costumeId": "Raincoat",

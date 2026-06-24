@@ -34,7 +34,9 @@ namespace FantasyLoveSimAssetTool.Services
                 Create("Heroine_Autumn", "立ち絵: 秋服", AssetUsage.Sprites, "Heroine_Autumn.png", "standing character sprite, full body, autumn outfit, transparent background"),
                 Create("Heroine_Winter", "立ち絵: 冬服", AssetUsage.Sprites, "Heroine_Winter.png", "standing character sprite, full body, winter outfit, transparent background"),
                 Create("Heroine_Dress", "立ち絵: ドレス", AssetUsage.Sprites, "Heroine_Dress.png", "standing character sprite, full body, elegant dress, transparent background"),
-                Create("Heroine_NightDress", "立ち絵: ナイトドレス", AssetUsage.Sprites, "Heroine_NightDress.png", "standing character sprite, full body, night dress, transparent background"),
+                Create("Heroine_Adventure", "立ち絵: 冒険用衣装", AssetUsage.Sprites, "Heroine_Adventure.png", "standing character sprite, full body, adventure outfit, transparent background"),
+                Create("Heroine_Town", "立ち絵: 街用衣装", AssetUsage.Sprites, "Heroine_Town.png", "standing character sprite, full body, town outfit, transparent background"),
+                Create("Heroine_Room", "立ち絵: 部屋着", AssetUsage.Sprites, "Heroine_Room.png", "standing character sprite, full body, room outfit, transparent background"),
                 Create("Heroine_Raincoat", "立ち絵: レインコート", AssetUsage.Sprites, "Heroine_Raincoat.png", "standing character sprite, full body, raincoat, transparent background"),
 
                 Create("GameStartIntro_01", "イベント: 導入", AssetUsage.Event, "GameStartIntro_01.png", "visual novel event still, first meeting scene, warm light, cinematic composition"),
