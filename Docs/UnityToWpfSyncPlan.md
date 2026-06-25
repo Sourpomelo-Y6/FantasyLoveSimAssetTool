@@ -102,6 +102,10 @@ endings_from_unity.json
 
 WPF 側では `ConversationEntries` の `Kind=Endings` へ merge する候補にする。
 Unity 側の `message` だけで戻ってきた場合は、WPF 側では `lines[0].text` として扱う。
+逆取り込みでは `items[].message`、`items[].sourceMetadata.message`、`items[].lines[].text`、`items[].lines[].message` を本文候補として扱う。
+`lines[]` が空、または `lines[]` の本文がすべて空の場合は、`message` を先頭行へ補完する。
+Unity 側 exporter の命名差を吸収するため、配列は `items[]` と `endings[]`、ID は `id` と `endingId`、表示名は `title`、`displayName`、`name`、カテゴリは `category` と `endingType` を受け付ける。
+取り込み後は会話データタブを `Endings` に切り替え、検索、カテゴリ、画像、警告、発火候補フィルタを解除して、追加または既存スキップ対象のエンディングを選択する。
 
 ### 5. HeroineAssetCatalog / HeroineLayeredSpriteData
 

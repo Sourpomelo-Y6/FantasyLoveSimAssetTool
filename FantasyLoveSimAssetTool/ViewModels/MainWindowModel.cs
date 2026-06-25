@@ -4083,12 +4083,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private bool HasExistingConversationEntry(ConversationDataKind kind, string id)
         {
+            return FindConversationEntry(kind, id) != null;
+        }
+
+        private ConversationEntry FindConversationEntry(ConversationDataKind kind, string id)
+        {
             if (SelectedProfile == null || SelectedProfile.ConversationEntries == null || string.IsNullOrWhiteSpace(id))
             {
-                return false;
+                return null;
             }
 
-            return SelectedProfile.ConversationEntries.Any(entry => entry != null
+            return SelectedProfile.ConversationEntries.FirstOrDefault(entry => entry != null
                 && entry.Kind == kind
                 && string.Equals(entry.Id, id, StringComparison.OrdinalIgnoreCase));
         }
@@ -4456,18 +4461,22 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             SelectedProfile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
             List<ConversationEntry> importedEntries = new List<ConversationEntry>();
+            List<ConversationEntry> existingEntries = new List<ConversationEntry>();
             int skippedCount = 0;
 
-            foreach (FromUnityEndingItem item in endingData.Items ?? new List<FromUnityEndingItem>())
+            foreach (FromUnityEndingItem item in GetFromUnityEndingItems(endingData))
             {
-                if (item == null || string.IsNullOrWhiteSpace(item.Id))
+                string endingId = GetFromUnityEndingId(item);
+                if (item == null || string.IsNullOrWhiteSpace(endingId))
                 {
                     skippedCount++;
                     continue;
                 }
 
-                if (HasExistingConversationEntry(ConversationDataKind.Endings, item.Id.Trim()))
+                ConversationEntry existingEntry = FindConversationEntry(ConversationDataKind.Endings, endingId);
+                if (existingEntry != null)
                 {
+                    existingEntries.Add(existingEntry);
                     skippedCount++;
                     continue;
                 }
@@ -4479,11 +4488,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             characterProjectService.SaveProfile(SelectedProfile);
             SelectedConversationDataKind = ConversationDataKind.Endings;
+            ResetConversationListFilters();
             RefreshConversationCategorySuggestions();
             RefreshFilteredConversationEntries();
             if (importedEntries.Count > 0)
             {
                 SelectedConversationEntry = importedEntries[0];
+            }
+            else if (existingEntries.Count > 0)
+            {
+                SelectedConversationEntry = existingEntries[0];
             }
 
             StatusMessage = $"FromUnity endings を取り込みました。追加 {importedEntries.Count} 件、スキップ {skippedCount} 件。";
@@ -4491,13 +4505,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private static ConversationEntry CreateEndingFromUnityEnding(FromUnityEndingItem item)
         {
+            string endingId = GetFromUnityEndingId(item);
+            string endingMessage = GetFromUnityEndingMessage(item);
             ConversationEntry entry = new ConversationEntry
             {
                 Kind = ConversationDataKind.Endings,
-                Id = item.Id.Trim(),
-                Title = string.IsNullOrWhiteSpace(item.Title) ? item.Id.Trim() : item.Title.Trim(),
-                Category = string.IsNullOrWhiteSpace(item.Category) ? "Normal" : item.Category.Trim(),
-                ImageAssetIdsText = JoinImportList(item.ImageAssetIds),
+                Id = endingId,
+                Title = GetFromUnityEndingTitle(item, endingId),
+                Category = GetFromUnityEndingCategory(item),
+                ImageAssetIdsText = JoinImportList(GetFromUnityEndingImageAssetIds(item)),
                 Priority = item.Priority,
                 Memo = BuildFromUnityEndingMemo(item)
             };
@@ -4515,7 +4531,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 entry.Lines.Add(new ConversationLine
                 {
                     Speaker = string.IsNullOrWhiteSpace(line.Speaker) ? "Heroine" : line.Speaker.Trim(),
-                    Text = line.Text ?? string.Empty,
+                    Text = string.IsNullOrWhiteSpace(line.Text) ? line.Message ?? string.Empty : line.Text,
                     Expression = line.Expression ?? string.Empty
                 });
             }
@@ -4525,12 +4541,94 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 entry.Lines.Add(new ConversationLine
                 {
                     Speaker = "Heroine",
-                    Text = item.Message ?? string.Empty,
+                    Text = endingMessage,
                     Expression = string.Empty
                 });
             }
+            else if (!string.IsNullOrWhiteSpace(endingMessage)
+                && entry.Lines.All(line => string.IsNullOrWhiteSpace(line.Text)))
+            {
+                entry.Lines[0].Text = endingMessage;
+            }
 
             return entry;
+        }
+
+        private static IEnumerable<FromUnityEndingItem> GetFromUnityEndingItems(FromUnityEndingDataFile endingData)
+        {
+            if (endingData == null)
+            {
+                return Array.Empty<FromUnityEndingItem>();
+            }
+
+            return endingData.Items ?? endingData.Endings ?? new List<FromUnityEndingItem>();
+        }
+
+        private static string GetFromUnityEndingId(FromUnityEndingItem item)
+        {
+            if (item == null)
+            {
+                return string.Empty;
+            }
+
+            return FirstNonEmpty(item.Id, item.EndingId).Trim();
+        }
+
+        private static string GetFromUnityEndingTitle(FromUnityEndingItem item, string fallbackId)
+        {
+            return FirstNonEmpty(item?.Title, item?.DisplayName, item?.Name, fallbackId).Trim();
+        }
+
+        private static string GetFromUnityEndingCategory(FromUnityEndingItem item)
+        {
+            string category = FirstNonEmpty(item?.Category, item?.EndingType);
+            return string.IsNullOrWhiteSpace(category) ? "Normal" : category.Trim();
+        }
+
+        private static IEnumerable<string> GetFromUnityEndingImageAssetIds(FromUnityEndingItem item)
+        {
+            List<string> values = new List<string>();
+            if (item?.ImageAssetIds != null)
+            {
+                values.AddRange(item.ImageAssetIds);
+            }
+
+            values.Add(item?.StillId);
+            values.Add(item?.StillAssetId);
+            return values;
+        }
+
+        private static string GetFromUnityEndingMessage(FromUnityEndingItem item)
+        {
+            if (item == null)
+            {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.Message))
+            {
+                return item.Message;
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.SourceMetadata?.Message))
+            {
+                return item.SourceMetadata.Message;
+            }
+
+            return string.Empty;
+        }
+
+        private static string FirstNonEmpty(params string[] values)
+        {
+            foreach (string value in values)
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    return value;
+                }
+            }
+
+            return string.Empty;
         }
 
         private static void ApplyFromUnityEndingCondition(
@@ -4925,6 +5023,20 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void ResetConversationListFilters()
+        {
+            conversationSearchText = string.Empty;
+            selectedConversationCategoryFilter = "All";
+            selectedConversationImageFilter = "All";
+            showOnlyConversationWarnings = false;
+            showOnlyMatchingGameEvents = false;
+            OnPropertyChanged(nameof(ConversationSearchText));
+            OnPropertyChanged(nameof(SelectedConversationCategoryFilter));
+            OnPropertyChanged(nameof(SelectedConversationImageFilter));
+            OnPropertyChanged(nameof(ShowOnlyConversationWarnings));
+            OnPropertyChanged(nameof(ShowOnlyMatchingGameEvents));
         }
 
         private bool MatchesConversationCategoryFilter(ConversationEntry entry)
