@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.Json;
 
 namespace FantasyLoveSimAssetTool.Models
 {
@@ -35,6 +36,12 @@ namespace FantasyLoveSimAssetTool.Models
 
         public FromUnityEndingCondition Conditions { get; set; }
 
+        public int RequiredAffection { get; set; }
+
+        public List<string> RequiredShownEventIds { get; set; }
+
+        public List<string> RequiredFlagIds { get; set; }
+
         public List<FromUnityEndingLine> Lines { get; set; }
 
         public string Message { get; set; }
@@ -46,6 +53,10 @@ namespace FantasyLoveSimAssetTool.Models
         public string StillId { get; set; }
 
         public string StillAssetId { get; set; }
+
+        public string StillSpriteName { get; set; }
+
+        public JsonElement StillSprite { get; set; }
 
         public int Priority { get; set; }
 

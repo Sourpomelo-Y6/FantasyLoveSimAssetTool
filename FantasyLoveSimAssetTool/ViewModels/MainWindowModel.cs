@@ -4518,7 +4518,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 Memo = BuildFromUnityEndingMemo(item)
             };
 
-            ApplyFromUnityEndingCondition(entry.Conditions, item.Conditions);
+            ApplyFromUnityEndingCondition(entry.Conditions, item);
 
             entry.Lines.Clear();
             foreach (FromUnityEndingLine line in item.Lines ?? new List<FromUnityEndingLine>())
@@ -4582,7 +4582,28 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private static string GetFromUnityEndingCategory(FromUnityEndingItem item)
         {
             string category = FirstNonEmpty(item?.Category, item?.EndingType);
-            return string.IsNullOrWhiteSpace(category) ? "Normal" : category.Trim();
+            if (!string.IsNullOrWhiteSpace(category))
+            {
+                return category.Trim();
+            }
+
+            string source = FirstNonEmpty(item?.EndingId, item?.Id, item?.DisplayName, item?.Title, item?.Name);
+            if (source.IndexOf("Good", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "Good";
+            }
+
+            if (source.IndexOf("Normal", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "Normal";
+            }
+
+            if (source.IndexOf("Bad", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "Bad";
+            }
+
+            return "Ending";
         }
 
         private static IEnumerable<string> GetFromUnityEndingImageAssetIds(FromUnityEndingItem item)
@@ -4595,7 +4616,35 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             values.Add(item?.StillId);
             values.Add(item?.StillAssetId);
+            values.Add(item?.StillSpriteName);
+            values.Add(GetFromUnityStillSpriteName(item?.StillSprite));
             return values;
+        }
+
+        private static string GetFromUnityStillSpriteName(JsonElement? stillSprite)
+        {
+            if (stillSprite == null || stillSprite.Value.ValueKind == JsonValueKind.Undefined || stillSprite.Value.ValueKind == JsonValueKind.Null)
+            {
+                return string.Empty;
+            }
+
+            JsonElement element = stillSprite.Value;
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                return element.GetString() ?? string.Empty;
+            }
+
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                if (TryGetJsonString(element, "name", out string name)
+                    || TryGetJsonString(element, "assetId", out name)
+                    || TryGetJsonString(element, "spriteName", out name))
+                {
+                    return name;
+                }
+            }
+
+            return string.Empty;
         }
 
         private static string GetFromUnityEndingMessage(FromUnityEndingItem item)
@@ -4631,17 +4680,42 @@ namespace FantasyLoveSimAssetTool.ViewModels
             return string.Empty;
         }
 
+        private static bool TryGetJsonString(JsonElement element, string propertyName, out string value)
+        {
+            foreach (JsonProperty property in element.EnumerateObject())
+            {
+                if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase)
+                    && property.Value.ValueKind == JsonValueKind.String)
+                {
+                    value = property.Value.GetString() ?? string.Empty;
+                    return !string.IsNullOrWhiteSpace(value);
+                }
+            }
+
+            value = string.Empty;
+            return false;
+        }
+
         private static void ApplyFromUnityEndingCondition(
             ConversationCondition target,
-            FromUnityEndingCondition source)
+            FromUnityEndingItem item)
         {
-            if (target == null || source == null)
+            if (target == null || item == null)
             {
                 return;
             }
 
+            FromUnityEndingCondition source = item.Conditions;
+            if (source == null)
+            {
+                target.MinAffection = item.RequiredAffection;
+                target.MaxAffection = 100;
+                target.RequiredFlagIdsText = JoinImportList(GetFromUnityEndingRequiredFlagIds(item));
+                return;
+            }
+
             target.LocationId = source.LocationId ?? string.Empty;
-            target.MinAffection = source.MinAffection;
+            target.MinAffection = source.MinAffection == 0 ? item.RequiredAffection : source.MinAffection;
             target.MaxAffection = source.MaxAffection == 0 ? 100 : source.MaxAffection;
             target.Weather = source.Weather ?? string.Empty;
             target.Season = source.Season ?? string.Empty;
@@ -4649,7 +4723,28 @@ namespace FantasyLoveSimAssetTool.ViewModels
             target.ActionId = source.ActionId ?? string.Empty;
             target.RequiredItemId = source.RequiredItemId ?? string.Empty;
             target.Once = source.Once;
-            target.RequiredFlagIdsText = JoinImportList(source.RequiredFlagIds);
+            target.RequiredFlagIdsText = JoinImportList(GetFromUnityEndingRequiredFlagIds(item));
+        }
+
+        private static IEnumerable<string> GetFromUnityEndingRequiredFlagIds(FromUnityEndingItem item)
+        {
+            List<string> values = new List<string>();
+            if (item?.Conditions?.RequiredFlagIds != null)
+            {
+                values.AddRange(item.Conditions.RequiredFlagIds);
+            }
+
+            if (item?.RequiredFlagIds != null)
+            {
+                values.AddRange(item.RequiredFlagIds);
+            }
+
+            if (item?.RequiredShownEventIds != null)
+            {
+                values.AddRange(item.RequiredShownEventIds);
+            }
+
+            return values;
         }
 
         private static string BuildFromUnityEndingMemo(FromUnityEndingItem item)

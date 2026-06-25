@@ -65,7 +65,7 @@ Unity 側では、会話は JSON ファイルごとに1つの ScriptableObject `
 | --- | --- | --- |
 | `conversations_export.json` | `ConversationData` | `Assets/Resources/Heroines/<HeroineId>/Conversations.asset` |
 | `game_events_export.json` | `GameEventData` | `Assets/Resources/Heroines/<HeroineId>/GameEvents/<EventId>.asset` |
-| `scheduled_events_export.json` | `ScheduledEventData` | `Assets/Resources/ScheduledEvents/<ScheduledEvent>.asset` |
+| `scheduled_events_export.json` | `ScheduledEventData` | `Assets/Resources/Heroines/<HeroineId>/ScheduledEvents/<ScheduledEvent>.asset` |
 | `action_reactions_export.json` | `ActionData.reactions` | `Assets/Resources/Heroines/<HeroineId>/Actions/<Action>.asset` |
 | `endings_export.json` | `EndingData` | `Assets/Resources/Heroines/<HeroineId>/Endings/<EndingId>.asset` |
 
@@ -194,7 +194,8 @@ Unity 側の対応先は `GameEventData` を想定する。
 
 翌日予定として発生する外出、デート、家で過ごす予定を扱う。
 通常行動の `Walk` や `ActionReactionData` とは別系統で、Unity 側の対応先は `ScheduledEventData` とする。
-保存先はヒロイン別ではなく、現行ランタイムが読む `Assets/Resources/ScheduledEvents/`。
+保存先は `Assets/Resources/Heroines/<HeroineId>/ScheduledEvents/`。
+実行時は `HeroineProfileData.scheduledEventResourcePath` を優先して読み、該当 `ScheduleType` がない場合だけ共通 `Assets/Resources/ScheduledEvents/` をフォールバックとして使う。
 
 ```json
 {
@@ -332,7 +333,6 @@ Export 時は `ConversationEntries` を種別ごとに分け、`conversations_ex
 
 - `Conversations`
 - `GameEvents`
-- `ScheduledEvents`
 - `ActionReactions`
 - `Endings`
 
@@ -349,15 +349,11 @@ Export 時は `ConversationEntries` を種別ごとに分け、`conversations_ex
 - `memo`
 - カテゴリ、条件、表情、画像 AssetId の候補反映
 - 種別とカテゴリに基づく ID 自動生成
-- `ScheduledEvents` では、カテゴリに基づく予定イベント雛形を反映できる
 
 複雑なノード分岐、条件付き選択肢、演出命令、音声参照は後回しにする。
 現時点の選択肢は Unity 側の `ConversationChoice` に合わせ、`choiceText`、`responseText`、`affectionChange` の単純な分岐だけを扱う。
 Unity importer は `choices[]` を `ConversationDataItem.choices` に復元し、選択肢が 1 件以上ある場合は `ConversationType.Choice` にする。
 Unity 側の現行 UI は選択肢 3 件までのため、4 件以上ある場合は warning を出す。
-
-`ScheduledEvents` の雛形は、カテゴリを `scheduleType` として扱い、`actionId`、`triggerTimeSlot`、準備文、実行本文を初期入力する。
-例: `SoloForest` は `actionId=AutoWalkForest`、`triggerTimeSlot=Noon`、`lines[0]` に準備文、`lines[1]` に実行本文を入れる。
 
 ## Unity Import 対応
 

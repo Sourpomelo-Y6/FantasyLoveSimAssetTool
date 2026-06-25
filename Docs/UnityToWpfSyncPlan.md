@@ -39,6 +39,8 @@ UnityImport/
       actions_from_unity.json
       conversations_from_unity.json
       game_events_from_unity.json
+      scheduled_events_from_unity.json
+      endings_from_unity.json
       sprite_links_from_unity.json
       export_report.json
 ```
@@ -90,24 +92,7 @@ game_events_from_unity.json
 WPF 側では `ConversationEntries` の `Kind=GameEvents` へ merge する候補にする。
 `category` と `conditions` は `Docs/GameEventDataGuide.md` の運用へ寄せる。
 
-### 4. EndingData
-
-Unity 側で Good、Normal、Bad などのエンディング本文やスチル ID を修正した場合の救済用。
-
-出力:
-
-```text
-endings_from_unity.json
-```
-
-WPF 側では `ConversationEntries` の `Kind=Endings` へ merge する候補にする。
-Unity 側の `message` だけで戻ってきた場合は、WPF 側では `lines[0].text` として扱う。
-逆取り込みでは `items[].message`、`items[].sourceMetadata.message`、`items[].lines[].text`、`items[].lines[].message` を本文候補として扱う。
-`lines[]` が空、または `lines[]` の本文がすべて空の場合は、`message` を先頭行へ補完する。
-Unity 側 exporter の命名差を吸収するため、配列は `items[]` と `endings[]`、ID は `id` と `endingId`、表示名は `title`、`displayName`、`name`、カテゴリは `category` と `endingType` を受け付ける。
-取り込み後は会話データタブを `Endings` に切り替え、検索、カテゴリ、画像、警告、発火候補フィルタを解除して、追加または既存スキップ対象のエンディングを選択する。
-
-### 5. HeroineAssetCatalog / HeroineLayeredSpriteData
+### 4. HeroineAssetCatalog / HeroineLayeredSpriteData
 
 画像実体を戻すのではなく、ID 対応を戻す用途に限定する。
 
@@ -130,6 +115,35 @@ Unity 側 exporter の命名差を吸収するため、配列は `items[]` と `
 
 画像本体は WPF Tool の生成物、Export、または手元の素材フォルダを正とする。
 
+### 5. EndingData
+
+Unity 側でエンディング本文、条件、スチル参照を手修正した場合の救済用。
+
+出力:
+
+```text
+endings_from_unity.json
+```
+
+`HeroineProfileData.endingResourcePath` から `EndingData` を読み、`endingId`、`displayName`、`message`、`stillSprite`、`requiredAffection`、`requiredShownEventIds` を戻す。
+Tool 側の `endings_export.json` と合わせるため、`category`、`conditions.minAffection`、`conditions.requiredFlagIds`、`priority` も出力する。
+`category` は `endingId` / `displayName` に `Good`、`Normal`、`Bad` が含まれる場合はそれを使い、それ以外は `Ending` とする。
+`EndingData` には `stillId` がないため、`imageAssetIds` には `stillSprite.name` を入れる。
+画像ファイル本体や Unity の GUID / fileID は戻さない。
+
+### 6. ScheduledEventData
+
+Unity 側でヒロイン別の翌日予定、お出かけ、デート本文を手修正した場合の救済用。
+
+出力:
+
+```text
+scheduled_events_from_unity.json
+```
+
+`HeroineProfileData.scheduledEventResourcePath` から `ScheduledEventData` を読み、`scheduleType`、`actionId`、`triggerTimeSlot`、`outfitPromptMode`、`eventSpeakerType`、`preparationMessage`、`eventMessage`、`stillId`、`affectionChange` を戻す。
+共通フォールバックの `Assets/Resources/ScheduledEvents/` は、ヒロイン固有データと混ざらないよう逆 export 対象にしない。
+
 ## Unity Editor 拡張案
 
 メニュー:
@@ -142,7 +156,7 @@ Tools/FantasyLoveSim/Export Heroine Unity Data...
 
 1. `HeroineProfileData` または HeroineId を選ぶ。
 2. `Assets/Resources/Heroines/<HeroineId>/` を基準に関連 ScriptableObject を探す。
-3. `ActionData`、`ConversationData`、`GameEventData`、`HeroineAssetCatalog`、`HeroineLayeredSpriteData` を読む。
+3. `ActionData`、`ConversationData`、`GameEventData`、`ScheduledEventData`、`EndingData`、`HeroineAssetCatalog`、`HeroineLayeredSpriteData` を読む。
 4. FromUnity JSON DTO へ変換する。
 5. `UnityImport/FromUnity/<HeroineId>/` へ JSON を出す。
 6. 件数と warning を `export_report.json` と Console に出す。
@@ -174,10 +188,15 @@ Unity Editor 拡張側で型付き ScriptableObject を読むため、WPF Tool �
 同じ `Id` の通常会話が既に存在する場合は上書きせずスキップする。
 `Unity Event読込` から `game_events_from_unity.json` を選んだ場合は、`GameEvents` の `ConversationEntry` として新規追加する。
 同じ `Id` のイベントが既に存在する場合は上書きせずスキップする。
-`Unity Ending読込` から `endings_from_unity.json` を選んだ場合は、`Endings` の `ConversationEntry` として新規追加する。
-同じ `Id` のエンディングが既に存在する場合は上書きせずスキップする。
 Unity 側 exporter が `sourceMetadata.choices` に退避した選択肢は、WPF 側の `Choices` に取り込む。
 保持する項目は `choiceText`、`responseText`、`affectionChange` とする。
+`Unity Ending読込` から `endings_from_unity.json` を選んだ場合は、`Endings` の `ConversationEntry` として新規追加する想定にする。
+同じ `Id` のエンディングが既に存在する場合は上書きせずスキップする。
+Unity 側 `EndingData` 由来の `endingId`、`displayName`、`message`、`stillSprite`、`requiredAffection`、`requiredShownEventIds` も受け付ける。
+`endingId` は WPF 側 `id`、`displayName` は `title`、`message` は `lines[0].text`、`stillSprite.name` は `imageAssetIds[0]`、`requiredAffection` は `conditions.minAffection`、`requiredShownEventIds` は `conditions.requiredFlagIds` に変換する。
+取り込み後は `Endings` 種別へ切り替え、一覧フィルタを解除して、追加されたエンディングまたは既存スキップ対象を選択する。
+`Unity Scheduled Event読込` から `scheduled_events_from_unity.json` を選んだ場合は、`ScheduledEvents` の `ConversationEntry` として新規追加する想定にする。
+同じ `Id` または同じ `scheduleType` の予定イベントが既に存在する場合は上書きせずスキップする。
 差分表示、既存データの選択更新、削除同期はまだ行わない。
 
 ## Merge 方針
@@ -232,13 +251,14 @@ Unity 側から戻す処理は、追加と更新候補の提示に限定する�
 
 この JSON をそのまま `action_reactions_export.json` に変換するか、別の action 定義として WPF Tool に持つかは次の設計課題にする。
 
-## Conversation / GameEvent / Ending の FromUnity JSON
+## Conversation / GameEvent / ScheduledEvent / Ending の FromUnity JSON
 
-通常会話、イベント、エンディングは、既存の WPF export JSON に近い形で戻す。
+通常会話、イベント、予定イベント、エンディングは、既存の WPF export JSON に近い形で戻す。
 
 ```text
 conversations_from_unity.json
 game_events_from_unity.json
+scheduled_events_from_unity.json
 endings_from_unity.json
 ```
 
