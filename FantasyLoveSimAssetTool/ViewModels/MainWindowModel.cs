@@ -1435,7 +1435,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 ApplyConversationEventTemplate,
                 () => SelectedProfile != null
                     && SelectedConversationEntry != null
-                    && SelectedConversationDataKind == ConversationDataKind.GameEvents);
+                    && (SelectedConversationDataKind == ConversationDataKind.GameEvents
+                        || SelectedConversationDataKind == ConversationDataKind.ScheduledEvents));
             ApplyConversationConditionSuggestionsCommand = new RelayCommand(
                 ApplyConversationConditionSuggestions,
                 () => SelectedConversationEntry != null);
@@ -4407,6 +4408,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 return;
             }
 
+            if (SelectedConversationDataKind == ConversationDataKind.ScheduledEvents)
+            {
+                ApplyScheduledEventTemplate();
+                return;
+            }
+
             string category = string.IsNullOrWhiteSpace(SelectedConversationCategorySuggestion)
                 ? CreateDefaultConversationCategory(ConversationDataKind.GameEvents)
                 : SelectedConversationCategorySuggestion;
@@ -4439,6 +4446,65 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RefreshFilteredConversationEntries();
             SelectedConversationEntry = appliedEntry;
             StatusMessage = $"{category} のイベント雛形を反映しました。";
+        }
+
+        private void ApplyScheduledEventTemplate()
+        {
+            if (SelectedProfile == null || SelectedConversationEntry == null)
+            {
+                return;
+            }
+
+            string scheduleType = string.IsNullOrWhiteSpace(SelectedConversationCategorySuggestion)
+                ? CreateDefaultConversationCategory(ConversationDataKind.ScheduledEvents)
+                : SelectedConversationCategorySuggestion;
+
+            ScheduledEventTemplate template = CreateScheduledEventTemplate(scheduleType);
+            SelectedConversationEntry.Kind = ConversationDataKind.ScheduledEvents;
+            SelectedConversationEntry.Category = template.ScheduleType;
+            SelectedConversationEntry.Conditions ??= new ConversationCondition();
+            SelectedConversationEntry.Conditions.ActionId = template.ActionId;
+            SelectedConversationEntry.Conditions.TimeOfDay = template.TriggerTimeSlot;
+            SelectedConversationEntry.Conditions.LocationId = template.LocationId;
+            SelectedConversationEntry.Conditions.Once = false;
+
+            SelectedConversationEntry.Id = CreateConversationEntryId(
+                ConversationDataKind.ScheduledEvents,
+                template.ScheduleType,
+                SelectedProfile.ConversationEntries ?? new ObservableCollection<ConversationEntry>(),
+                SelectedConversationEntry);
+
+            if (string.IsNullOrWhiteSpace(SelectedConversationEntry.Title)
+                || SelectedConversationEntry.Title.StartsWith(GetConversationKindDisplayName(ConversationDataKind.ScheduledEvents), StringComparison.OrdinalIgnoreCase))
+            {
+                SelectedConversationEntry.Title = template.Title;
+            }
+
+            if (IsConversationLinesEmpty(SelectedConversationEntry.Lines))
+            {
+                SelectedConversationEntry.Lines = new ObservableCollection<ConversationLine>
+                {
+                    new ConversationLine
+                    {
+                        Speaker = "System",
+                        Expression = string.Empty,
+                        Text = template.PreparationMessage
+                    },
+                    new ConversationLine
+                    {
+                        Speaker = "Heroine",
+                        Expression = "Smile",
+                        Text = template.EventMessage
+                    }
+                };
+                SelectedConversationLine = SelectedConversationEntry.Lines.FirstOrDefault();
+            }
+
+            ConversationEntry appliedEntry = SelectedConversationEntry;
+            OnPropertyChanged(nameof(SelectedConversationEntry));
+            RefreshFilteredConversationEntries();
+            SelectedConversationEntry = appliedEntry;
+            StatusMessage = $"{template.ScheduleType} の予定イベント雛形を反映しました。";
         }
 
         private static void ApplyEventTemplateConditions(ConversationCondition conditions, string category)
@@ -4504,6 +4570,32 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     return "予定イベント";
                 default:
                     return "イベント";
+            }
+        }
+
+        private static ScheduledEventTemplate CreateScheduledEventTemplate(string scheduleType)
+        {
+            string normalizedScheduleType = NormalizeIdPart(scheduleType);
+            switch (normalizedScheduleType)
+            {
+                case "SoloCave":
+                    return new ScheduledEventTemplate("SoloCave", "洞窟への外出", "AutoWalkCave", "Noon", "Cave", "今日は昼に洞窟へ出かける予定です。", "洞窟を慎重に進みながら、少し緊張した時間を過ごしました。");
+                case "SoloLake":
+                    return new ScheduledEventTemplate("SoloLake", "湖への外出", "AutoWalkLake", "Noon", "Lake", "今日は昼に湖へ出かける予定です。", "湖のほとりで、静かな時間を過ごしました。");
+                case "SoloShopping":
+                    return new ScheduledEventTemplate("SoloShopping", "街への買い物", "AutoShopping", "Noon", "Town", "今日は昼に街へ買い物に出かける予定です。", "街を歩きながら、気になる店をいくつか見て回りました。");
+                case "DuoForest":
+                    return new ScheduledEventTemplate("DuoForest", "森への同行外出", "DuoWalkForest", "Noon", "Forest", "今日は昼に二人で森へ出かける予定です。", "二人で森を歩きながら、少しだけ距離が近づいた気がしました。");
+                case "DuoCave":
+                    return new ScheduledEventTemplate("DuoCave", "洞窟への同行外出", "DuoWalkCave", "Noon", "Cave", "今日は昼に二人で洞窟へ出かける予定です。", "二人で洞窟を進み、危ない場所では自然と声を掛け合いました。");
+                case "DuoLake":
+                    return new ScheduledEventTemplate("DuoLake", "湖への同行外出", "DuoWalkLake", "Noon", "Lake", "今日は昼に二人で湖へ出かける予定です。", "湖のほとりで、二人だけの落ち着いた時間を過ごしました。");
+                case "DuoShopping":
+                    return new ScheduledEventTemplate("DuoShopping", "街への同行買い物", "DuoShopping", "Noon", "Town", "今日は昼に二人で街へ買い物に出かける予定です。", "街で買い物をしながら、相手の好みを少し知ることができました。");
+                case "StayHome":
+                    return new ScheduledEventTemplate("StayHome", "家で過ごす予定", "StayHome", "Noon", "Room", "今日は昼を家で過ごす予定です。", "部屋でゆっくり過ごし、穏やかな時間になりました。");
+                default:
+                    return new ScheduledEventTemplate("SoloForest", "森への外出", "AutoWalkForest", "Noon", "Forest", "今日は昼に森へ出かける予定です。", "森を歩きながら、静かな時間を過ごしました。");
             }
         }
 
@@ -5135,6 +5227,41 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 default:
                     return "LocationTalk";
             }
+        }
+
+        private class ScheduledEventTemplate
+        {
+            public ScheduledEventTemplate(
+                string scheduleType,
+                string title,
+                string actionId,
+                string triggerTimeSlot,
+                string locationId,
+                string preparationMessage,
+                string eventMessage)
+            {
+                ScheduleType = scheduleType;
+                Title = title;
+                ActionId = actionId;
+                TriggerTimeSlot = triggerTimeSlot;
+                LocationId = locationId;
+                PreparationMessage = preparationMessage;
+                EventMessage = eventMessage;
+            }
+
+            public string ScheduleType { get; }
+
+            public string Title { get; }
+
+            public string ActionId { get; }
+
+            public string TriggerTimeSlot { get; }
+
+            public string LocationId { get; }
+
+            public string PreparationMessage { get; }
+
+            public string EventMessage { get; }
         }
 
         private static string GetConversationKindDisplayName(ConversationDataKind kind)

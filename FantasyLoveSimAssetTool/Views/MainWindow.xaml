@@ -412,7 +412,7 @@
                                                       Margin="0,0,8,0"/>
                                             <Button Grid.Column="2" Content="反映" Command="{Binding ApplyConversationCategorySuggestionCommand}" Height="26"/>
                                             <Button Grid.Column="3"
-                                                    Content="イベント雛形"
+                                                    Content="雛形"
                                                     Command="{Binding ApplyConversationEventTemplateCommand}"
                                                     Height="26"
                                                     Margin="8,0,0,0"/>
