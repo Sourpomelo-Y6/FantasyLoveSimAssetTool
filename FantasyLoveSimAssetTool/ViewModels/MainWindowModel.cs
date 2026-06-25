@@ -373,6 +373,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 selectedConversationDataKind = value;
                 OnPropertyChanged(nameof(SelectedConversationDataKind));
                 RefreshConversationCategorySuggestions();
+                RefreshConversationActionSuggestions();
                 RefreshFilteredConversationEntries();
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -1263,6 +1264,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 ConversationDataKind.Conversations,
                 ConversationDataKind.GameEvents,
+                ConversationDataKind.ScheduledEvents,
                 ConversationDataKind.ActionReactions,
                 ConversationDataKind.Endings
             };
@@ -4846,10 +4848,19 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 }
 
                 AddUnexpectedValueWarning(warnings, "場所", conditions.LocationId, ConversationValueCatalog.Locations);
-                AddUnexpectedValueWarning(warnings, "行動", conditions.ActionId, ConversationValueCatalog.Actions);
+                if (entry.Kind == ConversationDataKind.ScheduledEvents)
+                {
+                    AddUnexpectedValueWarning(warnings, "予定種別", entry.Category, ConversationValueCatalog.ScheduledEventTypes);
+                    AddUnexpectedValueWarning(warnings, "行動", conditions.ActionId, ConversationValueCatalog.ScheduledEventActions);
+                    AddUnexpectedValueWarning(warnings, "時間", conditions.TimeOfDay, ConversationValueCatalog.ScheduledTimeSlots);
+                }
+                else
+                {
+                    AddUnexpectedValueWarning(warnings, "行動", conditions.ActionId, ConversationValueCatalog.Actions);
+                    AddUnexpectedValueWarning(warnings, "時間", conditions.TimeOfDay, ConversationValueCatalog.TimeOfDay);
+                }
                 AddUnexpectedValueWarning(warnings, "天候", conditions.Weather, ConversationValueCatalog.Weather);
                 AddUnexpectedValueWarning(warnings, "季節", conditions.Season, ConversationValueCatalog.Seasons);
-                AddUnexpectedValueWarning(warnings, "時間", conditions.TimeOfDay, ConversationValueCatalog.TimeOfDay);
             }
 
             ObservableCollection<ConversationLine> lines = entry.Lines ?? new ObservableCollection<ConversationLine>();
@@ -4974,6 +4985,21 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SelectedConversationCategoryFilter = "All";
         }
 
+        private void RefreshConversationActionSuggestions()
+        {
+            ConversationActionSuggestions.Clear();
+            IEnumerable<string> actions = SelectedConversationDataKind == ConversationDataKind.ScheduledEvents
+                ? ConversationValueCatalog.ScheduledEventActions
+                : ConversationValueCatalog.Actions;
+
+            foreach (string action in actions)
+            {
+                ConversationActionSuggestions.Add(action);
+            }
+
+            SelectedConversationActionSuggestion = ConversationActionSuggestions.FirstOrDefault() ?? string.Empty;
+        }
+
         private static ConversationEntry CreateConversationEntry(ConversationDataKind kind, ObservableCollection<ConversationEntry> existingEntries)
         {
             int nextNumber = existingEntries.Count(entry => entry.Kind == kind) + 1;
@@ -4986,6 +5012,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 Priority = 100
             };
             entry.Lines.Add(new ConversationLine());
+            if (kind == ConversationDataKind.ScheduledEvents)
+            {
+                entry.Conditions.ActionId = "AutoWalkForest";
+                entry.Conditions.TimeOfDay = "Noon";
+                entry.Lines[0].Text = "今日は昼に森へ出かける予定です。";
+                entry.Lines.Add(new ConversationLine
+                {
+                    Speaker = "Heroine",
+                    Text = "森を歩きながら、静かな時間を過ごしました。",
+                    Expression = "Neutral"
+                });
+            }
             return entry;
         }
 
@@ -4996,6 +5034,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 case ConversationDataKind.GameEvents:
                     prefix = "Event";
+                    break;
+                case ConversationDataKind.ScheduledEvents:
+                    prefix = "Scheduled";
                     break;
                 case ConversationDataKind.ActionReactions:
                     prefix = "Reaction";
@@ -5018,6 +5059,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 case ConversationDataKind.GameEvents:
                     prefix = "Event";
+                    break;
+                case ConversationDataKind.ScheduledEvents:
+                    prefix = "Scheduled";
                     break;
                 case ConversationDataKind.ActionReactions:
                     prefix = "Reaction";
@@ -5050,6 +5094,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 case ConversationDataKind.GameEvents:
                     return new[] { "Intro", "DayStart", "Location", "Date", "Quest", "Weather", "Season", "Scheduled" };
+                case ConversationDataKind.ScheduledEvents:
+                    return ConversationValueCatalog.ScheduledEventTypes;
                 case ConversationDataKind.ActionReactions:
                     return new[] { "Tea", "Rest", "Walk", "Gift", "Talk" };
                 case ConversationDataKind.Endings:
@@ -5080,6 +5126,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 case ConversationDataKind.GameEvents:
                     return "Intro";
+                case ConversationDataKind.ScheduledEvents:
+                    return "SoloForest";
                 case ConversationDataKind.ActionReactions:
                     return "Action";
                 case ConversationDataKind.Endings:
@@ -5095,6 +5143,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 case ConversationDataKind.GameEvents:
                     return "イベント";
+                case ConversationDataKind.ScheduledEvents:
+                    return "予定イベント";
                 case ConversationDataKind.ActionReactions:
                     return "行動反応";
                 case ConversationDataKind.Endings:

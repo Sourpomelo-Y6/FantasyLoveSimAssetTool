@@ -2,9 +2,10 @@ namespace FantasyLoveSimAssetTool.Models
 {
     public enum ConversationDataKind
     {
-        Conversations,
-        GameEvents,
-        ActionReactions,
-        Endings
+        Conversations = 0,
+        GameEvents = 1,
+        ActionReactions = 2,
+        Endings = 3,
+        ScheduledEvents = 4
     }
 }

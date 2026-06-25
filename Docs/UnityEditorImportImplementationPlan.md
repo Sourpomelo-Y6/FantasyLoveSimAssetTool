@@ -132,12 +132,14 @@ Tools/FantasyLoveSim/Import Heroine Export...
 
 会話は JSON ファイルごとに1つの `.asset` を作る。
 ゲームイベントは既存の `GameManager` が `Resources.LoadAll<GameEventData>` で読むため、item ごとに個別 `.asset` を作る。
-行動反応、エンディングは今後の実装時に container 方式か個別 asset 方式を決める。
+予定イベントは既存の `GameManager` が `Resources.LoadAll<ScheduledEventData>` で読むため、item ごとに共通 `ScheduledEvents` フォルダへ個別 `.asset` を作る。
+行動反応は既存 `ActionData.reactions` を更新し、エンディングは item ごとに個別 `.asset` を作る。
 
 - `conversations_export.json` -> `Conversations.asset`
 - `game_events_export.json` -> `GameEvents/<EventId>.asset`
-- `action_reactions_export.json` -> `ActionReactions.asset`
-- `endings_export.json` -> `Endings.asset`
+- `scheduled_events_export.json` -> `Assets/Resources/ScheduledEvents/<ScheduledEvent>.asset`
+- `action_reactions_export.json` -> `Actions/<Action>.asset` の `ActionData.reactions`
+- `endings_export.json` -> `Endings/<EndingId>.asset`
 
 個別 item ごとに `.asset` を分ける運用は、実行時ローダーとの相性を優先する。
 
@@ -299,6 +301,22 @@ Unity 側で手編集する項目が増えた場合は、上書きしてよい�
 `category` を `GameEventTriggerType` に変換し、`lines[]` を `GameEventData.pages` に変換する。
 `imageAssetIds[0]` は `HeroineAssetCatalog` から Sprite 解決し、最初のページのスチルとして設定する。
 イベントページの `expressionId` は会話と同じ表情切り替えに使う。
+
+`scheduled_events_export.json` import は実装済み。
+`conditions.scheduleType` を `ScheduleType` に変換し、`Assets/Resources/ScheduledEvents/<ScheduledEvent>.asset` の `ScheduledEventData` を作成、更新する。
+`preparationMessage` は朝の予定表示、`eventMessage` は予定実行時の本文に反映する。
+`preparationMessage` / `eventMessage` が空の場合は、`lines[0]` を準備文、`lines[1...]` を実行本文として補完する。
+`imageAssetIds[0]` は `stillId` / `stillSprite` に解決する。
+通常行動の `Walk` と翌日予定の外出、デートは別データとして扱い、予定側は `ScheduledEventData` を正とする。
+
+`action_reactions_export.json` import は実装済み。
+`conditions.actionId` で既存 `ActionData` を探し、その action の `reactions` を JSON 由来で置き換える。
+既存 action がない場合は最小の `ActionData` を作成する。
+`lines[0]` を `ActionReactionData.resultMessage`、`imageAssetIds[0]` を `stillId` / `stillSprite`、`conditions.weather` / `season` / `timeOfDay` を条件として反映する。
+
+`endings_export.json` import は実装済み。
+item ごとに `Assets/Resources/Heroines/<HeroineId>/Endings/<EndingId>.asset` を作成、更新する。
+`lines[]` は改行結合して `EndingData.message` に入れ、`imageAssetIds[0]` を `EndingData.stillSprite` に解決する。
 
 ## WPF 側との境界
 

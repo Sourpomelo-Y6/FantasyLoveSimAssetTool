@@ -20,6 +20,40 @@ namespace FantasyLoveSimAssetTool.Models
             "Talk"
         };
 
+        public static readonly string[] ScheduledEventTypes =
+        {
+            "SoloForest",
+            "SoloCave",
+            "SoloLake",
+            "SoloShopping",
+            "DuoForest",
+            "DuoCave",
+            "DuoLake",
+            "DuoShopping",
+            "StayHome"
+        };
+
+        public static readonly string[] ScheduledEventActions =
+        {
+            "AutoWalkForest",
+            "AutoWalkCave",
+            "AutoWalkLake",
+            "AutoShopping",
+            "DuoWalkForest",
+            "DuoWalkCave",
+            "DuoWalkLake",
+            "DuoShopping",
+            "StayHome"
+        };
+
+        public static readonly string[] ScheduledTimeSlots =
+        {
+            "Morning",
+            "Noon",
+            "Evening",
+            "Night"
+        };
+
         public static readonly string[] Weather =
         {
             "Sunny",

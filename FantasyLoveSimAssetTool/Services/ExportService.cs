@@ -161,10 +161,12 @@ namespace FantasyLoveSimAssetTool.Services
             File.WriteAllText(Path.Combine(dataDirectory, "sprite_layers_export.json"), BuildSpriteLayersExportJson(profile, acceptedAssets, report));
             File.WriteAllText(Path.Combine(dataDirectory, "conversations_export.json"), BuildConversationExportJson(profile, ConversationDataKind.Conversations));
             File.WriteAllText(Path.Combine(dataDirectory, "game_events_export.json"), BuildConversationExportJson(profile, ConversationDataKind.GameEvents));
+            File.WriteAllText(Path.Combine(dataDirectory, "scheduled_events_export.json"), BuildScheduledEventsExportJson(profile));
             File.WriteAllText(Path.Combine(dataDirectory, "action_reactions_export.json"), BuildConversationExportJson(profile, ConversationDataKind.ActionReactions));
             File.WriteAllText(Path.Combine(dataDirectory, "endings_export.json"), BuildConversationExportJson(profile, ConversationDataKind.Endings));
             WriteDraftFile(Path.Combine(dataDirectory, "conversations_draft.md"), "会話案");
             WriteDraftFile(Path.Combine(dataDirectory, "game_events_draft.md"), "イベント案");
+            WriteDraftFile(Path.Combine(dataDirectory, "scheduled_events_draft.md"), "予定イベント案");
             WriteDraftFile(Path.Combine(dataDirectory, "action_reactions_draft.md"), "行動反応案");
             WriteDraftFile(Path.Combine(dataDirectory, "endings_draft.md"), "エンディング案");
         }
@@ -562,6 +564,7 @@ namespace FantasyLoveSimAssetTool.Services
 
             report.ConversationCount = entries.Count(entry => entry.Kind == ConversationDataKind.Conversations);
             report.GameEventCount = entries.Count(entry => entry.Kind == ConversationDataKind.GameEvents);
+            report.ScheduledEventCount = entries.Count(entry => entry.Kind == ConversationDataKind.ScheduledEvents);
             report.ActionReactionCount = entries.Count(entry => entry.Kind == ConversationDataKind.ActionReactions);
             report.EndingCount = entries.Count(entry => entry.Kind == ConversationDataKind.Endings);
 
@@ -619,11 +622,24 @@ namespace FantasyLoveSimAssetTool.Services
                     report.Warnings.Add($"{label}: once が true のイベントは requiredFlagIds を指定してください。");
                 }
 
+                if (entry.Kind == ConversationDataKind.ScheduledEvents)
+                {
+                    ValidateCatalogValue(label, "scheduleType", entry.Category, ConversationValueCatalog.ScheduledEventTypes, report);
+                    ValidateCatalogValue(label, "actionId", entry.Conditions.ActionId, ConversationValueCatalog.ScheduledEventActions, report);
+                    ValidateCatalogValue(label, "triggerTimeSlot", entry.Conditions.TimeOfDay, ConversationValueCatalog.ScheduledTimeSlots, report);
+                }
+                else
+                {
+                    ValidateCatalogValue(label, "actionId", entry.Conditions.ActionId, ConversationValueCatalog.Actions, report);
+                }
+
                 ValidateCatalogValue(label, "locationId", entry.Conditions.LocationId, ConversationValueCatalog.Locations, report);
-                ValidateCatalogValue(label, "actionId", entry.Conditions.ActionId, ConversationValueCatalog.Actions, report);
                 ValidateCatalogValue(label, "weather", entry.Conditions.Weather, ConversationValueCatalog.Weather, report);
                 ValidateCatalogValue(label, "season", entry.Conditions.Season, ConversationValueCatalog.Seasons, report);
-                ValidateCatalogValue(label, "timeOfDay", entry.Conditions.TimeOfDay, ConversationValueCatalog.TimeOfDay, report);
+                if (entry.Kind != ConversationDataKind.ScheduledEvents)
+                {
+                    ValidateCatalogValue(label, "timeOfDay", entry.Conditions.TimeOfDay, ConversationValueCatalog.TimeOfDay, report);
+                }
             }
 
             IReadOnlyList<ConversationLine> lines = (entry.Lines ?? new System.Collections.ObjectModel.ObservableCollection<ConversationLine>()).ToList();
@@ -697,6 +713,8 @@ namespace FantasyLoveSimAssetTool.Services
             {
                 case ConversationDataKind.GameEvents:
                     return "イベント";
+                case ConversationDataKind.ScheduledEvents:
+                    return "予定イベント";
                 case ConversationDataKind.ActionReactions:
                     return "行動反応";
                 case ConversationDataKind.Endings:
@@ -752,6 +770,57 @@ namespace FantasyLoveSimAssetTool.Services
                     imageAssetIds = SplitList(entry.ImageAssetIdsText),
                     priority = entry.Priority,
                     memo = entry.Memo
+                }).ToList()
+            };
+
+            return JsonSerializer.Serialize(exportModel, CreateJsonOptions());
+        }
+
+        private static string BuildScheduledEventsExportJson(HeroineProfile profile)
+        {
+            IReadOnlyList<ConversationEntry> entries = (profile.ConversationEntries ?? new System.Collections.ObjectModel.ObservableCollection<ConversationEntry>())
+                .Where(entry => entry.Kind == ConversationDataKind.ScheduledEvents)
+                .ToList();
+
+            object exportModel = new
+            {
+                schemaVersion = 1,
+                heroineId = profile.HeroineId,
+                kind = ConversationDataKind.ScheduledEvents.ToString(),
+                items = entries.Select(entry =>
+                {
+                    IReadOnlyList<ConversationLine> lines = (entry.Lines ?? new System.Collections.ObjectModel.ObservableCollection<ConversationLine>()).ToList();
+                    string preparationMessage = lines.Count > 0 ? lines[0].Text ?? string.Empty : string.Empty;
+                    string eventMessage = lines.Count > 1
+                        ? string.Join(Environment.NewLine, lines.Skip(1).Select(line => line.Text ?? string.Empty))
+                        : string.Empty;
+                    return new
+                    {
+                        id = entry.Id,
+                        title = entry.Title,
+                        category = entry.Category,
+                        conditions = new
+                        {
+                            scheduleType = string.IsNullOrWhiteSpace(entry.Category) ? string.Empty : entry.Category,
+                            actionId = entry.Conditions == null ? string.Empty : entry.Conditions.ActionId,
+                            triggerTimeSlot = entry.Conditions == null ? string.Empty : entry.Conditions.TimeOfDay,
+                            outfitPromptMode = "Conditional",
+                            eventSpeakerType = "Heroine",
+                            affectionChange = 1
+                        },
+                        preparationMessage,
+                        eventMessage,
+                        lines = lines
+                            .Select(line => new
+                            {
+                                speaker = line.Speaker,
+                                text = line.Text,
+                                expression = line.Expression
+                            }).ToList(),
+                        imageAssetIds = SplitList(entry.ImageAssetIdsText),
+                        priority = entry.Priority,
+                        memo = entry.Memo
+                    };
                 }).ToList()
             };
 
