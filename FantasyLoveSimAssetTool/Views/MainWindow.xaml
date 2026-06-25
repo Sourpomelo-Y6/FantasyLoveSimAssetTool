@@ -209,7 +209,7 @@
                                     <ColumnDefinition Width="120"/>
                                     <ColumnDefinition Width="220"/>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="420"/>
+                                    <ColumnDefinition Width="560"/>
                                 </Grid.ColumnDefinitions>
 
                                 <TextBlock Grid.Column="0" Text="データ種別" VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -238,6 +238,11 @@
                                                 Margin="0,0,8,0"/>
                                         <Button Content="Unity Event読込"
                                                 Command="{Binding ImportGameEventsFromUnityCommand}"
+                                                Height="26"
+                                                MinWidth="132"
+                                                Margin="0,0,8,0"/>
+                                        <Button Content="Unity Ending読込"
+                                                Command="{Binding ImportEndingsFromUnityCommand}"
                                                 Height="26"
                                                 MinWidth="132"
                                                 Margin="0,0,8,0"/>

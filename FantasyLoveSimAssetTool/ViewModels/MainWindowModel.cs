@@ -1144,6 +1144,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ImportGameEventsFromUnityCommand { get; }
 
+        public ICommand ImportEndingsFromUnityCommand { get; }
+
         public ICommand ApplyConversationCategorySuggestionCommand { get; }
 
         public ICommand ApplyConversationEventTemplateCommand { get; }
@@ -1427,6 +1429,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedProfile != null);
             ImportGameEventsFromUnityCommand = new RelayCommand(
                 ImportGameEventsFromUnity,
+                () => SelectedProfile != null);
+            ImportEndingsFromUnityCommand = new RelayCommand(
+                ImportEndingsFromUnity,
                 () => SelectedProfile != null);
             ApplyConversationCategorySuggestionCommand = new RelayCommand(
                 ApplyConversationCategorySuggestion,
@@ -4387,6 +4392,177 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     AffectionChange = choice.AffectionChange
                 });
             }
+        }
+
+        private void ImportEndingsFromUnity()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            OpenFileDialog dialog = new OpenFileDialog
+            {
+                Title = "endings_from_unity.json を選択",
+                Filter = "endings_from_unity.json|endings_from_unity.json|JSON files (*.json)|*.json|All files (*.*)|*.*"
+            };
+
+            if (dialog.ShowDialog() != true)
+            {
+                StatusMessage = "FromUnity endings import をキャンセルしました。";
+                return;
+            }
+
+            try
+            {
+                ImportEndingsFromUnityFile(dialog.FileName);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"FromUnity endings import に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void ImportEndingsFromUnityFile(string filePath)
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            JsonSerializerOptions options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            FromUnityEndingDataFile endingData = JsonSerializer.Deserialize<FromUnityEndingDataFile>(
+                File.ReadAllText(filePath),
+                options);
+
+            if (endingData == null)
+            {
+                throw new InvalidOperationException("endings_from_unity.json を読み込めませんでした。");
+            }
+
+            if (endingData.SchemaVersion != 1)
+            {
+                throw new InvalidOperationException($"未対応の schemaVersion です: {endingData.SchemaVersion}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(endingData.HeroineId)
+                && !string.Equals(endingData.HeroineId, SelectedProfile.HeroineId, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException($"HeroineId が選択中のキャラクターと一致しません。JSON: {endingData.HeroineId} / Selected: {SelectedProfile.HeroineId}");
+            }
+
+            SelectedProfile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
+            List<ConversationEntry> importedEntries = new List<ConversationEntry>();
+            int skippedCount = 0;
+
+            foreach (FromUnityEndingItem item in endingData.Items ?? new List<FromUnityEndingItem>())
+            {
+                if (item == null || string.IsNullOrWhiteSpace(item.Id))
+                {
+                    skippedCount++;
+                    continue;
+                }
+
+                if (HasExistingConversationEntry(ConversationDataKind.Endings, item.Id.Trim()))
+                {
+                    skippedCount++;
+                    continue;
+                }
+
+                ConversationEntry entry = CreateEndingFromUnityEnding(item);
+                SelectedProfile.ConversationEntries.Add(entry);
+                importedEntries.Add(entry);
+            }
+
+            characterProjectService.SaveProfile(SelectedProfile);
+            SelectedConversationDataKind = ConversationDataKind.Endings;
+            RefreshConversationCategorySuggestions();
+            RefreshFilteredConversationEntries();
+            if (importedEntries.Count > 0)
+            {
+                SelectedConversationEntry = importedEntries[0];
+            }
+
+            StatusMessage = $"FromUnity endings を取り込みました。追加 {importedEntries.Count} 件、スキップ {skippedCount} 件。";
+        }
+
+        private static ConversationEntry CreateEndingFromUnityEnding(FromUnityEndingItem item)
+        {
+            ConversationEntry entry = new ConversationEntry
+            {
+                Kind = ConversationDataKind.Endings,
+                Id = item.Id.Trim(),
+                Title = string.IsNullOrWhiteSpace(item.Title) ? item.Id.Trim() : item.Title.Trim(),
+                Category = string.IsNullOrWhiteSpace(item.Category) ? "Normal" : item.Category.Trim(),
+                ImageAssetIdsText = JoinImportList(item.ImageAssetIds),
+                Priority = item.Priority,
+                Memo = BuildFromUnityEndingMemo(item)
+            };
+
+            ApplyFromUnityEndingCondition(entry.Conditions, item.Conditions);
+
+            entry.Lines.Clear();
+            foreach (FromUnityEndingLine line in item.Lines ?? new List<FromUnityEndingLine>())
+            {
+                if (line == null)
+                {
+                    continue;
+                }
+
+                entry.Lines.Add(new ConversationLine
+                {
+                    Speaker = string.IsNullOrWhiteSpace(line.Speaker) ? "Heroine" : line.Speaker.Trim(),
+                    Text = line.Text ?? string.Empty,
+                    Expression = line.Expression ?? string.Empty
+                });
+            }
+
+            if (entry.Lines.Count == 0)
+            {
+                entry.Lines.Add(new ConversationLine
+                {
+                    Speaker = "Heroine",
+                    Text = item.Message ?? string.Empty,
+                    Expression = string.Empty
+                });
+            }
+
+            return entry;
+        }
+
+        private static void ApplyFromUnityEndingCondition(
+            ConversationCondition target,
+            FromUnityEndingCondition source)
+        {
+            if (target == null || source == null)
+            {
+                return;
+            }
+
+            target.LocationId = source.LocationId ?? string.Empty;
+            target.MinAffection = source.MinAffection;
+            target.MaxAffection = source.MaxAffection == 0 ? 100 : source.MaxAffection;
+            target.Weather = source.Weather ?? string.Empty;
+            target.Season = source.Season ?? string.Empty;
+            target.TimeOfDay = source.TimeOfDay ?? string.Empty;
+            target.ActionId = source.ActionId ?? string.Empty;
+            target.RequiredItemId = source.RequiredItemId ?? string.Empty;
+            target.Once = source.Once;
+            target.RequiredFlagIdsText = JoinImportList(source.RequiredFlagIds);
+        }
+
+        private static string BuildFromUnityEndingMemo(FromUnityEndingItem item)
+        {
+            List<string> parts = new List<string> { "FromUnity endings import" };
+            if (!string.IsNullOrWhiteSpace(item.Memo))
+            {
+                parts.Add(item.Memo.Trim());
+            }
+
+            return string.Join(Environment.NewLine, parts);
         }
 
         private void ApplyConversationCategorySuggestion()

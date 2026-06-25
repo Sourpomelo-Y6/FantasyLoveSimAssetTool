@@ -90,7 +90,20 @@ game_events_from_unity.json
 WPF 側では `ConversationEntries` の `Kind=GameEvents` へ merge する候補にする。
 `category` と `conditions` は `Docs/GameEventDataGuide.md` の運用へ寄せる。
 
-### 4. HeroineAssetCatalog / HeroineLayeredSpriteData
+### 4. EndingData
+
+Unity 側で Good、Normal、Bad などのエンディング本文やスチル ID を修正した場合の救済用。
+
+出力:
+
+```text
+endings_from_unity.json
+```
+
+WPF 側では `ConversationEntries` の `Kind=Endings` へ merge する候補にする。
+Unity 側の `message` だけで戻ってきた場合は、WPF 側では `lines[0].text` として扱う。
+
+### 5. HeroineAssetCatalog / HeroineLayeredSpriteData
 
 画像実体を戻すのではなく、ID 対応を戻す用途に限定する。
 
@@ -157,6 +170,8 @@ Unity Editor 拡張側で型付き ScriptableObject を読むため、WPF Tool �
 同じ `Id` の通常会話が既に存在する場合は上書きせずスキップする。
 `Unity Event読込` から `game_events_from_unity.json` を選んだ場合は、`GameEvents` の `ConversationEntry` として新規追加する。
 同じ `Id` のイベントが既に存在する場合は上書きせずスキップする。
+`Unity Ending読込` から `endings_from_unity.json` を選んだ場合は、`Endings` の `ConversationEntry` として新規追加する。
+同じ `Id` のエンディングが既に存在する場合は上書きせずスキップする。
 Unity 側 exporter が `sourceMetadata.choices` に退避した選択肢は、WPF 側の `Choices` に取り込む。
 保持する項目は `choiceText`、`responseText`、`affectionChange` とする。
 差分表示、既存データの選択更新、削除同期はまだ行わない。
@@ -213,13 +228,14 @@ Unity 側から戻す処理は、追加と更新候補の提示に限定する�
 
 この JSON をそのまま `action_reactions_export.json` に変換するか、別の action 定義として WPF Tool に持つかは次の設計課題にする。
 
-## Conversation / GameEvent の FromUnity JSON
+## Conversation / GameEvent / Ending の FromUnity JSON
 
-通常会話とイベントは、既存の WPF export JSON に近い形で戻す。
+通常会話、イベント、エンディングは、既存の WPF export JSON に近い形で戻す。
 
 ```text
 conversations_from_unity.json
 game_events_from_unity.json
+endings_from_unity.json
 ```
 
 フィールドは `Docs/ConversationDataPlan.md` と `Docs/GameEventDataGuide.md` を基準にする。
