@@ -78,6 +78,17 @@ Tools/FantasyLoveSim/Import Heroine Export...
 - `stillCommonPositivePrompt`
 - `actionReactionPolicy`
 - `endingPolicy`
+- `outfitMessageOverrides`
+  - `outfitId`
+  - `lockedMessage`
+  - `changedMessage`
+- `outfitReactionMessageOverrides`
+  - `reactionType`: `Praise`, `Dislike`, `Bored`, `Change`
+  - `message`
+
+`outfitMessageOverrides` と `outfitReactionMessageOverrides` は、Unity 側に直接書いたヒロイン固有台詞を Tool 再 import で失わないための正規フィールドとして扱う。
+WPF Tool 側は基本情報タブで編集し、`heroine_profile_export.json` に同名配列として出力する。
+Unity 側 exporter は `heroine_profile_from_unity.json` にも同名配列を出し、WPF Tool 側は既存 `outfitId` / `reactionType` を上書きせず新規分だけ取り込む。
 
 ### HeroineAssetCatalog
 

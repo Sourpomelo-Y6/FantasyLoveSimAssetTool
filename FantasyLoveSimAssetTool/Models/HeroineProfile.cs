@@ -54,6 +54,10 @@ namespace FantasyLoveSimAssetTool.Models
 
         public string EndingPolicy { get; set; }
 
+        public ObservableCollection<OutfitMessageOverride> OutfitMessageOverrides { get; set; }
+
+        public ObservableCollection<OutfitReactionMessageOverride> OutfitReactionMessageOverrides { get; set; }
+
         public ObservableCollection<HeroineAsset> Assets { get; set; }
 
         public ObservableCollection<StillWorkItem> StillWorkItems { get; set; }
@@ -76,6 +80,8 @@ namespace FantasyLoveSimAssetTool.Models
             stillCommonPositivePrompt = "clean lines,highly detailed,masterpiece,8k,best quality,very aesthetic,absurdres,newest";
             ActionReactionPolicy = string.Empty;
             EndingPolicy = string.Empty;
+            OutfitMessageOverrides = new ObservableCollection<OutfitMessageOverride>();
+            OutfitReactionMessageOverrides = new ObservableCollection<OutfitReactionMessageOverride>();
             Assets = new ObservableCollection<HeroineAsset>();
             StillWorkItems = new ObservableCollection<StillWorkItem>();
             ConversationEntries = new ObservableCollection<ConversationEntry>();

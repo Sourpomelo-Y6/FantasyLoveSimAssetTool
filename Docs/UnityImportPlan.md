@@ -141,9 +141,22 @@ Unity 側の ScriptableObject 型は次を基本にする。
 - `stillCommonPositivePrompt`
 - `actionReactionPolicy`
 - `endingPolicy`
+- `outfitMessageOverrides`
+  - `outfitId`
+  - `lockedMessage`
+  - `changedMessage`
+- `outfitReactionMessageOverrides`
+  - `reactionType`: `Praise`, `Dislike`, `Bored`, `Change`
+  - `message`
 
 Unity Editor 拡張は `heroineId` をキーにして既存 `.asset` を検索する。
 既存 `.asset` があれば更新し、なければ新規作成する。
+`outfitMessageOverrides` と `outfitReactionMessageOverrides` が JSON に存在する場合は、Unity 側の `HeroineProfileData` の同名リストを置き換える。
+JSON に存在しない場合は、Unity 側で手修正した既存リストを保持する。
+
+WPF Tool 側は、基本情報タブで `outfitMessageOverrides` と `outfitReactionMessageOverrides` を編集し、`heroine_profile_export.json` に出力する。
+これにより、Unity 側の `TestHeroineProfile` などへ直接持たせたツンデレ台詞を Tool 再 import で欠落させず、Tool 側の profile.json を正本に戻せる。
+Unity から Tool へ戻す場合は `heroine_profile_from_unity.json` を使い、既存 `outfitId` / `reactionType` は上書きせず新規分だけ追加する。
 
 ## assets_export.json
 

@@ -65,6 +65,8 @@ namespace FantasyLoveSimAssetTool.Services
             ValidateHeroineId(profile.HeroineId);
             profile.AppearancePrompt ??= string.Empty;
             profile.StillCommonPositivePrompt ??= string.Empty;
+            profile.OutfitMessageOverrides ??= new ObservableCollection<OutfitMessageOverride>();
+            profile.OutfitReactionMessageOverrides ??= new ObservableCollection<OutfitReactionMessageOverride>();
             profile.Assets ??= new ObservableCollection<HeroineAsset>();
             profile.StillWorkItems ??= new ObservableCollection<StillWorkItem>();
             profile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
@@ -208,6 +210,8 @@ namespace FantasyLoveSimAssetTool.Services
             profile.Assets ??= new ObservableCollection<HeroineAsset>();
             profile.StillWorkItems ??= new ObservableCollection<StillWorkItem>();
             profile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
+            profile.OutfitMessageOverrides ??= new ObservableCollection<OutfitMessageOverride>();
+            profile.OutfitReactionMessageOverrides ??= new ObservableCollection<OutfitReactionMessageOverride>();
             profile.AppearancePrompt ??= string.Empty;
             profile.StillCommonPositivePrompt ??= string.Empty;
             NormalizeConversationEntries(profile.ConversationEntries);

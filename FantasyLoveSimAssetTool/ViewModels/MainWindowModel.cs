@@ -29,6 +29,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly ComfyWorkflowService comfyWorkflowService;
         private readonly ComfyClientService comfyClientService;
         private readonly ExportService exportService;
+        private OutfitMessageOverride selectedOutfitMessageOverride;
+        private OutfitReactionMessageOverride selectedOutfitReactionMessageOverride;
         private string heroineIdInput;
         private string displayNameInput;
         private string assetIdInput;
@@ -839,6 +841,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 }
 
                 OnPropertyChanged(nameof(SelectedProfile));
+                SelectedOutfitMessageOverride = selectedProfile?.OutfitMessageOverrides?.FirstOrDefault();
+                SelectedOutfitReactionMessageOverride = selectedProfile?.OutfitReactionMessageOverrides?.FirstOrDefault();
                 RefreshStillPromptAfterProfilePromptChanged();
                 LoadStillDefinitions();
                 RefreshFilteredAssets();
@@ -849,6 +853,30 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 RefreshConversationCategorySuggestions();
                 RefreshFilteredConversationEntries();
                 RefreshSelectedStillStatus();
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public OutfitMessageOverride SelectedOutfitMessageOverride
+        {
+            get { return selectedOutfitMessageOverride; }
+            set
+            {
+                if (selectedOutfitMessageOverride == value) { return; }
+                selectedOutfitMessageOverride = value;
+                OnPropertyChanged(nameof(SelectedOutfitMessageOverride));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public OutfitReactionMessageOverride SelectedOutfitReactionMessageOverride
+        {
+            get { return selectedOutfitReactionMessageOverride; }
+            set
+            {
+                if (selectedOutfitReactionMessageOverride == value) { return; }
+                selectedOutfitReactionMessageOverride = value;
+                OnPropertyChanged(nameof(SelectedOutfitReactionMessageOverride));
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -1106,6 +1134,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ICommand CreateCharacterCommand { get; }
 
         public ICommand SaveSelectedProfileCommand { get; }
+
+        public ICommand ImportHeroineProfileFromUnityCommand { get; }
+
+        public ICommand AddOutfitMessageOverrideCommand { get; }
+
+        public ICommand RemoveOutfitMessageOverrideCommand { get; }
+
+        public ICommand AddOutfitReactionMessageOverrideCommand { get; }
+
+        public ICommand RemoveOutfitReactionMessageOverrideCommand { get; }
 
         public ICommand RefreshProfilesCommand { get; }
 
@@ -1374,6 +1412,21 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             CreateCharacterCommand = new RelayCommand(CreateCharacter);
             SaveSelectedProfileCommand = new RelayCommand(SaveSelectedProfile, () => SelectedProfile != null);
+            ImportHeroineProfileFromUnityCommand = new RelayCommand(
+                ImportHeroineProfileFromUnity,
+                () => SelectedProfile != null);
+            AddOutfitMessageOverrideCommand = new RelayCommand(
+                AddOutfitMessageOverride,
+                () => SelectedProfile != null);
+            RemoveOutfitMessageOverrideCommand = new RelayCommand(
+                RemoveOutfitMessageOverride,
+                () => SelectedProfile != null && SelectedOutfitMessageOverride != null);
+            AddOutfitReactionMessageOverrideCommand = new RelayCommand(
+                AddOutfitReactionMessageOverride,
+                () => SelectedProfile != null);
+            RemoveOutfitReactionMessageOverrideCommand = new RelayCommand(
+                RemoveOutfitReactionMessageOverride,
+                () => SelectedProfile != null && SelectedOutfitReactionMessageOverride != null);
             RefreshProfilesCommand = new RelayCommand(LoadProfiles);
             BrowseImageCommand = new RelayCommand(BrowseImage);
             AddImageAssetCommand = new RelayCommand(AddImageAsset, () => SelectedProfile != null);
@@ -3708,6 +3761,198 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 StatusMessage = $"保存に失敗しました: {ex.Message}";
             }
+        }
+
+        private void AddOutfitMessageOverride()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            SelectedProfile.OutfitMessageOverrides ??= new ObservableCollection<OutfitMessageOverride>();
+            OutfitMessageOverride item = new OutfitMessageOverride
+            {
+                OutfitId = BuildUniqueId(
+                    "Outfit",
+                    SelectedProfile.OutfitMessageOverrides
+                        .Where(overrideItem => overrideItem != null)
+                        .Select(overrideItem => overrideItem.OutfitId)),
+                LockedMessage = string.Empty,
+                ChangedMessage = string.Empty
+            };
+            SelectedProfile.OutfitMessageOverrides.Add(item);
+            SelectedOutfitMessageOverride = item;
+            StatusMessage = "衣装メッセージ override を追加しました。";
+        }
+
+        private void RemoveOutfitMessageOverride()
+        {
+            if (SelectedProfile == null || SelectedOutfitMessageOverride == null)
+            {
+                return;
+            }
+
+            SelectedProfile.OutfitMessageOverrides ??= new ObservableCollection<OutfitMessageOverride>();
+            SelectedProfile.OutfitMessageOverrides.Remove(SelectedOutfitMessageOverride);
+            SelectedOutfitMessageOverride = SelectedProfile.OutfitMessageOverrides.FirstOrDefault();
+            StatusMessage = "衣装メッセージ override を削除しました。";
+        }
+
+        private void AddOutfitReactionMessageOverride()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            SelectedProfile.OutfitReactionMessageOverrides ??= new ObservableCollection<OutfitReactionMessageOverride>();
+            OutfitReactionMessageOverride item = new OutfitReactionMessageOverride
+            {
+                ReactionType = BuildUniqueId(
+                    "Reaction",
+                    SelectedProfile.OutfitReactionMessageOverrides
+                        .Where(overrideItem => overrideItem != null)
+                        .Select(overrideItem => overrideItem.ReactionType)),
+                Message = string.Empty
+            };
+            SelectedProfile.OutfitReactionMessageOverrides.Add(item);
+            SelectedOutfitReactionMessageOverride = item;
+            StatusMessage = "衣装反応メッセージ override を追加しました。";
+        }
+
+        private void RemoveOutfitReactionMessageOverride()
+        {
+            if (SelectedProfile == null || SelectedOutfitReactionMessageOverride == null)
+            {
+                return;
+            }
+
+            SelectedProfile.OutfitReactionMessageOverrides ??= new ObservableCollection<OutfitReactionMessageOverride>();
+            SelectedProfile.OutfitReactionMessageOverrides.Remove(SelectedOutfitReactionMessageOverride);
+            SelectedOutfitReactionMessageOverride = SelectedProfile.OutfitReactionMessageOverrides.FirstOrDefault();
+            StatusMessage = "衣装反応メッセージ override を削除しました。";
+        }
+
+        private void ImportHeroineProfileFromUnity()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            OpenFileDialog dialog = new OpenFileDialog
+            {
+                Title = "heroine_profile_from_unity.json を選択",
+                Filter = "heroine_profile_from_unity.json|heroine_profile_from_unity.json|JSON files (*.json)|*.json|All files (*.*)|*.*"
+            };
+
+            if (dialog.ShowDialog() != true)
+            {
+                StatusMessage = "FromUnity profile import をキャンセルしました。";
+                return;
+            }
+
+            try
+            {
+                ImportHeroineProfileFromUnityFile(dialog.FileName);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"FromUnity profile import に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void ImportHeroineProfileFromUnityFile(string filePath)
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            JsonSerializerOptions options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            FromUnityHeroineProfileData profileData = JsonSerializer.Deserialize<FromUnityHeroineProfileData>(
+                File.ReadAllText(filePath),
+                options);
+
+            if (profileData == null)
+            {
+                throw new InvalidOperationException("heroine_profile_from_unity.json を読み込めませんでした。");
+            }
+
+            if (profileData.SchemaVersion != 1)
+            {
+                throw new InvalidOperationException($"未対応の schemaVersion です: {profileData.SchemaVersion}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(profileData.HeroineId)
+                && !string.Equals(profileData.HeroineId, SelectedProfile.HeroineId, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException($"HeroineId が選択中のキャラクターと一致しません。JSON: {profileData.HeroineId} / Selected: {SelectedProfile.HeroineId}");
+            }
+
+            SelectedProfile.OutfitMessageOverrides ??= new ObservableCollection<OutfitMessageOverride>();
+            SelectedProfile.OutfitReactionMessageOverrides ??= new ObservableCollection<OutfitReactionMessageOverride>();
+            int addedOutfitCount = 0;
+            int skippedOutfitCount = 0;
+            int addedReactionCount = 0;
+            int skippedReactionCount = 0;
+
+            foreach (OutfitMessageOverride item in profileData.OutfitMessageOverrides ?? new List<OutfitMessageOverride>())
+            {
+                if (item == null || string.IsNullOrWhiteSpace(item.OutfitId))
+                {
+                    skippedOutfitCount++;
+                    continue;
+                }
+
+                if (SelectedProfile.OutfitMessageOverrides.Any(existing => existing != null
+                    && string.Equals(existing.OutfitId, item.OutfitId, StringComparison.OrdinalIgnoreCase)))
+                {
+                    skippedOutfitCount++;
+                    continue;
+                }
+
+                SelectedProfile.OutfitMessageOverrides.Add(new OutfitMessageOverride
+                {
+                    OutfitId = item.OutfitId.Trim(),
+                    LockedMessage = item.LockedMessage ?? string.Empty,
+                    ChangedMessage = item.ChangedMessage ?? string.Empty
+                });
+                addedOutfitCount++;
+            }
+
+            foreach (OutfitReactionMessageOverride item in profileData.OutfitReactionMessageOverrides ?? new List<OutfitReactionMessageOverride>())
+            {
+                if (item == null || string.IsNullOrWhiteSpace(item.ReactionType))
+                {
+                    skippedReactionCount++;
+                    continue;
+                }
+
+                if (SelectedProfile.OutfitReactionMessageOverrides.Any(existing => existing != null
+                    && string.Equals(existing.ReactionType, item.ReactionType, StringComparison.OrdinalIgnoreCase)))
+                {
+                    skippedReactionCount++;
+                    continue;
+                }
+
+                SelectedProfile.OutfitReactionMessageOverrides.Add(new OutfitReactionMessageOverride
+                {
+                    ReactionType = item.ReactionType.Trim(),
+                    Message = item.Message ?? string.Empty
+                });
+                addedReactionCount++;
+            }
+
+            characterProjectService.SaveProfile(SelectedProfile);
+            SelectedOutfitMessageOverride = SelectedProfile.OutfitMessageOverrides.FirstOrDefault();
+            SelectedOutfitReactionMessageOverride = SelectedProfile.OutfitReactionMessageOverrides.FirstOrDefault();
+            OnPropertyChanged(nameof(SelectedProfile));
+            StatusMessage = $"FromUnity profile を取り込みました。衣装 {addedOutfitCount} 件追加/{skippedOutfitCount} 件スキップ、反応 {addedReactionCount} 件追加/{skippedReactionCount} 件スキップ。";
         }
 
         private void ExportSelectedProfile()

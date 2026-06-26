@@ -229,7 +229,20 @@ namespace FantasyLoveSimAssetTool.Services
                 appearancePrompt = profile.AppearancePrompt,
                 stillCommonPositivePrompt = profile.StillCommonPositivePrompt,
                 actionReactionPolicy = profile.ActionReactionPolicy,
-                endingPolicy = profile.EndingPolicy
+                endingPolicy = profile.EndingPolicy,
+                outfitMessageOverrides = (profile.OutfitMessageOverrides ?? new System.Collections.ObjectModel.ObservableCollection<OutfitMessageOverride>())
+                    .Select(item => new
+                    {
+                        outfitId = item.OutfitId,
+                        lockedMessage = item.LockedMessage,
+                        changedMessage = item.ChangedMessage
+                    }).ToList(),
+                outfitReactionMessageOverrides = (profile.OutfitReactionMessageOverrides ?? new System.Collections.ObjectModel.ObservableCollection<OutfitReactionMessageOverride>())
+                    .Select(item => new
+                    {
+                        reactionType = item.ReactionType,
+                        message = item.Message
+                    }).ToList()
             };
 
             return JsonSerializer.Serialize(exportModel, CreateJsonOptions());
@@ -556,7 +569,7 @@ namespace FantasyLoveSimAssetTool.Services
             return Math.Abs(firstRatio - secondRatio) < 0.001;
         }
 
-        private static void ValidateConversationEntries(HeroineProfile profile, IReadOnlyList<HeroineAsset> acceptedAssets, ExportReport report)
+        private void ValidateConversationEntries(HeroineProfile profile, IReadOnlyList<HeroineAsset> acceptedAssets, ExportReport report)
         {
             IReadOnlyList<ConversationEntry> entries = (profile.ConversationEntries ?? new System.Collections.ObjectModel.ObservableCollection<ConversationEntry>())
                 .ToList();
@@ -587,7 +600,7 @@ namespace FantasyLoveSimAssetTool.Services
             }
         }
 
-        private static void ValidateConversationEntry(ConversationEntry entry, HashSet<string> acceptedAssetIds, ExportReport report)
+        private void ValidateConversationEntry(ConversationEntry entry, HashSet<string> acceptedAssetIds, ExportReport report)
         {
             string label = BuildConversationWarningLabel(entry);
             if (string.IsNullOrWhiteSpace(entry.Id))
