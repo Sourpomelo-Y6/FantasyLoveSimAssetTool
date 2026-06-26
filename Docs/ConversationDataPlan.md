@@ -57,13 +57,13 @@ Unity 側では `assets_export.json` を使って `AssetId` から画像パス�
 
 ## Unity 側フィールド対応
 
-Unity 側では、会話は JSON ファイルごとに1つの ScriptableObject `.asset` を生成、更新する。
+Unity 側では、会話は item ごとに個別の ScriptableObject `.asset` を生成、更新する。
 ゲームイベントは既存の `GameManager` が `Resources.LoadAll<GameEventData>` で読むため、item ごとに個別 `.asset` を生成、更新する。
-行動反応、エンディングは実装時に container 方式か個別 asset 方式を決める。
+行動反応は既存 `ActionData.reactions` を更新し、エンディングは item ごとに個別 `.asset` を生成、更新する。
 
 | JSON | Unity 側 ScriptableObject | 保存先 |
 | --- | --- | --- |
-| `conversations_export.json` | `ConversationData` | `Assets/Resources/Heroines/<HeroineId>/Conversations.asset` |
+| `conversations_export.json` | `ConversationData` | `Assets/Resources/Heroines/<HeroineId>/Conversations/<ConversationId>.asset` |
 | `game_events_export.json` | `GameEventData` | `Assets/Resources/Heroines/<HeroineId>/GameEvents/<EventId>.asset` |
 | `scheduled_events_export.json` | `ScheduledEventData` | `Assets/Resources/Heroines/<HeroineId>/ScheduledEvents/<ScheduledEvent>.asset` |
 | `action_reactions_export.json` | `ActionData.reactions` | `Assets/Resources/Heroines/<HeroineId>/Actions/<Action>.asset` |

@@ -95,11 +95,14 @@ ScriptableObject の保存先は次を基本にする。
 Assets/Resources/Heroines/<HeroineId>/
   HeroineProfileData.asset
   HeroineAssetCatalog.asset
-  Conversations.asset
+  Conversations/
+    <ConversationId>.asset
   GameEvents/
     <EventId>.asset
-  ActionReactions.asset
-  Endings.asset
+  Actions/
+    <Action>.asset
+  Endings/
+    <EndingId>.asset
 ```
 
 画像は `assets_export.json` の `unityImagePath` を基準に参照する。
@@ -111,10 +114,10 @@ Unity 側の ScriptableObject 型は次を基本にする。
 | --- | --- | --- |
 | `heroine_profile_export.json` | `HeroineProfileData` | `Assets/Resources/Heroines/<HeroineId>/HeroineProfileData.asset` |
 | `assets_export.json` | `HeroineAssetCatalog` | `Assets/Resources/Heroines/<HeroineId>/HeroineAssetCatalog.asset` |
-| `conversations_export.json` | `ConversationData` | `Assets/Resources/Heroines/<HeroineId>/Conversations.asset` |
+| `conversations_export.json` | `ConversationData` | `Assets/Resources/Heroines/<HeroineId>/Conversations/<ConversationId>.asset` |
 | `game_events_export.json` | `GameEventData` | `Assets/Resources/Heroines/<HeroineId>/GameEvents/<EventId>.asset` |
-| `action_reactions_export.json` | `ActionReactionData` | `Assets/Resources/Heroines/<HeroineId>/ActionReactions.asset` |
-| `endings_export.json` | `EndingData` | `Assets/Resources/Heroines/<HeroineId>/Endings.asset` |
+| `action_reactions_export.json` | `ActionData.reactions` | `Assets/Resources/Heroines/<HeroineId>/Actions/<Action>.asset` |
+| `endings_export.json` | `EndingData` | `Assets/Resources/Heroines/<HeroineId>/Endings/<EndingId>.asset` |
 | `sprite_layers_export.json` | `HeroineLayeredSpriteData` | `Assets/Resources/Heroines/<HeroineId>/HeroineLayeredSpriteData.asset` |
 
 ## heroine_profile_export.json
@@ -219,9 +222,9 @@ Unity Editor 側で `ConversationData`、`GameEventData`、`ActionReactionData`�
 会話データの JSON スキーマと WPF 画面方針は `Docs/ConversationDataPlan.md` にまとめる。
 `GameEvents` のカテゴリ、条件、発火判定、イベントスチル参照の運用は `Docs/GameEventDataGuide.md` にまとめる。
 
-会話データの ScriptableObject は、各 JSON ファイルごとに1つの `.asset` を作る。
-各 `.asset` は `heroineId` と `items` 相当のリストを持つ。
-会話 item ごとに個別 `.asset` を分ける運用は、件数が増えてから必要性を再判断する。
+会話データの ScriptableObject は、会話 item ごとに個別 `.asset` を作る。
+保存先は `Assets/Resources/Heroines/<HeroineId>/Conversations/<ConversationId>.asset` とする。
+旧 `Assets/Resources/Heroines/<HeroineId>/Conversations.asset` container 方式は、同名フォルダと Resources パスが衝突して重複読み込みの原因になるため使わない。
 
 Unity 側で受け取る条件値は次を基準にする。
 WPF 側は同じ値を入力候補として表示し、Export 時に候補外の値を警告する。
