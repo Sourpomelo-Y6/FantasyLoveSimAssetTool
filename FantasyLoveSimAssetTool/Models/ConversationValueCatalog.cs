@@ -70,6 +70,20 @@ namespace FantasyLoveSimAssetTool.Models
             "Winter"
         };
 
+        public static readonly string[] Costumes =
+        {
+            "Default",
+            "Summer",
+            "Spring",
+            "Autumn",
+            "Winter",
+            "Raincoat",
+            "Dress",
+            "Town",
+            "Room",
+            "Adventure"
+        };
+
         public static readonly string[] TimeOfDay =
         {
             "Morning",

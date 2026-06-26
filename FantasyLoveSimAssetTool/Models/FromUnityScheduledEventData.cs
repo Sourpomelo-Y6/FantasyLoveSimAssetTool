@@ -39,6 +39,8 @@ namespace FantasyLoveSimAssetTool.Models
 
         public string OutfitPromptMode { get; set; }
 
+        public string CostumeId { get; set; }
+
         public string EventSpeakerType { get; set; }
 
         public string PreparationMessage { get; set; }
@@ -65,6 +67,8 @@ namespace FantasyLoveSimAssetTool.Models
         public string ScheduleType { get; set; }
 
         public string ActionId { get; set; }
+
+        public string CostumeId { get; set; }
 
         public string TriggerTimeSlot { get; set; }
 

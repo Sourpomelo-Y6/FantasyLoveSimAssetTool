@@ -56,6 +56,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string gameEventTestSeason;
         private string gameEventTestTimeOfDay;
         private string gameEventTestActionId;
+        private string gameEventTestCostumeId;
         private string gameEventTestItemId;
         private string gameEventTestFlagIdsText;
         private string selectedConversationCategorySuggestion;
@@ -64,6 +65,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string selectedConversationWeatherSuggestion;
         private string selectedConversationSeasonSuggestion;
         private string selectedConversationTimeOfDaySuggestion;
+        private string selectedConversationCostumeSuggestion;
         private string selectedConversationExpressionSuggestion;
         private HeroineAsset selectedConversationImageAsset;
         private ExpressionDefinition selectedExpressionDefinition;
@@ -148,6 +150,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<string> ConversationSeasonSuggestions { get; }
 
         public ObservableCollection<string> ConversationTimeOfDaySuggestions { get; }
+
+        public ObservableCollection<string> ConversationCostumeSuggestions { get; }
 
         public ObservableCollection<string> ConversationExpressionSuggestions { get; }
 
@@ -529,6 +533,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public string GameEventTestCostumeId
+        {
+            get { return gameEventTestCostumeId; }
+            set
+            {
+                if (gameEventTestCostumeId == value) { return; }
+                gameEventTestCostumeId = value;
+                OnPropertyChanged(nameof(GameEventTestCostumeId));
+                RefreshFilteredConversationEntries();
+            }
+        }
+
         public string GameEventTestItemId
         {
             get { return gameEventTestItemId; }
@@ -640,6 +656,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedConversationTimeOfDaySuggestion == value) { return; }
                 selectedConversationTimeOfDaySuggestion = value;
                 OnPropertyChanged(nameof(SelectedConversationTimeOfDaySuggestion));
+            }
+        }
+
+        public string SelectedConversationCostumeSuggestion
+        {
+            get { return selectedConversationCostumeSuggestion; }
+            set
+            {
+                if (selectedConversationCostumeSuggestion == value) { return; }
+                selectedConversationCostumeSuggestion = value;
+                OnPropertyChanged(nameof(SelectedConversationCostumeSuggestion));
             }
         }
 
@@ -1210,6 +1237,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ConversationWeatherSuggestions = new ObservableCollection<string>(new[] { string.Empty }.Concat(ConversationValueCatalog.Weather));
             ConversationSeasonSuggestions = new ObservableCollection<string>(new[] { string.Empty }.Concat(ConversationValueCatalog.Seasons));
             ConversationTimeOfDaySuggestions = new ObservableCollection<string>(new[] { string.Empty }.Concat(ConversationValueCatalog.TimeOfDay));
+            ConversationCostumeSuggestions = new ObservableCollection<string>(new[] { string.Empty }.Concat(ConversationValueCatalog.Costumes));
             ConversationExpressionSuggestions = new ObservableCollection<string>(ConversationValueCatalog.Expressions);
             ExpressionDefinitions = new ObservableCollection<ExpressionDefinition>();
             CostumeDefinitions = new ObservableCollection<CostumeDefinition>();
@@ -1292,6 +1320,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             gameEventTestSeason = string.Empty;
             gameEventTestTimeOfDay = string.Empty;
             gameEventTestActionId = string.Empty;
+            gameEventTestCostumeId = string.Empty;
             gameEventTestItemId = string.Empty;
             gameEventTestFlagIdsText = string.Empty;
             selectedConversationCategoryFilter = "All";
@@ -1303,6 +1332,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             selectedConversationWeatherSuggestion = string.Empty;
             selectedConversationSeasonSuggestion = string.Empty;
             selectedConversationTimeOfDaySuggestion = string.Empty;
+            selectedConversationCostumeSuggestion = string.Empty;
             selectedConversationExpressionSuggestion = "Neutral";
             selectedConversationImageAsset = null;
             selectedExpressionDefinition = null;
@@ -4164,6 +4194,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             target.Season = source.Season ?? string.Empty;
             target.TimeOfDay = source.TimeOfDay ?? string.Empty;
             target.ActionId = source.ActionId ?? string.Empty;
+            target.CostumeId = source.CostumeId ?? string.Empty;
             target.RequiredItemId = source.RequiredItemId ?? string.Empty;
             target.Once = source.Once;
             target.RequiredFlagIdsText = JoinImportList(source.RequiredFlagIds);
@@ -4362,6 +4393,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             target.Season = source.Season ?? string.Empty;
             target.TimeOfDay = source.TimeOfDay ?? string.Empty;
             target.ActionId = source.ActionId ?? string.Empty;
+            target.CostumeId = source.CostumeId ?? string.Empty;
             target.RequiredItemId = source.RequiredItemId ?? string.Empty;
             target.Once = source.Once;
             target.RequiredFlagIdsText = JoinImportList(source.RequiredFlagIds);
@@ -4656,6 +4688,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             target.Season = source?.Season ?? string.Empty;
             target.TimeOfDay = FirstNonEmpty(item.TriggerTimeSlot, source?.TriggerTimeSlot, source?.TimeOfDay);
             target.ActionId = FirstNonEmpty(item.ActionId, source?.ActionId);
+            target.CostumeId = FirstNonEmpty(item.CostumeId, source?.CostumeId);
             target.RequiredItemId = source?.RequiredItemId ?? string.Empty;
             target.Once = source != null && source.Once;
             target.RequiredFlagIdsText = JoinImportList(source?.RequiredFlagIds);
@@ -5009,6 +5042,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             target.Season = source.Season ?? string.Empty;
             target.TimeOfDay = source.TimeOfDay ?? string.Empty;
             target.ActionId = source.ActionId ?? string.Empty;
+            target.CostumeId = source.CostumeId ?? string.Empty;
             target.RequiredItemId = source.RequiredItemId ?? string.Empty;
             target.Once = source.Once;
             target.RequiredFlagIdsText = JoinImportList(GetFromUnityEndingRequiredFlagIds(item));
@@ -5314,6 +5348,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SelectedConversationEntry.Conditions.Weather = SelectedConversationWeatherSuggestion ?? string.Empty;
             SelectedConversationEntry.Conditions.Season = SelectedConversationSeasonSuggestion ?? string.Empty;
             SelectedConversationEntry.Conditions.TimeOfDay = SelectedConversationTimeOfDaySuggestion ?? string.Empty;
+            SelectedConversationEntry.Conditions.CostumeId = SelectedConversationCostumeSuggestion ?? string.Empty;
             OnPropertyChanged(nameof(SelectedConversationEntry));
             StatusMessage = "条件候補を反映しました。";
         }
@@ -5472,6 +5507,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 || !MatchesOptionalCondition(conditions.Season, GameEventTestSeason)
                 || !MatchesOptionalCondition(conditions.TimeOfDay, GameEventTestTimeOfDay)
                 || !MatchesOptionalCondition(conditions.ActionId, GameEventTestActionId)
+                || !MatchesOptionalCondition(conditions.CostumeId, GameEventTestCostumeId)
                 || !MatchesOptionalCondition(conditions.RequiredItemId, GameEventTestItemId))
             {
                 return false;
@@ -5546,6 +5582,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 || ContainsSearchText(condition.Season, query)
                 || ContainsSearchText(condition.TimeOfDay, query)
                 || ContainsSearchText(condition.ActionId, query)
+                || ContainsSearchText(condition.CostumeId, query)
                 || ContainsSearchText(condition.RequiredItemId, query)
                 || ContainsSearchText(condition.RequiredFlagIdsText, query);
         }

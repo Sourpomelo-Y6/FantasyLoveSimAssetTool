@@ -14,6 +14,7 @@ namespace FantasyLoveSimAssetTool.Services
         private readonly CharacterProjectService characterProjectService;
         private readonly ImageInspectionService imageInspectionService;
         private readonly StillDefinitionService stillDefinitionService;
+        private readonly DefinitionCatalogService definitionCatalogService;
 
         public string ExportDirectory
         {
@@ -30,6 +31,7 @@ namespace FantasyLoveSimAssetTool.Services
             this.characterProjectService = characterProjectService ?? throw new ArgumentNullException(nameof(characterProjectService));
             this.imageInspectionService = imageInspectionService ?? throw new ArgumentNullException(nameof(imageInspectionService));
             stillDefinitionService = new StillDefinitionService(this.characterProjectService.WorkspaceRoot);
+            definitionCatalogService = new DefinitionCatalogService(this.characterProjectService.WorkspaceRoot);
         }
 
         public ExportReport ExportHeroine(HeroineProfile profile)
@@ -636,6 +638,7 @@ namespace FantasyLoveSimAssetTool.Services
                 ValidateCatalogValue(label, "locationId", entry.Conditions.LocationId, ConversationValueCatalog.Locations, report);
                 ValidateCatalogValue(label, "weather", entry.Conditions.Weather, ConversationValueCatalog.Weather, report);
                 ValidateCatalogValue(label, "season", entry.Conditions.Season, ConversationValueCatalog.Seasons, report);
+                ValidateCatalogValue(label, "costumeId", entry.Conditions.CostumeId, GetConversationCostumeIds(), report);
                 if (entry.Kind != ConversationDataKind.ScheduledEvents)
                 {
                     ValidateCatalogValue(label, "timeOfDay", entry.Conditions.TimeOfDay, ConversationValueCatalog.TimeOfDay, report);
@@ -701,6 +704,27 @@ namespace FantasyLoveSimAssetTool.Services
             }
         }
 
+        private IReadOnlyCollection<string> GetConversationCostumeIds()
+        {
+            List<string> values = new List<string>(ConversationValueCatalog.Costumes);
+            try
+            {
+                CostumeDefinitionFile file = definitionCatalogService.LoadCostumeDefinitionFile();
+                values.AddRange((file.Costumes ?? new List<CostumeDefinition>())
+                    .Where(costume => costume != null && !string.IsNullOrWhiteSpace(costume.CostumeId))
+                    .Select(costume => costume.CostumeId.Trim()));
+            }
+            catch
+            {
+                // Export validation should continue even if optional definition files are unavailable.
+            }
+
+            return values
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
         private static string BuildConversationWarningLabel(ConversationEntry entry)
         {
             string id = string.IsNullOrWhiteSpace(entry.Id) ? "(id未設定)" : entry.Id;
@@ -749,6 +773,7 @@ namespace FantasyLoveSimAssetTool.Services
                         season = entry.Conditions == null ? string.Empty : entry.Conditions.Season,
                         timeOfDay = entry.Conditions == null ? string.Empty : entry.Conditions.TimeOfDay,
                         actionId = entry.Conditions == null ? string.Empty : entry.Conditions.ActionId,
+                        costumeId = entry.Conditions == null ? string.Empty : entry.Conditions.CostumeId,
                         requiredItemId = entry.Conditions == null ? string.Empty : entry.Conditions.RequiredItemId,
                         once = entry.Conditions != null && entry.Conditions.Once,
                         requiredFlagIds = SplitList(entry.Conditions == null ? string.Empty : entry.Conditions.RequiredFlagIdsText)
@@ -804,6 +829,7 @@ namespace FantasyLoveSimAssetTool.Services
                             scheduleType = string.IsNullOrWhiteSpace(entry.Category) ? string.Empty : entry.Category,
                             actionId = entry.Conditions == null ? string.Empty : entry.Conditions.ActionId,
                             triggerTimeSlot = entry.Conditions == null ? string.Empty : entry.Conditions.TimeOfDay,
+                            costumeId = entry.Conditions == null ? string.Empty : entry.Conditions.CostumeId,
                             outfitPromptMode = "Conditional",
                             eventSpeakerType = "Heroine",
                             affectionChange = 1

@@ -54,6 +54,7 @@
 | `season` | 季節条件。例: `Spring`, `Summer`, `Autumn`, `Winter` | 季節条件なし |
 | `timeOfDay` | 時間帯条件。例: `Morning`, `Day`, `Evening`, `Night` | 時間帯条件なし |
 | `actionId` | 行動条件。例: `Tea`, `Rest`, `Walk`, `Gift`, `Talk` | 行動条件なし |
+| `costumeId` | 服装条件。例: `Default`, `Summer`, `Raincoat`, `Dress` | 服装条件なし |
 | `requiredItemId` | 必要アイテム ID | アイテム条件なし |
 | `once` | 1回だけ発火するイベントか | `false` |
 | `requiredFlagIds` | 必要フラグ ID 一覧 | フラグ条件なし |
@@ -137,6 +138,7 @@ WPF 側では ID 重複を警告する。
         "season": "",
         "timeOfDay": "Morning",
         "actionId": "",
+        "costumeId": "",
         "requiredItemId": "",
         "once": true,
         "requiredFlagIds": [
@@ -170,7 +172,7 @@ WPF 側では ID 重複を警告する。
 Unity 側では、候補イベントを次の順で絞り込む。
 
 1. `category` が現在の発火タイミングに合う。
-2. `locationId`、`weather`、`season`、`timeOfDay` が現在状態に合う。
+2. `locationId`、`weather`、`season`、`timeOfDay`、`costumeId` が現在状態に合う。
 3. `minAffection` / `maxAffection` の範囲内。
 4. `actionId`、`requiredItemId`、`requiredFlagIds` を満たす。
 5. `once=true` のイベントが既読済みなら除外する。
@@ -189,7 +191,7 @@ WPF 側は会話データ一覧の `警告` 列と Export report で、主に次
 - `minAffection` が `maxAffection` より大きい。
 - `GameEvents` で `once=true` なのに `requiredFlagIds` が空。
 - 台詞行がない、または話者、本文が空。
-- 表情、場所、行動、天候、季節、時間帯が候補外。
+- 表情、場所、行動、天候、季節、時間帯、服装が候補外。
 - `imageAssetIds` が `Accepted` 画像を参照していない。
 
 画像準備を後回しにしている間は、画像関連警告は残っていてもよい。

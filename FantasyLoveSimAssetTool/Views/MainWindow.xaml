@@ -344,6 +344,8 @@
                                             <TextBox Text="{Binding GameEventTestTimeOfDay, UpdateSourceTrigger=PropertyChanged}" Width="72" Margin="0,0,8,0"/>
                                             <TextBlock Text="行動" VerticalAlignment="Center" Margin="0,0,4,0"/>
                                             <TextBox Text="{Binding GameEventTestActionId, UpdateSourceTrigger=PropertyChanged}" Width="72" Margin="0,0,8,0"/>
+                                            <TextBlock Text="衣装" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <TextBox Text="{Binding GameEventTestCostumeId, UpdateSourceTrigger=PropertyChanged}" Width="72" Margin="0,0,8,0"/>
                                             <TextBlock Text="Item" VerticalAlignment="Center" Margin="0,0,4,0"/>
                                             <TextBox Text="{Binding GameEventTestItemId, UpdateSourceTrigger=PropertyChanged}" Width="72" Margin="0,0,8,0"/>
                                             <TextBlock Text="Flags" VerticalAlignment="Center" Margin="0,0,4,0"/>
@@ -376,6 +378,7 @@
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
@@ -482,11 +485,22 @@
                                             <Button Content="候補反映" Command="{Binding ApplyConversationConditionSuggestionsCommand}" Height="26" Width="80"/>
                                         </StackPanel>
 
-                                        <TextBlock Grid.Row="7" Grid.Column="0" Text="必要フラグ" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                        <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding SelectedConversationEntry.Conditions.RequiredFlagIdsText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                        <TextBlock Grid.Row="7" Grid.Column="0" Text="衣装" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                        <StackPanel Grid.Row="7" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.CostumeId, UpdateSourceTrigger=PropertyChanged}" Width="180" Margin="0,0,8,0"/>
+                                            <ComboBox ItemsSource="{Binding ConversationCostumeSuggestions}"
+                                                      SelectedItem="{Binding SelectedConversationCostumeSuggestion}"
+                                                      Width="140"
+                                                      Height="26"
+                                                      Margin="0,0,8,0"/>
+                                            <Button Content="候補反映" Command="{Binding ApplyConversationConditionSuggestionsCommand}" Height="26" Width="80"/>
+                                        </StackPanel>
 
-                                        <TextBlock Grid.Row="8" Grid.Column="0" Text="画像AssetId" VerticalAlignment="Top" Margin="0,4,8,8"/>
-                                        <Grid Grid.Row="8" Grid.Column="1" Margin="0,0,0,8">
+                                        <TextBlock Grid.Row="8" Grid.Column="0" Text="必要フラグ" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                        <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding SelectedConversationEntry.Conditions.RequiredFlagIdsText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                                        <TextBlock Grid.Row="9" Grid.Column="0" Text="画像AssetId" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                        <Grid Grid.Row="9" Grid.Column="1" Margin="0,0,0,8">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="180"/>
@@ -507,10 +521,10 @@
                                             <Button Grid.Column="2" Content="追加" Command="{Binding AddConversationImageAssetCommand}" Height="26" VerticalAlignment="Top"/>
                                         </Grid>
 
-                                        <TextBlock Grid.Row="9" Grid.Column="0" Text="優先度" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                        <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding SelectedConversationEntry.Priority, UpdateSourceTrigger=PropertyChanged}" Width="100" HorizontalAlignment="Left" Margin="0,0,0,8"/>
+                                        <TextBlock Grid.Row="10" Grid.Column="0" Text="優先度" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                        <TextBox Grid.Row="10" Grid.Column="1" Text="{Binding SelectedConversationEntry.Priority, UpdateSourceTrigger=PropertyChanged}" Width="100" HorizontalAlignment="Left" Margin="0,0,0,8"/>
 
-                                        <Grid Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,8">
+                                        <Grid Grid.Row="11" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,8">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="100"/>
@@ -529,7 +543,7 @@
                                             <Button Grid.Column="2" Content="行削除" Command="{Binding RemoveConversationLineCommand}" Height="26"/>
                                         </Grid>
 
-                                        <DataGrid Grid.Row="11"
+                                        <DataGrid Grid.Row="12"
                                                   Grid.Column="0"
                                                   Grid.ColumnSpan="2"
                                                   ItemsSource="{Binding SelectedConversationEntry.Lines}"
@@ -545,7 +559,7 @@
                                             </DataGrid.Columns>
                                         </DataGrid>
 
-                                        <Grid Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,8">
+                                        <Grid Grid.Row="13" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,8">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="100"/>
@@ -556,7 +570,7 @@
                                             <Button Grid.Column="2" Content="選択肢削除" Command="{Binding RemoveConversationChoiceCommand}" Height="26"/>
                                         </Grid>
 
-                                        <DataGrid Grid.Row="13"
+                                        <DataGrid Grid.Row="14"
                                                   Grid.Column="0"
                                                   Grid.ColumnSpan="2"
                                                   ItemsSource="{Binding SelectedConversationEntry.Choices}"
@@ -572,8 +586,8 @@
                                             </DataGrid.Columns>
                                         </DataGrid>
 
-                                        <TextBlock Grid.Row="14" Grid.Column="0" Text="メモ" VerticalAlignment="Top" Margin="0,4,8,8"/>
-                                        <TextBox Grid.Row="14"
+                                        <TextBlock Grid.Row="15" Grid.Column="0" Text="メモ" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                        <TextBox Grid.Row="15"
                                                  Grid.Column="1"
                                                  Text="{Binding SelectedConversationEntry.Memo, UpdateSourceTrigger=PropertyChanged}"
                                                  AcceptsReturn="True"

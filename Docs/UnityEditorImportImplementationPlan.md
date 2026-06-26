@@ -307,6 +307,7 @@ Unity 側で手編集する項目が増えた場合は、上書きしてよい�
 `preparationMessage` は朝の予定表示、`eventMessage` は予定実行時の本文に反映する。
 `preparationMessage` / `eventMessage` が空の場合は、`lines[0]` を準備文、`lines[1...]` を実行本文として補完する。
 `imageAssetIds[0]` は `stillId` / `stillSprite` に解決する。
+`conditions.costumeId` がある場合は、現在衣装が一致する場合だけ発火する条件として扱う。
 ヒロイン別予定イベントが存在しない `ScheduleType` は、実行時に共通 `Assets/Resources/ScheduledEvents/` のデータで補完する。
 通常行動の `Walk` と翌日予定の外出、デートは別データとして扱い、予定側は `ScheduledEventData` を正とする。
 

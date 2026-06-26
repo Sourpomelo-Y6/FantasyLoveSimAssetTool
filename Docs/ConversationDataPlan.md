@@ -84,6 +84,7 @@ Unity 側の実装で別名を使う場合も、WPF 側の JSON 名はこの表�
 | `conditions.season` | `condition.season` | 空は条件なし |
 | `conditions.timeOfDay` | `condition.timeOfDay` | 空は条件なし |
 | `conditions.actionId` | `condition.actionId` | 行動反応用。空は条件なし |
+| `conditions.costumeId` | `condition.costumeId` | 空は条件なし。現在衣装が一致する場合だけ発火させる |
 | `conditions.requiredItemId` | `condition.requiredItemId` | 空は条件なし |
 | `conditions.once` | `condition.once` | 1回限りイベント用 |
 | `conditions.requiredFlagIds` | `condition.requiredFlagIds` | 空配列は条件なし |
@@ -110,6 +111,7 @@ Unity 側で実際の ID を変更した場合は、この一覧、WPF 側の候
 | `weather` | `Sunny`, `Rainy`, `Cloudy`, `Snow` |
 | `season` | `Spring`, `Summer`, `Autumn`, `Winter` |
 | `timeOfDay` | `Morning`, `Day`, `Evening`, `Night` |
+| `costumeId` | `Default`, `Summer`, `Spring`, `Autumn`, `Winter`, `Raincoat`, `Dress`, `Town`, `Room`, `Adventure` |
 | `expression` | `Neutral`, `Smile`, `Sad`, `Angry`, `Shy`, `Surprised` |
 
 ## conversations_export.json
@@ -132,7 +134,8 @@ Unity 側で実際の ID を変更した場合は、この一覧、WPF 側の候
         "maxAffection": 100,
         "weather": "",
         "season": "",
-        "timeOfDay": ""
+        "timeOfDay": "",
+        "costumeId": ""
       },
       "lines": [
         {
@@ -169,7 +172,8 @@ Unity 側の対応先は `ConversationData` を想定する。
       "conditions": {
         "once": true,
         "locationId": "",
-        "minAffection": 0
+        "minAffection": 0,
+        "costumeId": ""
       },
       "lines": [
         {
@@ -210,6 +214,7 @@ Unity 側の対応先は `GameEventData` を想定する。
         "scheduleType": "SoloForest",
         "actionId": "AutoWalkForest",
         "triggerTimeSlot": "Noon",
+        "costumeId": "",
         "outfitPromptMode": "Conditional",
         "eventSpeakerType": "Heroine",
         "affectionChange": 1
@@ -248,6 +253,7 @@ Unity 側の対応先は `GameEventData` を想定する。
       "conditions": {
         "actionId": "Tea",
         "minAffection": 10,
+        "costumeId": "",
         "requiredItemId": ""
       },
       "lines": [
@@ -288,6 +294,7 @@ Good、Normal、Bad などの結果条件と、対応するエンディングス
       "category": "Good",
       "conditions": {
         "minAffection": 80,
+        "costumeId": "",
         "requiredFlagIds": []
       },
       "lines": [

@@ -79,6 +79,8 @@ namespace FantasyLoveSimAssetTool.Models
 
         public string ActionId { get; set; }
 
+        public string CostumeId { get; set; }
+
         public string RequiredItemId { get; set; }
 
         public bool Once { get; set; }

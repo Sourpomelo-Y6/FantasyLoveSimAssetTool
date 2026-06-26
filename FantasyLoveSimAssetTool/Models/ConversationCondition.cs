@@ -16,6 +16,8 @@ namespace FantasyLoveSimAssetTool.Models
 
         public string ActionId { get; set; }
 
+        public string CostumeId { get; set; }
+
         public string RequiredItemId { get; set; }
 
         public bool Once { get; set; }
@@ -30,6 +32,7 @@ namespace FantasyLoveSimAssetTool.Models
             Season = string.Empty;
             TimeOfDay = string.Empty;
             ActionId = string.Empty;
+            CostumeId = string.Empty;
             RequiredItemId = string.Empty;
             RequiredFlagIdsText = string.Empty;
         }
