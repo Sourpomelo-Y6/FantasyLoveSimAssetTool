@@ -1144,6 +1144,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ImportGameEventsFromUnityCommand { get; }
 
+        public ICommand ImportScheduledEventsFromUnityCommand { get; }
+
         public ICommand ImportEndingsFromUnityCommand { get; }
 
         public ICommand ApplyConversationCategorySuggestionCommand { get; }
@@ -1429,6 +1431,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedProfile != null);
             ImportGameEventsFromUnityCommand = new RelayCommand(
                 ImportGameEventsFromUnity,
+                () => SelectedProfile != null);
+            ImportScheduledEventsFromUnityCommand = new RelayCommand(
+                ImportScheduledEventsFromUnity,
                 () => SelectedProfile != null);
             ImportEndingsFromUnityCommand = new RelayCommand(
                 ImportEndingsFromUnity,
@@ -4397,6 +4402,289 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     AffectionChange = choice.AffectionChange
                 });
             }
+        }
+
+        private void ImportScheduledEventsFromUnity()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            OpenFileDialog dialog = new OpenFileDialog
+            {
+                Title = "scheduled_events_from_unity.json を選択",
+                Filter = "scheduled_events_from_unity.json|scheduled_events_from_unity.json|JSON files (*.json)|*.json|All files (*.*)|*.*"
+            };
+
+            if (dialog.ShowDialog() != true)
+            {
+                StatusMessage = "FromUnity scheduled events import をキャンセルしました。";
+                return;
+            }
+
+            try
+            {
+                ImportScheduledEventsFromUnityFile(dialog.FileName);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"FromUnity scheduled events import に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void ImportScheduledEventsFromUnityFile(string filePath)
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            JsonSerializerOptions options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            FromUnityScheduledEventDataFile scheduledEventData = JsonSerializer.Deserialize<FromUnityScheduledEventDataFile>(
+                File.ReadAllText(filePath),
+                options);
+
+            if (scheduledEventData == null)
+            {
+                throw new InvalidOperationException("scheduled_events_from_unity.json を読み込めませんでした。");
+            }
+
+            if (scheduledEventData.SchemaVersion != 1)
+            {
+                throw new InvalidOperationException($"未対応の schemaVersion です: {scheduledEventData.SchemaVersion}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(scheduledEventData.HeroineId)
+                && !string.Equals(scheduledEventData.HeroineId, SelectedProfile.HeroineId, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException($"HeroineId が選択中のキャラクターと一致しません。JSON: {scheduledEventData.HeroineId} / Selected: {SelectedProfile.HeroineId}");
+            }
+
+            SelectedProfile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
+            List<ConversationEntry> importedEntries = new List<ConversationEntry>();
+            List<ConversationEntry> existingEntries = new List<ConversationEntry>();
+            int skippedCount = 0;
+
+            foreach (FromUnityScheduledEventItem item in GetFromUnityScheduledEventItems(scheduledEventData))
+            {
+                string scheduledEventId = GetFromUnityScheduledEventId(item);
+                string scheduleType = GetFromUnityScheduleType(item);
+                if (item == null || string.IsNullOrWhiteSpace(scheduledEventId))
+                {
+                    skippedCount++;
+                    continue;
+                }
+
+                ConversationEntry existingEntry = FindExistingScheduledEventEntry(scheduledEventId, scheduleType);
+                if (existingEntry != null)
+                {
+                    existingEntries.Add(existingEntry);
+                    skippedCount++;
+                    continue;
+                }
+
+                ConversationEntry entry = CreateScheduledEventFromUnityScheduledEvent(item);
+                SelectedProfile.ConversationEntries.Add(entry);
+                importedEntries.Add(entry);
+            }
+
+            characterProjectService.SaveProfile(SelectedProfile);
+            SelectedConversationDataKind = ConversationDataKind.ScheduledEvents;
+            ResetConversationListFilters();
+            RefreshConversationCategorySuggestions();
+            RefreshFilteredConversationEntries();
+            if (importedEntries.Count > 0)
+            {
+                SelectedConversationEntry = importedEntries[0];
+            }
+            else if (existingEntries.Count > 0)
+            {
+                SelectedConversationEntry = existingEntries[0];
+            }
+
+            StatusMessage = $"FromUnity scheduled events を取り込みました。追加 {importedEntries.Count} 件、スキップ {skippedCount} 件。";
+        }
+
+        private ConversationEntry FindExistingScheduledEventEntry(string id, string scheduleType)
+        {
+            ConversationEntry existingEntry = FindConversationEntry(ConversationDataKind.ScheduledEvents, id);
+            if (existingEntry != null || string.IsNullOrWhiteSpace(scheduleType) || SelectedProfile?.ConversationEntries == null)
+            {
+                return existingEntry;
+            }
+
+            return SelectedProfile.ConversationEntries.FirstOrDefault(entry => entry != null
+                && entry.Kind == ConversationDataKind.ScheduledEvents
+                && string.Equals(entry.Category, scheduleType, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static ConversationEntry CreateScheduledEventFromUnityScheduledEvent(FromUnityScheduledEventItem item)
+        {
+            string scheduledEventId = GetFromUnityScheduledEventId(item);
+            string scheduleType = GetFromUnityScheduleType(item);
+            ConversationEntry entry = new ConversationEntry
+            {
+                Kind = ConversationDataKind.ScheduledEvents,
+                Id = scheduledEventId,
+                Title = GetFromUnityScheduledEventTitle(item, scheduledEventId),
+                Category = string.IsNullOrWhiteSpace(scheduleType) ? "StayHome" : scheduleType,
+                ImageAssetIdsText = JoinImportList(GetFromUnityScheduledEventImageAssetIds(item)),
+                Priority = item.Priority,
+                Memo = BuildFromUnityScheduledEventMemo(item)
+            };
+
+            ApplyFromUnityScheduledEventCondition(entry.Conditions, item);
+
+            entry.Lines.Clear();
+            bool hasDirectMessages = !string.IsNullOrWhiteSpace(item.PreparationMessage)
+                || !string.IsNullOrWhiteSpace(item.EventMessage);
+            if (hasDirectMessages)
+            {
+                if (!string.IsNullOrWhiteSpace(item.PreparationMessage))
+                {
+                    entry.Lines.Add(new ConversationLine
+                    {
+                        Speaker = "System",
+                        Text = item.PreparationMessage,
+                        Expression = string.Empty
+                    });
+                }
+
+                if (!string.IsNullOrWhiteSpace(item.EventMessage))
+                {
+                    entry.Lines.Add(new ConversationLine
+                    {
+                        Speaker = string.IsNullOrWhiteSpace(item.EventSpeakerType) ? "Heroine" : item.EventSpeakerType,
+                        Text = item.EventMessage,
+                        Expression = string.Empty
+                    });
+                }
+            }
+            else
+            {
+                foreach (FromUnityScheduledEventLine line in item.Lines ?? new List<FromUnityScheduledEventLine>())
+                {
+                    if (line == null)
+                    {
+                        continue;
+                    }
+
+                    entry.Lines.Add(new ConversationLine
+                    {
+                        Speaker = string.IsNullOrWhiteSpace(line.Speaker) ? "Heroine" : line.Speaker.Trim(),
+                        Text = line.Text ?? string.Empty,
+                        Expression = line.Expression ?? string.Empty
+                    });
+                }
+            }
+
+            if (entry.Lines.Count == 0)
+            {
+                entry.Lines.Add(new ConversationLine
+                {
+                    Speaker = "System",
+                    Text = string.Empty,
+                    Expression = string.Empty
+                });
+            }
+
+            return entry;
+        }
+
+        private static IEnumerable<FromUnityScheduledEventItem> GetFromUnityScheduledEventItems(FromUnityScheduledEventDataFile scheduledEventData)
+        {
+            if (scheduledEventData == null)
+            {
+                return Array.Empty<FromUnityScheduledEventItem>();
+            }
+
+            return scheduledEventData.Items ?? scheduledEventData.ScheduledEvents ?? new List<FromUnityScheduledEventItem>();
+        }
+
+        private static string GetFromUnityScheduledEventId(FromUnityScheduledEventItem item)
+        {
+            if (item == null)
+            {
+                return string.Empty;
+            }
+
+            string scheduleType = GetFromUnityScheduleType(item);
+            return FirstNonEmpty(item.Id, item.ScheduledEventId, scheduleType).Trim();
+        }
+
+        private static string GetFromUnityScheduleType(FromUnityScheduledEventItem item)
+        {
+            return FirstNonEmpty(item?.ScheduleType, item?.Conditions?.ScheduleType, item?.Category).Trim();
+        }
+
+        private static string GetFromUnityScheduledEventTitle(FromUnityScheduledEventItem item, string fallbackId)
+        {
+            return FirstNonEmpty(item?.Title, item?.DisplayName, item?.ScheduleType, item?.Category, fallbackId).Trim();
+        }
+
+        private static IEnumerable<string> GetFromUnityScheduledEventImageAssetIds(FromUnityScheduledEventItem item)
+        {
+            List<string> values = new List<string>();
+            if (item?.ImageAssetIds != null)
+            {
+                values.AddRange(item.ImageAssetIds);
+            }
+
+            values.Add(item?.StillId);
+            values.Add(item?.StillAssetId);
+            return values;
+        }
+
+        private static void ApplyFromUnityScheduledEventCondition(
+            ConversationCondition target,
+            FromUnityScheduledEventItem item)
+        {
+            if (target == null || item == null)
+            {
+                return;
+            }
+
+            FromUnityScheduledEventCondition source = item.Conditions;
+            target.LocationId = source?.LocationId ?? string.Empty;
+            target.MinAffection = source?.MinAffection ?? 0;
+            target.MaxAffection = source == null || source.MaxAffection == 0 ? 100 : source.MaxAffection;
+            target.Weather = source?.Weather ?? string.Empty;
+            target.Season = source?.Season ?? string.Empty;
+            target.TimeOfDay = FirstNonEmpty(item.TriggerTimeSlot, source?.TriggerTimeSlot, source?.TimeOfDay);
+            target.ActionId = FirstNonEmpty(item.ActionId, source?.ActionId);
+            target.RequiredItemId = source?.RequiredItemId ?? string.Empty;
+            target.Once = source != null && source.Once;
+            target.RequiredFlagIdsText = JoinImportList(source?.RequiredFlagIds);
+        }
+
+        private static string BuildFromUnityScheduledEventMemo(FromUnityScheduledEventItem item)
+        {
+            List<string> parts = new List<string> { "FromUnity scheduled events import" };
+            if (!string.IsNullOrWhiteSpace(item.Memo))
+            {
+                parts.Add(item.Memo.Trim());
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.OutfitPromptMode))
+            {
+                parts.Add("outfitPromptMode: " + item.OutfitPromptMode.Trim());
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.EventSpeakerType))
+            {
+                parts.Add("eventSpeakerType: " + item.EventSpeakerType.Trim());
+            }
+
+            if (item.AffectionChange != 0)
+            {
+                parts.Add("affectionChange: " + item.AffectionChange);
+            }
+
+            return string.Join(Environment.NewLine, parts);
         }
 
         private void ImportEndingsFromUnity()

@@ -195,8 +195,10 @@ Unity 側 exporter が `sourceMetadata.choices` に退避した選択肢は、WP
 Unity 側 `EndingData` 由来の `endingId`、`displayName`、`message`、`stillSprite`、`requiredAffection`、`requiredShownEventIds` も受け付ける。
 `endingId` は WPF 側 `id`、`displayName` は `title`、`message` は `lines[0].text`、`stillSprite.name` は `imageAssetIds[0]`、`requiredAffection` は `conditions.minAffection`、`requiredShownEventIds` は `conditions.requiredFlagIds` に変換する。
 取り込み後は `Endings` 種別へ切り替え、一覧フィルタを解除して、追加されたエンディングまたは既存スキップ対象を選択する。
-`Unity Scheduled Event読込` から `scheduled_events_from_unity.json` を選んだ場合は、`ScheduledEvents` の `ConversationEntry` として新規追加する想定にする。
+`Unity Schedule読込` から `scheduled_events_from_unity.json` を選んだ場合は、`ScheduledEvents` の `ConversationEntry` として新規追加する。
 同じ `Id` または同じ `scheduleType` の予定イベントが既に存在する場合は上書きせずスキップする。
+`scheduleType` は WPF 側 `category`、`actionId` は `conditions.actionId`、`triggerTimeSlot` は `conditions.timeOfDay`、`preparationMessage` / `eventMessage` は `lines[]` に変換する。
+`outfitPromptMode`、`eventSpeakerType`、`affectionChange` は WPF 側の現行正本フィールドがないため `memo` に保持する。
 差分表示、既存データの選択更新、削除同期はまだ行わない。
 
 ## Merge 方針

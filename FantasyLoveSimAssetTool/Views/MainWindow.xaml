@@ -241,6 +241,11 @@
                                                 Height="26"
                                                 MinWidth="132"
                                                 Margin="0,0,8,0"/>
+                                        <Button Content="Unity Schedule読込"
+                                                Command="{Binding ImportScheduledEventsFromUnityCommand}"
+                                                Height="26"
+                                                MinWidth="148"
+                                                Margin="0,0,8,0"/>
                                         <Button Content="Unity Ending読込"
                                                 Command="{Binding ImportEndingsFromUnityCommand}"
                                                 Height="26"
