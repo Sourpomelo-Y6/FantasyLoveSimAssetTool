@@ -20,6 +20,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
     public class MainWindowModel : ObservableObject
     {
         private readonly CharacterProjectService characterProjectService;
+        private readonly EnemyProjectService enemyProjectService;
         private readonly PromptRecordService promptRecordService;
         private readonly PromptTemplateService promptTemplateService;
         private readonly DefinitionCatalogService definitionCatalogService;
@@ -33,6 +34,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private OutfitReactionMessageOverride selectedOutfitReactionMessageOverride;
         private string heroineIdInput;
         private string displayNameInput;
+        private string enemyIdInput;
+        private string enemyDisplayNameInput;
+        private string enemyTypeInput;
+        private string enemyAssetIdInput;
+        private string enemyImageSourcePathInput;
+        private AssetStatus selectedEnemyAssetStatus;
+        private EnemyProfile selectedEnemyProfile;
+        private EnemyAsset selectedEnemyAsset;
+        private string selectedEnemyAssetImagePath;
+        private string selectedEnemyAssetImageMessage;
         private string assetIdInput;
         private string imageSourcePathInput;
         private AssetUsage selectedAssetUsage;
@@ -112,6 +123,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string statusMessage;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
+
+        public ObservableCollection<EnemyProfile> EnemyProfiles { get; }
 
         public ObservableCollection<AssetUsage> AssetUsages { get; }
 
@@ -221,6 +234,72 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (displayNameInput == value) { return; }
                 displayNameInput = value;
                 OnPropertyChanged(nameof(DisplayNameInput));
+            }
+        }
+
+        public string EnemyIdInput
+        {
+            get { return enemyIdInput; }
+            set
+            {
+                if (enemyIdInput == value) { return; }
+                enemyIdInput = value;
+                OnPropertyChanged(nameof(EnemyIdInput));
+            }
+        }
+
+        public string EnemyDisplayNameInput
+        {
+            get { return enemyDisplayNameInput; }
+            set
+            {
+                if (enemyDisplayNameInput == value) { return; }
+                enemyDisplayNameInput = value;
+                OnPropertyChanged(nameof(EnemyDisplayNameInput));
+            }
+        }
+
+        public string EnemyTypeInput
+        {
+            get { return enemyTypeInput; }
+            set
+            {
+                if (enemyTypeInput == value) { return; }
+                enemyTypeInput = value;
+                OnPropertyChanged(nameof(EnemyTypeInput));
+            }
+        }
+
+        public string EnemyAssetIdInput
+        {
+            get { return enemyAssetIdInput; }
+            set
+            {
+                if (enemyAssetIdInput == value) { return; }
+                enemyAssetIdInput = value;
+                OnPropertyChanged(nameof(EnemyAssetIdInput));
+            }
+        }
+
+        public string EnemyImageSourcePathInput
+        {
+            get { return enemyImageSourcePathInput; }
+            set
+            {
+                if (enemyImageSourcePathInput == value) { return; }
+                enemyImageSourcePathInput = value;
+                OnPropertyChanged(nameof(EnemyImageSourcePathInput));
+            }
+        }
+
+        public AssetStatus SelectedEnemyAssetStatus
+        {
+            get { return selectedEnemyAssetStatus; }
+            set
+            {
+                if (selectedEnemyAssetStatus == value) { return; }
+                selectedEnemyAssetStatus = value;
+                OnPropertyChanged(nameof(SelectedEnemyAssetStatus));
             }
         }
 
@@ -857,6 +936,32 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public EnemyProfile SelectedEnemyProfile
+        {
+            get { return selectedEnemyProfile; }
+            set
+            {
+                if (selectedEnemyProfile == value) { return; }
+                selectedEnemyProfile = value;
+                OnPropertyChanged(nameof(SelectedEnemyProfile));
+                SelectedEnemyAsset = selectedEnemyProfile?.Assets?.FirstOrDefault();
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public EnemyAsset SelectedEnemyAsset
+        {
+            get { return selectedEnemyAsset; }
+            set
+            {
+                if (selectedEnemyAsset == value) { return; }
+                selectedEnemyAsset = value;
+                OnPropertyChanged(nameof(SelectedEnemyAsset));
+                RefreshSelectedEnemyAssetPreview();
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
         public OutfitMessageOverride SelectedOutfitMessageOverride
         {
             get { return selectedOutfitMessageOverride; }
@@ -911,6 +1016,28 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedAssetImageMessage == value) { return; }
                 selectedAssetImageMessage = value;
                 OnPropertyChanged(nameof(SelectedAssetImageMessage));
+            }
+        }
+
+        public string SelectedEnemyAssetImagePath
+        {
+            get { return selectedEnemyAssetImagePath; }
+            set
+            {
+                if (selectedEnemyAssetImagePath == value) { return; }
+                selectedEnemyAssetImagePath = value;
+                OnPropertyChanged(nameof(SelectedEnemyAssetImagePath));
+            }
+        }
+
+        public string SelectedEnemyAssetImageMessage
+        {
+            get { return selectedEnemyAssetImageMessage; }
+            set
+            {
+                if (selectedEnemyAssetImageMessage == value) { return; }
+                selectedEnemyAssetImageMessage = value;
+                OnPropertyChanged(nameof(SelectedEnemyAssetImageMessage));
             }
         }
 
@@ -1147,6 +1274,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand RefreshProfilesCommand { get; }
 
+        public ICommand RefreshEnemiesCommand { get; }
+
+        public ICommand CreateEnemyCommand { get; }
+
+        public ICommand SaveSelectedEnemyCommand { get; }
+
+        public ICommand BrowseEnemyImageCommand { get; }
+
+        public ICommand AddEnemyImageAssetCommand { get; }
+
+        public ICommand UnregisterEnemyImageAssetCommand { get; }
+
         public ICommand BrowseImageCommand { get; }
 
         public ICommand AddImageAssetCommand { get; }
@@ -1246,6 +1385,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public MainWindowModel()
         {
             characterProjectService = new CharacterProjectService();
+            enemyProjectService = new EnemyProjectService(characterProjectService.WorkspaceRoot);
             promptRecordService = new PromptRecordService(characterProjectService);
             promptTemplateService = new PromptTemplateService(characterProjectService.WorkspaceRoot);
             definitionCatalogService = new DefinitionCatalogService(characterProjectService.WorkspaceRoot);
@@ -1256,6 +1396,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             comfyClientService = new ComfyClientService();
             exportService = new ExportService(characterProjectService, imageInspectionService);
             Profiles = new ObservableCollection<HeroineProfile>();
+            EnemyProfiles = new ObservableCollection<EnemyProfile>();
             FilteredAssets = new ObservableCollection<HeroineAsset>();
             AcceptedAssets = new ObservableCollection<HeroineAsset>();
             AvailablePromptTemplates = new ObservableCollection<PromptTemplate>();
@@ -1342,6 +1483,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
             };
             heroineIdInput = "TestHeroine";
             displayNameInput = "テストヒロイン";
+            enemyIdInput = "ForestSlime";
+            enemyDisplayNameInput = "森スライム";
+            enemyTypeInput = "Slime";
+            enemyAssetIdInput = "Enemy_ForestSlime_Idle";
+            enemyImageSourcePathInput = string.Empty;
+            selectedEnemyAssetStatus = AssetStatus.Accepted;
+            selectedEnemyAssetImagePath = string.Empty;
+            selectedEnemyAssetImageMessage = "敵画像を選択してください。";
             assetIdInput = "Heroine_Normal";
             imageSourcePathInput = string.Empty;
             selectedAssetUsage = AssetUsage.Sprites;
@@ -1430,6 +1579,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 RemoveOutfitReactionMessageOverride,
                 () => SelectedProfile != null && SelectedOutfitReactionMessageOverride != null);
             RefreshProfilesCommand = new RelayCommand(LoadProfiles);
+            RefreshEnemiesCommand = new RelayCommand(LoadEnemies);
+            CreateEnemyCommand = new RelayCommand(CreateEnemy);
+            SaveSelectedEnemyCommand = new RelayCommand(SaveSelectedEnemy, () => SelectedEnemyProfile != null);
+            BrowseEnemyImageCommand = new RelayCommand(BrowseEnemyImage);
+            AddEnemyImageAssetCommand = new RelayCommand(AddEnemyImageAsset, () => SelectedEnemyProfile != null);
+            UnregisterEnemyImageAssetCommand = new RelayCommand(
+                UnregisterEnemyImageAsset,
+                () => SelectedEnemyProfile != null && SelectedEnemyAsset != null);
             BrowseImageCommand = new RelayCommand(BrowseImage);
             AddImageAssetCommand = new RelayCommand(AddImageAsset, () => SelectedProfile != null);
             UnregisterImageAssetCommand = new RelayCommand(
@@ -1565,6 +1722,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RefreshConversationCategorySuggestions();
             LoadStillDefinitions();
             LoadProfiles();
+            LoadEnemies();
             StatusMessage = "キャラクター基本情報の保存準備ができています。";
         }
 
@@ -2285,6 +2443,248 @@ namespace FantasyLoveSimAssetTool.ViewModels
             currentComfyWorkflowJson = string.Empty;
             hasComfyInterruptRequested = false;
             ClearComfyPreviewImage();
+        }
+
+        private void CreateEnemy()
+        {
+            try
+            {
+                EnemyProfile profile = enemyProjectService.CreateEnemy(EnemyIdInput, EnemyDisplayNameInput, EnemyTypeInput);
+                LoadEnemies();
+                SelectEnemy(profile.EnemyId);
+                StatusMessage = $"{profile.EnemyId} を作成しました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"敵キャラ作成に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void SaveSelectedEnemy()
+        {
+            if (SelectedEnemyProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                enemyProjectService.SaveProfile(SelectedEnemyProfile);
+                StatusMessage = $"{SelectedEnemyProfile.EnemyId} を保存しました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"敵キャラ保存に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void BrowseEnemyImage()
+        {
+            OpenFileDialog dialog = new OpenFileDialog
+            {
+                Title = "登録する敵画像を選択",
+                Filter = "Image files (*.png;*.jpg;*.jpeg;*.webp)|*.png;*.jpg;*.jpeg;*.webp|All files (*.*)|*.*"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                EnemyImageSourcePathInput = dialog.FileName;
+                if (string.IsNullOrWhiteSpace(EnemyAssetIdInput))
+                {
+                    EnemyAssetIdInput = Path.GetFileNameWithoutExtension(dialog.FileName);
+                }
+            }
+        }
+
+        private void AddEnemyImageAsset()
+        {
+            if (SelectedEnemyProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                bool hasExistingAssetId = HasExistingEnemyAssetId();
+                bool hasExistingStoredFile = HasExistingEnemyStoredImageFile();
+                bool overwriteExisting = ShouldOverwriteExistingEnemyAsset(hasExistingAssetId, hasExistingStoredFile);
+                if (overwriteExisting == false && (hasExistingAssetId || hasExistingStoredFile))
+                {
+                    StatusMessage = "敵画像登録をキャンセルしました。";
+                    return;
+                }
+
+                EnemyAsset asset = enemyProjectService.AddImageAsset(
+                    SelectedEnemyProfile,
+                    EnemyImageSourcePathInput,
+                    EnemyAssetIdInput,
+                    SelectedEnemyAssetStatus,
+                    overwriteExisting);
+
+                SelectedEnemyAsset = asset;
+                string registrationMessage = overwriteExisting
+                    ? $"{asset.AssetId} を Battle に上書き登録しました。"
+                    : $"{asset.AssetId} を Battle に登録しました。";
+                StatusMessage = AppendEnemyImageInspectionMessage(registrationMessage, asset);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"敵画像登録に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void UnregisterEnemyImageAsset()
+        {
+            if (SelectedEnemyProfile == null || SelectedEnemyAsset == null)
+            {
+                return;
+            }
+
+            EnemyAsset asset = SelectedEnemyAsset;
+            MessageBoxResult result = MessageBox.Show(
+                $"AssetId '{asset.AssetId}' の登録を解除しますか？\n画像ファイルと prompt JSON は削除されません。",
+                "敵画像登録解除の確認",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result != MessageBoxResult.Yes)
+            {
+                StatusMessage = "敵画像登録解除をキャンセルしました。";
+                return;
+            }
+
+            try
+            {
+                string storedPath = asset.StoredPath;
+                string promptPath = asset.PromptRecordPath;
+                bool unregistered = enemyProjectService.UnregisterImageAsset(SelectedEnemyProfile, asset);
+                if (!unregistered)
+                {
+                    StatusMessage = $"{asset.AssetId} は敵画像一覧に見つかりませんでした。";
+                    return;
+                }
+
+                SelectedEnemyAsset = SelectedEnemyProfile.Assets.FirstOrDefault();
+                StatusMessage = $"{asset.AssetId} の登録を解除しました。画像ファイルと prompt JSON は残しています。画像: {storedPath} / prompt: {promptPath}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"敵画像登録解除に失敗しました: {ex.Message}";
+            }
+        }
+
+        private bool HasExistingEnemyAssetId()
+        {
+            if (SelectedEnemyProfile == null || SelectedEnemyProfile.Assets == null || string.IsNullOrWhiteSpace(EnemyAssetIdInput))
+            {
+                return false;
+            }
+
+            string assetId = EnemyAssetIdInput.Trim();
+            return SelectedEnemyProfile.Assets.Any(asset => asset.AssetId == assetId);
+        }
+
+        private bool HasExistingEnemyStoredImageFile()
+        {
+            string storedImagePath = BuildEnemyStoredImagePathForInput();
+            return !string.IsNullOrWhiteSpace(storedImagePath) && File.Exists(storedImagePath);
+        }
+
+        private string BuildEnemyStoredImagePathForInput()
+        {
+            if (SelectedEnemyProfile == null || string.IsNullOrWhiteSpace(EnemyAssetIdInput))
+            {
+                return string.Empty;
+            }
+
+            string extension = Path.GetExtension(EnemyImageSourcePathInput);
+            if (string.IsNullOrWhiteSpace(extension))
+            {
+                extension = ".png";
+            }
+
+            string fileName = EnemyAssetIdInput.Trim() + extension;
+            return Path.Combine(
+                enemyProjectService.GetImageUsageDirectory(SelectedEnemyProfile.EnemyId, AssetUsage.Battle),
+                fileName);
+        }
+
+        private bool ShouldOverwriteExistingEnemyAsset(bool hasExistingAssetId, bool hasExistingStoredFile)
+        {
+            if (!hasExistingAssetId && !hasExistingStoredFile)
+            {
+                return false;
+            }
+
+            string message = hasExistingAssetId
+                ? $"AssetId '{EnemyAssetIdInput.Trim()}' はすでに登録されています。画像と登録情報を上書きしますか？"
+                : $"AssetId '{EnemyAssetIdInput.Trim()}' の登録はありませんが、保存先画像ファイルが残っています。\n残っている画像ファイルを上書きして登録しますか？";
+
+            MessageBoxResult result = MessageBox.Show(
+                message,
+                hasExistingAssetId ? "敵画像登録の上書き確認" : "敵画像ファイルの上書き確認",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            return result == MessageBoxResult.Yes;
+        }
+
+        private void RefreshSelectedEnemyAssetPreview()
+        {
+            SelectedEnemyAssetImagePath = string.Empty;
+
+            if (SelectedEnemyProfile == null || SelectedEnemyAsset == null)
+            {
+                SelectedEnemyAssetImageMessage = "敵画像を選択してください。";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(SelectedEnemyAsset.StoredPath))
+            {
+                SelectedEnemyAssetImageMessage = "StoredPath が空です。";
+                return;
+            }
+
+            string imagePath = Path.Combine(
+                enemyProjectService.GetEnemyDirectory(SelectedEnemyProfile.EnemyId),
+                SelectedEnemyAsset.StoredPath);
+
+            if (!File.Exists(imagePath))
+            {
+                SelectedEnemyAssetImageMessage = "画像ファイルが見つかりません: " + imagePath;
+                return;
+            }
+
+            SelectedEnemyAssetImagePath = imagePath;
+            SelectedEnemyAssetImageMessage = AppendEnemyImageInspectionMessage(imagePath, SelectedEnemyAsset);
+        }
+
+        private string AppendEnemyImageInspectionMessage(string baseMessage, EnemyAsset asset)
+        {
+            if (SelectedEnemyProfile == null || asset == null || string.IsNullOrWhiteSpace(asset.StoredPath))
+            {
+                return baseMessage;
+            }
+
+            string imagePath = Path.Combine(
+                enemyProjectService.GetEnemyDirectory(SelectedEnemyProfile.EnemyId),
+                asset.StoredPath);
+
+            try
+            {
+                ImageInspectionResult result = imageInspectionService.Inspect(imagePath, AssetUsage.Battle);
+                string summary = imageInspectionService.BuildSummary(result);
+                if (result.Warnings.Count == 0)
+                {
+                    return $"{baseMessage} 検査: {summary}";
+                }
+
+                return $"{baseMessage} 検査: {summary} / 警告 {result.Warnings.Count} 件: {string.Join(" / ", result.Warnings)}";
+            }
+            catch (Exception ex)
+            {
+                return $"{baseMessage} 画像検査に失敗しました: {ex.Message}";
+            }
         }
 
         private void BrowseImage()
@@ -6285,6 +6685,34 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        private void LoadEnemies()
+        {
+            try
+            {
+                string previousEnemyId = SelectedEnemyProfile == null ? string.Empty : SelectedEnemyProfile.EnemyId;
+                EnemyProfiles.Clear();
+                foreach (EnemyProfile profile in enemyProjectService.LoadProfiles())
+                {
+                    EnemyProfiles.Add(profile);
+                }
+
+                SelectedEnemyProfile = null;
+                if (!string.IsNullOrWhiteSpace(previousEnemyId))
+                {
+                    SelectEnemy(previousEnemyId);
+                }
+
+                if (SelectedEnemyProfile == null && EnemyProfiles.Count > 0)
+                {
+                    SelectedEnemyProfile = EnemyProfiles[0];
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"敵キャラ読み込みに失敗しました: {ex.Message}";
+            }
+        }
+
         private void SelectProfile(string heroineId)
         {
             foreach (HeroineProfile profile in Profiles)
@@ -6292,6 +6720,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (profile.HeroineId == heroineId)
                 {
                     SelectedProfile = profile;
+                    return;
+                }
+            }
+        }
+
+        private void SelectEnemy(string enemyId)
+        {
+            foreach (EnemyProfile profile in EnemyProfiles)
+            {
+                if (profile.EnemyId == enemyId)
+                {
+                    SelectedEnemyProfile = profile;
                     return;
                 }
             }

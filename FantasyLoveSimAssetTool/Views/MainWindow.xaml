@@ -835,6 +835,184 @@
                         </Grid>
                     </TabItem>
 
+                    <TabItem Header="敵キャラ素材">
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="260"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0"
+                                    BorderBrush="#DDDDDD"
+                                    BorderThickness="1"
+                                    Padding="10">
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Top"
+                                               Text="敵キャラ"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,0,8"/>
+
+                                    <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                                        <TextBlock Text="EnemyId"/>
+                                        <TextBox Text="{Binding EnemyIdInput, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,8"/>
+
+                                        <TextBlock Text="表示名"/>
+                                        <TextBox Text="{Binding EnemyDisplayNameInput, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,8"/>
+
+                                        <TextBlock Text="敵タイプ"/>
+                                        <TextBox Text="{Binding EnemyTypeInput, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,8"/>
+
+                                        <Button Content="敵キャラ作成"
+                                                Command="{Binding CreateEnemyCommand}"
+                                                Height="28"/>
+                                        <Button Content="再読み込み"
+                                                Command="{Binding RefreshEnemiesCommand}"
+                                                Height="28"
+                                                Margin="0,8,0,0"/>
+                                    </StackPanel>
+
+                                    <ListBox ItemsSource="{Binding EnemyProfiles}"
+                                             SelectedItem="{Binding SelectedEnemyProfile}"
+                                             DisplayMemberPath="DisplayName"/>
+                                </DockPanel>
+                            </Border>
+
+                            <Grid Grid.Column="2">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="12"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="12"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="EnemyId" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedEnemyProfile.EnemyId}" IsReadOnly="True" Margin="0,0,12,8"/>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="2" Text="表示名" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding SelectedEnemyProfile.DisplayName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,8"/>
+
+                                    <Button Grid.Row="0"
+                                            Grid.Column="4"
+                                            Content="敵情報保存"
+                                            Command="{Binding SaveSelectedEnemyCommand}"
+                                            Height="26"
+                                            Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="敵タイプ" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedEnemyProfile.EnemyType, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="2" Text="メモ" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBox Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="2" Text="{Binding SelectedEnemyProfile.Memo, UpdateSourceTrigger=PropertyChanged}"/>
+                                </Grid>
+
+                                <Grid Grid.Row="2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="96"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="AssetId" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EnemyAssetIdInput, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="元画像" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding EnemyImageSourcePathInput, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,8"/>
+                                    <Button Grid.Row="1" Grid.Column="2" Content="参照" Command="{Binding BrowseEnemyImageCommand}" Height="26" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="状態" VerticalAlignment="Center"/>
+                                    <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding AssetStatuses}" SelectedItem="{Binding SelectedEnemyAssetStatus}" Margin="0,0,8,0"/>
+                                    <Button Grid.Row="2" Grid.Column="2" Content="画像登録" Command="{Binding AddEnemyImageAssetCommand}" Height="26"/>
+                                </Grid>
+
+                                <Grid Grid.Row="4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="3*"/>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="2*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="敵画像一覧" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="2" Text="プレビュー" FontWeight="SemiBold" Margin="0,0,0,8"/>
+
+                                    <DataGrid Grid.Row="1"
+                                              Grid.Column="0"
+                                              ItemsSource="{Binding SelectedEnemyProfile.Assets}"
+                                              SelectedItem="{Binding SelectedEnemyAsset}"
+                                              AutoGenerateColumns="False"
+                                              CanUserAddRows="False"
+                                              IsReadOnly="False">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId}" Width="170" IsReadOnly="True"/>
+                                            <DataGridTextColumn Header="用途" Binding="{Binding Usage}" Width="80" IsReadOnly="True"/>
+                                            <DataGridComboBoxColumn Header="状態"
+                                                                    SelectedItemBinding="{Binding Status}"
+                                                                    ItemsSource="{Binding Data.AssetStatuses, Source={StaticResource ViewModelProxy}}"
+                                                                    Width="100"/>
+                                            <DataGridTextColumn Header="ファイル名" Binding="{Binding FileName}" Width="170" IsReadOnly="True"/>
+                                            <DataGridTextColumn Header="保存先" Binding="{Binding StoredPath}" Width="*" IsReadOnly="True"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+
+                                    <Button Grid.Row="2"
+                                            Grid.Column="0"
+                                            Content="登録解除"
+                                            Command="{Binding UnregisterEnemyImageAssetCommand}"
+                                            Width="100"
+                                            Height="28"
+                                            HorizontalAlignment="Right"
+                                            Margin="0,8,0,0"/>
+
+                                    <Border Grid.Row="1"
+                                            Grid.Column="2"
+                                            BorderBrush="#DDDDDD"
+                                            BorderThickness="1"
+                                            Padding="8">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <Image Grid.Row="0"
+                                                   Source="{Binding SelectedEnemyAssetImagePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}"
+                                                   Stretch="Uniform"/>
+                                            <TextBlock Grid.Row="1"
+                                                       Text="{Binding SelectedEnemyAssetImageMessage}"
+                                                       Foreground="Gray"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,8,0,0"/>
+                                        </Grid>
+                                    </Border>
+                                </Grid>
+                            </Grid>
+                        </Grid>
+                    </TabItem>
+
                     <TabItem Header="スチル作業">
                         <Grid Margin="0,12,0,0">
                             <Grid.ColumnDefinitions>

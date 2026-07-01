@@ -548,5 +548,5 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 
 その後に、画像検査、テンプレート編集画面、Export 後の導線改善を進めるとよいです。現状の MVP は外部生成した画像または ComfyUI 生成画像を登録し、採用状態と prompt 記録を管理し、Unity 向けに出力する用途には使える状態です。
 
-敵キャラ素材については、`EnemyProfile`、`EnemyAsset`、`EnemyProjectService` まで追加済みです。
-次は「敵キャラ素材」タブで敵一覧、敵基本情報、敵画像一覧、画像登録を操作できるようにします。
+敵キャラ素材については、`EnemyProfile`、`EnemyAsset`、`EnemyProjectService`、最小の「敵キャラ素材」タブまで追加済みです。
+次は enemy export として `enemy_profile_export.json`、`enemy_assets_export.json`、`Export/Enemies/<EnemyId>/Images/Battle/` を出力できるようにします。
