@@ -41,7 +41,7 @@ Unity プロジェクト本体とは分けて運用し、生成した成果物�
 - `Event`: ゲーム開始、日常イベント、予定イベントなどのイベントスチル
 - `Actions`: 行動結果や行動反応用のスチル
 - `Ending`: エンディング用スチル
-- `Battle`: 戦闘画面用のヒロイン、敵、攻撃、被ダメージ画像
+- `Battle`: 戦闘画面用のヒロイン画像。敵画像は `Docs/EnemyAssetManagementPlan.md` の enemy export で分けて扱う
 
 Unity 側の取り込み先は次を基本にする。
 
@@ -221,7 +221,7 @@ long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft an
 - `Event`: ゲーム開始、日常イベント、場所イベント
 - `Actions`: お茶、休憩、散歩、贈り物などの行動反応
 - `Ending`: Good / Normal / Bad Ending
-- `Battle`: 戦闘 UI 用の通常、攻撃、被ダメージ、敵画像
+- `Battle`: 戦闘 UI 用のヒロイン通常、攻撃、被ダメージ画像。敵画像は enemy export 側で扱う
 
 例:
 

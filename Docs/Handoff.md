@@ -533,6 +533,7 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 - `Docs/Extra/UnityToWpfSyncPlan.md`: Unity 側で手修正した ActionData、会話、イベントを WPF Tool 側へ戻す FromUnity JSON 方針
 - `Docs/Extra/ConversationDataPlan.md`: 会話、イベント、行動反応、エンディング本文の JSON export と Unity Import 方針
 - `Docs/Extra/BattleCharacterImagePlan.md`: 戦闘画面用キャラクター画像の usage、命名、Export、Unity 取り込み方針
+- `Docs/EnemyAssetManagementPlan.md`: ヒロインとは独立した敵キャラクター素材タブ、保存形式、enemy export 方針
 - `Docs/GameEventDataGuide.md`: `GameEvents` のカテゴリ、条件、発火判定、イベントスチル参照の運用
 - `Docs/ExpressionCostumeVariantRoadmap.md`: 表情差分、衣装差分の元データ作成、外部 JSON 化、GUI 編集へのロードマップ
 - `Docs/TransparentLayerAssetWorkflow.md`: 透過レイヤー素材の作成、登録、確認手順
