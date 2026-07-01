@@ -408,7 +408,7 @@ Services/
 44. ComfyUI `/queue` を参照し、生成待機中に実行中、待機中、対象 prompt のキュー状態を表示する
 45. ComfyUI WebSocket を参照し、生成待機中に実行中 node と sampler step を表示する
 46. Export の `Data` 配下に Unity Editor Import 用の `heroine_profile_export.json` と `assets_export.json` を出力する
-47. `Docs/ConversationDataPlan.md` を追加し、会話、イベント、行動反応、エンディング本文の JSON export と Unity Import 方針を整理する
+47. `Docs/Extra/ConversationDataPlan.md` を追加し、会話、イベント、行動反応、エンディング本文の JSON export と Unity Import 方針を整理する
 48. 会話データタブを追加し、`ConversationEntries` を `profile.json` に保存、再読み込みできる最小編集機能を実装する
 49. Export 時に `ConversationEntries` から `conversations_export.json`、`game_events_export.json`、`action_reactions_export.json`、`endings_export.json` を出力する
 50. 会話データタブにカテゴリ、条件、表情、画像 AssetId、ID 自動生成の入力補助を追加する
@@ -422,9 +422,9 @@ Services/
 58. 差分定義タブと `DefinitionCatalogService` を追加し、表情、衣装、透過レイヤー素材定義 JSON を GUI から編集できるようにする
 59. 差分定義タブで `LayerKind`、`ExpressionId`、`CostumeId` を候補選択できるようにし、保存前に空欄、重複、未定義参照を検証する
 60. レイヤープレビュータブを追加し、Accepted 済みの透過レイヤー素材を `DrawOrder` 順に重ねて確認できるようにする
-61. `Docs/UnityImportPlan.md` に `sprite_layers_export.json` の詳細契約、Unity 側 `HeroineLayeredSpriteData` 案、Import 手順、fallback ルール、追加警告候補を整理する
+61. `Docs/Extra/UnityImportPlan.md` に `sprite_layers_export.json` の詳細契約、Unity 側 `HeroineLayeredSpriteData` 案、Import 手順、fallback ルール、追加警告候補を整理する
 62. WPF Export warning に BaseBody、Default 衣装、Neutral 表情、重複レイヤー、透過 PNG、BaseBody とのキャンバスサイズ、縦横比の検証を追加する
-63. `Docs/UnityEditorImportImplementationPlan.md` を追加し、Unity Editor Import 拡張の配置、ScriptableObject 型、Import 手順、warning、更新ルールを整理する
+63. `Docs/Extra/UnityEditorImportImplementationPlan.md` を追加し、Unity Editor Import 拡張の配置、ScriptableObject 型、Import 手順、warning、更新ルールを整理する
 64. `Docs/TransparentLayerAssetWorkflow.md` を追加し、透過レイヤー素材の作成、登録、Export、Unity 確認手順を整理する
 
 ## 次に進める候補
@@ -525,14 +525,14 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 ## 関連ドキュメント
 
 - `Docs/CharacterAssetGenerationToolSpec.md`: WPF ツール側の仕様
-- `Docs/UnityImportPlan.md`: WPF export 結果を Unity Editor 拡張で取り込む方針と、別リポジトリ運用方針
-- `Docs/UnityEditorImportImplementationPlan.md`: Unity Editor Import 拡張の実装計画
-- `Docs/UnityToWpfSyncPlan.md`: Unity 側で手修正した ActionData、会話、イベントを WPF Tool 側へ戻す FromUnity JSON 方針
-- `Docs/ConversationDataPlan.md`: 会話、イベント、行動反応、エンディング本文の JSON export と Unity Import 方針
+- `Docs/Extra/UnityImportPlan.md`: WPF export 結果を Unity Editor 拡張で取り込む方針と、別リポジトリ運用方針
+- `Docs/Extra/UnityEditorImportImplementationPlan.md`: Unity Editor Import 拡張の実装計画
+- `Docs/Extra/UnityToWpfSyncPlan.md`: Unity 側で手修正した ActionData、会話、イベントを WPF Tool 側へ戻す FromUnity JSON 方針
+- `Docs/Extra/ConversationDataPlan.md`: 会話、イベント、行動反応、エンディング本文の JSON export と Unity Import 方針
+- `Docs/Extra/BattleCharacterImagePlan.md`: 戦闘画面用キャラクター画像の usage、命名、Export、Unity 取り込み方針
 - `Docs/GameEventDataGuide.md`: `GameEvents` のカテゴリ、条件、発火判定、イベントスチル参照の運用
 - `Docs/ExpressionCostumeVariantRoadmap.md`: 表情差分、衣装差分の元データ作成、外部 JSON 化、GUI 編集へのロードマップ
 - `Docs/TransparentLayerAssetWorkflow.md`: 透過レイヤー素材の作成、登録、確認手順
-- `Docs/ConversationDataPlan.md`: 会話、イベント、行動反応、エンディング本文の JSON export 方針
 
 ## 次の担当者へのメモ
 

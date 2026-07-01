@@ -5,7 +5,7 @@
 WPF ツールは Unity の ScriptableObject `.asset` を直接生成しない。
 WPF ツールは画像と中間 JSON を出力し、Unity Editor 拡張が Unity Editor 内で JSON を読み込んで `.asset` を生成、更新する。
 
-Unity 側で手修正したデータを WPF Tool 側へ戻す場合は、正方向 Import とは分けて `Docs/UnityToWpfSyncPlan.md` の FromUnity JSON 方針に従う。
+Unity 側で手修正したデータを WPF Tool 側へ戻す場合は、正方向 Import とは分けて `Docs/Extra/UnityToWpfSyncPlan.md` の FromUnity JSON 方針に従う。
 WPF Tool は Unity `.asset` YAML を直接読まない。
 
 ## 基本方針
@@ -45,7 +45,7 @@ WPF ツールは通常の C# アプリとして管理できるため、同じリ
 
 Unity 側は上記の契約を読み込む Editor 拡張を持つ。
 WPF 側はこの契約に沿った export を出す。
-どちらかの実装を変更する場合も、まず `Docs/UnityImportPlan.md` の契約を更新し、その後で WPF 側と Unity 側を合わせる。
+どちらかの実装を変更する場合も、まず `Docs/Extra/UnityImportPlan.md` の契約を更新し、その後で WPF 側と Unity 側を合わせる。
 
 必要になった場合は、WPF ツール側に Unity プロジェクトの import 用フォルダへ直接 export する設定を追加する。
 この場合もリポジトリを統合する必要はなく、出力先パスを設定として持つだけでよい。
@@ -60,6 +60,7 @@ Export/
       Event/
       Actions/
       Ending/
+      Battle/
     Data/
       heroine_profile_note.md
       heroine_profile_export.json
@@ -87,6 +88,7 @@ Assets/Images/Heroines/<HeroineId>/
   Event/
   Actions/
   Ending/
+  Battle/
 ```
 
 ScriptableObject の保存先は次を基本にする。
@@ -145,18 +147,17 @@ Unity 側の ScriptableObject 型は次を基本にする。
   - `outfitId`
   - `lockedMessage`
   - `changedMessage`
+  - 今後追加: `lockedExpressionId`
+  - 今後追加: `changedExpressionId`
 - `outfitReactionMessageOverrides`
   - `reactionType`: `Praise`, `Dislike`, `Bored`, `Change`
   - `message`
+  - 今後追加: `expressionId`
 
 Unity Editor 拡張は `heroineId` をキーにして既存 `.asset` を検索する。
 既存 `.asset` があれば更新し、なければ新規作成する。
 `outfitMessageOverrides` と `outfitReactionMessageOverrides` が JSON に存在する場合は、Unity 側の `HeroineProfileData` の同名リストを置き換える。
 JSON に存在しない場合は、Unity 側で手修正した既存リストを保持する。
-
-WPF Tool 側は、基本情報タブで `outfitMessageOverrides` と `outfitReactionMessageOverrides` を編集し、`heroine_profile_export.json` に出力する。
-これにより、Unity 側の `TestHeroineProfile` などへ直接持たせたツンデレ台詞を Tool 再 import で欠落させず、Tool 側の profile.json を正本に戻せる。
-Unity から Tool へ戻す場合は `heroine_profile_from_unity.json` を使い、既存 `outfitId` / `reactionType` は上書きせず新規分だけ追加する。
 
 ## assets_export.json
 
@@ -217,6 +218,9 @@ Unity Editor 拡張は `exportImagePath` から画像をコピーし、`unityIma
 | `Prompts/<AssetId>.prompt.json` | 生成条件の確認、再生成用メモ |
 | `Data/*_draft.md` | 会話、イベント、行動反応、エンディングの確認用下書き |
 
+戦闘画面用のキャラクター画像は `Images/Battle/` と `usage = Battle` で扱う。
+詳細は `BattleCharacterImagePlan.md` を参照する。
+
 ## 会話データ
 
 会話データ、イベント、行動反応、エンディング本文は、WPF ツールから次の JSON として export する。
@@ -232,7 +236,7 @@ Data/
 
 このときも WPF 側から `.asset` を直接生成しない。
 Unity Editor 側で `ConversationData`、`GameEventData`、`ActionReactionData`、`EndingData` の `.asset` を生成、更新する。
-会話データの JSON スキーマと WPF 画面方針は `Docs/ConversationDataPlan.md` にまとめる。
+会話データの JSON スキーマと WPF 画面方針は `Docs/Extra/ConversationDataPlan.md` にまとめる。
 `GameEvents` のカテゴリ、条件、発火判定、イベントスチル参照の運用は `Docs/GameEventDataGuide.md` にまとめる。
 
 会話データの ScriptableObject は、会話 item ごとに個別 `.asset` を作る。

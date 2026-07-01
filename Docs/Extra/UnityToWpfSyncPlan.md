@@ -72,22 +72,10 @@ heroine_profile_from_unity.json
 - `outfitReactionMessageOverrides`
 
 `outfitMessageOverrides` は `outfitId`、`lockedMessage`、`changedMessage` を持つ。
+今後は衣装変更成功時と未解放時の表情を変えられるように、`changedExpressionId` と `lockedExpressionId` も戻す。
 `outfitReactionMessageOverrides` は `reactionType` と `message` を持つ。
+今後は `衣装を見る` 実行後のヒロイン反応ごとに表情を変えられるように、`expressionId` も戻す。
 WPF Tool 側では、同じ `outfitId` / `reactionType` の既存データを無条件上書きせず、差分確認または新規追加候補として扱う。
-
-WPF Tool の基本情報タブでは、次の欄で編集する。
-
-- 衣装メッセージ override
-  - `outfitId`
-  - `lockedMessage`
-  - `changedMessage`
-- 衣装反応メッセージ override
-  - `reactionType`
-  - `message`
-
-`heroine_profile_from_unity.json` の取り込みは、Unity 側で増えた項目を Tool 側へ戻す救済用途から始める。
-同じ `outfitId` または `reactionType` が既にある場合はスキップし、既存の Tool 側データを保持する。
-差分表示と項目単位の選択 merge は後続課題にする。
 
 ### 2. ActionData
 
@@ -306,7 +294,7 @@ scheduled_events_from_unity.json
 endings_from_unity.json
 ```
 
-フィールドは `Docs/ConversationDataPlan.md` と `Docs/GameEventDataGuide.md` を基準にする。
+フィールドは `Docs/Extra/ConversationDataPlan.md` と `Docs/GameEventDataGuide.md` を基準にする。
 Unity 側にしかないフィールドは `unity` または `sourceMetadata` のような補助領域に逃がし、WPF の正本フィールドとは混ぜない。
 
 ## Warning

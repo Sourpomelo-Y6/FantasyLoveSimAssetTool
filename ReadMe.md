@@ -5,7 +5,7 @@
 Stable Diffusion などで生成した立ち絵、イベントスチル、行動スチル、エンディングスチルと、それぞれのプロンプト記録をキャラクター単位で整理し、Unity に取り込みやすいフォルダ構成へ export することを目的にしています。
 
 詳細仕様は [Docs/CharacterAssetGenerationToolSpec.md](Docs/CharacterAssetGenerationToolSpec.md) を参照してください。
-Unity 取り込み方針は [Docs/UnityImportPlan.md](Docs/UnityImportPlan.md)、Unity Editor 側の実装計画は [Docs/UnityEditorImportImplementationPlan.md](Docs/UnityEditorImportImplementationPlan.md)、会話データ拡張案は [Docs/ConversationDataPlan.md](Docs/ConversationDataPlan.md)、表情・衣装差分ロードマップは [Docs/ExpressionCostumeVariantRoadmap.md](Docs/ExpressionCostumeVariantRoadmap.md)、透過レイヤー素材の作成手順は [Docs/TransparentLayerAssetWorkflow.md](Docs/TransparentLayerAssetWorkflow.md) を参照してください。
+Unity 取り込み方針は [Docs/Extra/UnityImportPlan.md](Docs/Extra/UnityImportPlan.md)、Unity Editor 側の実装計画は [Docs/Extra/UnityEditorImportImplementationPlan.md](Docs/Extra/UnityEditorImportImplementationPlan.md)、会話データ拡張案は [Docs/Extra/ConversationDataPlan.md](Docs/Extra/ConversationDataPlan.md)、表情・衣装差分ロードマップは [Docs/ExpressionCostumeVariantRoadmap.md](Docs/ExpressionCostumeVariantRoadmap.md)、透過レイヤー素材の作成手順は [Docs/TransparentLayerAssetWorkflow.md](Docs/TransparentLayerAssetWorkflow.md) を参照してください。
 
 ## 現在の状態
 
@@ -235,7 +235,7 @@ Export/
 `Data/heroine_profile_export.json` と `Data/assets_export.json` は Unity Editor Import 拡張が読む入口にします。
 WPF 側では ScriptableObject `.asset` を直接生成せず、Unity Editor 側で JSON から `HeroineProfileData` などを生成、更新する方針です。
 `Prompts` 配下の個別 prompt JSON は、生成条件の参照資料として `assets_export.json` の `exportPromptPath` から辿れるようにします。
-Unity 側での取り込み手順と、WPF ツールと Unity プロジェクトを別リポジトリで運用する方針は `Docs/UnityImportPlan.md` にまとめています。
+Unity 側での取り込み手順と、WPF ツールと Unity プロジェクトを別リポジトリで運用する方針は `Docs/Extra/UnityImportPlan.md` にまとめています。
 `sprite_layers_export.json` の項目定義、Unity 側 `HeroineLayeredSpriteData` 案、Import 手順、fallback ルールも同ドキュメントにまとめています。
 
 ## 今後の拡張候補

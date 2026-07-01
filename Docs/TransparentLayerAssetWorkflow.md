@@ -2,7 +2,7 @@
 
 このドキュメントは、表情差分、衣装差分を Unity 側で重ねて表示するための透過 PNG レイヤー素材を用意する手順をまとめる。
 
-関連する export 契約は `Docs/UnityImportPlan.md` の `sprite_layers_export.json`、全体ロードマップは `Docs/ExpressionCostumeVariantRoadmap.md` を参照する。
+関連する export 契約は `Docs/Extra/UnityImportPlan.md` の `sprite_layers_export.json`、全体ロードマップは `Docs/ExpressionCostumeVariantRoadmap.md` を参照する。
 
 ## 基本方針
 

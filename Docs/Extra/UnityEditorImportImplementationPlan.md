@@ -1,10 +1,10 @@
 # Unity Editor Import Implementation Plan
 
 このドキュメントは、`FantasyLoveSimAssetTool` の `Export/<HeroineId>/` を Unity プロジェクト側で取り込む Editor 拡張の実装メモである。
-データ契約そのものは `Docs/UnityImportPlan.md` を正とし、このドキュメントでは Unity 側に置くファイル、クラス、処理順、更新ルールを具体化する。
+データ契約そのものは `Docs/Extra/UnityImportPlan.md` を正とし、このドキュメントでは Unity 側に置くファイル、クラス、処理順、更新ルールを具体化する。
 
 Unity 側で手修正したデータを WPF Tool 側へ戻す逆方向同期は、通常 Import とは別機能として扱う。
-方針は `Docs/UnityToWpfSyncPlan.md` を参照する。
+方針は `Docs/Extra/UnityToWpfSyncPlan.md` を参照する。
 
 ## 目的
 
@@ -85,10 +85,6 @@ Tools/FantasyLoveSim/Import Heroine Export...
 - `outfitReactionMessageOverrides`
   - `reactionType`: `Praise`, `Dislike`, `Bored`, `Change`
   - `message`
-
-`outfitMessageOverrides` と `outfitReactionMessageOverrides` は、Unity 側に直接書いたヒロイン固有台詞を Tool 再 import で失わないための正規フィールドとして扱う。
-WPF Tool 側は基本情報タブで編集し、`heroine_profile_export.json` に同名配列として出力する。
-Unity 側 exporter は `heroine_profile_from_unity.json` にも同名配列を出し、WPF Tool 側は既存 `outfitId` / `reactionType` を上書きせず新規分だけ取り込む。
 
 ### HeroineAssetCatalog
 

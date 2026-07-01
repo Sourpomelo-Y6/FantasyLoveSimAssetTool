@@ -306,7 +306,7 @@ Data/
 
 Unity 側では、`layerKind` と `drawOrder` に従って SpriteRenderer、UI Image、または独自の立ち絵表示コンポーネントにレイヤーを割り当てる。
 全レイヤーは同じキャンバスサイズ、同じ原点、同じ基準位置で作ることを必須にする。
-`sprite_layers_export.json` の必須項目、Unity 側 ScriptableObject 案、Import 手順、fallback ルールは `Docs/UnityImportPlan.md` を正とする。
+`sprite_layers_export.json` の必須項目、Unity 側 ScriptableObject 案、Import 手順、fallback ルールは `Docs/Extra/UnityImportPlan.md` を正とする。
 
 ### Phase 6b: Unity 側レイヤー表示を追加する
 
@@ -377,7 +377,7 @@ Unity 側では、`layerKind` と `drawOrder` に従って SpriteRenderer、UI I
 
 1. `StillDefinitionService` に `Create(...)` を追加する。
 2. 会話データで使う表情名なら `ConversationValueCatalog.Expressions` に追加する。
-3. 必要なら `Docs/ConversationDataPlan.md` と `Docs/UnityImportPlan.md` の表情値一覧を更新する。
+3. 必要なら `Docs/Extra/ConversationDataPlan.md` と `Docs/Extra/UnityImportPlan.md` の表情値一覧を更新する。
 
 例:
 
