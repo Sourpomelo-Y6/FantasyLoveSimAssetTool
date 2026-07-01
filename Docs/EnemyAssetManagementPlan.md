@@ -158,12 +158,15 @@ BattlePanel のデバッグで敵画像が必要な場合も、敵キャラ素�
 
 ## 実装順
 
-1. `EnemyProfile` と `EnemyAsset` のモデルを追加する。
-2. `EnemyProjectService` を追加し、`Enemies/<EnemyId>/enemy.json` を保存、読み込みする。
+1. `EnemyProfile` と `EnemyAsset` のモデルを追加する。実装済み。
+2. `EnemyProjectService` を追加し、`Enemies/<EnemyId>/enemy.json` を保存、読み込みする。実装済み。
 3. 「敵キャラ素材」タブを追加する。
 4. 敵画像登録、登録解除、上書き登録を実装する。
 5. `enemy_profile_export.json` と `enemy_assets_export.json` を出力する。
 6. Unity 側 importer の enemy export 対応を進める。
+
+現在の `EnemyProjectService` は、敵プロファイルの作成、保存、読み込み、一覧読み込み、`Images/Battle/` と `Prompts/` の作成、戦闘画像登録、登録解除までを持つ。
+画像ファイル本体は、ヒロイン側の登録解除と同じく登録解除では削除しない。
 
 ## 後回しにするもの
 
