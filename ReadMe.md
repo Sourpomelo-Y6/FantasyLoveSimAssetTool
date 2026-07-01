@@ -79,6 +79,7 @@ Assets/Images/Heroines/<HeroineId>/Sprites/
 Assets/Images/Heroines/<HeroineId>/Event/
 Assets/Images/Heroines/<HeroineId>/Actions/
 Assets/Images/Heroines/<HeroineId>/Ending/
+Assets/Images/Heroines/<HeroineId>/Battle/
 ```
 
 ## プロジェクト構成
@@ -159,7 +160,7 @@ WPF は Windows Desktop SDK が必要です。WSL や Linux 上の .NET SDK で�
 
 - キャラクター作成
 - `Characters/<HeroineId>/profile.json` の保存、読み込み
-- `Images/Sprites`, `Event`, `Actions`, `Ending`, `Prompts` の作成
+- `Images/Sprites`, `Event`, `Actions`, `Ending`, `Battle`, `Prompts` の作成
 - 元画像の登録と用途別フォルダへのコピー
 - 登録済み画像の一覧表示とプレビュー
 - 登録済み画像の `Accepted`, `Pending`, `Rejected` 切り替え
@@ -191,6 +192,7 @@ Characters/
       Event/
       Actions/
       Ending/
+      Battle/
     Prompts/
       GameStartIntro_01.prompt.json
 ```
@@ -214,6 +216,7 @@ Export/
       Event/
       Actions/
       Ending/
+      Battle/
     Data/
       heroine_profile_note.md
       heroine_profile_export.json

@@ -53,7 +53,10 @@ namespace FantasyLoveSimAssetTool.Services
 
                 Create("GoodEnding_01", "エンディング: Good", AssetUsage.Ending, "GoodEnding_01.png", "good ending still, emotional smile, hopeful atmosphere, beautiful lighting"),
                 Create("NormalEnding_01", "エンディング: Normal", AssetUsage.Ending, "NormalEnding_01.png", "normal ending still, bittersweet smile, calm atmosphere, soft lighting"),
-                Create("BadEnding_01", "エンディング: Bad", AssetUsage.Ending, "BadEnding_01.png", "bad ending still, distant expression, lonely atmosphere, subdued lighting")
+                Create("BadEnding_01", "エンディング: Bad", AssetUsage.Ending, "BadEnding_01.png", "bad ending still, distant expression, lonely atmosphere, subdued lighting"),
+
+                Create("Battle_Heroine_Idle", "戦闘: ヒロイン通常", AssetUsage.Battle, "Battle_Heroine_Idle.png", "battle UI character sprite, heroine idle pose, full body, transparent background, clear game asset lighting"),
+                Create("Battle_Enemy_ForestSlime_Idle", "戦闘: 森スライム通常", AssetUsage.Battle, "Battle_Enemy_ForestSlime_Idle.png", "battle UI enemy sprite, forest slime idle pose, transparent background, clear game asset lighting")
             };
             Dictionary<string, ExpressionDefinition> expressions = LoadExpressionDefinitions(workspaceRoot);
             Dictionary<string, CostumeDefinition> costumes = LoadCostumeDefinitions(workspaceRoot);

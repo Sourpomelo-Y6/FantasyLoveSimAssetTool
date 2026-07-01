@@ -114,6 +114,7 @@ Characters/
       Event/
       Actions/
       Ending/
+      Battle/
     Prompts/
       <AssetId>.prompt.json
 ```
@@ -128,6 +129,7 @@ Export/
       Event/
       Actions/
       Ending/
+      Battle/
     Data/
       heroine_profile_note.md
       heroine_profile_export.json
@@ -224,6 +226,7 @@ Models/
 - `Event`
 - `Actions`
 - `Ending`
+- `Battle`
 
 ### AssetStatus
 

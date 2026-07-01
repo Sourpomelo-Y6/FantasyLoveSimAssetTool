@@ -1307,14 +1307,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 AssetUsage.Sprites.ToString(),
                 AssetUsage.Event.ToString(),
                 AssetUsage.Actions.ToString(),
-                AssetUsage.Ending.ToString()
+                AssetUsage.Ending.ToString(),
+                AssetUsage.Battle.ToString()
             };
             AssetUsages = new ObservableCollection<AssetUsage>
             {
                 AssetUsage.Sprites,
                 AssetUsage.Event,
                 AssetUsage.Actions,
-                AssetUsage.Ending
+                AssetUsage.Ending,
+                AssetUsage.Battle
             };
             AssetStatuses = new ObservableCollection<AssetStatus>
             {

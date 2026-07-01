@@ -90,6 +90,7 @@ namespace FantasyLoveSimAssetTool.Services
             Directory.CreateDirectory(Path.Combine(heroineExportDirectory, "Images", "Event"));
             Directory.CreateDirectory(Path.Combine(heroineExportDirectory, "Images", "Actions"));
             Directory.CreateDirectory(Path.Combine(heroineExportDirectory, "Images", "Ending"));
+            Directory.CreateDirectory(Path.Combine(heroineExportDirectory, "Images", "Battle"));
             Directory.CreateDirectory(Path.Combine(heroineExportDirectory, "Data"));
             Directory.CreateDirectory(Path.Combine(heroineExportDirectory, "Prompts"));
         }

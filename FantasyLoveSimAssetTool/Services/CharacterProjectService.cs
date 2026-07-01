@@ -244,6 +244,7 @@ namespace FantasyLoveSimAssetTool.Services
             Directory.CreateDirectory(Path.Combine(GetCharacterDirectory(heroineId), "Images", "Event"));
             Directory.CreateDirectory(Path.Combine(GetCharacterDirectory(heroineId), "Images", "Actions"));
             Directory.CreateDirectory(Path.Combine(GetCharacterDirectory(heroineId), "Images", "Ending"));
+            Directory.CreateDirectory(Path.Combine(GetCharacterDirectory(heroineId), "Images", "Battle"));
             Directory.CreateDirectory(Path.Combine(GetCharacterDirectory(heroineId), "Prompts"));
         }
 

@@ -69,24 +69,31 @@ namespace FantasyLoveSimAssetTool.Services
                 result.Warnings.Add($"縦横比が極端です: {result.PixelWidth}x{result.PixelHeight}");
             }
 
-            if (usage == AssetUsage.Sprites)
+            if (usage == AssetUsage.Sprites || usage == AssetUsage.Battle)
             {
                 if (!string.Equals(result.FileFormat, "PNG", StringComparison.OrdinalIgnoreCase))
                 {
-                    result.Warnings.Add("立ち絵は透過 PNG が望ましいです。");
+                    result.Warnings.Add(usage == AssetUsage.Battle
+                        ? "戦闘画像は透過 PNG が望ましいです。"
+                        : "立ち絵は透過 PNG が望ましいです。");
                 }
 
                 if (!result.HasTransparentPixels)
                 {
-                    result.Warnings.Add("立ち絵に透過ピクセルが見つかりません。");
+                    result.Warnings.Add(usage == AssetUsage.Battle
+                        ? "戦闘画像に透過ピクセルが見つかりません。"
+                        : "立ち絵に透過ピクセルが見つかりません。");
                 }
 
-                double heightWidthRatio = result.PixelWidth == 0
-                    ? 0
-                    : (double)result.PixelHeight / result.PixelWidth;
-                if (heightWidthRatio < SpriteMinimumHeightWidthRatio)
+                if (usage == AssetUsage.Sprites)
                 {
-                    result.Warnings.Add("立ち絵としては縦長の画像が望ましいです。");
+                    double heightWidthRatio = result.PixelWidth == 0
+                        ? 0
+                        : (double)result.PixelHeight / result.PixelWidth;
+                    if (heightWidthRatio < SpriteMinimumHeightWidthRatio)
+                    {
+                        result.Warnings.Add("立ち絵としては縦長の画像が望ましいです。");
+                    }
                 }
             }
         }

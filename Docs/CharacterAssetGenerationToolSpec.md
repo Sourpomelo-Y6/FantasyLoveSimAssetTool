@@ -41,6 +41,7 @@ Unity プロジェクト本体とは分けて運用し、生成した成果物�
 - `Event`: ゲーム開始、日常イベント、予定イベントなどのイベントスチル
 - `Actions`: 行動結果や行動反応用のスチル
 - `Ending`: エンディング用スチル
+- `Battle`: 戦闘画面用のヒロイン、敵、攻撃、被ダメージ画像
 
 Unity 側の取り込み先は次を基本にする。
 
@@ -49,6 +50,7 @@ Assets/Images/Heroines/<HeroineId>/Sprites/
 Assets/Images/Heroines/<HeroineId>/Event/
 Assets/Images/Heroines/<HeroineId>/Actions/
 Assets/Images/Heroines/<HeroineId>/Ending/
+Assets/Images/Heroines/<HeroineId>/Battle/
 ```
 
 ### 会話・イベント案
@@ -189,7 +191,7 @@ JSON が存在しない、空、不正な場合は、アプリ内のデフォル
 ]
 ```
 
-`usage` は `Sprites`, `Event`, `Actions`, `Ending` のいずれかを指定する。
+`usage` は `Sprites`, `Event`, `Actions`, `Ending`, `Battle` のいずれかを指定する。
 `templateText` には `{CharacterAppearancePrompt}` を含め、キャラクター容姿プロンプトと合成できるようにする。
 
 ### キャラクター容姿プロンプト
@@ -219,6 +221,7 @@ long silver hair, blue eyes, gentle smile, petite girl, fantasy heroine, soft an
 - `Event`: ゲーム開始、日常イベント、場所イベント
 - `Actions`: お茶、休憩、散歩、贈り物などの行動反応
 - `Ending`: Good / Normal / Bad Ending
+- `Battle`: 戦闘 UI 用の通常、攻撃、被ダメージ、敵画像
 
 例:
 
@@ -377,7 +380,7 @@ ComfyUI で生成した画像については、採用時に次を `PromptRecord`
 スチル一覧の各行では、次を確認、編集できるようにする。
 
 - `AssetId`
-- 用途: `Sprites` / `Event` / `Actions` / `Ending`
+- 用途: `Sprites` / `Event` / `Actions` / `Ending` / `Battle`
 - 表示名
 - 出力ファイル名
 - スチル固有の追加プロンプト
@@ -407,7 +410,7 @@ ComfyUI で生成した画像については、採用時に次を `PromptRecord`
 - 表示名
 - `AssetId`
 - スチル状態
-- 用途フィルタ: `All` / `Sprites` / `Event` / `Actions` / `Ending`
+- 用途フィルタ: `All` / `Sprites` / `Event` / `Actions` / `Ending` / `Battle`
 
 右側の詳細では、次を表示、編集できるようにする。
 
@@ -543,6 +546,7 @@ Export/
       Event/
       Actions/
       Ending/
+      Battle/
     Data/
       heroine_profile_note.md
       heroine_profile_export.json

@@ -155,6 +155,20 @@ namespace FantasyLoveSimAssetTool.Services
                     DisplayName = "エンディング: Normal",
                     Usage = AssetUsage.Ending,
                     TemplateText = CharacterAppearancePromptPlaceholder + ", normal ending still, bittersweet smile, calm atmosphere, cinematic composition, soft lighting"
+                },
+                new PromptTemplate
+                {
+                    TemplateId = "battle_heroine_idle",
+                    DisplayName = "戦闘: ヒロイン通常",
+                    Usage = AssetUsage.Battle,
+                    TemplateText = CharacterAppearancePromptPlaceholder + ", battle UI character sprite, idle pose, full body, transparent background, clear game asset lighting"
+                },
+                new PromptTemplate
+                {
+                    TemplateId = "battle_heroine_attack",
+                    DisplayName = "戦闘: ヒロイン攻撃",
+                    Usage = AssetUsage.Battle,
+                    TemplateText = CharacterAppearancePromptPlaceholder + ", battle UI character sprite, attack pose, full body, transparent background, clear game asset lighting"
                 }
             };
         }
