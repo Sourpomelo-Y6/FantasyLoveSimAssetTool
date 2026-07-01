@@ -957,7 +957,22 @@
                                     </Grid.RowDefinitions>
 
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="敵画像一覧" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                    <TextBlock Grid.Row="0" Grid.Column="2" Text="プレビュー" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <StackPanel Grid.Row="0"
+                                                Grid.Column="2"
+                                                Orientation="Horizontal"
+                                                HorizontalAlignment="Right"
+                                                Margin="0,0,0,8">
+                                        <TextBlock Text="{Binding LastEnemyExportReport.ExportedImageCount, StringFormat=Images: {0}}"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,8,0"/>
+                                        <TextBlock Text="{Binding LastEnemyExportReport.Warnings.Count, StringFormat=Warnings: {0}}"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,8,0"/>
+                                        <Button Content="Enemy Export"
+                                                Command="{Binding ExportSelectedEnemyCommand}"
+                                                Height="26"
+                                                MinWidth="112"/>
+                                    </StackPanel>
 
                                     <DataGrid Grid.Row="1"
                                               Grid.Column="0"

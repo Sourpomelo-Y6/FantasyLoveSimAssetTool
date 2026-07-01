@@ -30,6 +30,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly ComfyWorkflowService comfyWorkflowService;
         private readonly ComfyClientService comfyClientService;
         private readonly ExportService exportService;
+        private readonly EnemyExportService enemyExportService;
         private OutfitMessageOverride selectedOutfitMessageOverride;
         private OutfitReactionMessageOverride selectedOutfitReactionMessageOverride;
         private string heroineIdInput;
@@ -94,6 +95,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private PromptRecord currentPromptRecord;
         private HeroineProfile selectedProfile;
         private ExportReport lastExportReport;
+        private EnemyExportReport lastEnemyExportReport;
         private string selectedAssetImagePath;
         private string selectedAssetImageMessage;
         private string selectedStillAssetStatusText;
@@ -997,6 +999,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public EnemyExportReport LastEnemyExportReport
+        {
+            get { return lastEnemyExportReport; }
+            set
+            {
+                if (lastEnemyExportReport == value) { return; }
+                lastEnemyExportReport = value;
+                OnPropertyChanged(nameof(LastEnemyExportReport));
+            }
+        }
+
         public string SelectedAssetImagePath
         {
             get { return selectedAssetImagePath; }
@@ -1286,6 +1299,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand UnregisterEnemyImageAssetCommand { get; }
 
+        public ICommand ExportSelectedEnemyCommand { get; }
+
         public ICommand BrowseImageCommand { get; }
 
         public ICommand AddImageAssetCommand { get; }
@@ -1395,6 +1410,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             comfyWorkflowService = new ComfyWorkflowService(characterProjectService.WorkspaceRoot);
             comfyClientService = new ComfyClientService();
             exportService = new ExportService(characterProjectService, imageInspectionService);
+            enemyExportService = new EnemyExportService(enemyProjectService, imageInspectionService);
             Profiles = new ObservableCollection<HeroineProfile>();
             EnemyProfiles = new ObservableCollection<EnemyProfile>();
             FilteredAssets = new ObservableCollection<HeroineAsset>();
@@ -1533,6 +1549,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             selectedLayerPreviewExpressionId = string.Empty;
             layerPreviewMessage = "キャラクターとレイヤーを選択してください。";
             lastExportReport = new ExportReport();
+            lastEnemyExportReport = new EnemyExportReport();
             selectedAssetImagePath = string.Empty;
             selectedAssetImageMessage = "画像を選択してください。";
             selectedStillAssetStatusText = "Asset: 未選択";
@@ -1587,6 +1604,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             UnregisterEnemyImageAssetCommand = new RelayCommand(
                 UnregisterEnemyImageAsset,
                 () => SelectedEnemyProfile != null && SelectedEnemyAsset != null);
+            ExportSelectedEnemyCommand = new RelayCommand(ExportSelectedEnemy, () => SelectedEnemyProfile != null);
             BrowseImageCommand = new RelayCommand(BrowseImage);
             AddImageAssetCommand = new RelayCommand(AddImageAsset, () => SelectedProfile != null);
             UnregisterImageAssetCommand = new RelayCommand(
@@ -2475,6 +2493,25 @@ namespace FantasyLoveSimAssetTool.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = $"敵キャラ保存に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void ExportSelectedEnemy()
+        {
+            if (SelectedEnemyProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                enemyProjectService.SaveProfile(SelectedEnemyProfile);
+                LastEnemyExportReport = enemyExportService.ExportEnemy(SelectedEnemyProfile);
+                StatusMessage = $"{SelectedEnemyProfile.EnemyId} を enemy export しました。画像 {LastEnemyExportReport.ExportedImageCount}/{LastEnemyExportReport.AcceptedAssetCount} 件、prompt {LastEnemyExportReport.ExportedPromptCount} 件、警告 {LastEnemyExportReport.Warnings.Count} 件。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"敵キャラ export に失敗しました: {ex.Message}";
             }
         }
 
