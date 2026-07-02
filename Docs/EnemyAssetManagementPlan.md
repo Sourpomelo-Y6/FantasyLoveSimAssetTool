@@ -5,6 +5,10 @@
 現状の `AssetUsage.Battle` は、ヒロインの戦闘立ち絵や攻撃、被ダメージ差分を `Characters/<HeroineId>/` 配下で扱うための用途として残す。
 敵キャラクターはヒロインに紐づかない共通素材として扱うため、ヒロインの `profile.json` や `assets_export.json` には混ぜない。
 
+Unity へ取り込むための正規仕様は `Docs/Extra/EnemyExportUnityImportSpec.md` を参照する。
+特に、enemy export は `Accepted` かつ画像登録済みの Asset だけを `enemy_assets_export.json` に出す。
+`標準候補追加` で作っただけの `Pending` 候補や prompt JSON だけの候補は Unity import 対象にならない。
+
 ## 基本方針
 
 - 敵キャラクターは `Enemies/<EnemyId>/` 配下で管理する。
@@ -46,6 +50,7 @@ Enemies/
 ## Export フォルダ案
 
 敵キャラクター export はヒロイン export と分ける。
+取り込み時は `Export/Enemies/<EnemyId>/` を 1 つの export root として扱う。
 
 ```text
 Export/
@@ -65,6 +70,13 @@ Unity 側の取り込み先:
 ```text
 Assets/Images/Enemies/<EnemyId>/Battle/
 Assets/Resources/Enemies/<EnemyId>.asset
+```
+
+画像コピーは次の対応を基本にする。
+
+```text
+Export/Enemies/<EnemyId>/Images/Battle/<fileName>
+  -> Assets/Images/Enemies/<EnemyId>/Battle/<fileName>
 ```
 
 将来、敵ごとに複数の ScriptableObject を持つ場合は次へ広げる。
@@ -96,6 +108,9 @@ Images/Battle/Enemy_ForestSlime_Defeat.png
 ```
 
 ## enemy_assets_export.json 案
+
+`assets` には `Accepted` かつ画像登録済みの Asset だけが入る。
+画像未登録の候補や `Pending` / `Rejected` の Asset は入らない。
 
 ```json
 {

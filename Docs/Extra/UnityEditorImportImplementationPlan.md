@@ -56,6 +56,20 @@ Tools/FantasyLoveSim/Import Heroine Export...
 
 将来、直近の export パスを `EditorPrefs` に保存し、再実行メニューを追加してもよい。
 
+敵キャラ素材はヒロイン import とは別メニューで扱う。
+
+```text
+FantasyLoveSim/Import Enemy Export
+```
+
+処理:
+
+1. `EditorUtility.OpenFolderPanel` で `Export/Enemies/<EnemyId>/` または `Export/Enemies/` を選ばせる。
+2. 選択フォルダに `Data/enemy_profile_export.json` があるか確認する。なければ直下の各フォルダを敵 export として探す。
+3. 各敵フォルダの `Data/enemy_assets_export.json` があれば画像 catalog も取り込む。
+4. `EnemyData` と `EnemyAssetCatalog` を作成、更新する。
+5. 結果を `EditorUtility.DisplayDialog` と Console summary に出す。
+
 ## ScriptableObject 型
 
 ### HeroineProfileData
@@ -149,6 +163,25 @@ Tools/FantasyLoveSim/Import Heroine Export...
 - `endings_export.json` -> `Endings/<EndingId>.asset`
 
 個別 item ごとに `.asset` を分ける運用は、実行時ローダーとの相性を優先する。
+
+### EnemyData / EnemyAssetCatalog
+
+敵 import は `Export/Enemies/<EnemyId>/Data/enemy_profile_export.json` と `enemy_assets_export.json` を読む。
+ヒロイン import の `Export/<HeroineId>/` とは混ぜない。
+
+保存先:
+
+```text
+Assets/Resources/Enemies/<EnemyId>.asset
+Assets/Resources/Enemies/<EnemyId>/EnemyAssetCatalog.asset
+Assets/Images/Enemies/<EnemyId>/Battle/<FileName>
+```
+
+`enemy_profile_export.json` は `enemyId` と `displayName` だけを `EnemyData` に反映する。
+現時点の Tool export は戦闘パラメータ、報酬、勝敗メッセージを持たないため、既存 `EnemyData` のそれらの値は保持する。
+
+`enemy_assets_export.json` の `assets[]` は `status = Accepted` の画像だけが入る前提で、Unity 側では `exportImagePath` からコピーし、`unityImagePath` の Sprite を `EnemyAssetCatalog.assets` に保存する。
+画像 import 設定は Texture Type を `Sprite (2D and UI)`、Sprite Mode を `Single` にする。
 
 ## Import 処理順
 

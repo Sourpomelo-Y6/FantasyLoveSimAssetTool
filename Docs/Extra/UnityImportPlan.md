@@ -43,6 +43,10 @@ WPF ツールは通常の C# アプリとして管理できるため、同じリ
 - `Images/<Usage>/<FileName>`
 - `Prompts/<AssetId>.prompt.json`
 
+敵キャラ素材はヒロイン export とは別契約にする。
+敵は `Export/Enemies/<EnemyId>/` 配下に出力し、Unity 側では `Data/enemy_profile_export.json` と `Data/enemy_assets_export.json` を読む。
+詳細は `EnemyExportUnityImportSpec.md` と `EnemyDataImportPlan.md` を参照する。
+
 Unity 側は上記の契約を読み込む Editor 拡張を持つ。
 WPF 側はこの契約に沿った export を出す。
 どちらかの実装を変更する場合も、まず `Docs/Extra/UnityImportPlan.md` の契約を更新し、その後で WPF 側と Unity 側を合わせる。
@@ -219,6 +223,7 @@ Unity Editor 拡張は `exportImagePath` から画像をコピーし、`unityIma
 | `Data/*_draft.md` | 会話、イベント、行動反応、エンディングの確認用下書き |
 
 戦闘画面用のキャラクター画像は `Images/Battle/` と `usage = Battle` で扱う。
+ただし敵キャラ画像はヒロイン export には含めず、`Export/Enemies/<EnemyId>/Images/Battle/` から `Assets/Images/Enemies/<EnemyId>/Battle/` へ取り込む。
 詳細は `BattleCharacterImagePlan.md` を参照する。
 
 ## 会話データ

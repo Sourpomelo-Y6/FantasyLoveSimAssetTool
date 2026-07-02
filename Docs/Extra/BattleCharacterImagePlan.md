@@ -4,7 +4,7 @@
 
 現時点の Unity 側は、通常メニューの `DebugBattleAction` から `BattlePanel` を開くデバッグ入口を想定している。
 今後、戦闘画面にプレイヤー、ヒロイン、敵の画像を表示するため、AssetTool 側でも戦闘用画像の用途、命名、export JSON、Unity 取り込み先を整理しておく。
-ただし、敵キャラクターはヒロインと独立した共通素材として扱うため、最終的には `Docs/EnemyAssetManagementPlan.md` の enemy export へ分離する。
+ただし、敵キャラクターはヒロインと独立した共通素材として扱うため、`EnemyExportUnityImportSpec.md` の enemy export へ分離する。
 
 ## 目的
 
@@ -37,7 +37,7 @@ Export/
 
 `Battle/` には、戦闘中に表示するヒロイン画像を置く。
 敵画像はヒロインに紐づかない共通素材として扱うため、ヒロイン export 内には含めない。
-敵画像の保存、命名、export は `Docs/EnemyAssetManagementPlan.md` を正とする。
+敵画像の保存、命名、export は `EnemyExportUnityImportSpec.md` を正とする。
 
 ## Unity 側取り込み先
 
@@ -239,7 +239,7 @@ Export/<HeroineId>/Images/Battle/*.png
 Battle_Heroine_Idle.png
 ```
 
-敵側 Image の確認には、`Docs/EnemyAssetManagementPlan.md` に従って `Enemy_ForestSlime_Idle.png` を enemy export から用意する。
+敵側 Image の確認には、`EnemyExportUnityImportSpec.md` に従って `Enemy_ForestSlime_Idle.png` を enemy export から用意する。
 これで BattlePanel にヒロイン側 Image と敵側 Image を追加したとき、表示・サイズ・アンカー・左右配置を確認できる。
 攻撃差分やダメージ差分は、BattlePanel の画像表示が安定してから追加する。
 
