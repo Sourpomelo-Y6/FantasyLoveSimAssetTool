@@ -134,6 +134,7 @@ WPF Tool には「敵キャラ素材」タブを追加する。
 - prompt 記録
 - 敵基本 prompt、敵戦闘画像共通 positive prompt、negative prompt
 - 個別作画 prompt と合成 prompt preview
+- 通常、攻撃、被ダメージ、撃破の標準候補を一括追加
 - ローカル ComfyUI への送信、結果確認、画像取得、生成画像の敵画像採用
 - 敵キャラ export
 
@@ -177,6 +178,14 @@ BattlePanel のデバッグで敵画像が必要な場合も、敵キャラ素�
 `EnemyExportService` は、`Export/Enemies/<EnemyId>/Images/Battle/`、`Data/enemy_profile_export.json`、`Data/enemy_assets_export.json`、`Prompts/` を出力する。
 「敵キャラ素材」タブには、敵基本 prompt、共通 positive prompt、negative prompt、個別作画 prompt を入力し、ComfyUI で敵画像を生成して採用する最小 UI を追加済み。
 Comfy 採用時は `Images/Battle/` に画像を登録し、生成条件を `Prompts/<AssetId>.prompt.json` に保存する。
+「標準候補追加」では、画像なしの `Pending` 候補として次を追加し、対応する prompt JSON も保存する。
+
+| assetId | 用途 |
+| --- | --- |
+| `Enemy_<EnemyId>_Idle` | 通常画像 |
+| `Enemy_<EnemyId>_Attack` | 攻撃画像 |
+| `Enemy_<EnemyId>_Damage` | 被ダメージ画像 |
+| `Enemy_<EnemyId>_Defeat` | 撃破画像 |
 
 ## 後回しにするもの
 

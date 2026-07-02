@@ -1092,6 +1092,14 @@
                                     </Grid.RowDefinitions>
 
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="敵画像一覧" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <Button Grid.Row="0"
+                                            Grid.Column="0"
+                                            Content="標準候補追加"
+                                            Command="{Binding AddEnemyStandardAssetDataCommand}"
+                                            Height="26"
+                                            Width="112"
+                                            HorizontalAlignment="Right"
+                                            Margin="0,0,0,8"/>
                                     <StackPanel Grid.Row="0"
                                                 Grid.Column="2"
                                                 Orientation="Horizontal"
@@ -1123,6 +1131,7 @@
                                                                     SelectedItemBinding="{Binding Status}"
                                                                     ItemsSource="{Binding Data.AssetStatuses, Source={StaticResource ViewModelProxy}}"
                                                                     Width="100"/>
+                                            <DataGridTextColumn Header="メモ" Binding="{Binding Memo, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
                                             <DataGridTextColumn Header="ファイル名" Binding="{Binding FileName}" Width="170" IsReadOnly="True"/>
                                             <DataGridTextColumn Header="保存先" Binding="{Binding StoredPath}" Width="*" IsReadOnly="True"/>
                                         </DataGrid.Columns>

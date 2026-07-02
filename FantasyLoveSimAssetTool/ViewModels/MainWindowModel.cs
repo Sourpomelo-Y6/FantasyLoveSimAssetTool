@@ -1340,6 +1340,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ExportSelectedEnemyCommand { get; }
 
+        public ICommand AddEnemyStandardAssetDataCommand { get; }
+
         public ICommand BuildEnemyComfyWorkflowPreviewCommand { get; }
 
         public ICommand SubmitEnemyComfyPromptCommand { get; }
@@ -1651,6 +1653,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 UnregisterEnemyImageAsset,
                 () => SelectedEnemyProfile != null && SelectedEnemyAsset != null);
             ExportSelectedEnemyCommand = new RelayCommand(ExportSelectedEnemy, () => SelectedEnemyProfile != null);
+            AddEnemyStandardAssetDataCommand = new RelayCommand(
+                AddEnemyStandardAssetData,
+                () => SelectedEnemyProfile != null);
             BuildEnemyComfyWorkflowPreviewCommand = new RelayCommand(
                 BuildEnemyComfyWorkflowPreview,
                 () => SelectedEnemyProfile != null);
@@ -2586,6 +2591,68 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        private void AddEnemyStandardAssetData()
+        {
+            if (SelectedEnemyProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                SelectedEnemyProfile.Assets ??= new ObservableCollection<EnemyAsset>();
+                enemyProjectService.EnsureEnemyDirectories(SelectedEnemyProfile.EnemyId);
+
+                int addedCount = 0;
+                int updatedCount = 0;
+                EnemyAsset firstAsset = null;
+                foreach (EnemyAssetTemplate template in BuildEnemyStandardAssetTemplates(SelectedEnemyProfile))
+                {
+                    EnemyAsset asset = SelectedEnemyProfile.Assets
+                        .FirstOrDefault(item => string.Equals(item.AssetId, template.AssetId, StringComparison.Ordinal));
+                    if (asset == null)
+                    {
+                        asset = new EnemyAsset
+                        {
+                            AssetId = template.AssetId,
+                            Usage = AssetUsage.Battle,
+                            Status = AssetStatus.Pending,
+                            PromptRecordPath = Path.Combine("Prompts", template.AssetId + ".prompt.json"),
+                            Memo = template.Memo
+                        };
+                        SelectedEnemyProfile.Assets.Add(asset);
+                        addedCount++;
+                    }
+                    else
+                    {
+                        asset.Usage = AssetUsage.Battle;
+                        if (string.IsNullOrWhiteSpace(asset.PromptRecordPath))
+                        {
+                            asset.PromptRecordPath = Path.Combine("Prompts", template.AssetId + ".prompt.json");
+                        }
+
+                        if (string.IsNullOrWhiteSpace(asset.Memo))
+                        {
+                            asset.Memo = template.Memo;
+                        }
+
+                        updatedCount++;
+                    }
+
+                    SaveEnemyPromptRecordForTemplate(asset, template.Prompt);
+                    firstAsset ??= asset;
+                }
+
+                enemyProjectService.SaveProfile(SelectedEnemyProfile);
+                SelectedEnemyAsset = firstAsset ?? SelectedEnemyProfile.Assets.FirstOrDefault();
+                StatusMessage = $"敵画像の標準候補を登録しました。追加 {addedCount} 件、更新 {updatedCount} 件。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"敵画像の標準候補登録に失敗しました: {ex.Message}";
+            }
+        }
+
         private void BuildEnemyComfyWorkflowPreview()
         {
             if (SelectedEnemyProfile == null)
@@ -2980,6 +3047,36 @@ namespace FantasyLoveSimAssetTool.ViewModels
             enemyProjectService.SaveProfile(SelectedEnemyProfile);
         }
 
+        private void SaveEnemyPromptRecordForTemplate(EnemyAsset asset, string assetPrompt)
+        {
+            if (SelectedEnemyProfile == null || asset == null)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(asset.PromptRecordPath))
+            {
+                asset.PromptRecordPath = Path.Combine("Prompts", asset.AssetId + ".prompt.json");
+            }
+
+            PromptRecord record = new PromptRecord
+            {
+                PositivePrompt = BuildEnemyPositivePrompt(SelectedEnemyProfile, assetPrompt),
+                NegativePrompt = SelectedEnemyProfile.NegativePrompt,
+                RevisionMemo = assetPrompt
+            };
+
+            string promptPath = BuildEnemyPromptRecordPath(SelectedEnemyProfile, asset);
+            string promptDirectory = Path.GetDirectoryName(promptPath);
+            if (!string.IsNullOrWhiteSpace(promptDirectory))
+            {
+                Directory.CreateDirectory(promptDirectory);
+            }
+
+            string json = JsonSerializer.Serialize(record, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(promptPath, json);
+        }
+
         private string BuildEnemyPromptRecordPath(EnemyProfile profile, EnemyAsset asset)
         {
             string relativePath = asset.PromptRecordPath;
@@ -3043,6 +3140,33 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private static string GetDefaultEnemyAssetPrompt()
         {
             return "solo enemy, full body, front view, battle sprite, transparent background, isolated character";
+        }
+
+        private static IReadOnlyList<EnemyAssetTemplate> BuildEnemyStandardAssetTemplates(EnemyProfile profile)
+        {
+            string enemyId = profile == null || string.IsNullOrWhiteSpace(profile.EnemyId)
+                ? "Enemy"
+                : profile.EnemyId.Trim();
+
+            return new[]
+            {
+                new EnemyAssetTemplate(
+                    $"Enemy_{enemyId}_Idle",
+                    "通常画像",
+                    "solo enemy, full body, front view, idle pose, battle sprite, transparent background, isolated character"),
+                new EnemyAssetTemplate(
+                    $"Enemy_{enemyId}_Attack",
+                    "攻撃画像",
+                    "solo enemy, full body, dynamic attack pose, aggressive motion, battle sprite, transparent background, isolated character"),
+                new EnemyAssetTemplate(
+                    $"Enemy_{enemyId}_Damage",
+                    "被ダメージ画像",
+                    "solo enemy, full body, damaged reaction pose, hurt expression, battle sprite, transparent background, isolated character"),
+                new EnemyAssetTemplate(
+                    $"Enemy_{enemyId}_Defeat",
+                    "撃破画像",
+                    "solo enemy, full body, defeated pose, weakened, battle sprite, transparent background, isolated character")
+            };
         }
 
         private void ClearEnemyComfyWork()
@@ -7174,6 +7298,22 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 characterProjectService.GetCharacterDirectory(profile.HeroineId),
                 "Prompts",
                 stillDefinition.AssetId + ".prompt.json");
+        }
+
+        private class EnemyAssetTemplate
+        {
+            public string AssetId { get; }
+
+            public string Memo { get; }
+
+            public string Prompt { get; }
+
+            public EnemyAssetTemplate(string assetId, string memo, string prompt)
+            {
+                AssetId = assetId;
+                Memo = memo;
+                Prompt = prompt;
+            }
         }
     }
 }

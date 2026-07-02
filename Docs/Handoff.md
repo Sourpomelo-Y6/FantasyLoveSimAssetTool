@@ -76,6 +76,7 @@
 - Export 結果フォルダをアプリから開く操作
 - 敵キャラ素材タブでの敵プロファイル作成、敵画像登録、登録解除、プレビュー、enemy export
 - 敵キャラ素材タブでの敵基本 prompt、共通 positive prompt、negative prompt、個別作画 prompt の入力
+- 敵キャラ素材タブでの通常、攻撃、被ダメージ、撃破の標準候補追加
 - 敵キャラ素材タブからの ComfyUI 送信、生成画像取得、敵画像への採用、prompt JSON 保存
 
 ## 開発時の注意
