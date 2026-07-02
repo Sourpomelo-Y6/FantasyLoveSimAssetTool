@@ -35,6 +35,9 @@ Enemies/
   "enemyId": "ForestSlime",
   "displayName": "森スライム",
   "enemyType": "Slime",
+  "appearancePrompt": "",
+  "battleCommonPositivePrompt": "clean lines, highly detailed, masterpiece, 8k, best quality, very aesthetic, absurdres, newest",
+  "negativePrompt": "lowres, bad anatomy, bad face, error, extra digit, fewer digits, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
   "memo": "",
   "assets": []
 }
@@ -129,6 +132,9 @@ WPF Tool には「敵キャラ素材」タブを追加する。
 - 画像登録、登録解除、上書き登録
 - `Accepted` / `Pending` / `Rejected`
 - prompt 記録
+- 敵基本 prompt、敵戦闘画像共通 positive prompt、negative prompt
+- 個別作画 prompt と合成 prompt preview
+- ローカル ComfyUI への送信、結果確認、画像取得、生成画像の敵画像採用
 - 敵キャラ export
 
 ヒロインの「スチル作業」タブとは分ける。
@@ -169,6 +175,8 @@ BattlePanel のデバッグで敵画像が必要な場合も、敵キャラ素�
 画像ファイル本体は、ヒロイン側の登録解除と同じく登録解除では削除しない。
 「敵キャラ素材」タブは、敵一覧、新規作成、基本情報保存、敵画像登録、登録解除、プレビューまでを持つ。
 `EnemyExportService` は、`Export/Enemies/<EnemyId>/Images/Battle/`、`Data/enemy_profile_export.json`、`Data/enemy_assets_export.json`、`Prompts/` を出力する。
+「敵キャラ素材」タブには、敵基本 prompt、共通 positive prompt、negative prompt、個別作画 prompt を入力し、ComfyUI で敵画像を生成して採用する最小 UI を追加済み。
+Comfy 採用時は `Images/Battle/` に画像を登録し、生成条件を `Prompts/<AssetId>.prompt.json` に保存する。
 
 ## 後回しにするもの
 

@@ -40,6 +40,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string enemyTypeInput;
         private string enemyAssetIdInput;
         private string enemyImageSourcePathInput;
+        private string enemyAssetPromptInput;
         private AssetStatus selectedEnemyAssetStatus;
         private EnemyProfile selectedEnemyProfile;
         private EnemyAsset selectedEnemyAsset;
@@ -302,6 +303,32 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedEnemyAssetStatus == value) { return; }
                 selectedEnemyAssetStatus = value;
                 OnPropertyChanged(nameof(SelectedEnemyAssetStatus));
+            }
+        }
+
+        public string EnemyAssetPromptInput
+        {
+            get { return enemyAssetPromptInput; }
+            set
+            {
+                if (enemyAssetPromptInput == value) { return; }
+                enemyAssetPromptInput = value;
+                OnPropertyChanged(nameof(EnemyAssetPromptInput));
+                OnPropertyChanged(nameof(EnemyPromptPreview));
+                ClearEnemyComfyWork();
+            }
+        }
+
+        public string EnemyPromptPreview
+        {
+            get
+            {
+                if (SelectedEnemyProfile == null)
+                {
+                    return string.Empty;
+                }
+
+                return BuildEnemyPositivePrompt(SelectedEnemyProfile, EnemyAssetPromptInput);
             }
         }
 
@@ -944,8 +971,19 @@ namespace FantasyLoveSimAssetTool.ViewModels
             set
             {
                 if (selectedEnemyProfile == value) { return; }
+                if (selectedEnemyProfile != null)
+                {
+                    selectedEnemyProfile.PropertyChanged -= SelectedEnemyProfile_PropertyChanged;
+                }
+
                 selectedEnemyProfile = value;
+                if (selectedEnemyProfile != null)
+                {
+                    selectedEnemyProfile.PropertyChanged += SelectedEnemyProfile_PropertyChanged;
+                }
+
                 OnPropertyChanged(nameof(SelectedEnemyProfile));
+                OnPropertyChanged(nameof(EnemyPromptPreview));
                 SelectedEnemyAsset = selectedEnemyProfile?.Assets?.FirstOrDefault();
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -960,6 +998,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 selectedEnemyAsset = value;
                 OnPropertyChanged(nameof(SelectedEnemyAsset));
                 RefreshSelectedEnemyAssetPreview();
+                LoadEnemyPromptForSelectedAsset();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -1301,6 +1340,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ExportSelectedEnemyCommand { get; }
 
+        public ICommand BuildEnemyComfyWorkflowPreviewCommand { get; }
+
+        public ICommand SubmitEnemyComfyPromptCommand { get; }
+
+        public ICommand AdoptEnemyComfyImageCommand { get; }
+
         public ICommand BrowseImageCommand { get; }
 
         public ICommand AddImageAssetCommand { get; }
@@ -1504,6 +1549,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             enemyTypeInput = "Slime";
             enemyAssetIdInput = "Enemy_ForestSlime_Idle";
             enemyImageSourcePathInput = string.Empty;
+            enemyAssetPromptInput = GetDefaultEnemyAssetPrompt();
             selectedEnemyAssetStatus = AssetStatus.Accepted;
             selectedEnemyAssetImagePath = string.Empty;
             selectedEnemyAssetImageMessage = "敵画像を選択してください。";
@@ -1605,6 +1651,20 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 UnregisterEnemyImageAsset,
                 () => SelectedEnemyProfile != null && SelectedEnemyAsset != null);
             ExportSelectedEnemyCommand = new RelayCommand(ExportSelectedEnemy, () => SelectedEnemyProfile != null);
+            BuildEnemyComfyWorkflowPreviewCommand = new RelayCommand(
+                BuildEnemyComfyWorkflowPreview,
+                () => SelectedEnemyProfile != null);
+            SubmitEnemyComfyPromptCommand = new RelayCommand(
+                SubmitEnemyComfyPrompt,
+                () => SelectedEnemyProfile != null && !IsComfySubmitting && !IsComfyInterrupting && !IsComfyWaitingResult);
+            AdoptEnemyComfyImageCommand = new RelayCommand(
+                AdoptEnemyComfyImage,
+                () => SelectedEnemyProfile != null &&
+                    !IsComfyInterrupting &&
+                    !IsComfyWaitingResult &&
+                    !IsComfyFetchingImage &&
+                    !string.IsNullOrWhiteSpace(CurrentComfyPreviewImagePath) &&
+                    File.Exists(CurrentComfyPreviewImagePath));
             BrowseImageCommand = new RelayCommand(BrowseImage);
             AddImageAssetCommand = new RelayCommand(AddImageAsset, () => SelectedProfile != null);
             UnregisterImageAssetCommand = new RelayCommand(
@@ -2449,6 +2509,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        private void SelectedEnemyProfile_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(EnemyProfile.AppearancePrompt) ||
+                e.PropertyName == nameof(EnemyProfile.BattleCommonPositivePrompt) ||
+                e.PropertyName == nameof(EnemyProfile.NegativePrompt))
+            {
+                OnPropertyChanged(nameof(EnemyPromptPreview));
+                ClearEnemyComfyWork();
+            }
+        }
+
         private void RefreshStillPromptAfterProfilePromptChanged()
         {
             RequestComfyPollingCancellation();
@@ -2515,6 +2586,109 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        private void BuildEnemyComfyWorkflowPreview()
+        {
+            if (SelectedEnemyProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                PromptRecord promptRecord = CreateEnemyPromptRecord();
+                CurrentComfyWorkflowPreview = comfyWorkflowService.BuildWorkflowPreview(ComfySettings, promptRecord);
+                StatusMessage = $"{SelectedEnemyProfile.DisplayName} の敵画像 ComfyUI workflow preview を作成しました。";
+            }
+            catch (Exception ex)
+            {
+                CurrentComfyWorkflowPreview = string.Empty;
+                StatusMessage = $"敵画像 ComfyUI workflow preview 作成に失敗しました: {ex.Message}";
+            }
+        }
+
+        private async void SubmitEnemyComfyPrompt()
+        {
+            if (SelectedEnemyProfile == null)
+            {
+                return;
+            }
+
+            RequestComfyPollingCancellation();
+            hasComfyInterruptRequested = false;
+            IsComfySubmitting = true;
+            CurrentComfyPromptId = string.Empty;
+            CurrentComfyResultSummary = string.Empty;
+            currentComfySubmittedPromptRecord = null;
+            currentComfyWorkflowJson = string.Empty;
+            ClearComfyPreviewImage();
+            string queuedPromptId = string.Empty;
+            string queuedClientId = string.Empty;
+            string displayName = BuildEnemyComfyDisplayName();
+            try
+            {
+                PromptRecord promptRecord = CreateEnemyPromptRecord();
+                string workflowJson = comfyWorkflowService.BuildWorkflowJson(ComfySettings, promptRecord);
+                currentComfySubmittedPromptRecord = promptRecord;
+                currentComfyWorkflowJson = workflowJson;
+                CurrentComfyWorkflowPreview = comfyWorkflowService.BuildWorkflowPreview(ComfySettings, promptRecord);
+                ComfyPromptQueueResult queueResult = await comfyClientService.QueuePromptWithClientAsync(ComfySettings, workflowJson);
+                CurrentComfyPromptId = queueResult.PromptId;
+                queuedPromptId = CurrentComfyPromptId;
+                queuedClientId = queueResult.ClientId;
+                StatusMessage = $"{displayName} を ComfyUI に送信しました。prompt_id: {CurrentComfyPromptId}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"敵画像 ComfyUI 送信に失敗しました: {ex.Message}";
+            }
+            finally
+            {
+                IsComfySubmitting = false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(queuedPromptId))
+            {
+                await WaitForComfyResultAsync(queuedPromptId, queuedClientId, displayName);
+            }
+        }
+
+        private void AdoptEnemyComfyImage()
+        {
+            if (SelectedEnemyProfile == null)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(CurrentComfyPreviewImagePath) || !File.Exists(CurrentComfyPreviewImagePath))
+            {
+                StatusMessage = "採用できる Comfy 生成画像がありません。先に画像取得を行ってください。";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(EnemyAssetIdInput))
+            {
+                EnemyAssetIdInput = BuildDefaultEnemyAssetId(SelectedEnemyProfile);
+            }
+
+            EnemyImageSourcePathInput = CurrentComfyPreviewImagePath;
+            SelectedEnemyAssetStatus = AssetStatus.Accepted;
+            try
+            {
+                EnemyAsset asset = AddEnemyImageAssetCore();
+                if (asset == null)
+                {
+                    return;
+                }
+
+                SaveEnemyComfyPromptRecord(asset);
+                StatusMessage += " Comfy 生成条件を敵 prompt 記録に保存しました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Comfy 生成画像の敵画像採用に失敗しました: {ex.Message}";
+            }
+        }
+
         private void BrowseEnemyImage()
         {
             OpenFileDialog dialog = new OpenFileDialog
@@ -2542,32 +2716,38 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             try
             {
-                bool hasExistingAssetId = HasExistingEnemyAssetId();
-                bool hasExistingStoredFile = HasExistingEnemyStoredImageFile();
-                bool overwriteExisting = ShouldOverwriteExistingEnemyAsset(hasExistingAssetId, hasExistingStoredFile);
-                if (overwriteExisting == false && (hasExistingAssetId || hasExistingStoredFile))
-                {
-                    StatusMessage = "敵画像登録をキャンセルしました。";
-                    return;
-                }
-
-                EnemyAsset asset = enemyProjectService.AddImageAsset(
-                    SelectedEnemyProfile,
-                    EnemyImageSourcePathInput,
-                    EnemyAssetIdInput,
-                    SelectedEnemyAssetStatus,
-                    overwriteExisting);
-
-                SelectedEnemyAsset = asset;
-                string registrationMessage = overwriteExisting
-                    ? $"{asset.AssetId} を Battle に上書き登録しました。"
-                    : $"{asset.AssetId} を Battle に登録しました。";
-                StatusMessage = AppendEnemyImageInspectionMessage(registrationMessage, asset);
+                AddEnemyImageAssetCore();
             }
             catch (Exception ex)
             {
                 StatusMessage = $"敵画像登録に失敗しました: {ex.Message}";
             }
+        }
+
+        private EnemyAsset AddEnemyImageAssetCore()
+        {
+            bool hasExistingAssetId = HasExistingEnemyAssetId();
+            bool hasExistingStoredFile = HasExistingEnemyStoredImageFile();
+            bool overwriteExisting = ShouldOverwriteExistingEnemyAsset(hasExistingAssetId, hasExistingStoredFile);
+            if (overwriteExisting == false && (hasExistingAssetId || hasExistingStoredFile))
+            {
+                StatusMessage = "敵画像登録をキャンセルしました。";
+                return null;
+            }
+
+            EnemyAsset asset = enemyProjectService.AddImageAsset(
+                SelectedEnemyProfile,
+                EnemyImageSourcePathInput,
+                EnemyAssetIdInput,
+                SelectedEnemyAssetStatus,
+                overwriteExisting);
+
+            SelectedEnemyAsset = asset;
+            string registrationMessage = overwriteExisting
+                ? $"{asset.AssetId} を Battle に上書き登録しました。"
+                : $"{asset.AssetId} を Battle に登録しました。";
+            StatusMessage = AppendEnemyImageInspectionMessage(registrationMessage, asset);
+            return asset;
         }
 
         private void UnregisterEnemyImageAsset()
@@ -2722,6 +2902,160 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 return $"{baseMessage} 画像検査に失敗しました: {ex.Message}";
             }
+        }
+
+        private void LoadEnemyPromptForSelectedAsset()
+        {
+            if (SelectedEnemyProfile == null || SelectedEnemyAsset == null)
+            {
+                return;
+            }
+
+            string promptPath = BuildEnemyPromptRecordPath(SelectedEnemyProfile, SelectedEnemyAsset);
+            if (!File.Exists(promptPath))
+            {
+                EnemyAssetPromptInput = GetDefaultEnemyAssetPrompt();
+                return;
+            }
+
+            try
+            {
+                string json = File.ReadAllText(promptPath);
+                PromptRecord record = JsonSerializer.Deserialize<PromptRecord>(
+                    json,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (record == null)
+                {
+                    EnemyAssetPromptInput = GetDefaultEnemyAssetPrompt();
+                    return;
+                }
+
+                EnemyAssetPromptInput = string.IsNullOrWhiteSpace(record.RevisionMemo)
+                    ? GetDefaultEnemyAssetPrompt()
+                    : record.RevisionMemo;
+            }
+            catch
+            {
+                EnemyAssetPromptInput = GetDefaultEnemyAssetPrompt();
+            }
+        }
+
+        private void SaveEnemyComfyPromptRecord(EnemyAsset asset)
+        {
+            if (SelectedEnemyProfile == null || asset == null)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(asset.PromptRecordPath))
+            {
+                asset.PromptRecordPath = Path.Combine("Prompts", asset.AssetId + ".prompt.json");
+            }
+
+            PromptRecord record = currentComfySubmittedPromptRecord ?? CreateEnemyPromptRecord();
+            record.ComfyPromptId = CurrentComfyPromptId ?? string.Empty;
+            record.ComfyEndpointUrl = ComfySettings != null ? ComfySettings.EndpointUrl : string.Empty;
+            record.ComfyWorkflowTemplatePath = ComfySettings != null ? ComfySettings.WorkflowTemplatePath : string.Empty;
+            record.ComfyWorkflowJson = currentComfyWorkflowJson ?? string.Empty;
+            record.RevisionMemo = EnemyAssetPromptInput ?? string.Empty;
+
+            if (currentComfyOutputImage != null)
+            {
+                record.ComfyOutputFileName = currentComfyOutputImage.FileName;
+                record.ComfyOutputSubfolder = currentComfyOutputImage.Subfolder;
+                record.ComfyOutputType = currentComfyOutputImage.Type;
+            }
+
+            ApplyComfyWorkflowSettings(record, currentComfyWorkflowJson);
+
+            string promptPath = BuildEnemyPromptRecordPath(SelectedEnemyProfile, asset);
+            string promptDirectory = Path.GetDirectoryName(promptPath);
+            if (!string.IsNullOrWhiteSpace(promptDirectory))
+            {
+                Directory.CreateDirectory(promptDirectory);
+            }
+
+            string json = JsonSerializer.Serialize(record, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(promptPath, json);
+            enemyProjectService.SaveProfile(SelectedEnemyProfile);
+        }
+
+        private string BuildEnemyPromptRecordPath(EnemyProfile profile, EnemyAsset asset)
+        {
+            string relativePath = asset.PromptRecordPath;
+            if (string.IsNullOrWhiteSpace(relativePath))
+            {
+                relativePath = Path.Combine("Prompts", asset.AssetId + ".prompt.json");
+                asset.PromptRecordPath = relativePath;
+            }
+
+            return Path.Combine(enemyProjectService.GetEnemyDirectory(profile.EnemyId), relativePath);
+        }
+
+        private PromptRecord CreateEnemyPromptRecord()
+        {
+            return new PromptRecord
+            {
+                PositivePrompt = BuildEnemyPositivePrompt(SelectedEnemyProfile, EnemyAssetPromptInput),
+                NegativePrompt = SelectedEnemyProfile != null ? SelectedEnemyProfile.NegativePrompt : string.Empty,
+                RevisionMemo = EnemyAssetPromptInput ?? string.Empty
+            };
+        }
+
+        private static string BuildEnemyPositivePrompt(EnemyProfile profile, string assetPrompt)
+        {
+            if (profile == null)
+            {
+                return string.Empty;
+            }
+
+            string[] promptParts =
+            {
+                NormalizePromptPart(profile.AppearancePrompt),
+                NormalizePromptPart(profile.BattleCommonPositivePrompt),
+                NormalizePromptPart(assetPrompt)
+            };
+
+            return string.Join(", ", promptParts.Where(part => !string.IsNullOrWhiteSpace(part)));
+        }
+
+        private string BuildEnemyComfyDisplayName()
+        {
+            if (SelectedEnemyProfile == null)
+            {
+                return "敵画像";
+            }
+
+            string assetId = string.IsNullOrWhiteSpace(EnemyAssetIdInput)
+                ? BuildDefaultEnemyAssetId(SelectedEnemyProfile)
+                : EnemyAssetIdInput.Trim();
+            return $"{SelectedEnemyProfile.DisplayName} / {assetId}";
+        }
+
+        private static string BuildDefaultEnemyAssetId(EnemyProfile profile)
+        {
+            string enemyId = profile == null || string.IsNullOrWhiteSpace(profile.EnemyId)
+                ? "Enemy"
+                : profile.EnemyId.Trim();
+            return $"Enemy_{enemyId}_Idle";
+        }
+
+        private static string GetDefaultEnemyAssetPrompt()
+        {
+            return "solo enemy, full body, front view, battle sprite, transparent background, isolated character";
+        }
+
+        private void ClearEnemyComfyWork()
+        {
+            RequestComfyPollingCancellation();
+            IsComfyWaitingResult = false;
+            CurrentComfyWorkflowPreview = string.Empty;
+            CurrentComfyPromptId = string.Empty;
+            CurrentComfyResultSummary = string.Empty;
+            currentComfySubmittedPromptRecord = null;
+            currentComfyWorkflowJson = string.Empty;
+            hasComfyInterruptRequested = false;
+            ClearComfyPreviewImage();
         }
 
         private void BrowseImage()

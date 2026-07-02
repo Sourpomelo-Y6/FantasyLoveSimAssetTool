@@ -66,6 +66,9 @@ namespace FantasyLoveSimAssetTool.Services
             profile.SchemaVersion = profile.SchemaVersion <= 0 ? 1 : profile.SchemaVersion;
             profile.DisplayName ??= string.Empty;
             profile.EnemyType ??= string.Empty;
+            profile.AppearancePrompt ??= string.Empty;
+            profile.BattleCommonPositivePrompt ??= string.Empty;
+            profile.NegativePrompt ??= string.Empty;
             profile.Memo ??= string.Empty;
             profile.Assets ??= new ObservableCollection<EnemyAsset>();
 
@@ -264,6 +267,9 @@ namespace FantasyLoveSimAssetTool.Services
             profile.EnemyId ??= string.Empty;
             profile.DisplayName ??= string.Empty;
             profile.EnemyType ??= string.Empty;
+            profile.AppearancePrompt ??= string.Empty;
+            profile.BattleCommonPositivePrompt ??= string.Empty;
+            profile.NegativePrompt ??= string.Empty;
             profile.Memo ??= string.Empty;
             profile.Assets ??= new ObservableCollection<EnemyAsset>();
 

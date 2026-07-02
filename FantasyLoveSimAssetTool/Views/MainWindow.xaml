@@ -884,6 +884,8 @@
                                     <RowDefinition Height="12"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="12"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="12"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
 
@@ -945,6 +947,139 @@
                                 </Grid>
 
                                 <Grid Grid.Row="4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="220"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="敵基本 prompt" VerticalAlignment="Top" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="0"
+                                             Grid.Column="1"
+                                             Text="{Binding SelectedEnemyProfile.AppearancePrompt, UpdateSourceTrigger=PropertyChanged}"
+                                             AcceptsReturn="True"
+                                             Height="48"
+                                             TextWrapping="Wrap"
+                                             Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="共通 positive" VerticalAlignment="Top" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="1"
+                                             Grid.Column="1"
+                                             Text="{Binding SelectedEnemyProfile.BattleCommonPositivePrompt, UpdateSourceTrigger=PropertyChanged}"
+                                             AcceptsReturn="True"
+                                             Height="42"
+                                             TextWrapping="Wrap"
+                                             Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Negative" VerticalAlignment="Top" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="2"
+                                             Grid.Column="1"
+                                             Text="{Binding SelectedEnemyProfile.NegativePrompt, UpdateSourceTrigger=PropertyChanged}"
+                                             AcceptsReturn="True"
+                                             Height="42"
+                                             TextWrapping="Wrap"
+                                             Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="個別作画 prompt" VerticalAlignment="Top" Margin="0,0,8,8"/>
+                                    <TextBox Grid.Row="3"
+                                             Grid.Column="1"
+                                             Text="{Binding EnemyAssetPromptInput, UpdateSourceTrigger=PropertyChanged}"
+                                             AcceptsReturn="True"
+                                             Height="48"
+                                             TextWrapping="Wrap"
+                                             Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="合成 prompt" VerticalAlignment="Top" Margin="0,0,8,0"/>
+                                    <TextBox Grid.Row="4"
+                                             Grid.Column="1"
+                                             Text="{Binding EnemyPromptPreview, Mode=OneWay}"
+                                             IsReadOnly="True"
+                                             AcceptsReturn="True"
+                                             Height="58"
+                                             TextWrapping="Wrap"
+                                             VerticalScrollBarVisibility="Auto"/>
+
+                                    <Grid Grid.Row="0" Grid.RowSpan="5" Grid.Column="3">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0"
+                                                   Text="敵画像作画"
+                                                   FontWeight="SemiBold"
+                                                   Margin="0,0,0,8"/>
+                                        <TextBox Grid.Row="1"
+                                                 Text="{Binding CurrentComfyResultSummary, Mode=OneWay}"
+                                                 IsReadOnly="True"
+                                                 AcceptsReturn="True"
+                                                 Height="54"
+                                                 TextWrapping="Wrap"
+                                                 VerticalScrollBarVisibility="Auto"
+                                                 Margin="0,0,0,8"/>
+                                        <Border Grid.Row="2"
+                                                BorderBrush="#DDDDDD"
+                                                BorderThickness="1"
+                                                Padding="6"
+                                                MinHeight="120">
+                                            <Grid>
+                                                <Image Source="{Binding CurrentComfyPreviewImagePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}"
+                                                       Stretch="Uniform"/>
+                                                <TextBlock Text="{Binding CurrentComfyPreviewImageMessage}"
+                                                           Foreground="Gray"
+                                                           TextWrapping="Wrap"
+                                                           VerticalAlignment="Bottom"
+                                                           Background="#CCFFFFFF"/>
+                                            </Grid>
+                                        </Border>
+                                        <WrapPanel Grid.Row="3"
+                                                   HorizontalAlignment="Right"
+                                                   Margin="0,8,0,0">
+                                            <Button Content="Comfy 作成"
+                                                    Command="{Binding BuildEnemyComfyWorkflowPreviewCommand}"
+                                                    Height="26"
+                                                    MinWidth="88"
+                                                    Margin="0,0,6,6"/>
+                                            <Button Content="Comfy 送信"
+                                                    Command="{Binding SubmitEnemyComfyPromptCommand}"
+                                                    Height="26"
+                                                    MinWidth="88"
+                                                    Margin="0,0,6,6"/>
+                                            <Button Content="結果確認"
+                                                    Command="{Binding CheckStillComfyResultCommand}"
+                                                    Height="26"
+                                                    MinWidth="76"
+                                                    Margin="0,0,6,6"/>
+                                            <Button Content="画像取得"
+                                                    Command="{Binding FetchStillComfyImageCommand}"
+                                                    Height="26"
+                                                    MinWidth="76"
+                                                    Margin="0,0,6,6"/>
+                                            <Button Content="Comfy 採用"
+                                                    Command="{Binding AdoptEnemyComfyImageCommand}"
+                                                    Height="26"
+                                                    MinWidth="88"
+                                                    Margin="0,0,6,6"/>
+                                            <Button Content="停止"
+                                                    Command="{Binding InterruptComfyGenerationCommand}"
+                                                    Height="26"
+                                                    MinWidth="60"
+                                                    Margin="0,0,0,6"/>
+                                        </WrapPanel>
+                                    </Grid>
+                                </Grid>
+
+                                <Grid Grid.Row="6">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="3*"/>
                                         <ColumnDefinition Width="16"/>
