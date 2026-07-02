@@ -998,7 +998,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 selectedEnemyAsset = value;
                 OnPropertyChanged(nameof(SelectedEnemyAsset));
                 RefreshSelectedEnemyAssetPreview();
-                LoadEnemyPromptForSelectedAsset();
+                ApplySelectedEnemyAssetToInputs();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -2969,6 +2969,45 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 return $"{baseMessage} 画像検査に失敗しました: {ex.Message}";
             }
+        }
+
+        private void ApplySelectedEnemyAssetToInputs()
+        {
+            if (SelectedEnemyProfile == null || SelectedEnemyAsset == null)
+            {
+                return;
+            }
+
+            EnemyAssetIdInput = SelectedEnemyAsset.AssetId;
+            SelectedEnemyAssetStatus = SelectedEnemyAsset.Status;
+            EnemyImageSourcePathInput = ResolveEnemyAssetInputImagePath(SelectedEnemyProfile, SelectedEnemyAsset);
+            LoadEnemyPromptForSelectedAsset();
+        }
+
+        private string ResolveEnemyAssetInputImagePath(EnemyProfile profile, EnemyAsset asset)
+        {
+            if (profile == null || asset == null)
+            {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrWhiteSpace(asset.StoredPath))
+            {
+                string storedPath = Path.Combine(
+                    enemyProjectService.GetEnemyDirectory(profile.EnemyId),
+                    asset.StoredPath);
+                if (File.Exists(storedPath))
+                {
+                    return storedPath;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(asset.SourcePath) && File.Exists(asset.SourcePath))
+            {
+                return asset.SourcePath;
+            }
+
+            return string.Empty;
         }
 
         private void LoadEnemyPromptForSelectedAsset()
