@@ -1172,6 +1172,302 @@
                         </Grid>
                     </TabItem>
 
+                    <TabItem Header="プレイヤー素材">
+                        <Grid Margin="0,12,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="12"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="12"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="12"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="120"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="PlayerId" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding PlayerProfile.PlayerId}" IsReadOnly="True" Margin="0,0,12,8"/>
+
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="表示名" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding PlayerProfile.DisplayName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,8"/>
+
+                                <Button Grid.Row="0"
+                                        Grid.Column="4"
+                                        Content="保存"
+                                        Command="{Binding SavePlayerProfileCommand}"
+                                        Height="26"
+                                        Margin="0,0,0,8"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="メモ" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding PlayerProfile.Memo, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0"/>
+                                <Button Grid.Row="1"
+                                        Grid.Column="4"
+                                        Content="再読み込み"
+                                        Command="{Binding ReloadPlayerProfileCommand}"
+                                        Height="26"/>
+                            </Grid>
+
+                            <Grid Grid.Row="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="96"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="AssetId" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding PlayerAssetIdInput, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="元画像" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding PlayerImageSourcePathInput, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,8,8"/>
+                                <Button Grid.Row="1" Grid.Column="2" Content="参照" Command="{Binding BrowsePlayerImageCommand}" Height="26" Margin="0,0,0,8"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="状態" VerticalAlignment="Center"/>
+                                <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding AssetStatuses}" SelectedItem="{Binding SelectedPlayerAssetStatus}" Margin="0,0,8,0"/>
+                                <Button Grid.Row="2" Grid.Column="2" Content="画像登録" Command="{Binding AddPlayerImageAssetCommand}" Height="26"/>
+                            </Grid>
+
+                            <Grid Grid.Row="4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="220"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="基本 prompt" VerticalAlignment="Top" Margin="0,0,8,8"/>
+                                <TextBox Grid.Row="0"
+                                         Grid.Column="1"
+                                         Text="{Binding PlayerProfile.AppearancePrompt, UpdateSourceTrigger=PropertyChanged}"
+                                         AcceptsReturn="True"
+                                         Height="48"
+                                         TextWrapping="Wrap"
+                                         Margin="0,0,0,8"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="共通 positive" VerticalAlignment="Top" Margin="0,0,8,8"/>
+                                <TextBox Grid.Row="1"
+                                         Grid.Column="1"
+                                         Text="{Binding PlayerProfile.BattleCommonPositivePrompt, UpdateSourceTrigger=PropertyChanged}"
+                                         AcceptsReturn="True"
+                                         Height="42"
+                                         TextWrapping="Wrap"
+                                         Margin="0,0,0,8"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Negative" VerticalAlignment="Top" Margin="0,0,8,8"/>
+                                <TextBox Grid.Row="2"
+                                         Grid.Column="1"
+                                         Text="{Binding PlayerProfile.NegativePrompt, UpdateSourceTrigger=PropertyChanged}"
+                                         AcceptsReturn="True"
+                                         Height="42"
+                                         TextWrapping="Wrap"
+                                         Margin="0,0,0,8"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="個別作画 prompt" VerticalAlignment="Top" Margin="0,0,8,8"/>
+                                <TextBox Grid.Row="3"
+                                         Grid.Column="1"
+                                         Text="{Binding PlayerAssetPromptInput, UpdateSourceTrigger=PropertyChanged}"
+                                         AcceptsReturn="True"
+                                         Height="48"
+                                         TextWrapping="Wrap"
+                                         Margin="0,0,0,8"/>
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="合成 prompt" VerticalAlignment="Top" Margin="0,0,8,0"/>
+                                <TextBox Grid.Row="4"
+                                         Grid.Column="1"
+                                         Text="{Binding PlayerPromptPreview, Mode=OneWay}"
+                                         IsReadOnly="True"
+                                         AcceptsReturn="True"
+                                         Height="58"
+                                         TextWrapping="Wrap"
+                                         VerticalScrollBarVisibility="Auto"/>
+
+                                <Grid Grid.Row="0" Grid.RowSpan="5" Grid.Column="3">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0"
+                                               Text="プレイヤー画像作画"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,0,8"/>
+                                    <TextBox Grid.Row="1"
+                                             Text="{Binding CurrentComfyResultSummary, Mode=OneWay}"
+                                             IsReadOnly="True"
+                                             AcceptsReturn="True"
+                                             Height="54"
+                                             TextWrapping="Wrap"
+                                             VerticalScrollBarVisibility="Auto"
+                                             Margin="0,0,0,8"/>
+                                    <Border Grid.Row="2"
+                                            BorderBrush="#DDDDDD"
+                                            BorderThickness="1"
+                                            Padding="6"
+                                            MinHeight="120">
+                                        <Grid>
+                                            <Image Source="{Binding CurrentComfyPreviewImagePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}"
+                                                   Stretch="Uniform"/>
+                                            <TextBlock Text="{Binding CurrentComfyPreviewImageMessage}"
+                                                       Foreground="Gray"
+                                                       TextWrapping="Wrap"
+                                                       VerticalAlignment="Bottom"
+                                                       Background="#CCFFFFFF"/>
+                                        </Grid>
+                                    </Border>
+                                    <WrapPanel Grid.Row="3"
+                                               HorizontalAlignment="Right"
+                                               Margin="0,8,0,0">
+                                        <Button Content="Comfy 作成"
+                                                Command="{Binding BuildPlayerComfyWorkflowPreviewCommand}"
+                                                Height="26"
+                                                MinWidth="88"
+                                                Margin="0,0,6,6"/>
+                                        <Button Content="Comfy 送信"
+                                                Command="{Binding SubmitPlayerComfyPromptCommand}"
+                                                Height="26"
+                                                MinWidth="88"
+                                                Margin="0,0,6,6"/>
+                                        <Button Content="結果確認"
+                                                Command="{Binding CheckStillComfyResultCommand}"
+                                                Height="26"
+                                                MinWidth="76"
+                                                Margin="0,0,6,6"/>
+                                        <Button Content="画像取得"
+                                                Command="{Binding FetchStillComfyImageCommand}"
+                                                Height="26"
+                                                MinWidth="76"
+                                                Margin="0,0,6,6"/>
+                                        <Button Content="Comfy 採用"
+                                                Command="{Binding AdoptPlayerComfyImageCommand}"
+                                                Height="26"
+                                                MinWidth="88"
+                                                Margin="0,0,6,6"/>
+                                        <Button Content="停止"
+                                                Command="{Binding InterruptComfyGenerationCommand}"
+                                                Height="26"
+                                                MinWidth="60"
+                                                Margin="0,0,0,6"/>
+                                    </WrapPanel>
+                                </Grid>
+                            </Grid>
+
+                            <Grid Grid.Row="6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="2*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="プレイヤー画像一覧" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                <Button Grid.Row="0"
+                                        Grid.Column="0"
+                                        Content="標準候補追加"
+                                        Command="{Binding AddPlayerStandardAssetDataCommand}"
+                                        Height="26"
+                                        Width="112"
+                                        HorizontalAlignment="Right"
+                                        Margin="0,0,0,8"/>
+                                <StackPanel Grid.Row="0"
+                                            Grid.Column="2"
+                                            Orientation="Horizontal"
+                                            HorizontalAlignment="Right"
+                                            Margin="0,0,0,8">
+                                    <TextBlock Text="{Binding LastPlayerExportReport.ExportedImageCount, StringFormat=Images: {0}}"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding LastPlayerExportReport.Warnings.Count, StringFormat=Warnings: {0}}"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,8,0"/>
+                                    <Button Content="Player Export"
+                                            Command="{Binding ExportPlayerCommand}"
+                                            Height="26"
+                                            MinWidth="112"/>
+                                </StackPanel>
+
+                                <DataGrid Grid.Row="1"
+                                          Grid.Column="0"
+                                          ItemsSource="{Binding PlayerProfile.Assets}"
+                                          SelectedItem="{Binding SelectedPlayerAsset}"
+                                          AutoGenerateColumns="False"
+                                          CanUserAddRows="False"
+                                          IsReadOnly="False">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId}" Width="170" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="用途" Binding="{Binding Usage}" Width="80" IsReadOnly="True"/>
+                                        <DataGridComboBoxColumn Header="状態"
+                                                                SelectedItemBinding="{Binding Status}"
+                                                                ItemsSource="{Binding Data.AssetStatuses, Source={StaticResource ViewModelProxy}}"
+                                                                Width="100"/>
+                                        <DataGridTextColumn Header="メモ" Binding="{Binding Memo, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
+                                        <DataGridTextColumn Header="ファイル名" Binding="{Binding FileName}" Width="170" IsReadOnly="True"/>
+                                        <DataGridTextColumn Header="保存先" Binding="{Binding StoredPath}" Width="*" IsReadOnly="True"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <Button Grid.Row="2"
+                                        Grid.Column="0"
+                                        Content="登録解除"
+                                        Command="{Binding UnregisterPlayerImageAssetCommand}"
+                                        Width="100"
+                                        Height="28"
+                                        HorizontalAlignment="Right"
+                                        Margin="0,8,0,0"/>
+
+                                <Border Grid.Row="1"
+                                        Grid.Column="2"
+                                        BorderBrush="#DDDDDD"
+                                        BorderThickness="1"
+                                        Padding="8">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <Image Grid.Row="0"
+                                               Source="{Binding SelectedPlayerAssetImagePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}"
+                                               Stretch="Uniform"/>
+                                        <TextBlock Grid.Row="1"
+                                                   Text="{Binding SelectedPlayerAssetImageMessage}"
+                                                   Foreground="Gray"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,8,0,0"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Grid>
+                    </TabItem>
+
                     <TabItem Header="スチル作業">
                         <Grid Margin="0,12,0,0">
                             <Grid.ColumnDefinitions>

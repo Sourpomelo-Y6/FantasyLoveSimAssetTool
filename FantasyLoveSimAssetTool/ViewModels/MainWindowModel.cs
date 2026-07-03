@@ -31,6 +31,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly ComfyClientService comfyClientService;
         private readonly ExportService exportService;
         private readonly EnemyExportService enemyExportService;
+        private readonly PlayerProjectService playerProjectService;
+        private readonly PlayerExportService playerExportService;
         private OutfitMessageOverride selectedOutfitMessageOverride;
         private OutfitReactionMessageOverride selectedOutfitReactionMessageOverride;
         private string heroineIdInput;
@@ -46,6 +48,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private EnemyAsset selectedEnemyAsset;
         private string selectedEnemyAssetImagePath;
         private string selectedEnemyAssetImageMessage;
+        private PlayerProfile playerProfile;
+        private PlayerAsset selectedPlayerAsset;
+        private string playerAssetIdInput;
+        private string playerImageSourcePathInput;
+        private string playerAssetPromptInput;
+        private AssetStatus selectedPlayerAssetStatus;
+        private string selectedPlayerAssetImagePath;
+        private string selectedPlayerAssetImageMessage;
         private string assetIdInput;
         private string imageSourcePathInput;
         private AssetUsage selectedAssetUsage;
@@ -97,6 +107,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private HeroineProfile selectedProfile;
         private ExportReport lastExportReport;
         private EnemyExportReport lastEnemyExportReport;
+        private PlayerExportReport lastPlayerExportReport;
         private string selectedAssetImagePath;
         private string selectedAssetImageMessage;
         private string selectedStillAssetStatusText;
@@ -329,6 +340,89 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 }
 
                 return BuildEnemyPositivePrompt(SelectedEnemyProfile, EnemyAssetPromptInput);
+            }
+        }
+
+        public PlayerProfile PlayerProfile
+        {
+            get { return playerProfile; }
+            set
+            {
+                if (playerProfile == value) { return; }
+                if (playerProfile != null)
+                {
+                    playerProfile.PropertyChanged -= PlayerProfile_PropertyChanged;
+                }
+
+                playerProfile = value;
+                if (playerProfile != null)
+                {
+                    playerProfile.PropertyChanged += PlayerProfile_PropertyChanged;
+                }
+
+                OnPropertyChanged(nameof(PlayerProfile));
+                OnPropertyChanged(nameof(PlayerPromptPreview));
+                SelectedPlayerAsset = playerProfile?.Assets?.FirstOrDefault();
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public string PlayerAssetIdInput
+        {
+            get { return playerAssetIdInput; }
+            set
+            {
+                if (playerAssetIdInput == value) { return; }
+                playerAssetIdInput = value;
+                OnPropertyChanged(nameof(PlayerAssetIdInput));
+            }
+        }
+
+        public string PlayerImageSourcePathInput
+        {
+            get { return playerImageSourcePathInput; }
+            set
+            {
+                if (playerImageSourcePathInput == value) { return; }
+                playerImageSourcePathInput = value;
+                OnPropertyChanged(nameof(PlayerImageSourcePathInput));
+            }
+        }
+
+        public string PlayerAssetPromptInput
+        {
+            get { return playerAssetPromptInput; }
+            set
+            {
+                if (playerAssetPromptInput == value) { return; }
+                playerAssetPromptInput = value;
+                OnPropertyChanged(nameof(PlayerAssetPromptInput));
+                OnPropertyChanged(nameof(PlayerPromptPreview));
+                ClearPlayerComfyWork();
+            }
+        }
+
+        public AssetStatus SelectedPlayerAssetStatus
+        {
+            get { return selectedPlayerAssetStatus; }
+            set
+            {
+                if (selectedPlayerAssetStatus == value) { return; }
+                selectedPlayerAssetStatus = value;
+                OnPropertyChanged(nameof(SelectedPlayerAssetStatus));
+            }
+        }
+
+        public string PlayerPromptPreview
+        {
+            get
+            {
+                if (PlayerProfile == null)
+                {
+                    return string.Empty;
+                }
+
+                return BuildPlayerPositivePrompt(PlayerProfile, PlayerAssetPromptInput);
             }
         }
 
@@ -1003,6 +1097,20 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public PlayerAsset SelectedPlayerAsset
+        {
+            get { return selectedPlayerAsset; }
+            set
+            {
+                if (selectedPlayerAsset == value) { return; }
+                selectedPlayerAsset = value;
+                OnPropertyChanged(nameof(SelectedPlayerAsset));
+                RefreshSelectedPlayerAssetPreview();
+                ApplySelectedPlayerAssetToInputs();
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
         public OutfitMessageOverride SelectedOutfitMessageOverride
         {
             get { return selectedOutfitMessageOverride; }
@@ -1049,6 +1157,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public PlayerExportReport LastPlayerExportReport
+        {
+            get { return lastPlayerExportReport; }
+            set
+            {
+                if (lastPlayerExportReport == value) { return; }
+                lastPlayerExportReport = value;
+                OnPropertyChanged(nameof(LastPlayerExportReport));
+            }
+        }
+
         public string SelectedAssetImagePath
         {
             get { return selectedAssetImagePath; }
@@ -1090,6 +1209,28 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedEnemyAssetImageMessage == value) { return; }
                 selectedEnemyAssetImageMessage = value;
                 OnPropertyChanged(nameof(SelectedEnemyAssetImageMessage));
+            }
+        }
+
+        public string SelectedPlayerAssetImagePath
+        {
+            get { return selectedPlayerAssetImagePath; }
+            set
+            {
+                if (selectedPlayerAssetImagePath == value) { return; }
+                selectedPlayerAssetImagePath = value;
+                OnPropertyChanged(nameof(SelectedPlayerAssetImagePath));
+            }
+        }
+
+        public string SelectedPlayerAssetImageMessage
+        {
+            get { return selectedPlayerAssetImageMessage; }
+            set
+            {
+                if (selectedPlayerAssetImageMessage == value) { return; }
+                selectedPlayerAssetImageMessage = value;
+                OnPropertyChanged(nameof(SelectedPlayerAssetImageMessage));
             }
         }
 
@@ -1348,6 +1489,26 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand AdoptEnemyComfyImageCommand { get; }
 
+        public ICommand ReloadPlayerProfileCommand { get; }
+
+        public ICommand SavePlayerProfileCommand { get; }
+
+        public ICommand BrowsePlayerImageCommand { get; }
+
+        public ICommand AddPlayerImageAssetCommand { get; }
+
+        public ICommand UnregisterPlayerImageAssetCommand { get; }
+
+        public ICommand ExportPlayerCommand { get; }
+
+        public ICommand AddPlayerStandardAssetDataCommand { get; }
+
+        public ICommand BuildPlayerComfyWorkflowPreviewCommand { get; }
+
+        public ICommand SubmitPlayerComfyPromptCommand { get; }
+
+        public ICommand AdoptPlayerComfyImageCommand { get; }
+
         public ICommand BrowseImageCommand { get; }
 
         public ICommand AddImageAssetCommand { get; }
@@ -1448,6 +1609,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             characterProjectService = new CharacterProjectService();
             enemyProjectService = new EnemyProjectService(characterProjectService.WorkspaceRoot);
+            playerProjectService = new PlayerProjectService(characterProjectService.WorkspaceRoot);
             promptRecordService = new PromptRecordService(characterProjectService);
             promptTemplateService = new PromptTemplateService(characterProjectService.WorkspaceRoot);
             definitionCatalogService = new DefinitionCatalogService(characterProjectService.WorkspaceRoot);
@@ -1458,6 +1620,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             comfyClientService = new ComfyClientService();
             exportService = new ExportService(characterProjectService, imageInspectionService);
             enemyExportService = new EnemyExportService(enemyProjectService, imageInspectionService);
+            playerExportService = new PlayerExportService(playerProjectService, imageInspectionService);
             Profiles = new ObservableCollection<HeroineProfile>();
             EnemyProfiles = new ObservableCollection<EnemyProfile>();
             FilteredAssets = new ObservableCollection<HeroineAsset>();
@@ -1555,6 +1718,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
             selectedEnemyAssetStatus = AssetStatus.Accepted;
             selectedEnemyAssetImagePath = string.Empty;
             selectedEnemyAssetImageMessage = "敵画像を選択してください。";
+            playerProfile = new PlayerProfile();
+            selectedPlayerAsset = null;
+            playerAssetIdInput = "Battle_Player_Idle";
+            playerImageSourcePathInput = string.Empty;
+            playerAssetPromptInput = GetDefaultPlayerAssetPrompt();
+            selectedPlayerAssetStatus = AssetStatus.Accepted;
+            selectedPlayerAssetImagePath = string.Empty;
+            selectedPlayerAssetImageMessage = "プレイヤー画像を選択してください。";
             assetIdInput = "Heroine_Normal";
             imageSourcePathInput = string.Empty;
             selectedAssetUsage = AssetUsage.Sprites;
@@ -1598,6 +1769,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             layerPreviewMessage = "キャラクターとレイヤーを選択してください。";
             lastExportReport = new ExportReport();
             lastEnemyExportReport = new EnemyExportReport();
+            lastPlayerExportReport = new PlayerExportReport();
             selectedAssetImagePath = string.Empty;
             selectedAssetImageMessage = "画像を選択してください。";
             selectedStillAssetStatusText = "Asset: 未選択";
@@ -1665,6 +1837,31 @@ namespace FantasyLoveSimAssetTool.ViewModels
             AdoptEnemyComfyImageCommand = new RelayCommand(
                 AdoptEnemyComfyImage,
                 () => SelectedEnemyProfile != null &&
+                    !IsComfyInterrupting &&
+                    !IsComfyWaitingResult &&
+                    !IsComfyFetchingImage &&
+                    !string.IsNullOrWhiteSpace(CurrentComfyPreviewImagePath) &&
+                    File.Exists(CurrentComfyPreviewImagePath));
+            ReloadPlayerProfileCommand = new RelayCommand(LoadPlayerProfile);
+            SavePlayerProfileCommand = new RelayCommand(SavePlayerProfile, () => PlayerProfile != null);
+            BrowsePlayerImageCommand = new RelayCommand(BrowsePlayerImage);
+            AddPlayerImageAssetCommand = new RelayCommand(AddPlayerImageAsset, () => PlayerProfile != null);
+            UnregisterPlayerImageAssetCommand = new RelayCommand(
+                UnregisterPlayerImageAsset,
+                () => PlayerProfile != null && SelectedPlayerAsset != null);
+            ExportPlayerCommand = new RelayCommand(ExportPlayer, () => PlayerProfile != null);
+            AddPlayerStandardAssetDataCommand = new RelayCommand(
+                AddPlayerStandardAssetData,
+                () => PlayerProfile != null);
+            BuildPlayerComfyWorkflowPreviewCommand = new RelayCommand(
+                BuildPlayerComfyWorkflowPreview,
+                () => PlayerProfile != null);
+            SubmitPlayerComfyPromptCommand = new RelayCommand(
+                SubmitPlayerComfyPrompt,
+                () => PlayerProfile != null && !IsComfySubmitting && !IsComfyInterrupting && !IsComfyWaitingResult);
+            AdoptPlayerComfyImageCommand = new RelayCommand(
+                AdoptPlayerComfyImage,
+                () => PlayerProfile != null &&
                     !IsComfyInterrupting &&
                     !IsComfyWaitingResult &&
                     !IsComfyFetchingImage &&
@@ -1806,6 +2003,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             LoadStillDefinitions();
             LoadProfiles();
             LoadEnemies();
+            LoadPlayerProfile();
             StatusMessage = "キャラクター基本情報の保存準備ができています。";
         }
 
@@ -2525,6 +2723,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        private void PlayerProfile_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(PlayerProfile.AppearancePrompt) ||
+                e.PropertyName == nameof(PlayerProfile.BattleCommonPositivePrompt) ||
+                e.PropertyName == nameof(PlayerProfile.NegativePrompt))
+            {
+                OnPropertyChanged(nameof(PlayerPromptPreview));
+                ClearPlayerComfyWork();
+            }
+        }
+
         private void RefreshStillPromptAfterProfilePromptChanged()
         {
             RequestComfyPollingCancellation();
@@ -3209,6 +3418,666 @@ namespace FantasyLoveSimAssetTool.ViewModels
         }
 
         private void ClearEnemyComfyWork()
+        {
+            RequestComfyPollingCancellation();
+            IsComfyWaitingResult = false;
+            CurrentComfyWorkflowPreview = string.Empty;
+            CurrentComfyPromptId = string.Empty;
+            CurrentComfyResultSummary = string.Empty;
+            currentComfySubmittedPromptRecord = null;
+            currentComfyWorkflowJson = string.Empty;
+            hasComfyInterruptRequested = false;
+            ClearComfyPreviewImage();
+        }
+
+        private void LoadPlayerProfile()
+        {
+            try
+            {
+                PlayerProfile = playerProjectService.LoadOrCreateProfile();
+                SelectedPlayerAsset = PlayerProfile.Assets.FirstOrDefault();
+                StatusMessage = "プレイヤー素材を読み込みました。";
+            }
+            catch (Exception ex)
+            {
+                PlayerProfile = new PlayerProfile();
+                StatusMessage = $"プレイヤー素材読み込みに失敗しました: {ex.Message}";
+            }
+        }
+
+        private void SavePlayerProfile()
+        {
+            if (PlayerProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                playerProjectService.SaveProfile(PlayerProfile);
+                StatusMessage = "プレイヤー素材を保存しました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"プレイヤー素材保存に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void ExportPlayer()
+        {
+            if (PlayerProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                playerProjectService.SaveProfile(PlayerProfile);
+                LastPlayerExportReport = playerExportService.ExportPlayer(PlayerProfile);
+                StatusMessage = $"プレイヤー素材を export しました。画像 {LastPlayerExportReport.ExportedImageCount}/{LastPlayerExportReport.AcceptedAssetCount} 件、prompt {LastPlayerExportReport.ExportedPromptCount} 件、警告 {LastPlayerExportReport.Warnings.Count} 件。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"プレイヤー素材 export に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void AddPlayerStandardAssetData()
+        {
+            if (PlayerProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                PlayerProfile.Assets ??= new ObservableCollection<PlayerAsset>();
+                playerProjectService.EnsurePlayerDirectories();
+
+                int addedCount = 0;
+                int updatedCount = 0;
+                PlayerAsset firstAsset = null;
+                foreach (PlayerAssetTemplate template in BuildPlayerStandardAssetTemplates())
+                {
+                    PlayerAsset asset = PlayerProfile.Assets
+                        .FirstOrDefault(item => string.Equals(item.AssetId, template.AssetId, StringComparison.Ordinal));
+                    if (asset == null)
+                    {
+                        asset = new PlayerAsset
+                        {
+                            AssetId = template.AssetId,
+                            Usage = AssetUsage.Battle,
+                            Status = AssetStatus.Pending,
+                            PromptRecordPath = Path.Combine("Prompts", template.AssetId + ".prompt.json"),
+                            Memo = template.Memo
+                        };
+                        PlayerProfile.Assets.Add(asset);
+                        addedCount++;
+                    }
+                    else
+                    {
+                        asset.Usage = AssetUsage.Battle;
+                        if (string.IsNullOrWhiteSpace(asset.PromptRecordPath))
+                        {
+                            asset.PromptRecordPath = Path.Combine("Prompts", template.AssetId + ".prompt.json");
+                        }
+
+                        if (string.IsNullOrWhiteSpace(asset.Memo))
+                        {
+                            asset.Memo = template.Memo;
+                        }
+
+                        updatedCount++;
+                    }
+
+                    SavePlayerPromptRecordForTemplate(asset, template.Prompt);
+                    firstAsset ??= asset;
+                }
+
+                playerProjectService.SaveProfile(PlayerProfile);
+                SelectedPlayerAsset = firstAsset ?? PlayerProfile.Assets.FirstOrDefault();
+                StatusMessage = $"プレイヤー画像の標準候補を登録しました。追加 {addedCount} 件、更新 {updatedCount} 件。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"プレイヤー画像の標準候補登録に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void BuildPlayerComfyWorkflowPreview()
+        {
+            if (PlayerProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                PromptRecord promptRecord = CreatePlayerPromptRecord();
+                CurrentComfyWorkflowPreview = comfyWorkflowService.BuildWorkflowPreview(ComfySettings, promptRecord);
+                StatusMessage = $"{BuildPlayerComfyDisplayName()} の ComfyUI workflow preview を作成しました。";
+            }
+            catch (Exception ex)
+            {
+                CurrentComfyWorkflowPreview = string.Empty;
+                StatusMessage = $"プレイヤー画像 ComfyUI workflow preview 作成に失敗しました: {ex.Message}";
+            }
+        }
+
+        private async void SubmitPlayerComfyPrompt()
+        {
+            if (PlayerProfile == null)
+            {
+                return;
+            }
+
+            RequestComfyPollingCancellation();
+            hasComfyInterruptRequested = false;
+            IsComfySubmitting = true;
+            CurrentComfyPromptId = string.Empty;
+            CurrentComfyResultSummary = string.Empty;
+            currentComfySubmittedPromptRecord = null;
+            currentComfyWorkflowJson = string.Empty;
+            ClearComfyPreviewImage();
+            string queuedPromptId = string.Empty;
+            string queuedClientId = string.Empty;
+            string displayName = BuildPlayerComfyDisplayName();
+            try
+            {
+                PromptRecord promptRecord = CreatePlayerPromptRecord();
+                string workflowJson = comfyWorkflowService.BuildWorkflowJson(ComfySettings, promptRecord);
+                currentComfySubmittedPromptRecord = promptRecord;
+                currentComfyWorkflowJson = workflowJson;
+                CurrentComfyWorkflowPreview = comfyWorkflowService.BuildWorkflowPreview(ComfySettings, promptRecord);
+                ComfyPromptQueueResult queueResult = await comfyClientService.QueuePromptWithClientAsync(ComfySettings, workflowJson);
+                CurrentComfyPromptId = queueResult.PromptId;
+                queuedPromptId = CurrentComfyPromptId;
+                queuedClientId = queueResult.ClientId;
+                StatusMessage = $"{displayName} を ComfyUI に送信しました。prompt_id: {CurrentComfyPromptId}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"プレイヤー画像 ComfyUI 送信に失敗しました: {ex.Message}";
+            }
+            finally
+            {
+                IsComfySubmitting = false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(queuedPromptId))
+            {
+                await WaitForComfyResultAsync(queuedPromptId, queuedClientId, displayName);
+            }
+        }
+
+        private void AdoptPlayerComfyImage()
+        {
+            if (PlayerProfile == null)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(CurrentComfyPreviewImagePath) || !File.Exists(CurrentComfyPreviewImagePath))
+            {
+                StatusMessage = "採用できる Comfy 生成画像がありません。先に画像取得を行ってください。";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(PlayerAssetIdInput))
+            {
+                PlayerAssetIdInput = "Battle_Player_Idle";
+            }
+
+            PlayerImageSourcePathInput = CurrentComfyPreviewImagePath;
+            SelectedPlayerAssetStatus = AssetStatus.Accepted;
+            try
+            {
+                PlayerAsset asset = AddPlayerImageAssetCore();
+                if (asset == null)
+                {
+                    return;
+                }
+
+                SavePlayerComfyPromptRecord(asset);
+                StatusMessage += " Comfy 生成条件をプレイヤー prompt 記録に保存しました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Comfy 生成画像のプレイヤー画像採用に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void BrowsePlayerImage()
+        {
+            OpenFileDialog dialog = new OpenFileDialog
+            {
+                Title = "登録するプレイヤー画像を選択",
+                Filter = "Image files (*.png;*.jpg;*.jpeg;*.webp)|*.png;*.jpg;*.jpeg;*.webp|All files (*.*)|*.*"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                PlayerImageSourcePathInput = dialog.FileName;
+                if (string.IsNullOrWhiteSpace(PlayerAssetIdInput))
+                {
+                    PlayerAssetIdInput = Path.GetFileNameWithoutExtension(dialog.FileName);
+                }
+            }
+        }
+
+        private void AddPlayerImageAsset()
+        {
+            if (PlayerProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                AddPlayerImageAssetCore();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"プレイヤー画像登録に失敗しました: {ex.Message}";
+            }
+        }
+
+        private PlayerAsset AddPlayerImageAssetCore()
+        {
+            bool hasExistingAssetId = HasExistingPlayerAssetId();
+            bool hasExistingStoredFile = HasExistingPlayerStoredImageFile();
+            bool overwriteExisting = ShouldOverwriteExistingPlayerAsset(hasExistingAssetId, hasExistingStoredFile);
+            if (overwriteExisting == false && (hasExistingAssetId || hasExistingStoredFile))
+            {
+                StatusMessage = "プレイヤー画像登録をキャンセルしました。";
+                return null;
+            }
+
+            PlayerAsset asset = playerProjectService.AddImageAsset(
+                PlayerProfile,
+                PlayerImageSourcePathInput,
+                PlayerAssetIdInput,
+                SelectedPlayerAssetStatus,
+                overwriteExisting);
+
+            SelectedPlayerAsset = asset;
+            string registrationMessage = overwriteExisting
+                ? $"{asset.AssetId} を Battle に上書き登録しました。"
+                : $"{asset.AssetId} を Battle に登録しました。";
+            StatusMessage = AppendPlayerImageInspectionMessage(registrationMessage, asset);
+            return asset;
+        }
+
+        private void UnregisterPlayerImageAsset()
+        {
+            if (PlayerProfile == null || SelectedPlayerAsset == null)
+            {
+                return;
+            }
+
+            PlayerAsset asset = SelectedPlayerAsset;
+            MessageBoxResult result = MessageBox.Show(
+                $"AssetId '{asset.AssetId}' の登録を解除しますか？\n画像ファイルと prompt JSON は削除されません。",
+                "プレイヤー画像登録解除の確認",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result != MessageBoxResult.Yes)
+            {
+                StatusMessage = "プレイヤー画像登録解除をキャンセルしました。";
+                return;
+            }
+
+            try
+            {
+                string storedPath = asset.StoredPath;
+                string promptPath = asset.PromptRecordPath;
+                bool unregistered = playerProjectService.UnregisterImageAsset(PlayerProfile, asset);
+                if (!unregistered)
+                {
+                    StatusMessage = $"{asset.AssetId} はプレイヤー画像一覧に見つかりませんでした。";
+                    return;
+                }
+
+                SelectedPlayerAsset = PlayerProfile.Assets.FirstOrDefault();
+                StatusMessage = $"{asset.AssetId} の登録を解除しました。画像ファイルと prompt JSON は残しています。画像: {storedPath} / prompt: {promptPath}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"プレイヤー画像登録解除に失敗しました: {ex.Message}";
+            }
+        }
+
+        private bool HasExistingPlayerAssetId()
+        {
+            if (PlayerProfile == null || PlayerProfile.Assets == null || string.IsNullOrWhiteSpace(PlayerAssetIdInput))
+            {
+                return false;
+            }
+
+            string assetId = PlayerAssetIdInput.Trim();
+            return PlayerProfile.Assets.Any(asset => asset.AssetId == assetId);
+        }
+
+        private bool HasExistingPlayerStoredImageFile()
+        {
+            string storedImagePath = BuildPlayerStoredImagePathForInput();
+            return !string.IsNullOrWhiteSpace(storedImagePath) && File.Exists(storedImagePath);
+        }
+
+        private string BuildPlayerStoredImagePathForInput()
+        {
+            if (PlayerProfile == null || string.IsNullOrWhiteSpace(PlayerAssetIdInput))
+            {
+                return string.Empty;
+            }
+
+            string extension = Path.GetExtension(PlayerImageSourcePathInput);
+            if (string.IsNullOrWhiteSpace(extension))
+            {
+                extension = ".png";
+            }
+
+            string fileName = PlayerAssetIdInput.Trim() + extension;
+            return Path.Combine(
+                playerProjectService.GetImageUsageDirectory(AssetUsage.Battle),
+                fileName);
+        }
+
+        private bool ShouldOverwriteExistingPlayerAsset(bool hasExistingAssetId, bool hasExistingStoredFile)
+        {
+            if (!hasExistingAssetId && !hasExistingStoredFile)
+            {
+                return false;
+            }
+
+            string message = hasExistingAssetId
+                ? $"AssetId '{PlayerAssetIdInput.Trim()}' はすでに登録されています。画像と登録情報を上書きしますか？"
+                : $"AssetId '{PlayerAssetIdInput.Trim()}' の登録はありませんが、保存先画像ファイルが残っています。\n残っている画像ファイルを上書きして登録しますか？";
+
+            MessageBoxResult result = MessageBox.Show(
+                message,
+                hasExistingAssetId ? "プレイヤー画像登録の上書き確認" : "プレイヤー画像ファイルの上書き確認",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            return result == MessageBoxResult.Yes;
+        }
+
+        private void RefreshSelectedPlayerAssetPreview()
+        {
+            SelectedPlayerAssetImagePath = string.Empty;
+
+            if (PlayerProfile == null || SelectedPlayerAsset == null)
+            {
+                SelectedPlayerAssetImageMessage = "プレイヤー画像を選択してください。";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(SelectedPlayerAsset.StoredPath))
+            {
+                SelectedPlayerAssetImageMessage = "StoredPath が空です。";
+                return;
+            }
+
+            string imagePath = Path.Combine(playerProjectService.PlayerDirectory, SelectedPlayerAsset.StoredPath);
+            if (!File.Exists(imagePath))
+            {
+                SelectedPlayerAssetImageMessage = "画像ファイルが見つかりません: " + imagePath;
+                return;
+            }
+
+            SelectedPlayerAssetImagePath = imagePath;
+            SelectedPlayerAssetImageMessage = AppendPlayerImageInspectionMessage(imagePath, SelectedPlayerAsset);
+        }
+
+        private string AppendPlayerImageInspectionMessage(string baseMessage, PlayerAsset asset)
+        {
+            if (PlayerProfile == null || asset == null || string.IsNullOrWhiteSpace(asset.StoredPath))
+            {
+                return baseMessage;
+            }
+
+            string imagePath = Path.Combine(playerProjectService.PlayerDirectory, asset.StoredPath);
+            try
+            {
+                ImageInspectionResult result = imageInspectionService.Inspect(imagePath, AssetUsage.Battle);
+                string summary = imageInspectionService.BuildSummary(result);
+                if (result.Warnings.Count == 0)
+                {
+                    return $"{baseMessage} 検査: {summary}";
+                }
+
+                return $"{baseMessage} 検査: {summary} / 警告 {result.Warnings.Count} 件: {string.Join(" / ", result.Warnings)}";
+            }
+            catch (Exception ex)
+            {
+                return $"{baseMessage} 画像検査に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void ApplySelectedPlayerAssetToInputs()
+        {
+            if (PlayerProfile == null || SelectedPlayerAsset == null)
+            {
+                return;
+            }
+
+            PlayerAssetIdInput = SelectedPlayerAsset.AssetId;
+            SelectedPlayerAssetStatus = SelectedPlayerAsset.Status;
+            PlayerImageSourcePathInput = ResolvePlayerAssetInputImagePath(SelectedPlayerAsset);
+            LoadPlayerPromptForSelectedAsset();
+        }
+
+        private string ResolvePlayerAssetInputImagePath(PlayerAsset asset)
+        {
+            if (asset == null)
+            {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrWhiteSpace(asset.StoredPath))
+            {
+                string storedPath = Path.Combine(playerProjectService.PlayerDirectory, asset.StoredPath);
+                if (File.Exists(storedPath))
+                {
+                    return storedPath;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(asset.SourcePath) && File.Exists(asset.SourcePath))
+            {
+                return asset.SourcePath;
+            }
+
+            return string.Empty;
+        }
+
+        private void LoadPlayerPromptForSelectedAsset()
+        {
+            if (PlayerProfile == null || SelectedPlayerAsset == null)
+            {
+                return;
+            }
+
+            string promptPath = BuildPlayerPromptRecordPath(SelectedPlayerAsset);
+            if (!File.Exists(promptPath))
+            {
+                PlayerAssetPromptInput = GetDefaultPlayerAssetPrompt();
+                return;
+            }
+
+            try
+            {
+                string json = File.ReadAllText(promptPath);
+                PromptRecord record = JsonSerializer.Deserialize<PromptRecord>(
+                    json,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (record == null)
+                {
+                    PlayerAssetPromptInput = GetDefaultPlayerAssetPrompt();
+                    return;
+                }
+
+                PlayerAssetPromptInput = string.IsNullOrWhiteSpace(record.RevisionMemo)
+                    ? GetDefaultPlayerAssetPrompt()
+                    : record.RevisionMemo;
+            }
+            catch
+            {
+                PlayerAssetPromptInput = GetDefaultPlayerAssetPrompt();
+            }
+        }
+
+        private void SavePlayerComfyPromptRecord(PlayerAsset asset)
+        {
+            if (PlayerProfile == null || asset == null)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(asset.PromptRecordPath))
+            {
+                asset.PromptRecordPath = Path.Combine("Prompts", asset.AssetId + ".prompt.json");
+            }
+
+            PromptRecord record = currentComfySubmittedPromptRecord ?? CreatePlayerPromptRecord();
+            record.ComfyPromptId = CurrentComfyPromptId ?? string.Empty;
+            record.ComfyEndpointUrl = ComfySettings != null ? ComfySettings.EndpointUrl : string.Empty;
+            record.ComfyWorkflowTemplatePath = ComfySettings != null ? ComfySettings.WorkflowTemplatePath : string.Empty;
+            record.ComfyWorkflowJson = currentComfyWorkflowJson ?? string.Empty;
+            record.RevisionMemo = PlayerAssetPromptInput ?? string.Empty;
+
+            if (currentComfyOutputImage != null)
+            {
+                record.ComfyOutputFileName = currentComfyOutputImage.FileName;
+                record.ComfyOutputSubfolder = currentComfyOutputImage.Subfolder;
+                record.ComfyOutputType = currentComfyOutputImage.Type;
+            }
+
+            ApplyComfyWorkflowSettings(record, currentComfyWorkflowJson);
+            string promptPath = BuildPlayerPromptRecordPath(asset);
+            string promptDirectory = Path.GetDirectoryName(promptPath);
+            if (!string.IsNullOrWhiteSpace(promptDirectory))
+            {
+                Directory.CreateDirectory(promptDirectory);
+            }
+
+            string json = JsonSerializer.Serialize(record, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(promptPath, json);
+            playerProjectService.SaveProfile(PlayerProfile);
+        }
+
+        private void SavePlayerPromptRecordForTemplate(PlayerAsset asset, string assetPrompt)
+        {
+            if (PlayerProfile == null || asset == null)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(asset.PromptRecordPath))
+            {
+                asset.PromptRecordPath = Path.Combine("Prompts", asset.AssetId + ".prompt.json");
+            }
+
+            PromptRecord record = new PromptRecord
+            {
+                PositivePrompt = BuildPlayerPositivePrompt(PlayerProfile, assetPrompt),
+                NegativePrompt = PlayerProfile.NegativePrompt,
+                RevisionMemo = assetPrompt
+            };
+
+            string promptPath = BuildPlayerPromptRecordPath(asset);
+            string promptDirectory = Path.GetDirectoryName(promptPath);
+            if (!string.IsNullOrWhiteSpace(promptDirectory))
+            {
+                Directory.CreateDirectory(promptDirectory);
+            }
+
+            string json = JsonSerializer.Serialize(record, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(promptPath, json);
+        }
+
+        private string BuildPlayerPromptRecordPath(PlayerAsset asset)
+        {
+            string relativePath = asset.PromptRecordPath;
+            if (string.IsNullOrWhiteSpace(relativePath))
+            {
+                relativePath = Path.Combine("Prompts", asset.AssetId + ".prompt.json");
+                asset.PromptRecordPath = relativePath;
+            }
+
+            return Path.Combine(playerProjectService.PlayerDirectory, relativePath);
+        }
+
+        private PromptRecord CreatePlayerPromptRecord()
+        {
+            return new PromptRecord
+            {
+                PositivePrompt = BuildPlayerPositivePrompt(PlayerProfile, PlayerAssetPromptInput),
+                NegativePrompt = PlayerProfile != null ? PlayerProfile.NegativePrompt : string.Empty,
+                RevisionMemo = PlayerAssetPromptInput ?? string.Empty
+            };
+        }
+
+        private static string BuildPlayerPositivePrompt(PlayerProfile profile, string assetPrompt)
+        {
+            if (profile == null)
+            {
+                return string.Empty;
+            }
+
+            string[] promptParts =
+            {
+                NormalizePromptPart(profile.AppearancePrompt),
+                NormalizePromptPart(profile.BattleCommonPositivePrompt),
+                NormalizePromptPart(assetPrompt)
+            };
+
+            return string.Join(", ", promptParts.Where(part => !string.IsNullOrWhiteSpace(part)));
+        }
+
+        private string BuildPlayerComfyDisplayName()
+        {
+            string assetId = string.IsNullOrWhiteSpace(PlayerAssetIdInput)
+                ? "Battle_Player_Idle"
+                : PlayerAssetIdInput.Trim();
+            return $"プレイヤー / {assetId}";
+        }
+
+        private static string GetDefaultPlayerAssetPrompt()
+        {
+            return "solo player character, full body, front view, battle sprite, transparent background, isolated character";
+        }
+
+        private static IReadOnlyList<PlayerAssetTemplate> BuildPlayerStandardAssetTemplates()
+        {
+            return new[]
+            {
+                new PlayerAssetTemplate(
+                    "Battle_Player_Idle",
+                    "通常画像",
+                    "solo player character, full body, front view, idle pose, battle sprite, transparent background, isolated character"),
+                new PlayerAssetTemplate(
+                    "Battle_Player_Attack",
+                    "攻撃画像",
+                    "solo player character, full body, dynamic attack pose, battle sprite, transparent background, isolated character"),
+                new PlayerAssetTemplate(
+                    "Battle_Player_Damage",
+                    "被ダメージ画像",
+                    "solo player character, full body, damaged reaction pose, battle sprite, transparent background, isolated character"),
+                new PlayerAssetTemplate(
+                    "Battle_Player_Victory",
+                    "勝利画像",
+                    "solo player character, full body, victory pose, confident, battle sprite, transparent background, isolated character"),
+                new PlayerAssetTemplate(
+                    "Battle_Player_Defeat",
+                    "敗北画像",
+                    "solo player character, full body, defeated pose, weakened, battle sprite, transparent background, isolated character")
+            };
+        }
+
+        private void ClearPlayerComfyWork()
         {
             RequestComfyPollingCancellation();
             IsComfyWaitingResult = false;
@@ -7348,6 +8217,22 @@ namespace FantasyLoveSimAssetTool.ViewModels
             public string Prompt { get; }
 
             public EnemyAssetTemplate(string assetId, string memo, string prompt)
+            {
+                AssetId = assetId;
+                Memo = memo;
+                Prompt = prompt;
+            }
+        }
+
+        private class PlayerAssetTemplate
+        {
+            public string AssetId { get; }
+
+            public string Memo { get; }
+
+            public string Prompt { get; }
+
+            public PlayerAssetTemplate(string assetId, string memo, string prompt)
             {
                 AssetId = assetId;
                 Memo = memo;

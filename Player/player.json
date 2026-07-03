@@ -1,0 +1,10 @@
+{
+  "SchemaVersion": 1,
+  "PlayerId": "Player",
+  "DisplayName": "Player",
+  "AppearancePrompt": "",
+  "BattleCommonPositivePrompt": "clean lines, highly detailed, masterpiece, 8k, best quality, very aesthetic, absurdres, newest",
+  "NegativePrompt": "lowres, bad anatomy, bad face, error, extra digit, fewer digits, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+  "Memo": "",
+  "Assets": []
+}

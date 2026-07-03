@@ -5,7 +5,7 @@
 Stable Diffusion などで生成した立ち絵、イベントスチル、行動スチル、エンディングスチルと、それぞれのプロンプト記録をキャラクター単位で整理し、Unity に取り込みやすいフォルダ構成へ export することを目的にしています。
 
 詳細仕様は [Docs/CharacterAssetGenerationToolSpec.md](Docs/CharacterAssetGenerationToolSpec.md) を参照してください。
-Unity 取り込み方針は [Docs/Extra/UnityImportPlan.md](Docs/Extra/UnityImportPlan.md)、Unity Editor 側の実装計画は [Docs/Extra/UnityEditorImportImplementationPlan.md](Docs/Extra/UnityEditorImportImplementationPlan.md)、敵キャラ素材の export / Unity import 仕様は [Docs/Extra/EnemyExportUnityImportSpec.md](Docs/Extra/EnemyExportUnityImportSpec.md)、会話データ拡張案は [Docs/Extra/ConversationDataPlan.md](Docs/Extra/ConversationDataPlan.md)、表情・衣装差分ロードマップは [Docs/ExpressionCostumeVariantRoadmap.md](Docs/ExpressionCostumeVariantRoadmap.md)、透過レイヤー素材の作成手順は [Docs/TransparentLayerAssetWorkflow.md](Docs/TransparentLayerAssetWorkflow.md) を参照してください。
+Unity 取り込み方針は [Docs/Extra/UnityImportPlan.md](Docs/Extra/UnityImportPlan.md)、Unity Editor 側の実装計画は [Docs/Extra/UnityEditorImportImplementationPlan.md](Docs/Extra/UnityEditorImportImplementationPlan.md)、敵キャラ素材の export / Unity import 仕様は [Docs/Extra/EnemyExportUnityImportSpec.md](Docs/Extra/EnemyExportUnityImportSpec.md)、プレイヤー素材の管理方針は [Docs/PlayerAssetManagementPlan.md](Docs/PlayerAssetManagementPlan.md)、会話データ拡張案は [Docs/Extra/ConversationDataPlan.md](Docs/Extra/ConversationDataPlan.md)、表情・衣装差分ロードマップは [Docs/ExpressionCostumeVariantRoadmap.md](Docs/ExpressionCostumeVariantRoadmap.md)、透過レイヤー素材の作成手順は [Docs/TransparentLayerAssetWorkflow.md](Docs/TransparentLayerAssetWorkflow.md) を参照してください。
 
 ## 現在の状態
 
@@ -55,6 +55,7 @@ Unity 取り込み方針は [Docs/Extra/UnityImportPlan.md](Docs/Extra/UnityImpo
 - レイヤープレビュータブによる Accepted 済み透過レイヤー素材の重ね合わせ確認
 - 透過レイヤー素材の `sprite_layers_export.json` 出力
 - Export 時の透過レイヤー素材検証と warning 表示
+- プレイヤー素材タブによる戦闘用プレイヤー画像の登録、ComfyUI 作画、`Export/Player/` 出力
 
 現状では、Stable Diffusion などの画像生成自体はアプリ内では完結せず、外部生成した画像を登録、整理、出力するツールとして動作します。
 この外部ファイル登録フローは今後も残し、将来追加するローカル ComfyUI 連携は、同じ登録処理へ生成結果を渡す任意機能として扱います。

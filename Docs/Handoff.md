@@ -78,6 +78,9 @@
 - 敵キャラ素材タブでの敵基本 prompt、共通 positive prompt、negative prompt、個別作画 prompt の入力
 - 敵キャラ素材タブでの通常、攻撃、被ダメージ、撃破の標準候補追加
 - 敵キャラ素材タブからの ComfyUI 送信、生成画像取得、敵画像への採用、prompt JSON 保存
+- プレイヤー素材タブでのプレイヤー戦闘画像登録、登録解除、プレビュー、player export
+- プレイヤー素材タブでの通常、攻撃、被ダメージ、勝利、敗北の標準候補追加
+- プレイヤー素材タブからの ComfyUI 送信、生成画像取得、プレイヤー画像への採用、prompt JSON 保存
 
 ## 開発時の注意
 
@@ -538,6 +541,7 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 - `Docs/Extra/ConversationDataPlan.md`: 会話、イベント、行動反応、エンディング本文の JSON export と Unity Import 方針
 - `Docs/Extra/BattleCharacterImagePlan.md`: 戦闘画面用キャラクター画像の usage、命名、Export、Unity 取り込み方針
 - `Docs/EnemyAssetManagementPlan.md`: ヒロインとは独立した敵キャラクター素材タブ、保存形式、enemy export 方針
+- `Docs/PlayerAssetManagementPlan.md`: ヒロインや敵キャラとは独立したプレイヤー戦闘素材タブ、保存形式、player export 方針
 - `Docs/Extra/EnemyExportUnityImportSpec.md`: enemy export の出力仕様、Unity 側コピー先、import 手順、取り込み失敗時の確認項目
 - `Docs/GameEventDataGuide.md`: `GameEvents` のカテゴリ、条件、発火判定、イベントスチル参照の運用
 - `Docs/ExpressionCostumeVariantRoadmap.md`: 表情差分、衣装差分の元データ作成、外部 JSON 化、GUI 編集へのロードマップ
@@ -557,3 +561,6 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 次は Unity 側 importer で `Export/Enemies/<EnemyId>/Data/enemy_profile_export.json` と `enemy_assets_export.json` を取り込めるようにします。
 enemy export の取り込み仕様は `Docs/Extra/EnemyExportUnityImportSpec.md` を正とします。
 `enemy_assets_export.json.assets` には `Accepted` かつ画像登録済みの Asset だけが入るため、`標準候補追加` で作っただけの画像なし候補は Unity import 対象になりません。
+
+プレイヤー素材については、`PlayerProfile`、`PlayerAsset`、`PlayerProjectService`、`PlayerExportService`、最小の「プレイヤー素材」タブまで追加済みです。
+保存先は `Player/`、export 先は `Export/Player/`、Unity 側コピー先は `Assets/Images/Player/Battle/` です。
