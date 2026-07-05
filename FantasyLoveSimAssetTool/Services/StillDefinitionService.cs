@@ -55,7 +55,11 @@ namespace FantasyLoveSimAssetTool.Services
                 Create("NormalEnding_01", "エンディング: Normal", AssetUsage.Ending, "NormalEnding_01.png", "normal ending still, bittersweet smile, calm atmosphere, soft lighting"),
                 Create("BadEnding_01", "エンディング: Bad", AssetUsage.Ending, "BadEnding_01.png", "bad ending still, distant expression, lonely atmosphere, subdued lighting"),
 
-                Create("Battle_Heroine_Idle", "戦闘: ヒロイン通常", AssetUsage.Battle, "Battle_Heroine_Idle.png", "battle UI character sprite, heroine idle pose, full body, transparent background, clear game asset lighting")
+                Create("Battle_Heroine_Idle", "戦闘: ヒロイン通常", AssetUsage.Battle, "Battle_Heroine_Idle.png", "battle UI character sprite, heroine idle pose, full body, transparent background, clear game asset lighting"),
+                Create("Battle_Heroine_Attack", "戦闘: ヒロイン攻撃", AssetUsage.Battle, "Battle_Heroine_Attack.png", "battle UI character sprite, heroine dynamic attack pose, full body, transparent background, clear game asset lighting"),
+                Create("Battle_Heroine_Damage", "戦闘: ヒロイン被ダメージ", AssetUsage.Battle, "Battle_Heroine_Damage.png", "battle UI character sprite, heroine damaged reaction pose, full body, transparent background, clear game asset lighting"),
+                Create("Battle_Heroine_Victory", "戦闘: ヒロイン勝利", AssetUsage.Battle, "Battle_Heroine_Victory.png", "battle UI character sprite, heroine victory pose, full body, transparent background, clear game asset lighting"),
+                Create("Battle_Heroine_Defeat", "戦闘: ヒロイン敗北", AssetUsage.Battle, "Battle_Heroine_Defeat.png", "battle UI character sprite, heroine defeated pose, full body, transparent background, clear game asset lighting")
             };
             Dictionary<string, ExpressionDefinition> expressions = LoadExpressionDefinitions(workspaceRoot);
             Dictionary<string, CostumeDefinition> costumes = LoadCostumeDefinitions(workspaceRoot);

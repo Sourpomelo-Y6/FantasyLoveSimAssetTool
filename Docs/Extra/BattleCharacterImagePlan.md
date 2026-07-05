@@ -190,6 +190,26 @@ Assets/Resources/Heroines/<HeroineId>/BattleAssets/BattleCharacterAssets.asset
 最初の段階ではこの JSON は必須にしない。
 Unity 側が `HeroineAssetCatalog` から `assetId` で直接探すだけでもよい。
 
+## Tool 側の登録導線
+
+ヒロイン戦闘画像は、ヒロインの「画像」タブで `戦闘候補追加` を押して標準候補を作成する。
+この操作では、選択中のヒロインに次の `AssetId` を `usage = Battle`、初期状態 `Pending` の登録候補として追加する。
+
+```text
+Battle_Heroine_Idle
+Battle_Heroine_Attack
+Battle_Heroine_Damage
+Battle_Heroine_Victory
+Battle_Heroine_Defeat
+```
+
+同時に `Prompts/<AssetId>.prompt.json` も作成し、ヒロインの基本 prompt、スチル共通 positive prompt、戦闘用の個別 prompt を合成した positive prompt を保存する。
+画像ファイル自体はこの時点では未登録でよい。
+生成済み PNG を採用する場合は、従来通り「元画像」にファイルを指定して `AssetId` を合わせ、`画像登録` で登録する。
+
+既に同じ `AssetId` がある場合は、画像レコードを増やさず既存レコードを更新する。
+そのため、標準候補の追加ボタンは不足分の作成と prompt の再作成に使える。
+
 ## prompt JSON に残す情報
 
 `Prompts/<AssetId>.prompt.json` には、通常の prompt に加えて戦闘用の見た目制約を残す。

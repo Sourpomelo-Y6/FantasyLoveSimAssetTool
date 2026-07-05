@@ -1517,6 +1517,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand SaveImageAssetsCommand { get; }
 
+        public ICommand AddHeroineBattleStandardAssetDataCommand { get; }
+
         public ICommand SavePromptRecordCommand { get; }
 
         public ICommand ApplyPromptTemplateCommand { get; }
@@ -1873,6 +1875,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 UnregisterImageAsset,
                 () => SelectedProfile != null && SelectedAsset != null);
             SaveImageAssetsCommand = new RelayCommand(SaveImageAssets, () => SelectedProfile != null);
+            AddHeroineBattleStandardAssetDataCommand = new RelayCommand(
+                AddHeroineBattleStandardAssetData,
+                () => SelectedProfile != null);
             SavePromptRecordCommand = new RelayCommand(
                 SavePromptRecord,
                 () => SelectedProfile != null && SelectedAsset != null && CurrentPromptRecord != null);
@@ -2670,13 +2675,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 ? SelectedStillDefinition.NegativePromptAddition
                 : string.Empty;
 
-            string[] promptParts =
-            {
-                NormalizePromptPart(commonPrompt),
-                NormalizePromptPart(additionPrompt)
-            };
+            return MergePromptParts(commonPrompt, additionPrompt);
+        }
 
-            return string.Join(", ", promptParts.Where(part => !string.IsNullOrWhiteSpace(part)));
+        private static string MergePromptParts(params string[] promptParts)
+        {
+            return string.Join(
+                ", ",
+                promptParts
+                    .Select(NormalizePromptPart)
+                    .Where(part => !string.IsNullOrWhiteSpace(part)));
         }
 
         private void SelectedStillDefinitionPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -4106,6 +4114,97 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     AssetIdInput = System.IO.Path.GetFileNameWithoutExtension(dialog.FileName);
                 }
             }
+        }
+
+        private void AddHeroineBattleStandardAssetData()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                SelectedProfile.Assets ??= new ObservableCollection<HeroineAsset>();
+
+                int addedCount = 0;
+                int updatedCount = 0;
+                HeroineAsset firstAsset = null;
+                foreach (StillDefinition definition in GetHeroineBattleStandardDefinitions())
+                {
+                    bool existed = SelectedProfile.Assets.Any(asset => asset.AssetId == definition.AssetId);
+                    HeroineAsset asset = EnsureAssetForStill(SelectedProfile, definition);
+                    asset.Usage = AssetUsage.Battle;
+                    asset.FileName = string.IsNullOrWhiteSpace(asset.FileName)
+                        ? definition.FileName
+                        : asset.FileName;
+                    asset.PromptRecordPath = string.IsNullOrWhiteSpace(asset.PromptRecordPath)
+                        ? Path.Combine("Prompts", asset.AssetId + ".prompt.json")
+                        : asset.PromptRecordPath;
+                    if (string.IsNullOrWhiteSpace(asset.Memo))
+                    {
+                        asset.Memo = "ヒロイン戦闘画像の標準候補";
+                    }
+
+                    SavePromptRecordForHeroineBattleTemplate(asset, definition);
+                    firstAsset ??= asset;
+                    if (existed)
+                    {
+                        updatedCount++;
+                    }
+                    else
+                    {
+                        addedCount++;
+                    }
+                }
+
+                characterProjectService.SaveProfile(SelectedProfile);
+                SelectedAssetStatusFilter = "All";
+                RefreshFilteredAssets();
+                RefreshAcceptedAssets();
+                SelectedAsset = firstAsset ?? SelectedProfile.Assets.FirstOrDefault(asset => asset.Usage == AssetUsage.Battle);
+                if (SelectedAsset != null)
+                {
+                    AssetIdInput = SelectedAsset.AssetId;
+                    SelectedAssetUsage = SelectedAsset.Usage;
+                    SelectedAssetStatus = SelectedAsset.Status;
+                }
+
+                RefreshSelectedStillStatus();
+                StatusMessage = $"ヒロイン戦闘画像の標準候補を登録しました。追加 {addedCount} 件、更新 {updatedCount} 件。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"ヒロイン戦闘画像の標準候補登録に失敗しました: {ex.Message}";
+            }
+        }
+
+        private IReadOnlyList<StillDefinition> GetHeroineBattleStandardDefinitions()
+        {
+            string[] assetIds =
+            {
+                "Battle_Heroine_Idle",
+                "Battle_Heroine_Attack",
+                "Battle_Heroine_Damage",
+                "Battle_Heroine_Victory",
+                "Battle_Heroine_Defeat"
+            };
+
+            return assetIds
+                .Select(assetId => StillDefinitions.FirstOrDefault(definition => definition.AssetId == assetId))
+                .Where(definition => definition != null)
+                .ToList();
+        }
+
+        private void SavePromptRecordForHeroineBattleTemplate(HeroineAsset asset, StillDefinition definition)
+        {
+            PromptRecord record = promptRecordService.LoadOrCreatePromptRecord(SelectedProfile, asset);
+            record.PositivePrompt = BuildStillPositivePrompt(SelectedProfile, definition);
+            record.NegativePrompt = MergePromptParts(
+                record.NegativePrompt,
+                definition.NegativePromptAddition);
+            record.RevisionMemo = definition.SpecificPrompt ?? string.Empty;
+            promptRecordService.SavePromptRecord(SelectedProfile, asset, record);
         }
 
         public void SetImageSourceFromDroppedFiles(string[] filePaths)
