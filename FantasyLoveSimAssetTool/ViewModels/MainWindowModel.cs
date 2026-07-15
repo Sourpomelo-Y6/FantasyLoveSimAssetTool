@@ -491,6 +491,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedAsset == value) { return; }
                 selectedAsset = value;
                 OnPropertyChanged(nameof(SelectedAsset));
+                PopulateSelectedAssetEditor();
                 RefreshSelectedAssetImagePath();
                 if (selectedAsset != null)
                 {
@@ -503,6 +504,47 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 LoadPromptForSelectedAsset();
                 CommandManager.InvalidateRequerySuggested();
             }
+        }
+
+        private void PopulateSelectedAssetEditor()
+        {
+            if (SelectedAsset == null)
+            {
+                AssetIdInput = string.Empty;
+                ImageSourcePathInput = string.Empty;
+                return;
+            }
+
+            AssetIdInput = SelectedAsset.AssetId ?? string.Empty;
+            SelectedAssetUsage = SelectedAsset.Usage;
+            SelectedAssetStatus = SelectedAsset.Status;
+            ImageSourcePathInput = ResolveSelectedAssetSourcePath(SelectedAsset);
+        }
+
+        private string ResolveSelectedAssetSourcePath(HeroineAsset asset)
+        {
+            if (asset == null)
+            {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrWhiteSpace(asset.SourcePath) && File.Exists(asset.SourcePath))
+            {
+                return asset.SourcePath;
+            }
+
+            if (SelectedProfile != null && !string.IsNullOrWhiteSpace(asset.StoredPath))
+            {
+                string storedPath = Path.Combine(
+                    characterProjectService.GetCharacterDirectory(SelectedProfile.HeroineId),
+                    asset.StoredPath);
+                if (File.Exists(storedPath))
+                {
+                    return storedPath;
+                }
+            }
+
+            return asset.SourcePath ?? string.Empty;
         }
 
         public TrainingImageEntry SelectedTrainingImageEntry
@@ -4676,6 +4718,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             try
             {
+                if (SelectedAsset != null)
+                {
+                    SelectedAsset.Usage = SelectedAssetUsage;
+                    SelectedAsset.Status = SelectedAssetStatus;
+                    SelectedAsset.SourcePath = ImageSourcePathInput ?? string.Empty;
+                }
                 characterProjectService.SaveProfile(SelectedProfile);
                 RefreshFilteredAssets();
                 RefreshAcceptedAssets();
