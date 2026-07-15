@@ -36,6 +36,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private OutfitMessageOverride selectedOutfitMessageOverride;
         private OutfitReactionMessageOverride selectedOutfitReactionMessageOverride;
         private TrainingImageEntry selectedTrainingImageEntry;
+        private HeroineAsset selectedTrainingAsset;
         private string heroineIdInput;
         private string displayNameInput;
         private string enemyIdInput;
@@ -150,6 +151,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<HeroineAsset> FilteredAssets { get; }
 
         public ObservableCollection<HeroineAsset> AcceptedAssets { get; }
+
+        public ObservableCollection<HeroineAsset> TrainingAssets { get; }
 
         public ObservableCollection<PromptTemplate> AvailablePromptTemplates { get; }
 
@@ -446,6 +449,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (imageSourcePathInput == value) { return; }
                 imageSourcePathInput = value;
                 OnPropertyChanged(nameof(ImageSourcePathInput));
+                CommandManager.InvalidateRequerySuggested();
             }
         }
 
@@ -491,6 +495,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedAsset == value) { return; }
                 selectedAsset = value;
                 OnPropertyChanged(nameof(SelectedAsset));
+                if (value != null && value.Usage == AssetUsage.Training && selectedTrainingAsset != value)
+                {
+                    selectedTrainingAsset = value;
+                    OnPropertyChanged(nameof(SelectedTrainingAsset));
+                }
+                else if ((value == null || value.Usage != AssetUsage.Training) && selectedTrainingAsset != null)
+                {
+                    selectedTrainingAsset = null;
+                    OnPropertyChanged(nameof(SelectedTrainingAsset));
+                }
                 PopulateSelectedAssetEditor();
                 RefreshSelectedAssetImagePath();
                 if (selectedAsset != null)
@@ -555,6 +569,22 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedTrainingImageEntry == value) { return; }
                 selectedTrainingImageEntry = value;
                 OnPropertyChanged(nameof(SelectedTrainingImageEntry));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public HeroineAsset SelectedTrainingAsset
+        {
+            get { return selectedTrainingAsset; }
+            set
+            {
+                if (selectedTrainingAsset == value) { return; }
+                selectedTrainingAsset = value;
+                OnPropertyChanged(nameof(SelectedTrainingAsset));
+                if (value != null && SelectedAsset != value)
+                {
+                    SelectedAsset = value;
+                }
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -1581,6 +1611,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand RemoveTrainingImageEntryCommand { get; }
 
+        public ICommand AdoptTrainingExternalImageCommand { get; }
+
         public ICommand SavePromptRecordCommand { get; }
 
         public ICommand ApplyPromptTemplateCommand { get; }
@@ -1693,6 +1725,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             EnemyProfiles = new ObservableCollection<EnemyProfile>();
             FilteredAssets = new ObservableCollection<HeroineAsset>();
             AcceptedAssets = new ObservableCollection<HeroineAsset>();
+            TrainingAssets = new ObservableCollection<HeroineAsset>();
             AvailablePromptTemplates = new ObservableCollection<PromptTemplate>();
             StillDefinitions = new ObservableCollection<StillDefinition>();
             FilteredStillDefinitions = new ObservableCollection<StillDefinition>();
@@ -1955,6 +1988,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RemoveTrainingImageEntryCommand = new RelayCommand(
                 RemoveTrainingImageEntry,
                 () => SelectedProfile != null && SelectedTrainingImageEntry != null);
+            AdoptTrainingExternalImageCommand = new RelayCommand(
+                AdoptTrainingExternalImage,
+                () => SelectedProfile != null &&
+                    SelectedTrainingAsset != null &&
+                    !string.IsNullOrWhiteSpace(ImageSourcePathInput) &&
+                    File.Exists(ImageSourcePathInput));
             SavePromptRecordCommand = new RelayCommand(
                 SavePromptRecord,
                 () => SelectedProfile != null && SelectedAsset != null && CurrentPromptRecord != null);
@@ -2709,10 +2748,42 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
                 SaveComfyPromptRecord(asset);
                 StatusMessage += " Comfy 生成条件を prompt 記録に保存しました。";
+                if (targetAsset.Usage == AssetUsage.Training)
+                {
+                    SelectNextPendingTrainingAsset(asset);
+                }
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Comfy 生成画像の採用に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void SelectNextPendingTrainingAsset(HeroineAsset adoptedAsset)
+        {
+            RefreshTrainingAssets();
+            if (TrainingAssets.Count == 0)
+            {
+                return;
+            }
+
+            int adoptedIndex = TrainingAssets.IndexOf(adoptedAsset);
+            int startIndex = adoptedIndex >= 0 ? adoptedIndex : -1;
+            for (int offset = 1; offset <= TrainingAssets.Count; offset++)
+            {
+                int index = (startIndex + offset) % TrainingAssets.Count;
+                HeroineAsset candidate = TrainingAssets[index];
+                if (candidate.Status != AssetStatus.Accepted)
+                {
+                    SelectedTrainingAsset = candidate;
+                    CurrentComfyPromptId = string.Empty;
+                    CurrentComfyResultSummary = string.Empty;
+                    currentComfySubmittedPromptRecord = null;
+                    currentComfyWorkflowJson = string.Empty;
+                    ClearComfyPreviewImage();
+                    StatusMessage += $" 次の未採用枠 {candidate.AssetId} を選択しました。";
+                    return;
+                }
             }
         }
 
@@ -4434,6 +4505,34 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SelectedTrainingImageEntry = item;
         }
 
+        private void AdoptTrainingExternalImage()
+        {
+            if (SelectedProfile == null || SelectedTrainingAsset == null || CurrentPromptRecord == null)
+            {
+                return;
+            }
+
+            HeroineAsset targetAsset = SelectedTrainingAsset;
+            try
+            {
+                promptRecordService.SavePromptRecord(SelectedProfile, targetAsset, CurrentPromptRecord);
+                AssetIdInput = targetAsset.AssetId;
+                SelectedAssetUsage = AssetUsage.Training;
+                SelectedAssetStatus = AssetStatus.Accepted;
+                HeroineAsset asset = AddImageAssetCore();
+                if (asset == null)
+                {
+                    return;
+                }
+
+                SelectNextPendingTrainingAsset(asset);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"訓練画像の採用に失敗しました: {ex.Message}";
+            }
+        }
+
         private void RemoveTrainingImageEntry()
         {
             if (SelectedProfile?.TrainingImages?.Items == null || SelectedTrainingImageEntry == null)
@@ -5697,6 +5796,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             HeroineAsset previousSelection = SelectedAsset;
             FilteredAssets.Clear();
+            RefreshTrainingAssets();
 
             if (SelectedProfile != null && SelectedProfile.Assets != null)
             {
@@ -5713,6 +5813,29 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             SelectedAsset = FilteredAssets.Count > 0 ? FilteredAssets[0] : null;
+        }
+
+        private void RefreshTrainingAssets()
+        {
+            HeroineAsset previousSelection = selectedTrainingAsset;
+            TrainingAssets.Clear();
+
+            if (SelectedProfile?.Assets != null)
+            {
+                foreach (HeroineAsset asset in SelectedProfile.Assets.Where(asset => asset?.Usage == AssetUsage.Training))
+                {
+                    TrainingAssets.Add(asset);
+                }
+            }
+
+            HeroineAsset nextSelection = previousSelection != null && TrainingAssets.Contains(previousSelection)
+                ? previousSelection
+                : TrainingAssets.FirstOrDefault();
+            if (selectedTrainingAsset != nextSelection)
+            {
+                selectedTrainingAsset = nextSelection;
+                OnPropertyChanged(nameof(SelectedTrainingAsset));
+            }
         }
 
         private void RefreshAcceptedAssets()

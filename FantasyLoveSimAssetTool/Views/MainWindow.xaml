@@ -913,45 +913,124 @@
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0"
-                                       Text="画像本体は画像タブの Usage=Training で管理します。空欄は共通画像、または現在表示中の画像へフォールバックします。"
+                                       Text="訓練画像の枠準備、Prompt編集、ComfyUI生成、外部画像登録、採用をこの画面で行います。空欄のマッピングは共通画像、または現在表示中の画像へフォールバックします。"
                                        Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,12"/>
 
-                            <GroupBox Grid.Row="1" Header="訓練共通画像 AssetId" Margin="0,0,0,12">
-                                <Grid Margin="8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="140"/><ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="140"/><ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="初回前" Margin="0,4,8,8"/>
-                                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedProfile.TrainingImages.Defaults.BeforeFirstStepImageAssetId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,8"/>
-                                    <TextBlock Grid.Row="0" Grid.Column="2" Text="実行後" Margin="0,4,8,8"/>
-                                    <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding SelectedProfile.TrainingImages.Defaults.AfterFirstStepImageAssetId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="主人公LP消費" Margin="0,4,8,8"/>
-                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedProfile.TrainingImages.Defaults.PlayerLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,8"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="2" Text="ヒロインLP消費" Margin="0,4,8,8"/>
-                                    <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding SelectedProfile.TrainingImages.Defaults.HeroineLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="同時LP消費" Margin="0,4,8,0"/>
-                                    <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding SelectedProfile.TrainingImages.Defaults.SimultaneousLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}"/>
-                                </Grid>
-                            </GroupBox>
+                            <Expander Grid.Row="1" Header="訓練画像マッピング（必要な場合だけ編集）" Margin="0,0,0,12">
+                                <StackPanel>
+                                    <GroupBox Header="訓練共通画像 AssetId" Margin="0,8,0,8">
+                                        <Grid Margin="8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="140"/><ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="140"/><ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="初回前" Margin="0,4,8,8"/>
+                                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedProfile.TrainingImages.Defaults.BeforeFirstStepImageAssetId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,8"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="2" Text="実行後" Margin="0,4,8,8"/>
+                                            <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding SelectedProfile.TrainingImages.Defaults.AfterFirstStepImageAssetId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="主人公LP消費" Margin="0,4,8,8"/>
+                                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedProfile.TrainingImages.Defaults.PlayerLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,8"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="2" Text="ヒロインLP消費" Margin="0,4,8,8"/>
+                                            <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding SelectedProfile.TrainingImages.Defaults.HeroineLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="同時LP消費" Margin="0,4,8,0"/>
+                                            <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding SelectedProfile.TrainingImages.Defaults.SimultaneousLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </Grid>
+                                    </GroupBox>
+                                    <DataGrid ItemsSource="{Binding SelectedProfile.TrainingImages.Items}"
+                                              SelectedItem="{Binding SelectedTrainingImageEntry}"
+                                              AutoGenerateColumns="False" CanUserAddRows="False" Height="180">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="TrainingId" Binding="{Binding TrainingId, UpdateSourceTrigger=PropertyChanged}" Width="130"/>
+                                            <DataGridTextColumn Header="初回前 AssetId" Binding="{Binding BeforeFirstStepImageAssetId, UpdateSourceTrigger=PropertyChanged}" Width="190"/>
+                                            <DataGridTextColumn Header="実行後 AssetId" Binding="{Binding AfterFirstStepImageAssetId, UpdateSourceTrigger=PropertyChanged}" Width="190"/>
+                                            <DataGridTextColumn Header="主人公LP AssetId" Binding="{Binding PlayerLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}" Width="180"/>
+                                            <DataGridTextColumn Header="ヒロインLP AssetId" Binding="{Binding HeroineLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}" Width="180"/>
+                                            <DataGridTextColumn Header="同時LP AssetId" Binding="{Binding SimultaneousLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}" Width="180"/>
+                                            <DataGridTextColumn Header="メモ" Binding="{Binding Memo, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </StackPanel>
+                            </Expander>
 
-                            <DataGrid Grid.Row="2"
-                                      ItemsSource="{Binding SelectedProfile.TrainingImages.Items}"
-                                      SelectedItem="{Binding SelectedTrainingImageEntry}"
-                                      AutoGenerateColumns="False" CanUserAddRows="False" Margin="0,0,0,12">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="TrainingId" Binding="{Binding TrainingId, UpdateSourceTrigger=PropertyChanged}" Width="130"/>
-                                    <DataGridTextColumn Header="初回前 AssetId" Binding="{Binding BeforeFirstStepImageAssetId, UpdateSourceTrigger=PropertyChanged}" Width="190"/>
-                                    <DataGridTextColumn Header="実行後 AssetId" Binding="{Binding AfterFirstStepImageAssetId, UpdateSourceTrigger=PropertyChanged}" Width="190"/>
-                                    <DataGridTextColumn Header="主人公LP AssetId" Binding="{Binding PlayerLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}" Width="180"/>
-                                    <DataGridTextColumn Header="ヒロインLP AssetId" Binding="{Binding HeroineLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}" Width="180"/>
-                                    <DataGridTextColumn Header="同時LP AssetId" Binding="{Binding SimultaneousLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}" Width="180"/>
-                                    <DataGridTextColumn Header="メモ" Binding="{Binding Memo, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
-                                </DataGrid.Columns>
-                            </DataGrid>
+                            <Grid Grid.Row="2" Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="300"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="360"/>
+                                </Grid.ColumnDefinitions>
+
+                                <GroupBox Grid.Column="0" Header="1. 作成する訓練画像">
+                                    <DataGrid ItemsSource="{Binding TrainingAssets}"
+                                              SelectedItem="{Binding SelectedTrainingAsset}"
+                                              AutoGenerateColumns="False"
+                                              CanUserAddRows="False"
+                                              IsReadOnly="True"
+                                              Margin="8">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId}" Width="*"/>
+                                            <DataGridTextColumn Header="状態" Binding="{Binding Status}" Width="80"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </GroupBox>
+
+                                <GroupBox Grid.Column="2" Header="2. Promptと生成">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="8">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding SelectedTrainingAsset.AssetId, StringFormat=AssetId: {0}}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding CurrentPromptRecord.TrainingId, StringFormat=TrainingId: {0}}" Margin="0,4,0,0"/>
+                                            <TextBlock Text="{Binding CurrentPromptRecord.TrainingVisualState, StringFormat=表示状態: {0}}" Margin="0,4,0,0"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,6,0,8">
+                                                <CheckBox Content="主人公を表示" IsChecked="{Binding CurrentPromptRecord.PlayerVisible}" Margin="0,0,16,0"/>
+                                                <CheckBox Content="ヒロインを表示" IsChecked="{Binding CurrentPromptRecord.HeroineVisible}"/>
+                                            </StackPanel>
+                                            <TextBlock Text="positive prompt"/>
+                                            <TextBox Text="{Binding CurrentPromptRecord.PositivePrompt, UpdateSourceTrigger=PropertyChanged}"
+                                                     AcceptsReturn="True" TextWrapping="Wrap" Height="110" Margin="0,4,0,8"/>
+                                            <TextBlock Text="negative prompt"/>
+                                            <TextBox Text="{Binding CurrentPromptRecord.NegativePrompt, UpdateSourceTrigger=PropertyChanged}"
+                                                     AcceptsReturn="True" TextWrapping="Wrap" Height="80" Margin="0,4,0,8"/>
+                                            <WrapPanel>
+                                                <Button Content="Prompt保存" Command="{Binding SavePromptRecordCommand}" Width="96" Height="30" Margin="0,0,6,6"/>
+                                                <Button Content="生成開始" Command="{Binding SubmitSelectedAssetComfyPromptCommand}" Width="96" Height="30" Margin="0,0,6,6"/>
+                                                <Button Content="生成停止" Command="{Binding InterruptComfyGenerationCommand}" Width="96" Height="30" Margin="0,0,6,6"/>
+                                                <Button Content="結果を確認" Command="{Binding CheckStillComfyResultCommand}" Width="96" Height="30" Margin="0,0,6,6"/>
+                                                <Button Content="画像を取得" Command="{Binding FetchStillComfyImageCommand}" Width="96" Height="30" Margin="0,0,6,6"/>
+                                            </WrapPanel>
+                                            <TextBlock Text="{Binding CurrentComfyResultSummary}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                </GroupBox>
+
+                                <GroupBox Grid.Column="4" Header="3. Previewと採用">
+                                    <Grid Margin="8">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Text="現在の登録画像" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                                        <Image Grid.Row="1" Source="{Binding SelectedAssetImagePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" Stretch="Uniform"/>
+                                        <TextBlock Grid.Row="2" Text="生成候補" FontWeight="SemiBold" Margin="0,8,0,4"/>
+                                        <Image Grid.Row="3" Source="{Binding CurrentComfyPreviewImagePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" Stretch="Uniform"/>
+                                        <StackPanel Grid.Row="4" Margin="0,8,0,0">
+                                            <TextBlock Text="{Binding SelectedAssetImageMessage}" Foreground="Gray" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding CurrentComfyPreviewImageMessage}" Foreground="Gray" TextWrapping="Wrap" Margin="0,4,0,8"/>
+                                            <WrapPanel HorizontalAlignment="Right">
+                                                <Button Content="外部画像を選択" Command="{Binding BrowseImageCommand}" Width="112" Height="30" Margin="0,0,6,6"/>
+                                                <Button Content="外部画像を採用" Command="{Binding AdoptTrainingExternalImageCommand}" Width="112" Height="30" Margin="0,0,6,6"/>
+                                                <Button Content="生成画像を採用" Command="{Binding AdoptSelectedAssetComfyImageCommand}" Width="112" Height="30" Margin="0,0,0,6"/>
+                                            </WrapPanel>
+                                        </StackPanel>
+                                    </Grid>
+                                </GroupBox>
+                            </Grid>
 
                             <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
                                 <Button Content="標準9枠を準備" Command="{Binding AddTrainingStandardAssetDataCommand}" Width="130" Height="30" Margin="0,0,8,0"/>
