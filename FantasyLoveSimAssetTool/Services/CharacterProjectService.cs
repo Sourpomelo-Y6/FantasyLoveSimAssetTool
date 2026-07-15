@@ -49,6 +49,8 @@ namespace FantasyLoveSimAssetTool.Services
                 DisplayName = string.IsNullOrWhiteSpace(displayName) ? heroineId.Trim() : displayName.Trim(),
                 StillCommonPositivePrompt = "clean lines,highly detailed,masterpiece,8k,best quality,very aesthetic,absurdres,newest"
             };
+            profile.BattleSkillsSpecified = true;
+            ApplyDefaultResourcePaths(profile);
 
             EnsureCharacterDirectories(profile.HeroineId);
             SaveProfile(profile);
@@ -65,8 +67,14 @@ namespace FantasyLoveSimAssetTool.Services
             ValidateHeroineId(profile.HeroineId);
             profile.AppearancePrompt ??= string.Empty;
             profile.StillCommonPositivePrompt ??= string.Empty;
+            NormalizeProfileCompatibilityFields(profile);
             profile.OutfitMessageOverrides ??= new ObservableCollection<OutfitMessageOverride>();
             profile.OutfitReactionMessageOverrides ??= new ObservableCollection<OutfitReactionMessageOverride>();
+            profile.BattleSkills ??= new ObservableCollection<HeroineBattleSkill>();
+            if (profile.BattleSkills.Count > 0)
+            {
+                profile.BattleSkillsSpecified = true;
+            }
             profile.Assets ??= new ObservableCollection<HeroineAsset>();
             profile.StillWorkItems ??= new ObservableCollection<StillWorkItem>();
             profile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
@@ -212,8 +220,20 @@ namespace FantasyLoveSimAssetTool.Services
             profile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
             profile.OutfitMessageOverrides ??= new ObservableCollection<OutfitMessageOverride>();
             profile.OutfitReactionMessageOverrides ??= new ObservableCollection<OutfitReactionMessageOverride>();
+            profile.BattleSkills ??= new ObservableCollection<HeroineBattleSkill>();
             profile.AppearancePrompt ??= string.Empty;
             profile.StillCommonPositivePrompt ??= string.Empty;
+            NormalizeProfileCompatibilityFields(profile);
+            if (string.IsNullOrWhiteSpace(profile.ConversationResourcePath)
+                && string.IsNullOrWhiteSpace(profile.GameEventResourcePath)
+                && string.IsNullOrWhiteSpace(profile.ActionResourcePath)
+                && string.IsNullOrWhiteSpace(profile.ScheduledEventResourcePath)
+                && string.IsNullOrWhiteSpace(profile.BattleResultEventResourcePath)
+                && string.IsNullOrWhiteSpace(profile.BattlePanelResultMessageResourcePath)
+                && string.IsNullOrWhiteSpace(profile.EndingResourcePath))
+            {
+                ApplyDefaultResourcePaths(profile);
+            }
             NormalizeConversationEntries(profile.ConversationEntries);
 
             return profile;
@@ -296,6 +316,11 @@ namespace FantasyLoveSimAssetTool.Services
                 entry.Conditions.ActionId ??= string.Empty;
                 entry.Conditions.RequiredItemId ??= string.Empty;
                 entry.Conditions.RequiredFlagIdsText ??= string.Empty;
+                entry.Conditions.RequiredSkillIdsText ??= string.Empty;
+                if (!string.IsNullOrWhiteSpace(entry.Conditions.RequiredSkillIdsText))
+                {
+                    entry.Conditions.RequiredSkillIdsSpecified = true;
+                }
 
                 foreach (ConversationLine line in entry.Lines)
                 {
@@ -310,6 +335,35 @@ namespace FantasyLoveSimAssetTool.Services
                     choice.ResponseText ??= string.Empty;
                 }
             }
+        }
+
+        private static void NormalizeProfileCompatibilityFields(HeroineProfile profile)
+        {
+            profile.InitialDialogueMessage ??= string.Empty;
+            profile.NextActionPrompt ??= string.Empty;
+            profile.MorningGreeting ??= string.Empty;
+            profile.GoodNightGreeting ??= string.Empty;
+            profile.GameStartFallbackMessage ??= string.Empty;
+            profile.GameStartFollowUpMessage ??= string.Empty;
+            profile.ConversationResourcePath ??= string.Empty;
+            profile.GameEventResourcePath ??= string.Empty;
+            profile.ActionResourcePath ??= string.Empty;
+            profile.ScheduledEventResourcePath ??= string.Empty;
+            profile.BattleResultEventResourcePath ??= string.Empty;
+            profile.BattlePanelResultMessageResourcePath ??= string.Empty;
+            profile.EndingResourcePath ??= string.Empty;
+        }
+
+        private static void ApplyDefaultResourcePaths(HeroineProfile profile)
+        {
+            string root = $"Heroines/{profile.HeroineId}";
+            profile.ConversationResourcePath = $"{root}/Conversations";
+            profile.GameEventResourcePath = $"{root}/GameEvents";
+            profile.ActionResourcePath = $"{root}/Actions";
+            profile.ScheduledEventResourcePath = $"{root}/ScheduledEvents";
+            profile.BattleResultEventResourcePath = $"{root}/BattleResultEvents";
+            profile.BattlePanelResultMessageResourcePath = $"{root}/BattlePanelResultMessages";
+            profile.EndingResourcePath = $"{root}/Endings";
         }
 
         private static void ValidateAssetId(string assetId)

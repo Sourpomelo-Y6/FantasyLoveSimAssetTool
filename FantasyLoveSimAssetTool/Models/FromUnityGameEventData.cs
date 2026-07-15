@@ -59,6 +59,8 @@ namespace FantasyLoveSimAssetTool.Models
         public bool Once { get; set; }
 
         public List<string> RequiredFlagIds { get; set; }
+
+        public List<string> RequiredSkillIds { get; set; }
     }
 
     public class FromUnityGameEventLine

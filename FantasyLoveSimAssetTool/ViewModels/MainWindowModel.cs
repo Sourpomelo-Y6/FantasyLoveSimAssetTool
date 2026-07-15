@@ -5798,58 +5798,80 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 throw new InvalidOperationException($"HeroineId が選択中のキャラクターと一致しません。JSON: {profileData.HeroineId} / Selected: {SelectedProfile.HeroineId}");
             }
 
+            ApplyOptionalProfileText(profileData.DisplayName, value => SelectedProfile.DisplayName = value);
+            ApplyOptionalProfileText(profileData.HeroineFirstPerson, value => SelectedProfile.FirstPerson = value);
+            ApplyOptionalProfileText(profileData.PlayerSecondPerson, value => SelectedProfile.SecondPerson = value);
+            ApplyOptionalProfileText(profileData.InitialDialogueMessage, value => SelectedProfile.InitialDialogueMessage = value);
+            ApplyOptionalProfileText(profileData.NextActionPrompt, value => SelectedProfile.NextActionPrompt = value);
+            ApplyOptionalProfileText(profileData.MorningGreeting, value => SelectedProfile.MorningGreeting = value);
+            ApplyOptionalProfileText(profileData.GoodNightGreeting, value => SelectedProfile.GoodNightGreeting = value);
+            ApplyOptionalProfileText(profileData.GameStartFallbackMessage, value => SelectedProfile.GameStartFallbackMessage = value);
+            ApplyOptionalProfileText(profileData.GameStartFollowUpMessage, value => SelectedProfile.GameStartFollowUpMessage = value);
+            ApplyOptionalProfileText(profileData.ConversationResourcePath, value => SelectedProfile.ConversationResourcePath = value);
+            ApplyOptionalProfileText(profileData.GameEventResourcePath, value => SelectedProfile.GameEventResourcePath = value);
+            ApplyOptionalProfileText(profileData.ActionResourcePath, value => SelectedProfile.ActionResourcePath = value);
+            ApplyOptionalProfileText(profileData.ScheduledEventResourcePath, value => SelectedProfile.ScheduledEventResourcePath = value);
+            ApplyOptionalProfileText(profileData.BattleResultEventResourcePath, value => SelectedProfile.BattleResultEventResourcePath = value);
+            ApplyOptionalProfileText(profileData.BattlePanelResultMessageResourcePath, value => SelectedProfile.BattlePanelResultMessageResourcePath = value);
+            ApplyOptionalProfileText(profileData.EndingResourcePath, value => SelectedProfile.EndingResourcePath = value);
+
             SelectedProfile.OutfitMessageOverrides ??= new ObservableCollection<OutfitMessageOverride>();
             SelectedProfile.OutfitReactionMessageOverrides ??= new ObservableCollection<OutfitReactionMessageOverride>();
+            SelectedProfile.BattleSkills ??= new ObservableCollection<HeroineBattleSkill>();
             int addedOutfitCount = 0;
             int skippedOutfitCount = 0;
             int addedReactionCount = 0;
             int skippedReactionCount = 0;
 
-            foreach (OutfitMessageOverride item in profileData.OutfitMessageOverrides ?? new List<OutfitMessageOverride>())
+            if (profileData.OutfitMessageOverrides != null)
             {
-                if (item == null || string.IsNullOrWhiteSpace(item.OutfitId))
+                SelectedProfile.OutfitMessageOverrides.Clear();
+                foreach (OutfitMessageOverride item in profileData.OutfitMessageOverrides)
                 {
-                    skippedOutfitCount++;
-                    continue;
-                }
+                    if (item == null || string.IsNullOrWhiteSpace(item.OutfitId))
+                    {
+                        skippedOutfitCount++;
+                        continue;
+                    }
 
-                if (SelectedProfile.OutfitMessageOverrides.Any(existing => existing != null
-                    && string.Equals(existing.OutfitId, item.OutfitId, StringComparison.OrdinalIgnoreCase)))
-                {
-                    skippedOutfitCount++;
-                    continue;
+                    SelectedProfile.OutfitMessageOverrides.Add(new OutfitMessageOverride
+                    {
+                        OutfitId = item.OutfitId.Trim(),
+                        LockedMessage = item.LockedMessage ?? string.Empty,
+                        ChangedMessage = item.ChangedMessage ?? string.Empty
+                    });
+                    addedOutfitCount++;
                 }
-
-                SelectedProfile.OutfitMessageOverrides.Add(new OutfitMessageOverride
-                {
-                    OutfitId = item.OutfitId.Trim(),
-                    LockedMessage = item.LockedMessage ?? string.Empty,
-                    ChangedMessage = item.ChangedMessage ?? string.Empty
-                });
-                addedOutfitCount++;
             }
 
-            foreach (OutfitReactionMessageOverride item in profileData.OutfitReactionMessageOverrides ?? new List<OutfitReactionMessageOverride>())
+            if (profileData.OutfitReactionMessageOverrides != null)
             {
-                if (item == null || string.IsNullOrWhiteSpace(item.ReactionType))
+                SelectedProfile.OutfitReactionMessageOverrides.Clear();
+                foreach (OutfitReactionMessageOverride item in profileData.OutfitReactionMessageOverrides)
                 {
-                    skippedReactionCount++;
-                    continue;
-                }
+                    if (item == null || string.IsNullOrWhiteSpace(item.ReactionType))
+                    {
+                        skippedReactionCount++;
+                        continue;
+                    }
 
-                if (SelectedProfile.OutfitReactionMessageOverrides.Any(existing => existing != null
-                    && string.Equals(existing.ReactionType, item.ReactionType, StringComparison.OrdinalIgnoreCase)))
-                {
-                    skippedReactionCount++;
-                    continue;
+                    SelectedProfile.OutfitReactionMessageOverrides.Add(new OutfitReactionMessageOverride
+                    {
+                        ReactionType = item.ReactionType.Trim(),
+                        Message = item.Message ?? string.Empty
+                    });
+                    addedReactionCount++;
                 }
+            }
 
-                SelectedProfile.OutfitReactionMessageOverrides.Add(new OutfitReactionMessageOverride
+            if (profileData.BattleSkills != null)
+            {
+                SelectedProfile.BattleSkillsSpecified = true;
+                SelectedProfile.BattleSkills.Clear();
+                foreach (HeroineBattleSkill item in profileData.BattleSkills.Where(item => item != null))
                 {
-                    ReactionType = item.ReactionType.Trim(),
-                    Message = item.Message ?? string.Empty
-                });
-                addedReactionCount++;
+                    SelectedProfile.BattleSkills.Add(item);
+                }
             }
 
             characterProjectService.SaveProfile(SelectedProfile);
@@ -5857,6 +5879,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SelectedOutfitReactionMessageOverride = SelectedProfile.OutfitReactionMessageOverrides.FirstOrDefault();
             OnPropertyChanged(nameof(SelectedProfile));
             StatusMessage = $"FromUnity profile を取り込みました。衣装 {addedOutfitCount} 件追加/{skippedOutfitCount} 件スキップ、反応 {addedReactionCount} 件追加/{skippedReactionCount} 件スキップ。";
+        }
+
+        private static void ApplyOptionalProfileText(string value, Action<string> apply)
+        {
+            if (value != null)
+            {
+                apply(value);
+            }
         }
 
         private void ExportSelectedProfile()
@@ -6546,6 +6576,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
             target.RequiredItemId = source.RequiredItemId ?? string.Empty;
             target.Once = source.Once;
             target.RequiredFlagIdsText = JoinImportList(source.RequiredFlagIds);
+            if (source.RequiredSkillIds != null)
+            {
+                target.RequiredSkillIdsSpecified = true;
+                target.RequiredSkillIdsText = JoinImportList(source.RequiredSkillIds);
+            }
         }
 
         private static string BuildFromUnityGameEventMemo(FromUnityGameEventItem item)

@@ -10,6 +10,10 @@ namespace FantasyLoveSimAssetTool.Models
 
         public string DisplayName { get; set; }
 
+        public string HeroineFirstPerson { get; set; }
+
+        public string PlayerSecondPerson { get; set; }
+
         public string InitialDialogueMessage { get; set; }
 
         public string NextActionPrompt { get; set; }
@@ -26,18 +30,16 @@ namespace FantasyLoveSimAssetTool.Models
 
         public List<OutfitReactionMessageOverride> OutfitReactionMessageOverrides { get; set; }
 
-        public FromUnityHeroineProfileData()
-        {
-            HeroineId = string.Empty;
-            DisplayName = string.Empty;
-            InitialDialogueMessage = string.Empty;
-            NextActionPrompt = string.Empty;
-            MorningGreeting = string.Empty;
-            GoodNightGreeting = string.Empty;
-            GameStartFallbackMessage = string.Empty;
-            GameStartFollowUpMessage = string.Empty;
-            OutfitMessageOverrides = new List<OutfitMessageOverride>();
-            OutfitReactionMessageOverrides = new List<OutfitReactionMessageOverride>();
-        }
+        public List<HeroineBattleSkill> BattleSkills { get; set; }
+
+        public string ConversationResourcePath { get; set; }
+        public string GameEventResourcePath { get; set; }
+        public string ActionResourcePath { get; set; }
+        public string ScheduledEventResourcePath { get; set; }
+        public string BattleResultEventResourcePath { get; set; }
+        public string BattlePanelResultMessageResourcePath { get; set; }
+        public string EndingResourcePath { get; set; }
+
+        // 初期化しないことで、JSONで省略された値(null)と明示的な空値を区別する。
     }
 }

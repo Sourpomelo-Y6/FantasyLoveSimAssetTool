@@ -24,6 +24,18 @@ namespace FantasyLoveSimAssetTool.Models
 
         public string SecondPerson { get; set; }
 
+        public string InitialDialogueMessage { get; set; }
+
+        public string NextActionPrompt { get; set; }
+
+        public string MorningGreeting { get; set; }
+
+        public string GoodNightGreeting { get; set; }
+
+        public string GameStartFallbackMessage { get; set; }
+
+        public string GameStartFollowUpMessage { get; set; }
+
         public string Likes { get; set; }
 
         public string Dislikes { get; set; }
@@ -58,6 +70,25 @@ namespace FantasyLoveSimAssetTool.Models
 
         public ObservableCollection<OutfitReactionMessageOverride> OutfitReactionMessageOverrides { get; set; }
 
+        public ObservableCollection<HeroineBattleSkill> BattleSkills { get; set; }
+
+        // 古い profile.json と「空配列を明示」の区別を維持するための互換フラグ。
+        public bool BattleSkillsSpecified { get; set; }
+
+        public string ConversationResourcePath { get; set; }
+
+        public string GameEventResourcePath { get; set; }
+
+        public string ActionResourcePath { get; set; }
+
+        public string ScheduledEventResourcePath { get; set; }
+
+        public string BattleResultEventResourcePath { get; set; }
+
+        public string BattlePanelResultMessageResourcePath { get; set; }
+
+        public string EndingResourcePath { get; set; }
+
         public ObservableCollection<HeroineAsset> Assets { get; set; }
 
         public ObservableCollection<StillWorkItem> StillWorkItems { get; set; }
@@ -74,6 +105,12 @@ namespace FantasyLoveSimAssetTool.Models
             SpeakingStyle = string.Empty;
             FirstPerson = string.Empty;
             SecondPerson = string.Empty;
+            InitialDialogueMessage = string.Empty;
+            NextActionPrompt = string.Empty;
+            MorningGreeting = string.Empty;
+            GoodNightGreeting = string.Empty;
+            GameStartFallbackMessage = string.Empty;
+            GameStartFollowUpMessage = string.Empty;
             Likes = string.Empty;
             Dislikes = string.Empty;
             appearancePrompt = string.Empty;
@@ -82,6 +119,14 @@ namespace FantasyLoveSimAssetTool.Models
             EndingPolicy = string.Empty;
             OutfitMessageOverrides = new ObservableCollection<OutfitMessageOverride>();
             OutfitReactionMessageOverrides = new ObservableCollection<OutfitReactionMessageOverride>();
+            BattleSkills = new ObservableCollection<HeroineBattleSkill>();
+            ConversationResourcePath = string.Empty;
+            GameEventResourcePath = string.Empty;
+            ActionResourcePath = string.Empty;
+            ScheduledEventResourcePath = string.Empty;
+            BattleResultEventResourcePath = string.Empty;
+            BattlePanelResultMessageResourcePath = string.Empty;
+            EndingResourcePath = string.Empty;
             Assets = new ObservableCollection<HeroineAsset>();
             StillWorkItems = new ObservableCollection<StillWorkItem>();
             ConversationEntries = new ObservableCollection<ConversationEntry>();

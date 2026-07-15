@@ -96,6 +96,9 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="HeroineId" VerticalAlignment="Center" Margin="0,0,8,8"/>
@@ -239,9 +242,64 @@
                                         </DataGrid.Columns>
                                     </DataGrid>
 
+                                    <Expander Grid.Row="18" Grid.Column="0" Grid.ColumnSpan="2"
+                                              Header="Unity 共通台詞" IsExpanded="False" Margin="0,12,0,8">
+                                        <Grid Margin="0,8,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="140"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Grid.Row="0" Text="初回台詞" Margin="0,4,8,8"/><TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedProfile.InitialDialogueMessage, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                            <TextBlock Grid.Row="1" Text="次の行動" Margin="0,4,8,8"/><TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedProfile.NextActionPrompt, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                            <TextBlock Grid.Row="2" Text="朝の挨拶" Margin="0,4,8,8"/><TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedProfile.MorningGreeting, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                            <TextBlock Grid.Row="3" Text="夜の挨拶" Margin="0,4,8,8"/><TextBox Grid.Row="3" Grid.Column="1" Text="{Binding SelectedProfile.GoodNightGreeting, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                            <TextBlock Grid.Row="4" Text="開始時fallback" Margin="0,4,8,8"/><TextBox Grid.Row="4" Grid.Column="1" Text="{Binding SelectedProfile.GameStartFallbackMessage, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                            <TextBlock Grid.Row="5" Text="開始後メッセージ" Margin="0,4,8,0"/><TextBox Grid.Row="5" Grid.Column="1" Text="{Binding SelectedProfile.GameStartFollowUpMessage, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </Grid>
+                                    </Expander>
+
+                                    <Expander Grid.Row="19" Grid.Column="0" Grid.ColumnSpan="2"
+                                              Header="Unity Resource Paths" IsExpanded="False" Margin="0,4,0,8">
+                                        <StackPanel Margin="0,8,0,0">
+                                            <TextBox Text="{Binding SelectedProfile.ConversationResourcePath, UpdateSourceTrigger=PropertyChanged}" ToolTip="Conversation Resource Path" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding SelectedProfile.GameEventResourcePath, UpdateSourceTrigger=PropertyChanged}" ToolTip="Game Event Resource Path" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding SelectedProfile.ActionResourcePath, UpdateSourceTrigger=PropertyChanged}" ToolTip="Action Resource Path" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding SelectedProfile.ScheduledEventResourcePath, UpdateSourceTrigger=PropertyChanged}" ToolTip="Scheduled Event Resource Path" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding SelectedProfile.BattleResultEventResourcePath, UpdateSourceTrigger=PropertyChanged}" ToolTip="Battle Result Event Resource Path" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding SelectedProfile.BattlePanelResultMessageResourcePath, UpdateSourceTrigger=PropertyChanged}" ToolTip="Battle Panel Result Message Resource Path" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding SelectedProfile.EndingResourcePath, UpdateSourceTrigger=PropertyChanged}" ToolTip="Ending Resource Path"/>
+                                        </StackPanel>
+                                    </Expander>
+
+                                    <Expander Grid.Row="20" Grid.Column="0" Grid.ColumnSpan="2"
+                                              Header="ヒロイン戦闘スキル" IsExpanded="False" Margin="0,4,0,0">
+                                        <DataGrid ItemsSource="{Binding SelectedProfile.BattleSkills}"
+                                                  AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True"
+                                                  Height="180" Margin="0,8,0,0">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="SkillId" Binding="{Binding SkillId}" Width="130"/>
+                                                <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName}" Width="130"/>
+                                                <DataGridTextColumn Header="効果" Binding="{Binding EffectType}" Width="90"/>
+                                                <DataGridTextColumn Header="対象" Binding="{Binding Target}" Width="80"/>
+                                                <DataGridTextColumn Header="MP" Binding="{Binding Cost}" Width="55"/>
+                                                <DataGridTextColumn Header="威力" Binding="{Binding Power}" Width="55"/>
+                                                <DataGridTextColumn Header="能力" Binding="{Binding AffectedStat}" Width="80"/>
+                                                <DataGridTextColumn Header="期間" Binding="{Binding StatusDurationTurns}" Width="55"/>
+                                                <DataGridTextColumn Header="確率" Binding="{Binding UseChancePercent}" Width="55"/>
+                                                <DataGridTextColumn Header="優先" Binding="{Binding Priority}" Width="55"/>
+                                                <DataGridTextColumn Header="回数" Binding="{Binding MaxUsesPerBattle}" Width="55"/>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </Expander>
+
                                     <Border Grid.Row="0"
                                             Grid.Column="2"
-                                            Grid.RowSpan="18"
+                                            Grid.RowSpan="21"
                                             BorderBrush="#DDDDDD"
                                             BorderThickness="1"
                                             Padding="10"
@@ -593,8 +651,12 @@
                                             <Button Content="候補反映" Command="{Binding ApplyConversationConditionSuggestionsCommand}" Height="26" Width="80"/>
                                         </StackPanel>
 
-                                        <TextBlock Grid.Row="8" Grid.Column="0" Text="必要フラグ" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                        <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding SelectedConversationEntry.Conditions.RequiredFlagIdsText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                        <TextBlock Grid.Row="8" Grid.Column="0" Text="必要条件" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                        <Grid Grid.Row="8" Grid.Column="1" Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <TextBox Grid.Column="0" Text="{Binding SelectedConversationEntry.Conditions.RequiredFlagIdsText, UpdateSourceTrigger=PropertyChanged}" ToolTip="必要フラグID（カンマまたは改行区切り）" Margin="0,0,4,0"/>
+                                            <TextBox Grid.Column="1" Text="{Binding SelectedConversationEntry.Conditions.RequiredSkillIdsText, UpdateSourceTrigger=PropertyChanged}" ToolTip="必要スキルID（カンマまたは改行区切り）" Margin="4,0,0,0"/>
+                                        </Grid>
 
                                         <TextBlock Grid.Row="9" Grid.Column="0" Text="画像AssetId" VerticalAlignment="Top" Margin="0,4,8,8"/>
                                         <Grid Grid.Row="9" Grid.Column="1" Margin="0,0,0,8">

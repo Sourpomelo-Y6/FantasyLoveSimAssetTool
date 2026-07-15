@@ -24,6 +24,10 @@ namespace FantasyLoveSimAssetTool.Models
 
         public string RequiredFlagIdsText { get; set; }
 
+        public string RequiredSkillIdsText { get; set; }
+
+        public bool RequiredSkillIdsSpecified { get; set; }
+
         public ConversationCondition()
         {
             LocationId = string.Empty;
@@ -35,6 +39,7 @@ namespace FantasyLoveSimAssetTool.Models
             CostumeId = string.Empty;
             RequiredItemId = string.Empty;
             RequiredFlagIdsText = string.Empty;
+            RequiredSkillIdsText = string.Empty;
         }
     }
 }

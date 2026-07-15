@@ -225,6 +225,12 @@ namespace FantasyLoveSimAssetTool.Services
                 speakingStyle = profile.SpeakingStyle,
                 firstPerson = profile.FirstPerson,
                 secondPerson = profile.SecondPerson,
+                initialDialogueMessage = profile.InitialDialogueMessage,
+                nextActionPrompt = profile.NextActionPrompt,
+                morningGreeting = profile.MorningGreeting,
+                goodNightGreeting = profile.GoodNightGreeting,
+                gameStartFallbackMessage = profile.GameStartFallbackMessage,
+                gameStartFollowUpMessage = profile.GameStartFollowUpMessage,
                 likes = profile.Likes,
                 dislikes = profile.Dislikes,
                 appearancePrompt = profile.AppearancePrompt,
@@ -243,7 +249,31 @@ namespace FantasyLoveSimAssetTool.Services
                     {
                         reactionType = item.ReactionType,
                         message = item.Message
+                    }).ToList(),
+                battleSkills = profile.BattleSkillsSpecified
+                    ? (object)(profile.BattleSkills ?? new System.Collections.ObjectModel.ObservableCollection<HeroineBattleSkill>())
+                    .Select(item => new
+                    {
+                        skillId = item.SkillId,
+                        displayName = item.DisplayName,
+                        effectType = item.EffectType,
+                        target = item.Target,
+                        cost = item.Cost,
+                        power = item.Power,
+                        affectedStat = item.AffectedStat,
+                        statusDurationTurns = item.StatusDurationTurns,
+                        useChancePercent = item.UseChancePercent,
+                        priority = item.Priority,
+                        maxUsesPerBattle = item.MaxUsesPerBattle
                     }).ToList()
+                    : null,
+                conversationResourcePath = profile.ConversationResourcePath,
+                gameEventResourcePath = profile.GameEventResourcePath,
+                actionResourcePath = profile.ActionResourcePath,
+                scheduledEventResourcePath = profile.ScheduledEventResourcePath,
+                battleResultEventResourcePath = profile.BattleResultEventResourcePath,
+                battlePanelResultMessageResourcePath = profile.BattlePanelResultMessageResourcePath,
+                endingResourcePath = profile.EndingResourcePath
             };
 
             return JsonSerializer.Serialize(exportModel, CreateJsonOptions());
@@ -790,7 +820,10 @@ namespace FantasyLoveSimAssetTool.Services
                         costumeId = entry.Conditions == null ? string.Empty : entry.Conditions.CostumeId,
                         requiredItemId = entry.Conditions == null ? string.Empty : entry.Conditions.RequiredItemId,
                         once = entry.Conditions != null && entry.Conditions.Once,
-                        requiredFlagIds = SplitList(entry.Conditions == null ? string.Empty : entry.Conditions.RequiredFlagIdsText)
+                        requiredFlagIds = SplitList(entry.Conditions == null ? string.Empty : entry.Conditions.RequiredFlagIdsText),
+                        requiredSkillIds = entry.Conditions != null && entry.Conditions.RequiredSkillIdsSpecified
+                            ? (object)SplitList(entry.Conditions.RequiredSkillIdsText)
+                            : null
                     },
                     lines = (entry.Lines ?? new System.Collections.ObjectModel.ObservableCollection<ConversationLine>())
                         .Select(line => new
@@ -871,7 +904,8 @@ namespace FantasyLoveSimAssetTool.Services
         {
             JsonSerializerOptions options = new JsonSerializerOptions
             {
-                WriteIndented = true
+                WriteIndented = true,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
             };
             options.Converters.Add(new JsonStringEnumConverter());
             return options;
