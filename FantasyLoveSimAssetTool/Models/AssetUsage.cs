@@ -6,6 +6,7 @@ namespace FantasyLoveSimAssetTool.Models
         Event,
         Actions,
         Ending,
-        Battle
+        Battle,
+        Training
     }
 }

@@ -35,6 +35,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly PlayerExportService playerExportService;
         private OutfitMessageOverride selectedOutfitMessageOverride;
         private OutfitReactionMessageOverride selectedOutfitReactionMessageOverride;
+        private TrainingImageEntry selectedTrainingImageEntry;
         private string heroineIdInput;
         private string displayNameInput;
         private string enemyIdInput;
@@ -500,6 +501,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     RefreshPromptTemplates();
                 }
                 LoadPromptForSelectedAsset();
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public TrainingImageEntry SelectedTrainingImageEntry
+        {
+            get { return selectedTrainingImageEntry; }
+            set
+            {
+                if (selectedTrainingImageEntry == value) { return; }
+                selectedTrainingImageEntry = value;
+                OnPropertyChanged(nameof(SelectedTrainingImageEntry));
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -1045,6 +1058,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 OnPropertyChanged(nameof(SelectedProfile));
                 SelectedOutfitMessageOverride = selectedProfile?.OutfitMessageOverrides?.FirstOrDefault();
                 SelectedOutfitReactionMessageOverride = selectedProfile?.OutfitReactionMessageOverrides?.FirstOrDefault();
+                SelectedTrainingImageEntry = selectedProfile?.TrainingImages?.Items?.FirstOrDefault();
                 RefreshStillPromptAfterProfilePromptChanged();
                 LoadStillDefinitions();
                 RefreshFilteredAssets();
@@ -1519,6 +1533,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand AddHeroineBattleStandardAssetDataCommand { get; }
 
+        public ICommand AddTrainingStandardAssetDataCommand { get; }
+
+        public ICommand AddTrainingImageEntryCommand { get; }
+
+        public ICommand RemoveTrainingImageEntryCommand { get; }
+
         public ICommand SavePromptRecordCommand { get; }
 
         public ICommand ApplyPromptTemplateCommand { get; }
@@ -1677,7 +1697,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 AssetUsage.Event.ToString(),
                 AssetUsage.Actions.ToString(),
                 AssetUsage.Ending.ToString(),
-                AssetUsage.Battle.ToString()
+                AssetUsage.Battle.ToString(),
+                AssetUsage.Training.ToString()
             };
             AssetUsages = new ObservableCollection<AssetUsage>
             {
@@ -1685,7 +1706,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 AssetUsage.Event,
                 AssetUsage.Actions,
                 AssetUsage.Ending,
-                AssetUsage.Battle
+                AssetUsage.Battle,
+                AssetUsage.Training
             };
             AssetStatuses = new ObservableCollection<AssetStatus>
             {
@@ -1878,6 +1900,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
             AddHeroineBattleStandardAssetDataCommand = new RelayCommand(
                 AddHeroineBattleStandardAssetData,
                 () => SelectedProfile != null);
+            AddTrainingStandardAssetDataCommand = new RelayCommand(
+                AddTrainingStandardAssetData,
+                () => SelectedProfile != null);
+            AddTrainingImageEntryCommand = new RelayCommand(
+                AddTrainingImageEntry,
+                () => SelectedProfile != null);
+            RemoveTrainingImageEntryCommand = new RelayCommand(
+                RemoveTrainingImageEntry,
+                () => SelectedProfile != null && SelectedTrainingImageEntry != null);
             SavePromptRecordCommand = new RelayCommand(
                 SavePromptRecord,
                 () => SelectedProfile != null && SelectedAsset != null && CurrentPromptRecord != null);
@@ -4176,6 +4207,186 @@ namespace FantasyLoveSimAssetTool.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = $"ヒロイン戦闘画像の標準候補登録に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void AddTrainingStandardAssetData()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                SelectedProfile.Assets ??= new ObservableCollection<HeroineAsset>();
+                SelectedProfile.TrainingImages ??= new TrainingImageSettings();
+                SelectedProfile.TrainingImages.Defaults ??= new TrainingImageDefaults();
+                SelectedProfile.TrainingImages.Items ??= new ObservableCollection<TrainingImageEntry>();
+
+                int addedCount = 0;
+                HeroineAsset firstAsset = null;
+                foreach (TrainingAssetTemplate template in CreateTrainingAssetTemplates())
+                {
+                    HeroineAsset asset = SelectedProfile.Assets.FirstOrDefault(
+                        item => string.Equals(item.AssetId, template.AssetId, StringComparison.Ordinal));
+                    if (asset == null)
+                    {
+                        asset = new HeroineAsset
+                        {
+                            AssetId = template.AssetId,
+                            Usage = AssetUsage.Training,
+                            Status = AssetStatus.Pending,
+                            FileName = template.AssetId + ".png",
+                            PromptRecordPath = Path.Combine("Prompts", template.AssetId + ".prompt.json"),
+                            Memo = "訓練画像の標準候補"
+                        };
+                        SelectedProfile.Assets.Add(asset);
+                        addedCount++;
+                    }
+                    else
+                    {
+                        asset.Usage = AssetUsage.Training;
+                        asset.FileName = string.IsNullOrWhiteSpace(asset.FileName)
+                            ? template.AssetId + ".png"
+                            : asset.FileName;
+                        asset.PromptRecordPath = string.IsNullOrWhiteSpace(asset.PromptRecordPath)
+                            ? Path.Combine("Prompts", template.AssetId + ".prompt.json")
+                            : asset.PromptRecordPath;
+                    }
+
+                    SaveTrainingPromptRecord(asset, template);
+                    firstAsset ??= asset;
+                }
+
+                ApplyStandardTrainingMappings(SelectedProfile.TrainingImages);
+                characterProjectService.SaveProfile(SelectedProfile);
+                SelectedAssetStatusFilter = "All";
+                RefreshFilteredAssets();
+                RefreshAcceptedAssets();
+                SelectedAsset = firstAsset;
+                SelectedTrainingImageEntry = SelectedProfile.TrainingImages.Items.FirstOrDefault();
+                StatusMessage = $"訓練画像の標準9枠を準備しました。新規追加 {addedCount} 件。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"訓練画像の標準枠作成に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void AddTrainingImageEntry()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            SelectedProfile.TrainingImages ??= new TrainingImageSettings();
+            SelectedProfile.TrainingImages.Items ??= new ObservableCollection<TrainingImageEntry>();
+            TrainingImageEntry item = new TrainingImageEntry();
+            SelectedProfile.TrainingImages.Items.Add(item);
+            SelectedTrainingImageEntry = item;
+        }
+
+        private void RemoveTrainingImageEntry()
+        {
+            if (SelectedProfile?.TrainingImages?.Items == null || SelectedTrainingImageEntry == null)
+            {
+                return;
+            }
+
+            SelectedProfile.TrainingImages.Items.Remove(SelectedTrainingImageEntry);
+            SelectedTrainingImageEntry = SelectedProfile.TrainingImages.Items.FirstOrDefault();
+        }
+
+        private void SaveTrainingPromptRecord(HeroineAsset asset, TrainingAssetTemplate template)
+        {
+            PromptRecord record = promptRecordService.LoadOrCreatePromptRecord(SelectedProfile, asset);
+            record.PositivePrompt = MergePromptParts(
+                SelectedProfile.AppearancePrompt,
+                SelectedProfile.StillCommonPositivePrompt,
+                template.PositivePrompt);
+            record.TrainingId = template.TrainingId;
+            record.TrainingVisualState = template.VisualState;
+            record.PlayerVisible = true;
+            record.HeroineVisible = true;
+            record.RevisionMemo = template.PositivePrompt;
+            promptRecordService.SavePromptRecord(SelectedProfile, asset, record);
+        }
+
+        private static void ApplyStandardTrainingMappings(TrainingImageSettings settings)
+        {
+            settings.Defaults.PlayerLpConsumedImageAssetId =
+                DefaultIfEmpty(settings.Defaults.PlayerLpConsumedImageAssetId, "Training_Common_PlayerLpConsumed");
+            settings.Defaults.HeroineLpConsumedImageAssetId =
+                DefaultIfEmpty(settings.Defaults.HeroineLpConsumedImageAssetId, "Training_Common_HeroineLpConsumed");
+            settings.Defaults.SimultaneousLpConsumedImageAssetId =
+                DefaultIfEmpty(settings.Defaults.SimultaneousLpConsumedImageAssetId, "Training_Common_SimultaneousLpConsumed");
+
+            string[] trainingIds = { "LightPractice", "SparringPractice", "EnduranceTraining" };
+            foreach (string trainingId in trainingIds)
+            {
+                TrainingImageEntry entry = settings.Items.FirstOrDefault(
+                    item => string.Equals(item.TrainingId, trainingId, StringComparison.Ordinal));
+                if (entry == null)
+                {
+                    entry = new TrainingImageEntry { TrainingId = trainingId };
+                    settings.Items.Add(entry);
+                }
+                entry.BeforeFirstStepImageAssetId = DefaultIfEmpty(
+                    entry.BeforeFirstStepImageAssetId,
+                    $"Training_{trainingId}_SelectedBeforeFirstStep");
+                entry.AfterFirstStepImageAssetId = DefaultIfEmpty(
+                    entry.AfterFirstStepImageAssetId,
+                    $"Training_{trainingId}_SelectedAfterFirstStep");
+            }
+        }
+
+        private static string DefaultIfEmpty(string currentValue, string defaultValue)
+        {
+            return string.IsNullOrWhiteSpace(currentValue) ? defaultValue : currentValue;
+        }
+
+        private static IReadOnlyList<TrainingAssetTemplate> CreateTrainingAssetTemplates()
+        {
+            List<TrainingAssetTemplate> templates = new List<TrainingAssetTemplate>();
+            string[] trainingIds = { "LightPractice", "SparringPractice", "EnduranceTraining" };
+            foreach (string trainingId in trainingIds)
+            {
+                templates.Add(new TrainingAssetTemplate(
+                    $"Training_{trainingId}_SelectedBeforeFirstStep", trainingId,
+                    "SelectedBeforeFirstStep",
+                    "visual novel training scene, both characters ready to begin, before first training step"));
+                templates.Add(new TrainingAssetTemplate(
+                    $"Training_{trainingId}_SelectedAfterFirstStep", trainingId,
+                    "SelectedAfterFirstStep",
+                    "visual novel training scene, both characters actively training, after training has begun"));
+            }
+            templates.Add(new TrainingAssetTemplate(
+                "Training_Common_PlayerLpConsumed", "Common", "PlayerLpConsumed",
+                "visual novel training scene, player exhausted after reaching the limit, heroine reacting clearly"));
+            templates.Add(new TrainingAssetTemplate(
+                "Training_Common_HeroineLpConsumed", "Common", "HeroineLpConsumed",
+                "visual novel training scene, heroine exhausted after reaching her limit, player reacting clearly"));
+            templates.Add(new TrainingAssetTemplate(
+                "Training_Common_SimultaneousLpConsumed", "Common", "SimultaneousLpConsumed",
+                "visual novel training scene, player and heroine both exhausted after simultaneously reaching their limits"));
+            return templates;
+        }
+
+        private sealed class TrainingAssetTemplate
+        {
+            public string AssetId { get; }
+            public string TrainingId { get; }
+            public string VisualState { get; }
+            public string PositivePrompt { get; }
+
+            public TrainingAssetTemplate(string assetId, string trainingId, string visualState, string positivePrompt)
+            {
+                AssetId = assetId;
+                TrainingId = trainingId;
+                VisualState = visualState;
+                PositivePrompt = positivePrompt;
             }
         }
 

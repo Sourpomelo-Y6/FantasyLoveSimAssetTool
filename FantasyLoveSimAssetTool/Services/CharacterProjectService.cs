@@ -71,6 +71,7 @@ namespace FantasyLoveSimAssetTool.Services
             profile.OutfitMessageOverrides ??= new ObservableCollection<OutfitMessageOverride>();
             profile.OutfitReactionMessageOverrides ??= new ObservableCollection<OutfitReactionMessageOverride>();
             profile.BattleSkills ??= new ObservableCollection<HeroineBattleSkill>();
+            NormalizeTrainingImages(profile);
             if (profile.BattleSkills.Count > 0)
             {
                 profile.BattleSkillsSpecified = true;
@@ -221,6 +222,7 @@ namespace FantasyLoveSimAssetTool.Services
             profile.OutfitMessageOverrides ??= new ObservableCollection<OutfitMessageOverride>();
             profile.OutfitReactionMessageOverrides ??= new ObservableCollection<OutfitReactionMessageOverride>();
             profile.BattleSkills ??= new ObservableCollection<HeroineBattleSkill>();
+            NormalizeTrainingImages(profile);
             profile.AppearancePrompt ??= string.Empty;
             profile.StillCommonPositivePrompt ??= string.Empty;
             NormalizeProfileCompatibilityFields(profile);
@@ -265,6 +267,7 @@ namespace FantasyLoveSimAssetTool.Services
             Directory.CreateDirectory(Path.Combine(GetCharacterDirectory(heroineId), "Images", "Actions"));
             Directory.CreateDirectory(Path.Combine(GetCharacterDirectory(heroineId), "Images", "Ending"));
             Directory.CreateDirectory(Path.Combine(GetCharacterDirectory(heroineId), "Images", "Battle"));
+            Directory.CreateDirectory(Path.Combine(GetCharacterDirectory(heroineId), "Images", "Training"));
             Directory.CreateDirectory(Path.Combine(GetCharacterDirectory(heroineId), "Prompts"));
         }
 
@@ -352,6 +355,29 @@ namespace FantasyLoveSimAssetTool.Services
             profile.BattleResultEventResourcePath ??= string.Empty;
             profile.BattlePanelResultMessageResourcePath ??= string.Empty;
             profile.EndingResourcePath ??= string.Empty;
+        }
+
+        private static void NormalizeTrainingImages(HeroineProfile profile)
+        {
+            profile.TrainingImages ??= new TrainingImageSettings();
+            profile.TrainingImages.Defaults ??= new TrainingImageDefaults();
+            profile.TrainingImages.Items ??= new ObservableCollection<TrainingImageEntry>();
+            TrainingImageDefaults defaults = profile.TrainingImages.Defaults;
+            defaults.BeforeFirstStepImageAssetId ??= string.Empty;
+            defaults.AfterFirstStepImageAssetId ??= string.Empty;
+            defaults.PlayerLpConsumedImageAssetId ??= string.Empty;
+            defaults.HeroineLpConsumedImageAssetId ??= string.Empty;
+            defaults.SimultaneousLpConsumedImageAssetId ??= string.Empty;
+            foreach (TrainingImageEntry item in profile.TrainingImages.Items)
+            {
+                item.TrainingId ??= string.Empty;
+                item.BeforeFirstStepImageAssetId ??= string.Empty;
+                item.AfterFirstStepImageAssetId ??= string.Empty;
+                item.PlayerLpConsumedImageAssetId ??= string.Empty;
+                item.HeroineLpConsumedImageAssetId ??= string.Empty;
+                item.SimultaneousLpConsumedImageAssetId ??= string.Empty;
+                item.Memo ??= string.Empty;
+            }
         }
 
         private static void ApplyDefaultResourcePaths(HeroineProfile profile)

@@ -903,6 +903,64 @@
                         </Grid>
                     </TabItem>
 
+                    <TabItem Header="訓練画像">
+                        <Grid Margin="0,12,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Text="画像本体は画像タブの Usage=Training で管理します。空欄は共通画像、または現在表示中の画像へフォールバックします。"
+                                       Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                            <GroupBox Grid.Row="1" Header="訓練共通画像 AssetId" Margin="0,0,0,12">
+                                <Grid Margin="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="140"/><ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="140"/><ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="初回前" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SelectedProfile.TrainingImages.Defaults.BeforeFirstStepImageAssetId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,8"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="2" Text="実行後" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding SelectedProfile.TrainingImages.Defaults.AfterFirstStepImageAssetId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="主人公LP消費" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedProfile.TrainingImages.Defaults.PlayerLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,8"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="2" Text="ヒロインLP消費" Margin="0,4,8,8"/>
+                                    <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding SelectedProfile.TrainingImages.Defaults.HeroineLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="同時LP消費" Margin="0,4,8,0"/>
+                                    <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding SelectedProfile.TrainingImages.Defaults.SimultaneousLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}"/>
+                                </Grid>
+                            </GroupBox>
+
+                            <DataGrid Grid.Row="2"
+                                      ItemsSource="{Binding SelectedProfile.TrainingImages.Items}"
+                                      SelectedItem="{Binding SelectedTrainingImageEntry}"
+                                      AutoGenerateColumns="False" CanUserAddRows="False" Margin="0,0,0,12">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="TrainingId" Binding="{Binding TrainingId, UpdateSourceTrigger=PropertyChanged}" Width="130"/>
+                                    <DataGridTextColumn Header="初回前 AssetId" Binding="{Binding BeforeFirstStepImageAssetId, UpdateSourceTrigger=PropertyChanged}" Width="190"/>
+                                    <DataGridTextColumn Header="実行後 AssetId" Binding="{Binding AfterFirstStepImageAssetId, UpdateSourceTrigger=PropertyChanged}" Width="190"/>
+                                    <DataGridTextColumn Header="主人公LP AssetId" Binding="{Binding PlayerLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}" Width="180"/>
+                                    <DataGridTextColumn Header="ヒロインLP AssetId" Binding="{Binding HeroineLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}" Width="180"/>
+                                    <DataGridTextColumn Header="同時LP AssetId" Binding="{Binding SimultaneousLpConsumedImageAssetId, UpdateSourceTrigger=PropertyChanged}" Width="180"/>
+                                    <DataGridTextColumn Header="メモ" Binding="{Binding Memo, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="標準9枠を準備" Command="{Binding AddTrainingStandardAssetDataCommand}" Width="130" Height="30" Margin="0,0,8,0"/>
+                                <Button Content="訓練追加" Command="{Binding AddTrainingImageEntryCommand}" Width="90" Height="30" Margin="0,0,8,0"/>
+                                <Button Content="訓練削除" Command="{Binding RemoveTrainingImageEntryCommand}" Width="90" Height="30" Margin="0,0,8,0"/>
+                                <Button Content="保存" Command="{Binding SaveSelectedProfileCommand}" Width="100" Height="30"/>
+                            </StackPanel>
+                        </Grid>
+                    </TabItem>
                     <TabItem Header="敵キャラ素材">
                         <Grid Margin="0,12,0,0">
                             <Grid.ColumnDefinitions>

@@ -27,6 +27,10 @@ namespace FantasyLoveSimAssetTool.Models
         private string comfyEndpointUrl;
         private string comfyWorkflowTemplatePath;
         private string comfyWorkflowJson;
+        private string trainingId;
+        private string trainingVisualState;
+        private bool playerVisible;
+        private bool heroineVisible;
 
         public string PositivePrompt
         {
@@ -281,6 +285,30 @@ namespace FantasyLoveSimAssetTool.Models
             }
         }
 
+        public string TrainingId
+        {
+            get { return trainingId; }
+            set { if (trainingId != value) { trainingId = value; OnPropertyChanged(nameof(TrainingId)); } }
+        }
+
+        public string TrainingVisualState
+        {
+            get { return trainingVisualState; }
+            set { if (trainingVisualState != value) { trainingVisualState = value; OnPropertyChanged(nameof(TrainingVisualState)); } }
+        }
+
+        public bool PlayerVisible
+        {
+            get { return playerVisible; }
+            set { if (playerVisible != value) { playerVisible = value; OnPropertyChanged(nameof(PlayerVisible)); } }
+        }
+
+        public bool HeroineVisible
+        {
+            get { return heroineVisible; }
+            set { if (heroineVisible != value) { heroineVisible = value; OnPropertyChanged(nameof(HeroineVisible)); } }
+        }
+
         public PromptRecord()
         {
             positivePrompt = string.Empty;
@@ -301,6 +329,8 @@ namespace FantasyLoveSimAssetTool.Models
             comfyEndpointUrl = string.Empty;
             comfyWorkflowTemplatePath = string.Empty;
             comfyWorkflowJson = string.Empty;
+            trainingId = string.Empty;
+            trainingVisualState = string.Empty;
         }
     }
 }

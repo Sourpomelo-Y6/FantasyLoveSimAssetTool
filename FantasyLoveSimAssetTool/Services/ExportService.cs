@@ -91,6 +91,7 @@ namespace FantasyLoveSimAssetTool.Services
             Directory.CreateDirectory(Path.Combine(heroineExportDirectory, "Images", "Actions"));
             Directory.CreateDirectory(Path.Combine(heroineExportDirectory, "Images", "Ending"));
             Directory.CreateDirectory(Path.Combine(heroineExportDirectory, "Images", "Battle"));
+            Directory.CreateDirectory(Path.Combine(heroineExportDirectory, "Images", "Training"));
             Directory.CreateDirectory(Path.Combine(heroineExportDirectory, "Data"));
             Directory.CreateDirectory(Path.Combine(heroineExportDirectory, "Prompts"));
         }
@@ -162,6 +163,7 @@ namespace FantasyLoveSimAssetTool.Services
             File.WriteAllText(Path.Combine(dataDirectory, "heroine_profile_export.json"), BuildProfileExportJson(profile));
             File.WriteAllText(Path.Combine(dataDirectory, "assets_export.json"), BuildAssetsExportJson(profile, acceptedAssets));
             File.WriteAllText(Path.Combine(dataDirectory, "sprite_layers_export.json"), BuildSpriteLayersExportJson(profile, acceptedAssets, report));
+            File.WriteAllText(Path.Combine(dataDirectory, "training_images_export.json"), BuildTrainingImagesExportJson(profile, acceptedAssets, report));
             File.WriteAllText(Path.Combine(dataDirectory, "conversations_export.json"), BuildConversationExportJson(profile, ConversationDataKind.Conversations));
             File.WriteAllText(Path.Combine(dataDirectory, "game_events_export.json"), BuildConversationExportJson(profile, ConversationDataKind.GameEvents));
             File.WriteAllText(Path.Combine(dataDirectory, "scheduled_events_export.json"), BuildScheduledEventsExportJson(profile));
@@ -308,6 +310,84 @@ namespace FantasyLoveSimAssetTool.Services
             };
 
             return JsonSerializer.Serialize(exportModel, CreateJsonOptions());
+        }
+
+        private static string BuildTrainingImagesExportJson(
+            HeroineProfile profile,
+            IReadOnlyList<HeroineAsset> acceptedAssets,
+            ExportReport report)
+        {
+            TrainingImageSettings settings = profile.TrainingImages ?? new TrainingImageSettings();
+            TrainingImageDefaults defaults = settings.Defaults ?? new TrainingImageDefaults();
+            List<TrainingImageEntry> items = (settings.Items ?? new System.Collections.ObjectModel.ObservableCollection<TrainingImageEntry>())
+                .Where(item => item != null && !string.IsNullOrWhiteSpace(item.TrainingId))
+                .ToList();
+            ValidateTrainingImageReferences(defaults, items, acceptedAssets, report);
+
+            object exportModel = new
+            {
+                schemaVersion = 1,
+                heroineId = profile.HeroineId,
+                defaults = new
+                {
+                    beforeFirstStepImageAssetId = defaults.BeforeFirstStepImageAssetId,
+                    afterFirstStepImageAssetId = defaults.AfterFirstStepImageAssetId,
+                    playerLpConsumedImageAssetId = defaults.PlayerLpConsumedImageAssetId,
+                    heroineLpConsumedImageAssetId = defaults.HeroineLpConsumedImageAssetId,
+                    simultaneousLpConsumedImageAssetId = defaults.SimultaneousLpConsumedImageAssetId
+                },
+                items = items.Select(item => new
+                {
+                    trainingId = item.TrainingId,
+                    beforeFirstStepImageAssetId = item.BeforeFirstStepImageAssetId,
+                    afterFirstStepImageAssetId = item.AfterFirstStepImageAssetId,
+                    playerLpConsumedImageAssetId = item.PlayerLpConsumedImageAssetId,
+                    heroineLpConsumedImageAssetId = item.HeroineLpConsumedImageAssetId,
+                    simultaneousLpConsumedImageAssetId = item.SimultaneousLpConsumedImageAssetId,
+                    memo = item.Memo
+                }).ToList()
+            };
+            return JsonSerializer.Serialize(exportModel, CreateJsonOptions());
+        }
+
+        private static void ValidateTrainingImageReferences(
+            TrainingImageDefaults defaults,
+            IReadOnlyList<TrainingImageEntry> items,
+            IReadOnlyList<HeroineAsset> acceptedAssets,
+            ExportReport report)
+        {
+            Dictionary<string, HeroineAsset> assets = acceptedAssets
+                .Where(asset => asset != null && !string.IsNullOrWhiteSpace(asset.AssetId))
+                .GroupBy(asset => asset.AssetId, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+            List<string> references = new List<string>
+            {
+                defaults.BeforeFirstStepImageAssetId,
+                defaults.AfterFirstStepImageAssetId,
+                defaults.PlayerLpConsumedImageAssetId,
+                defaults.HeroineLpConsumedImageAssetId,
+                defaults.SimultaneousLpConsumedImageAssetId
+            };
+            foreach (TrainingImageEntry item in items)
+            {
+                references.Add(item.BeforeFirstStepImageAssetId);
+                references.Add(item.AfterFirstStepImageAssetId);
+                references.Add(item.PlayerLpConsumedImageAssetId);
+                references.Add(item.HeroineLpConsumedImageAssetId);
+                references.Add(item.SimultaneousLpConsumedImageAssetId);
+            }
+
+            foreach (string assetId in references.Where(value => !string.IsNullOrWhiteSpace(value)).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                if (!assets.TryGetValue(assetId, out HeroineAsset asset))
+                {
+                    report.Warnings.Add($"{assetId}: 訓練画像の対応先がAccepted画像にありません。");
+                }
+                else if (asset.Usage != AssetUsage.Training)
+                {
+                    report.Warnings.Add($"{assetId}: 訓練画像の用途はTrainingが必要です。現在: {asset.Usage}");
+                }
+            }
         }
 
         private string BuildSpriteLayersExportJson(HeroineProfile profile, IReadOnlyList<HeroineAsset> acceptedAssets, ExportReport report)
