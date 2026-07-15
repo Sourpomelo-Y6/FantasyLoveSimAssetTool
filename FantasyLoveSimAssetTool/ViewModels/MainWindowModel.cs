@@ -1601,6 +1601,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand BuildComfyWorkflowPreviewCommand { get; }
 
+        public ICommand SubmitSelectedAssetComfyPromptCommand { get; }
+
         public ICommand BuildStillComfyWorkflowPreviewCommand { get; }
 
         public ICommand SubmitStillComfyPromptCommand { get; }
@@ -1614,6 +1616,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ICommand FetchStillComfyImageCommand { get; }
 
         public ICommand AdoptStillComfyImageCommand { get; }
+
+        public ICommand AdoptSelectedAssetComfyImageCommand { get; }
 
         public ICommand AddConversationEntryCommand { get; }
 
@@ -1973,6 +1977,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
             BuildComfyWorkflowPreviewCommand = new RelayCommand(
                 BuildComfyWorkflowPreview,
                 () => CurrentPromptRecord != null);
+            SubmitSelectedAssetComfyPromptCommand = new RelayCommand(
+                SubmitSelectedAssetComfyPrompt,
+                () => SelectedProfile != null &&
+                    SelectedAsset != null &&
+                    CurrentPromptRecord != null &&
+                    !IsComfySubmitting &&
+                    !IsComfyInterrupting &&
+                    !IsComfyWaitingResult);
             BuildStillComfyWorkflowPreviewCommand = new RelayCommand(
                 BuildStillComfyWorkflowPreview,
                 () => SelectedProfile != null && SelectedStillDefinition != null);
@@ -1997,6 +2009,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 AdoptStillComfyImage,
                 () => SelectedProfile != null &&
                     SelectedStillDefinition != null &&
+                    !IsComfyInterrupting &&
+                    !IsComfyWaitingResult &&
+                    !IsComfyFetchingImage &&
+                    !string.IsNullOrWhiteSpace(CurrentComfyPreviewImagePath) &&
+                    File.Exists(CurrentComfyPreviewImagePath));
+            AdoptSelectedAssetComfyImageCommand = new RelayCommand(
+                AdoptSelectedAssetComfyImage,
+                () => SelectedProfile != null &&
+                    SelectedAsset != null &&
                     !IsComfyInterrupting &&
                     !IsComfyWaitingResult &&
                     !IsComfyFetchingImage &&
@@ -2210,6 +2231,54 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 CurrentComfyWorkflowPreview = string.Empty;
                 StatusMessage = $"スチル ComfyUI workflow preview 作成に失敗しました: {ex.Message}";
+            }
+        }
+
+        private async void SubmitSelectedAssetComfyPrompt()
+        {
+            if (SelectedProfile == null || SelectedAsset == null || CurrentPromptRecord == null)
+            {
+                return;
+            }
+
+            RequestComfyPollingCancellation();
+            hasComfyInterruptRequested = false;
+            IsComfySubmitting = true;
+            CurrentComfyPromptId = string.Empty;
+            CurrentComfyResultSummary = string.Empty;
+            currentComfySubmittedPromptRecord = null;
+            currentComfyWorkflowJson = string.Empty;
+            ClearComfyPreviewImage();
+            string queuedPromptId = string.Empty;
+            string queuedClientId = string.Empty;
+            string assetId = SelectedAsset.AssetId;
+            try
+            {
+                // 訓練画像を含む選択中 Asset の prompt JSON をそのまま生成条件に使う。
+                PromptRecord promptRecord = CurrentPromptRecord;
+                promptRecordService.SavePromptRecord(SelectedProfile, SelectedAsset, promptRecord);
+                string workflowJson = comfyWorkflowService.BuildWorkflowJson(ComfySettings, promptRecord);
+                currentComfySubmittedPromptRecord = promptRecord;
+                currentComfyWorkflowJson = workflowJson;
+                CurrentComfyWorkflowPreview = comfyWorkflowService.BuildWorkflowPreview(ComfySettings, promptRecord);
+                ComfyPromptQueueResult queueResult = await comfyClientService.QueuePromptWithClientAsync(ComfySettings, workflowJson);
+                CurrentComfyPromptId = queueResult.PromptId;
+                queuedPromptId = CurrentComfyPromptId;
+                queuedClientId = queueResult.ClientId;
+                StatusMessage = $"{assetId} を ComfyUI に送信しました。prompt_id: {CurrentComfyPromptId}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"ComfyUI 送信に失敗しました: {ex.Message}";
+            }
+            finally
+            {
+                IsComfySubmitting = false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(queuedPromptId))
+            {
+                await WaitForComfyResultAsync(queuedPromptId, queuedClientId, assetId);
             }
         }
 
@@ -2594,6 +2663,41 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ImageSourcePathInput = CurrentComfyPreviewImagePath;
             AssetIdInput = SelectedStillDefinition.AssetId;
             SelectedAssetUsage = SelectedStillDefinition.Usage;
+            SelectedAssetStatus = AssetStatus.Accepted;
+            try
+            {
+                HeroineAsset asset = AddImageAssetCore();
+                if (asset == null)
+                {
+                    return;
+                }
+
+                SaveComfyPromptRecord(asset);
+                StatusMessage += " Comfy 生成条件を prompt 記録に保存しました。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Comfy 生成画像の採用に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void AdoptSelectedAssetComfyImage()
+        {
+            if (SelectedProfile == null || SelectedAsset == null)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(CurrentComfyPreviewImagePath) || !File.Exists(CurrentComfyPreviewImagePath))
+            {
+                StatusMessage = "採用できる Comfy 生成画像がありません。先に画像取得を行ってください。";
+                return;
+            }
+
+            HeroineAsset targetAsset = SelectedAsset;
+            ImageSourcePathInput = CurrentComfyPreviewImagePath;
+            AssetIdInput = targetAsset.AssetId;
+            SelectedAssetUsage = targetAsset.Usage;
             SelectedAssetStatus = AssetStatus.Accepted;
             try
             {

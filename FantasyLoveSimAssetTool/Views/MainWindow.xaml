@@ -2390,7 +2390,38 @@
                                 </Grid>
                             </ScrollViewer>
 
-                            <Button Grid.Row="2" Content="Prompt 保存" Command="{Binding SavePromptRecordCommand}" Width="140" Height="30" HorizontalAlignment="Right" Margin="0,12,0,0"/>
+                            <Grid Grid.Row="2" Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="320"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                    <TextBlock Text="選択中の登録画像（訓練画像を含む）の Prompt を ComfyUI へ送信します。生成後は画像取得してから採用してください。"
+                                               Foreground="Gray"
+                                               TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding CurrentComfyResultSummary}"
+                                               TextWrapping="Wrap"
+                                               Margin="0,6,0,0"/>
+                                    <TextBlock Text="{Binding CurrentComfyPreviewImageMessage}"
+                                               Foreground="Gray"
+                                               TextWrapping="Wrap"
+                                               Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <WrapPanel HorizontalAlignment="Right">
+                                        <Button Content="Prompt 保存" Command="{Binding SavePromptRecordCommand}" Width="100" Height="30" Margin="0,0,6,6"/>
+                                        <Button Content="選択画像を送信" Command="{Binding SubmitSelectedAssetComfyPromptCommand}" Width="120" Height="30" Margin="0,0,6,6"/>
+                                        <Button Content="結果確認" Command="{Binding CheckStillComfyResultCommand}" Width="84" Height="30" Margin="0,0,0,6"/>
+                                        <Button Content="待機キャンセル" Command="{Binding CancelStillComfyPollingCommand}" Width="100" Height="30" Margin="0,0,6,0"/>
+                                        <Button Content="画像取得" Command="{Binding FetchStillComfyImageCommand}" Width="84" Height="30" Margin="0,0,6,0"/>
+                                        <Button Content="選択画像へ採用" Command="{Binding AdoptSelectedAssetComfyImageCommand}" Width="110" Height="30"/>
+                                    </WrapPanel>
+                                    <Image Source="{Binding CurrentComfyPreviewImagePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}"
+                                           Height="180"
+                                           Stretch="Uniform"
+                                           Margin="0,8,0,0"/>
+                                </StackPanel>
+                            </Grid>
                         </Grid>
                     </TabItem>
 
