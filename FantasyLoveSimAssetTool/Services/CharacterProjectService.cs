@@ -72,6 +72,7 @@ namespace FantasyLoveSimAssetTool.Services
             profile.OutfitReactionMessageOverrides ??= new ObservableCollection<OutfitReactionMessageOverride>();
             profile.BattleSkills ??= new ObservableCollection<HeroineBattleSkill>();
             NormalizeTrainingImages(profile);
+            NormalizeTrainingDialogues(profile);
             if (profile.BattleSkills.Count > 0)
             {
                 profile.BattleSkillsSpecified = true;
@@ -223,6 +224,7 @@ namespace FantasyLoveSimAssetTool.Services
             profile.OutfitReactionMessageOverrides ??= new ObservableCollection<OutfitReactionMessageOverride>();
             profile.BattleSkills ??= new ObservableCollection<HeroineBattleSkill>();
             NormalizeTrainingImages(profile);
+            NormalizeTrainingDialogues(profile);
             profile.AppearancePrompt ??= string.Empty;
             profile.StillCommonPositivePrompt ??= string.Empty;
             NormalizeProfileCompatibilityFields(profile);
@@ -377,6 +379,28 @@ namespace FantasyLoveSimAssetTool.Services
                 item.HeroineLpConsumedImageAssetId ??= string.Empty;
                 item.SimultaneousLpConsumedImageAssetId ??= string.Empty;
                 item.Memo ??= string.Empty;
+            }
+        }
+
+        private static void NormalizeTrainingDialogues(HeroineProfile profile)
+        {
+            profile.TrainingDialogues ??= new TrainingDialogueSettings();
+            profile.TrainingDialogues.Items ??= new ObservableCollection<TrainingDialogueEntry>();
+            foreach (TrainingDialogueEntry entry in profile.TrainingDialogues.Items)
+            {
+                if (entry != null)
+                {
+                    entry.TrainingId ??= string.Empty;
+                    entry.VisualState ??= string.Empty;
+                    entry.Messages ??= new ObservableCollection<TrainingDialogueMessage>();
+                    foreach (TrainingDialogueMessage message in entry.Messages)
+                    {
+                        if (message != null)
+                        {
+                            message.Text ??= string.Empty;
+                        }
+                    }
+                }
             }
         }
 

@@ -988,6 +988,20 @@
                                                 <CheckBox Content="主人公を表示" IsChecked="{Binding CurrentPromptRecord.PlayerVisible}" Margin="0,0,16,0"/>
                                                 <CheckBox Content="ヒロインを表示" IsChecked="{Binding CurrentPromptRecord.HeroineVisible}"/>
                                             </StackPanel>
+                                            <GroupBox Header="ヒロインセリフ候補" Margin="0,0,0,8">
+                                                <StackPanel Margin="8">
+                                                    <ListBox ItemsSource="{Binding SelectedTrainingDialogueEntry.Messages}"
+                                                             SelectedItem="{Binding SelectedTrainingDialogueMessage}"
+                                                             DisplayMemberPath="Text"
+                                                             Height="72"/>
+                                                    <TextBox Text="{Binding SelectedTrainingDialogueMessage.Text, UpdateSourceTrigger=PropertyChanged}"
+                                                             AcceptsReturn="True" TextWrapping="Wrap" Height="56" Margin="0,6,0,6"/>
+                                                    <WrapPanel HorizontalAlignment="Right">
+                                                        <Button Content="候補追加" Command="{Binding AddTrainingDialogueMessageCommand}" Width="84" Margin="0,0,6,0"/>
+                                                        <Button Content="候補削除" Command="{Binding RemoveTrainingDialogueMessageCommand}" Width="84"/>
+                                                    </WrapPanel>
+                                                </StackPanel>
+                                            </GroupBox>
                                             <TextBlock Text="positive prompt"/>
                                             <TextBox Text="{Binding CurrentPromptRecord.PositivePrompt, UpdateSourceTrigger=PropertyChanged}"
                                                      AcceptsReturn="True" TextWrapping="Wrap" Height="110" Margin="0,4,0,8"/>

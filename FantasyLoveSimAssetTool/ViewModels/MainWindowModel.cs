@@ -37,6 +37,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private OutfitReactionMessageOverride selectedOutfitReactionMessageOverride;
         private TrainingImageEntry selectedTrainingImageEntry;
         private HeroineAsset selectedTrainingAsset;
+        private TrainingDialogueEntry selectedTrainingDialogueEntry;
+        private TrainingDialogueMessage selectedTrainingDialogueMessage;
         private string heroineIdInput;
         private string displayNameInput;
         private string enemyIdInput;
@@ -585,6 +587,31 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 {
                     SelectedAsset = value;
                 }
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public TrainingDialogueEntry SelectedTrainingDialogueEntry
+        {
+            get { return selectedTrainingDialogueEntry; }
+            private set
+            {
+                if (selectedTrainingDialogueEntry == value) { return; }
+                selectedTrainingDialogueEntry = value;
+                OnPropertyChanged(nameof(SelectedTrainingDialogueEntry));
+                SelectedTrainingDialogueMessage = value?.Messages?.FirstOrDefault();
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public TrainingDialogueMessage SelectedTrainingDialogueMessage
+        {
+            get { return selectedTrainingDialogueMessage; }
+            set
+            {
+                if (selectedTrainingDialogueMessage == value) { return; }
+                selectedTrainingDialogueMessage = value;
+                OnPropertyChanged(nameof(SelectedTrainingDialogueMessage));
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -1613,6 +1640,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand AdoptTrainingExternalImageCommand { get; }
 
+        public ICommand AddTrainingDialogueMessageCommand { get; }
+
+        public ICommand RemoveTrainingDialogueMessageCommand { get; }
+
         public ICommand SavePromptRecordCommand { get; }
 
         public ICommand ApplyPromptTemplateCommand { get; }
@@ -1994,6 +2025,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     SelectedTrainingAsset != null &&
                     !string.IsNullOrWhiteSpace(ImageSourcePathInput) &&
                     File.Exists(ImageSourcePathInput));
+            AddTrainingDialogueMessageCommand = new RelayCommand(
+                AddTrainingDialogueMessage,
+                () => SelectedTrainingDialogueEntry != null);
+            RemoveTrainingDialogueMessageCommand = new RelayCommand(
+                RemoveTrainingDialogueMessage,
+                () => SelectedTrainingDialogueEntry != null && SelectedTrainingDialogueMessage != null);
             SavePromptRecordCommand = new RelayCommand(
                 SavePromptRecord,
                 () => SelectedProfile != null && SelectedAsset != null && CurrentPromptRecord != null);
@@ -4440,6 +4477,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 SelectedProfile.TrainingImages ??= new TrainingImageSettings();
                 SelectedProfile.TrainingImages.Defaults ??= new TrainingImageDefaults();
                 SelectedProfile.TrainingImages.Items ??= new ObservableCollection<TrainingImageEntry>();
+                SelectedProfile.TrainingDialogues ??= new TrainingDialogueSettings();
+                SelectedProfile.TrainingDialogues.Items ??= new ObservableCollection<TrainingDialogueEntry>();
 
                 int addedCount = 0;
                 HeroineAsset firstAsset = null;
@@ -4473,6 +4512,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     }
 
                     SaveTrainingPromptRecord(asset, template);
+                    EnsureStandardTrainingDialogue(template);
                     firstAsset ??= asset;
                 }
 
@@ -4503,6 +4543,66 @@ namespace FantasyLoveSimAssetTool.ViewModels
             TrainingImageEntry item = new TrainingImageEntry();
             SelectedProfile.TrainingImages.Items.Add(item);
             SelectedTrainingImageEntry = item;
+        }
+
+        private void AddTrainingDialogueMessage()
+        {
+            if (SelectedTrainingDialogueEntry == null)
+            {
+                return;
+            }
+
+            SelectedTrainingDialogueEntry.Messages ??= new ObservableCollection<TrainingDialogueMessage>();
+            TrainingDialogueMessage message = new TrainingDialogueMessage();
+            SelectedTrainingDialogueEntry.Messages.Add(message);
+            SelectedTrainingDialogueMessage = message;
+        }
+
+        private void RemoveTrainingDialogueMessage()
+        {
+            if (SelectedTrainingDialogueEntry?.Messages == null || SelectedTrainingDialogueMessage == null)
+            {
+                return;
+            }
+
+            SelectedTrainingDialogueEntry.Messages.Remove(SelectedTrainingDialogueMessage);
+            SelectedTrainingDialogueMessage = SelectedTrainingDialogueEntry.Messages.FirstOrDefault();
+        }
+
+        private void RefreshSelectedTrainingDialogueEntry()
+        {
+            if (SelectedProfile?.TrainingDialogues?.Items == null || CurrentPromptRecord == null)
+            {
+                SelectedTrainingDialogueEntry = null;
+                return;
+            }
+
+            SelectedTrainingDialogueEntry = SelectedProfile.TrainingDialogues.Items.FirstOrDefault(entry =>
+                entry != null &&
+                string.Equals(entry.TrainingId, CurrentPromptRecord.TrainingId, StringComparison.Ordinal) &&
+                string.Equals(entry.VisualState, CurrentPromptRecord.TrainingVisualState, StringComparison.Ordinal));
+        }
+
+        private void EnsureStandardTrainingDialogue(TrainingAssetTemplate template)
+        {
+            TrainingDialogueEntry entry = SelectedProfile.TrainingDialogues.Items.FirstOrDefault(item =>
+                item != null &&
+                string.Equals(item.TrainingId, template.TrainingId, StringComparison.Ordinal) &&
+                string.Equals(item.VisualState, template.VisualState, StringComparison.Ordinal));
+            if (entry == null)
+            {
+                entry = new TrainingDialogueEntry
+                {
+                    TrainingId = template.TrainingId,
+                    VisualState = template.VisualState
+                };
+                SelectedProfile.TrainingDialogues.Items.Add(entry);
+            }
+            entry.Messages ??= new ObservableCollection<TrainingDialogueMessage>();
+            if (entry.Messages.Count == 0)
+            {
+                entry.Messages.Add(new TrainingDialogueMessage { Text = template.DialogueMessage });
+            }
         }
 
         private void AdoptTrainingExternalImage()
@@ -4630,6 +4730,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             public string TrainingId { get; }
             public string VisualState { get; }
             public string PositivePrompt { get; }
+            public string DialogueMessage { get; }
 
             public TrainingAssetTemplate(string assetId, string trainingId, string visualState, string positivePrompt)
             {
@@ -4637,6 +4738,22 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 TrainingId = trainingId;
                 VisualState = visualState;
                 PositivePrompt = positivePrompt;
+                DialogueMessage = BuildStandardTrainingDialogue(trainingId, visualState);
+            }
+        }
+
+        private static string BuildStandardTrainingDialogue(string trainingId, string visualState)
+        {
+            string trainingName = trainingId == "LightPractice" ? "軽い練習" :
+                trainingId == "SparringPractice" ? "模擬戦" : "持久訓練";
+            switch (visualState)
+            {
+                case "SelectedBeforeFirstStep": return trainingName + "を始めよう。準備はできてる？";
+                case "SelectedAfterFirstStep": return trainingName + "はまだ続くよ。いい調子！";
+                case "PlayerLpConsumed": return "無理しすぎないで。少し呼吸を整えよう？";
+                case "HeroineLpConsumed": return "少し疲れたけど、まだ諦めないよ。";
+                case "SimultaneousLpConsumed": return "二人とも限界まで頑張ったね。";
+                default: return trainingName + "を続けよう。";
             }
         }
 
@@ -4949,6 +5066,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             if (SelectedProfile == null || SelectedAsset == null)
             {
                 CurrentPromptRecord = null;
+                RefreshSelectedTrainingDialogueEntry();
                 return;
             }
 
@@ -4961,6 +5079,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 CurrentPromptRecord = new PromptRecord();
                 StatusMessage = $"prompt 読み込みに失敗しました: {ex.Message}";
             }
+            RefreshSelectedTrainingDialogueEntry();
         }
 
         private void RefreshPromptTemplates()

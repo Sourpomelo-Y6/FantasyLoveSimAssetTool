@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using FantasyLoveSimAssetTool.Common;
 
 namespace FantasyLoveSimAssetTool.Models
 {
@@ -27,5 +28,35 @@ namespace FantasyLoveSimAssetTool.Models
         public TrainingImageDefaults Defaults { get; set; } = new TrainingImageDefaults();
         public ObservableCollection<TrainingImageEntry> Items { get; set; } =
             new ObservableCollection<TrainingImageEntry>();
+    }
+
+    public class TrainingDialogueMessage : ObservableObject
+    {
+        private string text = string.Empty;
+
+        public string Text
+        {
+            get { return text; }
+            set
+            {
+                if (text == value) { return; }
+                text = value;
+                OnPropertyChanged(nameof(Text));
+            }
+        }
+    }
+
+    public class TrainingDialogueEntry
+    {
+        public string TrainingId { get; set; } = string.Empty;
+        public string VisualState { get; set; } = string.Empty;
+        public ObservableCollection<TrainingDialogueMessage> Messages { get; set; } =
+            new ObservableCollection<TrainingDialogueMessage>();
+    }
+
+    public class TrainingDialogueSettings
+    {
+        public ObservableCollection<TrainingDialogueEntry> Items { get; set; } =
+            new ObservableCollection<TrainingDialogueEntry>();
     }
 }

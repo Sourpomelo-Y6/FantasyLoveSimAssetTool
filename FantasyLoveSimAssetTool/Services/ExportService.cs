@@ -164,6 +164,7 @@ namespace FantasyLoveSimAssetTool.Services
             File.WriteAllText(Path.Combine(dataDirectory, "assets_export.json"), BuildAssetsExportJson(profile, acceptedAssets));
             File.WriteAllText(Path.Combine(dataDirectory, "sprite_layers_export.json"), BuildSpriteLayersExportJson(profile, acceptedAssets, report));
             File.WriteAllText(Path.Combine(dataDirectory, "training_images_export.json"), BuildTrainingImagesExportJson(profile, acceptedAssets, report));
+            File.WriteAllText(Path.Combine(dataDirectory, "training_dialogues_export.json"), BuildTrainingDialoguesExportJson(profile, report));
             File.WriteAllText(Path.Combine(dataDirectory, "conversations_export.json"), BuildConversationExportJson(profile, ConversationDataKind.Conversations));
             File.WriteAllText(Path.Combine(dataDirectory, "game_events_export.json"), BuildConversationExportJson(profile, ConversationDataKind.GameEvents));
             File.WriteAllText(Path.Combine(dataDirectory, "scheduled_events_export.json"), BuildScheduledEventsExportJson(profile));
@@ -388,6 +389,48 @@ namespace FantasyLoveSimAssetTool.Services
                     report.Warnings.Add($"{assetId}: 訓練画像の用途はTrainingが必要です。現在: {asset.Usage}");
                 }
             }
+        }
+
+        private static string BuildTrainingDialoguesExportJson(HeroineProfile profile, ExportReport report)
+        {
+            TrainingDialogueSettings settings = profile.TrainingDialogues ?? new TrainingDialogueSettings();
+            List<TrainingDialogueEntry> items = (settings.Items ?? new System.Collections.ObjectModel.ObservableCollection<TrainingDialogueEntry>())
+                .Where(item => item != null)
+                .ToList();
+            HashSet<string> keys = new HashSet<string>(StringComparer.Ordinal);
+            foreach (TrainingDialogueEntry item in items)
+            {
+                string key = (item.TrainingId ?? string.Empty) + "\n" + (item.VisualState ?? string.Empty);
+                if (string.IsNullOrWhiteSpace(item.VisualState))
+                {
+                    report.Warnings.Add("訓練セリフにvisualStateが空の項目があります。");
+                }
+                else if (!keys.Add(key))
+                {
+                    report.Warnings.Add($"訓練セリフが重複しています: {item.TrainingId} / {item.VisualState}");
+                }
+                if (item.Messages == null || !item.Messages.Any(message => message != null && !string.IsNullOrWhiteSpace(message.Text)))
+                {
+                    report.Warnings.Add($"訓練セリフが空です: {item.TrainingId} / {item.VisualState}");
+                }
+            }
+
+            object exportModel = new
+            {
+                schemaVersion = 1,
+                heroineId = profile.HeroineId,
+                items = items.Select(item => new
+                {
+                    trainingId = item.TrainingId,
+                    visualState = item.VisualState,
+                    messages = (item.Messages ?? new System.Collections.ObjectModel.ObservableCollection<TrainingDialogueMessage>())
+                        .Where(message => message != null && !string.IsNullOrWhiteSpace(message.Text))
+                        .Select(message => message.Text.Trim())
+                        .Distinct()
+                        .ToList()
+                }).ToList()
+            };
+            return JsonSerializer.Serialize(exportModel, CreateJsonOptions());
         }
 
         private string BuildSpriteLayersExportJson(HeroineProfile profile, IReadOnlyList<HeroineAsset> acceptedAssets, ExportReport report)
