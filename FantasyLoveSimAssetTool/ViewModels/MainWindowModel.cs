@@ -4483,7 +4483,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 RefreshAcceptedAssets();
                 SelectedAsset = firstAsset;
                 SelectedTrainingImageEntry = SelectedProfile.TrainingImages.Items.FirstOrDefault();
-                StatusMessage = $"訓練画像の標準9枠を準備しました。新規追加 {addedCount} 件。";
+                StatusMessage = $"訓練画像の標準15枠を準備しました。新規追加 {addedCount} 件。";
             }
             catch (Exception ex)
             {
@@ -4561,13 +4561,6 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private static void ApplyStandardTrainingMappings(TrainingImageSettings settings)
         {
-            settings.Defaults.PlayerLpConsumedImageAssetId =
-                DefaultIfEmpty(settings.Defaults.PlayerLpConsumedImageAssetId, "Training_Common_PlayerLpConsumed");
-            settings.Defaults.HeroineLpConsumedImageAssetId =
-                DefaultIfEmpty(settings.Defaults.HeroineLpConsumedImageAssetId, "Training_Common_HeroineLpConsumed");
-            settings.Defaults.SimultaneousLpConsumedImageAssetId =
-                DefaultIfEmpty(settings.Defaults.SimultaneousLpConsumedImageAssetId, "Training_Common_SimultaneousLpConsumed");
-
             string[] trainingIds = { "LightPractice", "SparringPractice", "EnduranceTraining" };
             foreach (string trainingId in trainingIds)
             {
@@ -4584,6 +4577,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 entry.AfterFirstStepImageAssetId = DefaultIfEmpty(
                     entry.AfterFirstStepImageAssetId,
                     $"Training_{trainingId}_SelectedAfterFirstStep");
+                entry.PlayerLpConsumedImageAssetId = DefaultIfEmpty(
+                    entry.PlayerLpConsumedImageAssetId,
+                    $"Training_{trainingId}_PlayerLpConsumed");
+                entry.HeroineLpConsumedImageAssetId = DefaultIfEmpty(
+                    entry.HeroineLpConsumedImageAssetId,
+                    $"Training_{trainingId}_HeroineLpConsumed");
+                entry.SimultaneousLpConsumedImageAssetId = DefaultIfEmpty(
+                    entry.SimultaneousLpConsumedImageAssetId,
+                    $"Training_{trainingId}_SimultaneousLpConsumed");
             }
         }
 
@@ -4606,16 +4608,19 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     $"Training_{trainingId}_SelectedAfterFirstStep", trainingId,
                     "SelectedAfterFirstStep",
                     "visual novel training scene, both characters actively training, after training has begun"));
+                templates.Add(new TrainingAssetTemplate(
+                    $"Training_{trainingId}_PlayerLpConsumed", trainingId,
+                    "PlayerLpConsumed",
+                    "visual novel training scene, player exhausted after reaching the limit, heroine reacting clearly"));
+                templates.Add(new TrainingAssetTemplate(
+                    $"Training_{trainingId}_HeroineLpConsumed", trainingId,
+                    "HeroineLpConsumed",
+                    "visual novel training scene, heroine exhausted after reaching her limit, player reacting clearly"));
+                templates.Add(new TrainingAssetTemplate(
+                    $"Training_{trainingId}_SimultaneousLpConsumed", trainingId,
+                    "SimultaneousLpConsumed",
+                    "visual novel training scene, player and heroine both exhausted after simultaneously reaching their limits"));
             }
-            templates.Add(new TrainingAssetTemplate(
-                "Training_Common_PlayerLpConsumed", "Common", "PlayerLpConsumed",
-                "visual novel training scene, player exhausted after reaching the limit, heroine reacting clearly"));
-            templates.Add(new TrainingAssetTemplate(
-                "Training_Common_HeroineLpConsumed", "Common", "HeroineLpConsumed",
-                "visual novel training scene, heroine exhausted after reaching her limit, player reacting clearly"));
-            templates.Add(new TrainingAssetTemplate(
-                "Training_Common_SimultaneousLpConsumed", "Common", "SimultaneousLpConsumed",
-                "visual novel training scene, player and heroine both exhausted after simultaneously reaching their limits"));
             return templates;
         }
 
