@@ -123,6 +123,76 @@ namespace FantasyLoveSimAssetTool.Tests
             CollectionAssert.AreEqual(new[] { "セリフA", "セリフB" }, item.GetProperty("messages").EnumerateArray().Select(x => x.GetString()).ToArray());
         }
 
+        [TestMethod]
+        public void ExportAndImport_RoundTripsFortyMessagesWithoutRemovingToolOnlyData()
+        {
+            string[] trainingIds = { "BasicTraining", "MagicTraining", "EnduranceTraining", "CooperativeDrill" };
+            string[] states =
+            {
+                "SelectedBeforeFirstStep",
+                "SelectedAfterFirstStep",
+                "PlayerLpConsumed",
+                "HeroineLpConsumed",
+                "SimultaneousLpConsumed"
+            };
+            TrainingDialogueSettings sourceSettings = new TrainingDialogueSettings();
+            foreach (string trainingId in trainingIds)
+            {
+                foreach (string state in states)
+                {
+                    sourceSettings.Items.Add(new TrainingDialogueEntry
+                    {
+                        TrainingId = trainingId,
+                        VisualState = state,
+                        Messages = new ObservableCollection<TrainingDialogueMessage>
+                        {
+                            new TrainingDialogueMessage { Text = $" {trainingId}-{state}-A " },
+                            new TrainingDialogueMessage { Text = $"{trainingId}-{state}-B" }
+                        }
+                    });
+                }
+            }
+            HeroineProfile sourceProfile = new HeroineProfile
+            {
+                HeroineId = "TestHeroine",
+                TrainingDialogues = sourceSettings
+            };
+            TrainingDialogueSettings importedSettings = SettingsWith(
+                "CooperativeDrill",
+                "SelectedBeforeFirstStep",
+                "Toolだけの既存候補");
+
+            string exportJson = TrainingDialogueSyncService.BuildExportJson(sourceProfile, new ExportReport());
+            FromUnityTrainingDialogueDataFile exportedData = TrainingDialogueSyncService.DeserializeFromUnity(exportJson);
+            TrainingDialogueMergeResult first = TrainingDialogueSyncService.MergeFromUnity(
+                importedSettings,
+                "TestHeroine",
+                exportedData);
+
+            Assert.AreEqual(20, importedSettings.Items.Count);
+            Assert.AreEqual(40, first.AddedMessageCount);
+            Assert.AreEqual(41, Flatten(importedSettings).Count);
+            Assert.IsTrue(Flatten(importedSettings).Contains(
+                "CooperativeDrill\nSelectedBeforeFirstStep\nToolだけの既存候補"));
+
+            HashSet<string> expected = Flatten(sourceSettings, true);
+            HashSet<string> actualExportedMessages = Flatten(importedSettings)
+                .Where(value => !value.EndsWith("\nToolだけの既存候補", StringComparison.Ordinal))
+                .ToHashSet(StringComparer.Ordinal);
+            CollectionAssert.AreEquivalent(expected.ToArray(), actualExportedMessages.ToArray());
+            Assert.IsFalse(actualExportedMessages.Any(value => value.EndsWith(" ", StringComparison.Ordinal)));
+
+            TrainingDialogueMergeResult second = TrainingDialogueSyncService.MergeFromUnity(
+                importedSettings,
+                "TestHeroine",
+                exportedData);
+
+            Assert.AreEqual(0, second.AddedEntryCount);
+            Assert.AreEqual(0, second.AddedMessageCount);
+            Assert.AreEqual(40, second.SkippedCount);
+            Assert.AreEqual(41, Flatten(importedSettings).Count);
+        }
+
         private static TrainingDialogueSettings SettingsWith(string trainingId, string state, params string[] messages)
         {
             return new TrainingDialogueSettings
@@ -147,6 +217,14 @@ namespace FantasyLoveSimAssetTool.Tests
         private static FromUnityTrainingDialogueItem Item(string trainingId, string state, params string[] messages)
         {
             return new FromUnityTrainingDialogueItem { TrainingId = trainingId, VisualState = state, Messages = messages.ToList() };
+        }
+
+        private static HashSet<string> Flatten(TrainingDialogueSettings settings, bool trimMessages = false)
+        {
+            return settings.Items
+                .SelectMany(entry => entry.Messages.Select(message =>
+                    $"{entry.TrainingId}\n{entry.VisualState}\n{(trimMessages ? message.Text.Trim() : message.Text)}"))
+                .ToHashSet(StringComparer.Ordinal);
         }
     }
 }
