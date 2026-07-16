@@ -902,9 +902,7 @@ namespace FantasyLoveSimAssetTool.Services
                         requiredItemId = entry.Conditions == null ? string.Empty : entry.Conditions.RequiredItemId,
                         once = entry.Conditions != null && entry.Conditions.Once,
                         requiredFlagIds = SplitList(entry.Conditions == null ? string.Empty : entry.Conditions.RequiredFlagIdsText),
-                        requiredSkillIds = entry.Conditions != null && entry.Conditions.RequiredSkillIdsSpecified
-                            ? (object)SplitList(entry.Conditions.RequiredSkillIdsText)
-                            : null
+                        requiredSkillIds = RequiredSkillIdSyncService.CreateExportValues(entry.Conditions)
                     },
                     lines = (entry.Lines ?? new System.Collections.ObjectModel.ObservableCollection<ConversationLine>())
                         .Select(line => new

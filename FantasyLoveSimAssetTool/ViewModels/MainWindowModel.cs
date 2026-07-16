@@ -7396,11 +7396,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             target.RequiredItemId = source.RequiredItemId ?? string.Empty;
             target.Once = source.Once;
             target.RequiredFlagIdsText = JoinImportList(source.RequiredFlagIds);
-            if (source.RequiredSkillIds != null)
-            {
-                target.RequiredSkillIdsSpecified = true;
-                target.RequiredSkillIdsText = JoinImportList(source.RequiredSkillIds);
-            }
+            RequiredSkillIdSyncService.ApplyImportedValues(target, source.RequiredSkillIds);
         }
 
         private static string BuildFromUnityGameEventMemo(FromUnityGameEventItem item)
