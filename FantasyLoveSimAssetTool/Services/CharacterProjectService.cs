@@ -73,6 +73,7 @@ namespace FantasyLoveSimAssetTool.Services
             profile.BattleSkills ??= new ObservableCollection<HeroineBattleSkill>();
             NormalizeTrainingImages(profile);
             NormalizeTrainingDialogues(profile);
+            NormalizeTrainingCatalog(profile);
             if (profile.BattleSkills.Count > 0)
             {
                 profile.BattleSkillsSpecified = true;
@@ -225,6 +226,7 @@ namespace FantasyLoveSimAssetTool.Services
             profile.BattleSkills ??= new ObservableCollection<HeroineBattleSkill>();
             NormalizeTrainingImages(profile);
             NormalizeTrainingDialogues(profile);
+            NormalizeTrainingCatalog(profile);
             profile.AppearancePrompt ??= string.Empty;
             profile.StillCommonPositivePrompt ??= string.Empty;
             NormalizeProfileCompatibilityFields(profile);
@@ -401,6 +403,21 @@ namespace FantasyLoveSimAssetTool.Services
                         }
                     }
                 }
+            }
+        }
+
+        private static void NormalizeTrainingCatalog(HeroineProfile profile)
+        {
+            profile.TrainingCatalog ??= new TrainingCatalogSettings();
+            profile.TrainingCatalog.Items ??= new ObservableCollection<TrainingCatalogItem>();
+            foreach (TrainingCatalogItem item in profile.TrainingCatalog.Items)
+            {
+                if (item == null) continue;
+                item.TrainingId ??= string.Empty;
+                item.DisplayName ??= string.Empty;
+                item.TrainingCategoryId ??= string.Empty;
+                item.UnlockNodeIds ??= new List<string>();
+                item.UnlockNodeNames ??= new List<string>();
             }
         }
 

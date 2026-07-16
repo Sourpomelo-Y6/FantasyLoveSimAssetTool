@@ -76,6 +76,8 @@ namespace FantasyLoveSimAssetTool.Models
 
         public TrainingDialogueSettings TrainingDialogues { get; set; }
 
+        public TrainingCatalogSettings TrainingCatalog { get; set; }
+
         // 古い profile.json と「空配列を明示」の区別を維持するための互換フラグ。
         public bool BattleSkillsSpecified { get; set; }
 
@@ -126,6 +128,7 @@ namespace FantasyLoveSimAssetTool.Models
             BattleSkills = new ObservableCollection<HeroineBattleSkill>();
             TrainingImages = new TrainingImageSettings();
             TrainingDialogues = new TrainingDialogueSettings();
+            TrainingCatalog = new TrainingCatalogSettings();
             ConversationResourcePath = string.Empty;
             GameEventResourcePath = string.Empty;
             ActionResourcePath = string.Empty;

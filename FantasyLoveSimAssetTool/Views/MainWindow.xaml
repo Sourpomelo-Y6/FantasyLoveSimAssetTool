@@ -920,15 +920,33 @@
                                 <TextBlock Grid.Column="0"
                                            Text="訓練画像の枠準備、Prompt編集、ComfyUI生成、外部画像登録、採用をこの画面で行います。空欄のマッピングは共通画像、または現在表示中の画像へフォールバックします。"
                                            Foreground="Gray" TextWrapping="Wrap" Margin="0,0,12,0"/>
-                                <Button Grid.Column="1"
-                                        Content="Unity訓練セリフ読込"
-                                        Command="{Binding ImportTrainingDialoguesFromUnityCommand}"
-                                        MinWidth="160"
-                                        Height="28"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Content="Unity訓練一覧読込"
+                                            Command="{Binding ImportTrainingCatalogFromUnityCommand}"
+                                            MinWidth="150" Height="28" Margin="0,0,8,0"/>
+                                    <Button Content="Unity訓練セリフ読込"
+                                            Command="{Binding ImportTrainingDialoguesFromUnityCommand}"
+                                            MinWidth="160" Height="28"/>
+                                </StackPanel>
                             </Grid>
 
                             <Expander Grid.Row="1" Header="訓練画像マッピング（必要な場合だけ編集）" Margin="0,0,0,12">
                                 <StackPanel>
+                                    <GroupBox Header="Unityから取り込んだ訓練一覧" Margin="0,8,0,8">
+                                        <DataGrid ItemsSource="{Binding SelectedProfile.TrainingCatalog.Items}"
+                                                  AutoGenerateColumns="False"
+                                                  CanUserAddRows="False"
+                                                  IsReadOnly="True"
+                                                  Height="130"
+                                                  Margin="8">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="TrainingId" Binding="{Binding TrainingId}" Width="180"/>
+                                                <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName}" Width="140"/>
+                                                <DataGridTextColumn Header="カテゴリー" Binding="{Binding TrainingCategoryId}" Width="130"/>
+                                                <DataGridTextColumn Header="解放" Binding="{Binding UnlockSummary}" Width="*"/>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </GroupBox>
                                     <GroupBox Header="訓練共通画像 AssetId" Margin="0,8,0,8">
                                         <Grid Margin="8">
                                             <Grid.ColumnDefinitions>
@@ -1058,7 +1076,7 @@
                             </Grid>
 
                             <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="標準15枠を準備" Command="{Binding AddTrainingStandardAssetDataCommand}" Width="140" Height="30" Margin="0,0,8,0"/>
+                                <Button Content="登録済み訓練の不足枠を準備" Command="{Binding AddTrainingStandardAssetDataCommand}" Width="210" Height="30" Margin="0,0,8,0"/>
                                 <Button Content="訓練追加" Command="{Binding AddTrainingImageEntryCommand}" Width="90" Height="30" Margin="0,0,8,0"/>
                                 <Button Content="訓練削除" Command="{Binding RemoveTrainingImageEntryCommand}" Width="90" Height="30" Margin="0,0,8,0"/>
                                 <Button Content="保存" Command="{Binding SaveSelectedProfileCommand}" Width="100" Height="30"/>

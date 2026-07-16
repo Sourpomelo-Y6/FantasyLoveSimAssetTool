@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Text.Json.Serialization;
 using FantasyLoveSimAssetTool.Common;
 
 namespace FantasyLoveSimAssetTool.Models
@@ -58,5 +60,28 @@ namespace FantasyLoveSimAssetTool.Models
     {
         public ObservableCollection<TrainingDialogueEntry> Items { get; set; } =
             new ObservableCollection<TrainingDialogueEntry>();
+    }
+
+    public class TrainingCatalogItem
+    {
+        public string TrainingId { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public string TrainingCategoryId { get; set; } = string.Empty;
+        public bool UnlockedByDefault { get; set; }
+        public List<string> UnlockNodeIds { get; set; } = new List<string>();
+        public List<string> UnlockNodeNames { get; set; } = new List<string>();
+
+        [JsonIgnore]
+        public string UnlockSummary => UnlockedByDefault
+            ? "初期解放"
+            : UnlockNodeNames != null && UnlockNodeNames.Count > 0
+                ? string.Join(" / ", UnlockNodeNames)
+                : "解放ノード未設定";
+    }
+
+    public class TrainingCatalogSettings
+    {
+        public ObservableCollection<TrainingCatalogItem> Items { get; set; } =
+            new ObservableCollection<TrainingCatalogItem>();
     }
 }

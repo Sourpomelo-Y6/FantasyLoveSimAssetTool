@@ -1646,6 +1646,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ImportTrainingDialoguesFromUnityCommand { get; }
 
+        public ICommand ImportTrainingCatalogFromUnityCommand { get; }
+
         public ICommand SavePromptRecordCommand { get; }
 
         public ICommand ApplyPromptTemplateCommand { get; }
@@ -2035,6 +2037,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedTrainingDialogueEntry != null && SelectedTrainingDialogueMessage != null);
             ImportTrainingDialoguesFromUnityCommand = new RelayCommand(
                 ImportTrainingDialoguesFromUnity,
+                () => SelectedProfile != null);
+            ImportTrainingCatalogFromUnityCommand = new RelayCommand(
+                ImportTrainingCatalogFromUnity,
                 () => SelectedProfile != null);
             SavePromptRecordCommand = new RelayCommand(
                 SavePromptRecord,
@@ -4485,9 +4490,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 SelectedProfile.TrainingDialogues ??= new TrainingDialogueSettings();
                 SelectedProfile.TrainingDialogues.Items ??= new ObservableCollection<TrainingDialogueEntry>();
 
+                EnsureLegacyTrainingCatalog();
+                IReadOnlyList<TrainingAssetTemplate> templates = CreateTrainingAssetTemplates();
                 int addedCount = 0;
                 HeroineAsset firstAsset = null;
-                foreach (TrainingAssetTemplate template in CreateTrainingAssetTemplates())
+                foreach (TrainingAssetTemplate template in templates)
                 {
                     HeroineAsset asset = SelectedProfile.Assets.FirstOrDefault(
                         item => string.Equals(item.AssetId, template.AssetId, StringComparison.Ordinal));
@@ -4521,14 +4528,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     firstAsset ??= asset;
                 }
 
-                ApplyStandardTrainingMappings(SelectedProfile.TrainingImages);
+                ApplyStandardTrainingMappings(
+                    SelectedProfile.TrainingImages,
+                    SelectedProfile.TrainingCatalog.Items);
                 characterProjectService.SaveProfile(SelectedProfile);
                 SelectedAssetStatusFilter = "All";
                 RefreshFilteredAssets();
                 RefreshAcceptedAssets();
                 SelectedAsset = firstAsset;
                 SelectedTrainingImageEntry = SelectedProfile.TrainingImages.Items.FirstOrDefault();
-                StatusMessage = $"訓練画像の標準15枠を準備しました。新規追加 {addedCount} 件。";
+                StatusMessage = $"登録済み訓練 {SelectedProfile.TrainingCatalog.Items.Count} 件の不足枠を準備しました。画像候補の新規追加 {addedCount} 件。";
             }
             catch (Exception ex)
             {
@@ -4600,6 +4609,111 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 StatusMessage = $"FromUnity 訓練セリフ import に失敗しました: {ex.Message}";
             }
+        }
+
+        private void ImportTrainingCatalogFromUnity()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            OpenFileDialog dialog = new OpenFileDialog
+            {
+                Title = "training_catalog_from_unity.json を選択",
+                Filter = "training_catalog_from_unity.json|training_catalog_from_unity.json|JSON files (*.json)|*.json|All files (*.*)|*.*"
+            };
+            if (dialog.ShowDialog() != true)
+            {
+                StatusMessage = "FromUnity 訓練一覧 import をキャンセルしました。";
+                return;
+            }
+
+            try
+            {
+                ImportTrainingCatalogFromUnityFile(dialog.FileName);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"FromUnity 訓練一覧 import に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void ImportTrainingCatalogFromUnityFile(string filePath)
+        {
+            JsonSerializerOptions options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            FromUnityTrainingCatalogDataFile data =
+                JsonSerializer.Deserialize<FromUnityTrainingCatalogDataFile>(
+                    File.ReadAllText(filePath),
+                    options);
+            if (data == null)
+            {
+                throw new InvalidOperationException("training_catalog_from_unity.json を読み込めませんでした。");
+            }
+            if (data.SchemaVersion != 1)
+            {
+                throw new InvalidOperationException($"未対応の schemaVersion です: {data.SchemaVersion}");
+            }
+            if (!string.IsNullOrWhiteSpace(data.HeroineId) &&
+                !string.Equals(data.HeroineId, SelectedProfile.HeroineId, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    $"HeroineId が選択中のキャラクターと一致しません。JSON: {data.HeroineId} / Selected: {SelectedProfile.HeroineId}");
+            }
+
+            SelectedProfile.TrainingCatalog ??= new TrainingCatalogSettings();
+            SelectedProfile.TrainingCatalog.Items ??= new ObservableCollection<TrainingCatalogItem>();
+            int addedCount = 0;
+            int updatedCount = 0;
+            int skippedCount = 0;
+            HashSet<string> importedIds = new HashSet<string>(StringComparer.Ordinal);
+            foreach (FromUnityTrainingCatalogItem source in
+                data.Items ?? new List<FromUnityTrainingCatalogItem>())
+            {
+                string trainingId = (source?.TrainingId ?? string.Empty).Trim();
+                if (trainingId.Length == 0 || !importedIds.Add(trainingId))
+                {
+                    skippedCount++;
+                    continue;
+                }
+
+                TrainingCatalogItem target = SelectedProfile.TrainingCatalog.Items.FirstOrDefault(item =>
+                    item != null && string.Equals(item.TrainingId, trainingId, StringComparison.Ordinal));
+                if (target == null)
+                {
+                    target = new TrainingCatalogItem { TrainingId = trainingId };
+                    SelectedProfile.TrainingCatalog.Items.Add(target);
+                    addedCount++;
+                }
+                else
+                {
+                    updatedCount++;
+                }
+
+                target.DisplayName = string.IsNullOrWhiteSpace(source.DisplayName)
+                    ? trainingId
+                    : source.DisplayName.Trim();
+                target.TrainingCategoryId = (source.TrainingCategoryId ?? string.Empty).Trim();
+                target.UnlockedByDefault = source.UnlockedByDefault;
+                target.UnlockNodeIds = (source.UnlockNodeIds ?? new List<string>())
+                    .Where(value => !string.IsNullOrWhiteSpace(value))
+                    .Select(value => value.Trim())
+                    .Distinct(StringComparer.Ordinal)
+                    .ToList();
+                target.UnlockNodeNames = (source.UnlockNodeNames ?? new List<string>())
+                    .Where(value => !string.IsNullOrWhiteSpace(value))
+                    .Select(value => value.Trim())
+                    .Distinct(StringComparer.Ordinal)
+                    .ToList();
+            }
+
+            characterProjectService.SaveProfile(SelectedProfile);
+            OnPropertyChanged(nameof(SelectedProfile));
+            StatusMessage =
+                $"FromUnity 訓練一覧を取り込みました。追加 {addedCount} 件、更新 {updatedCount} 件、重複・不正値スキップ {skippedCount} 件。既存のTool専用項目は削除していません。";
         }
 
         private void ImportTrainingDialoguesFromUnityFile(string filePath)
@@ -4800,11 +4914,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
             promptRecordService.SavePromptRecord(SelectedProfile, asset, record);
         }
 
-        private static void ApplyStandardTrainingMappings(TrainingImageSettings settings)
+        private static void ApplyStandardTrainingMappings(
+            TrainingImageSettings settings,
+            IEnumerable<TrainingCatalogItem> catalogItems)
         {
-            string[] trainingIds = { "LightPractice", "SparringPractice", "EnduranceTraining" };
-            foreach (string trainingId in trainingIds)
+            foreach (TrainingCatalogItem catalogItem in catalogItems ?? Enumerable.Empty<TrainingCatalogItem>())
             {
+                string trainingId = catalogItem?.TrainingId?.Trim();
+                if (string.IsNullOrWhiteSpace(trainingId)) continue;
                 TrainingImageEntry entry = settings.Items.FirstOrDefault(
                     item => string.Equals(item.TrainingId, trainingId, StringComparison.Ordinal));
                 if (entry == null)
@@ -4835,30 +4952,41 @@ namespace FantasyLoveSimAssetTool.ViewModels
             return string.IsNullOrWhiteSpace(currentValue) ? defaultValue : currentValue;
         }
 
-        private static IReadOnlyList<TrainingAssetTemplate> CreateTrainingAssetTemplates()
+        private IReadOnlyList<TrainingAssetTemplate> CreateTrainingAssetTemplates()
         {
             List<TrainingAssetTemplate> templates = new List<TrainingAssetTemplate>();
-            string[] trainingIds = { "LightPractice", "SparringPractice", "EnduranceTraining" };
-            foreach (string trainingId in trainingIds)
+            IEnumerable<TrainingCatalogItem> catalogItems =
+                SelectedProfile?.TrainingCatalog?.Items ?? Enumerable.Empty<TrainingCatalogItem>();
+            foreach (TrainingCatalogItem item in catalogItems)
             {
+                string trainingId = item?.TrainingId?.Trim();
+                if (string.IsNullOrWhiteSpace(trainingId)) continue;
+                string displayName = string.IsNullOrWhiteSpace(item.DisplayName)
+                    ? trainingId
+                    : item.DisplayName.Trim();
                 templates.Add(new TrainingAssetTemplate(
                     $"Training_{trainingId}_SelectedBeforeFirstStep", trainingId,
+                    displayName,
                     "SelectedBeforeFirstStep",
                     "visual novel training scene, both characters ready to begin, before first training step"));
                 templates.Add(new TrainingAssetTemplate(
                     $"Training_{trainingId}_SelectedAfterFirstStep", trainingId,
+                    displayName,
                     "SelectedAfterFirstStep",
                     "visual novel training scene, both characters actively training, after training has begun"));
                 templates.Add(new TrainingAssetTemplate(
                     $"Training_{trainingId}_PlayerLpConsumed", trainingId,
+                    displayName,
                     "PlayerLpConsumed",
                     "visual novel training scene, player exhausted after reaching the limit, heroine reacting clearly"));
                 templates.Add(new TrainingAssetTemplate(
                     $"Training_{trainingId}_HeroineLpConsumed", trainingId,
+                    displayName,
                     "HeroineLpConsumed",
                     "visual novel training scene, heroine exhausted after reaching her limit, player reacting clearly"));
                 templates.Add(new TrainingAssetTemplate(
                     $"Training_{trainingId}_SimultaneousLpConsumed", trainingId,
+                    displayName,
                     "SimultaneousLpConsumed",
                     "visual novel training scene, player and heroine both exhausted after simultaneously reaching their limits"));
             }
@@ -4873,20 +5001,23 @@ namespace FantasyLoveSimAssetTool.ViewModels
             public string PositivePrompt { get; }
             public string DialogueMessage { get; }
 
-            public TrainingAssetTemplate(string assetId, string trainingId, string visualState, string positivePrompt)
+            public TrainingAssetTemplate(
+                string assetId,
+                string trainingId,
+                string displayName,
+                string visualState,
+                string positivePrompt)
             {
                 AssetId = assetId;
                 TrainingId = trainingId;
                 VisualState = visualState;
                 PositivePrompt = positivePrompt;
-                DialogueMessage = BuildStandardTrainingDialogue(trainingId, visualState);
+                DialogueMessage = BuildStandardTrainingDialogue(displayName, visualState);
             }
         }
 
-        private static string BuildStandardTrainingDialogue(string trainingId, string visualState)
+        private static string BuildStandardTrainingDialogue(string trainingName, string visualState)
         {
-            string trainingName = trainingId == "LightPractice" ? "軽い練習" :
-                trainingId == "SparringPractice" ? "模擬戦" : "持久訓練";
             switch (visualState)
             {
                 case "SelectedBeforeFirstStep": return trainingName + "を始めよう。準備はできてる？";
@@ -4896,6 +5027,38 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 case "SimultaneousLpConsumed": return "二人とも限界まで頑張ったね。";
                 default: return trainingName + "を続けよう。";
             }
+        }
+
+        private void EnsureLegacyTrainingCatalog()
+        {
+            SelectedProfile.TrainingCatalog ??= new TrainingCatalogSettings();
+            SelectedProfile.TrainingCatalog.Items ??= new ObservableCollection<TrainingCatalogItem>();
+            if (SelectedProfile.TrainingCatalog.Items.Count > 0)
+            {
+                return;
+            }
+
+            SelectedProfile.TrainingCatalog.Items.Add(new TrainingCatalogItem
+            {
+                TrainingId = "LightPractice",
+                DisplayName = "軽い稽古",
+                TrainingCategoryId = "Fundamentals",
+                UnlockedByDefault = true
+            });
+            SelectedProfile.TrainingCatalog.Items.Add(new TrainingCatalogItem
+            {
+                TrainingId = "SparringPractice",
+                DisplayName = "実戦形式",
+                TrainingCategoryId = "Combat",
+                UnlockedByDefault = true
+            });
+            SelectedProfile.TrainingCatalog.Items.Add(new TrainingCatalogItem
+            {
+                TrainingId = "EnduranceTraining",
+                DisplayName = "持久訓練",
+                TrainingCategoryId = "Endurance",
+                UnlockedByDefault = true
+            });
         }
 
         private IReadOnlyList<StillDefinition> GetHeroineBattleStandardDefinitions()
