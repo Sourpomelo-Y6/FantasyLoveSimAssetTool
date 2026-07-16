@@ -253,9 +253,7 @@ namespace FantasyLoveSimAssetTool.Services
                         reactionType = item.ReactionType,
                         message = item.Message
                     }).ToList(),
-                battleSkills = profile.BattleSkillsSpecified
-                    ? (object)(profile.BattleSkills ?? new System.Collections.ObjectModel.ObservableCollection<HeroineBattleSkill>())
-                    .Select(item => new
+                battleSkills = BattleSkillSyncService.CreateExportValues(profile)?.Select(item => new
                     {
                         skillId = item.SkillId,
                         displayName = item.DisplayName,
@@ -268,8 +266,7 @@ namespace FantasyLoveSimAssetTool.Services
                         useChancePercent = item.UseChancePercent,
                         priority = item.Priority,
                         maxUsesPerBattle = item.MaxUsesPerBattle
-                    }).ToList()
-                    : null,
+                    }).ToList(),
                 conversationResourcePath = profile.ConversationResourcePath,
                 gameEventResourcePath = profile.GameEventResourcePath,
                 actionResourcePath = profile.ActionResourcePath,

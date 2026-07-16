@@ -6684,15 +6684,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 }
             }
 
-            if (profileData.BattleSkills != null)
-            {
-                SelectedProfile.BattleSkillsSpecified = true;
-                SelectedProfile.BattleSkills.Clear();
-                foreach (HeroineBattleSkill item in profileData.BattleSkills.Where(item => item != null))
-                {
-                    SelectedProfile.BattleSkills.Add(item);
-                }
-            }
+            BattleSkillSyncService.ApplyImportedValues(SelectedProfile, profileData.BattleSkills);
 
             characterProjectService.SaveProfile(SelectedProfile);
             SelectedOutfitMessageOverride = SelectedProfile.OutfitMessageOverrides.FirstOrDefault();
