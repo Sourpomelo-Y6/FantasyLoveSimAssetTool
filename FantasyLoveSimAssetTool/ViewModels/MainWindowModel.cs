@@ -1644,6 +1644,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand RemoveTrainingDialogueMessageCommand { get; }
 
+        public ICommand ImportTrainingDialoguesFromUnityCommand { get; }
+
         public ICommand SavePromptRecordCommand { get; }
 
         public ICommand ApplyPromptTemplateCommand { get; }
@@ -2031,6 +2033,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RemoveTrainingDialogueMessageCommand = new RelayCommand(
                 RemoveTrainingDialogueMessage,
                 () => SelectedTrainingDialogueEntry != null && SelectedTrainingDialogueMessage != null);
+            ImportTrainingDialoguesFromUnityCommand = new RelayCommand(
+                ImportTrainingDialoguesFromUnity,
+                () => SelectedProfile != null);
             SavePromptRecordCommand = new RelayCommand(
                 SavePromptRecord,
                 () => SelectedProfile != null && SelectedAsset != null && CurrentPromptRecord != null);
@@ -4567,6 +4572,142 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             SelectedTrainingDialogueEntry.Messages.Remove(SelectedTrainingDialogueMessage);
             SelectedTrainingDialogueMessage = SelectedTrainingDialogueEntry.Messages.FirstOrDefault();
+        }
+
+        private void ImportTrainingDialoguesFromUnity()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            OpenFileDialog dialog = new OpenFileDialog
+            {
+                Title = "training_dialogues_from_unity.json を選択",
+                Filter = "training_dialogues_from_unity.json|training_dialogues_from_unity.json|JSON files (*.json)|*.json|All files (*.*)|*.*"
+            };
+            if (dialog.ShowDialog() != true)
+            {
+                StatusMessage = "FromUnity 訓練セリフ import をキャンセルしました。";
+                return;
+            }
+
+            try
+            {
+                ImportTrainingDialoguesFromUnityFile(dialog.FileName);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"FromUnity 訓練セリフ import に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void ImportTrainingDialoguesFromUnityFile(string filePath)
+        {
+            JsonSerializerOptions options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            FromUnityTrainingDialogueDataFile data =
+                JsonSerializer.Deserialize<FromUnityTrainingDialogueDataFile>(
+                    File.ReadAllText(filePath),
+                    options);
+            if (data == null)
+            {
+                throw new InvalidOperationException("training_dialogues_from_unity.json を読み込めませんでした。");
+            }
+            if (data.SchemaVersion != 1)
+            {
+                throw new InvalidOperationException($"未対応の schemaVersion です: {data.SchemaVersion}");
+            }
+            if (!string.IsNullOrWhiteSpace(data.HeroineId) &&
+                !string.Equals(data.HeroineId, SelectedProfile.HeroineId, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    $"HeroineId が選択中のキャラクターと一致しません。JSON: {data.HeroineId} / Selected: {SelectedProfile.HeroineId}");
+            }
+
+            SelectedProfile.TrainingDialogues ??= new TrainingDialogueSettings();
+            SelectedProfile.TrainingDialogues.Items ??= new ObservableCollection<TrainingDialogueEntry>();
+            int addedEntryCount = 0;
+            int addedMessageCount = 0;
+            int skippedCount = 0;
+
+            foreach (FromUnityTrainingDialogueItem item in
+                data.Items ?? new List<FromUnityTrainingDialogueItem>())
+            {
+                string trainingId = (item?.TrainingId ?? string.Empty).Trim();
+                string visualState = NormalizeTrainingDialogueVisualState(item?.VisualState);
+                if (item == null || string.IsNullOrWhiteSpace(visualState))
+                {
+                    skippedCount++;
+                    continue;
+                }
+
+                TrainingDialogueEntry entry = SelectedProfile.TrainingDialogues.Items.FirstOrDefault(existing =>
+                    existing != null &&
+                    string.Equals((existing.TrainingId ?? string.Empty).Trim(), trainingId, StringComparison.Ordinal) &&
+                    string.Equals(
+                        NormalizeTrainingDialogueVisualState(existing.VisualState),
+                        visualState,
+                        StringComparison.Ordinal));
+                if (entry == null)
+                {
+                    entry = new TrainingDialogueEntry
+                    {
+                        TrainingId = trainingId,
+                        VisualState = visualState
+                    };
+                    SelectedProfile.TrainingDialogues.Items.Add(entry);
+                    addedEntryCount++;
+                }
+                else
+                {
+                    // 旧表記も保存時には現行名へ揃える。
+                    entry.VisualState = visualState;
+                }
+
+                entry.Messages ??= new ObservableCollection<TrainingDialogueMessage>();
+                foreach (string sourceMessage in item.Messages ?? new List<string>())
+                {
+                    string message = (sourceMessage ?? string.Empty).Trim();
+                    if (message.Length == 0 || entry.Messages.Any(existing =>
+                        existing != null && string.Equals(existing.Text?.Trim(), message, StringComparison.Ordinal)))
+                    {
+                        skippedCount++;
+                        continue;
+                    }
+
+                    entry.Messages.Add(new TrainingDialogueMessage { Text = message });
+                    addedMessageCount++;
+                }
+            }
+
+            characterProjectService.SaveProfile(SelectedProfile);
+            RefreshSelectedTrainingDialogueEntry();
+            OnPropertyChanged(nameof(SelectedProfile));
+            StatusMessage =
+                $"FromUnity 訓練セリフを取り込みました。枠追加 {addedEntryCount} 件、候補追加 {addedMessageCount} 件、重複・不正値スキップ {skippedCount} 件。";
+        }
+
+        private static string NormalizeTrainingDialogueVisualState(string visualState)
+        {
+            string value = (visualState ?? string.Empty).Trim();
+            switch (value)
+            {
+                case "BeforeFirstStep":
+                    return "SelectedBeforeFirstStep";
+                case "AfterFirstStep":
+                    return "SelectedAfterFirstStep";
+                case "SelectedBeforeFirstStep":
+                case "SelectedAfterFirstStep":
+                case "PlayerLpConsumed":
+                case "HeroineLpConsumed":
+                case "SimultaneousLpConsumed":
+                    return value;
+                default:
+                    return string.Empty;
+            }
         }
 
         private void RefreshSelectedTrainingDialogueEntry()
