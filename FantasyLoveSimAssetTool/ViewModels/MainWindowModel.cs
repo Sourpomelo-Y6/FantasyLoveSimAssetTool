@@ -9187,7 +9187,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 row.TrainingImages,
                 row.Conversations,
                 row.Expressions,
-                row.Costumes
+                row.Costumes,
+                row.BattleSkills,
+                row.SkillTree
             })
             {
                 if (!ShowOnlyIncompleteProductionStatus || cell.Kind != ProductionStatusKind.Complete)

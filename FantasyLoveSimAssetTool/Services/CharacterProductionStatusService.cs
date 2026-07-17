@@ -30,8 +30,90 @@ namespace FantasyLoveSimAssetTool.Services
                 TrainingImages = EvaluateTrainingImages(profile),
                 Conversations = EvaluateConversations(profile),
                 Expressions = EvaluateExpressions(profile, expressionList, layerList),
-                Costumes = EvaluateCostumes(profile, costumeList, layerList)
+                Costumes = EvaluateCostumes(profile, costumeList, layerList),
+                BattleSkills = EvaluateBattleSkills(profile),
+                SkillTree = EvaluateSkillTree(profile)
             };
+        }
+
+        private static ProductionStatusCell EvaluateBattleSkills(HeroineProfile profile)
+        {
+            List<HeroineBattleSkill> skills = profile.BattleSkills?.Where(x => x != null).ToList()
+                ?? new List<HeroineBattleSkill>();
+            List<ProductionStatusCheckItem> checks = new List<ProductionStatusCheckItem>
+            {
+                Check("戦闘スキル登録", skills.Count > 0,
+                    skills.Count > 0 ? $"{skills.Count} 件登録済みです。" : "戦闘スキルを1件以上登録してください。")
+            };
+            bool idsValid = skills.All(x => !string.IsNullOrWhiteSpace(x.SkillId)) &&
+                skills.Where(x => !string.IsNullOrWhiteSpace(x.SkillId))
+                    .GroupBy(x => x.SkillId.Trim(), StringComparer.OrdinalIgnoreCase).All(x => x.Count() == 1);
+            checks.Add(Check("SkillId", idsValid, idsValid ? "空ID・重複IDはありません。" : "空IDまたは重複IDがあります。"));
+            foreach (HeroineBattleSkill skill in skills)
+            {
+                string label = string.IsNullOrWhiteSpace(skill.SkillId) ? "SkillId未設定" : skill.SkillId.Trim();
+                bool valid = !string.IsNullOrWhiteSpace(skill.DisplayName) &&
+                    !string.IsNullOrWhiteSpace(skill.EffectType) && !string.IsNullOrWhiteSpace(skill.Target) &&
+                    skill.Cost >= 0 && skill.Power >= 0 && skill.StatusDurationTurns >= 0 &&
+                    skill.UseChancePercent >= 0 && skill.UseChancePercent <= 100 && skill.MaxUsesPerBattle >= 0;
+                checks.Add(Check($"戦闘スキル {label}", valid, valid
+                    ? $"{skill.DisplayName} / {skill.EffectType} / {skill.Target} / MP {skill.Cost}"
+                    : "表示名、効果、対象、MP・威力・期間・確率・回数の値を確認してください。"));
+            }
+            int complete = checks.Count(x => x.IsComplete);
+            return Cell(profile, "戦闘スキル", 0, Kind(complete, checks.Count),
+                $"完成条件 {complete}/{checks.Count}。登録、ID、効果設定を確認します。", checks);
+        }
+
+        private static ProductionStatusCell EvaluateSkillTree(HeroineProfile profile)
+        {
+            List<HeroineTrainingSkill> trainingSkills = profile.HeroineSkillTree?.TrainingSkills?.Where(x => x != null).ToList()
+                ?? new List<HeroineTrainingSkill>();
+            List<HeroineSkillTreeNode> nodes = profile.HeroineSkillTree?.Nodes?.Where(x => x != null).ToList()
+                ?? new List<HeroineSkillTreeNode>();
+            HashSet<string> battleSkillIds = new HashSet<string>((profile.BattleSkills ?? new System.Collections.ObjectModel.ObservableCollection<HeroineBattleSkill>())
+                .Where(x => x != null && !string.IsNullOrWhiteSpace(x.SkillId)).Select(x => x.SkillId.Trim()), StringComparer.OrdinalIgnoreCase);
+            HashSet<string> trainingSkillIds = new HashSet<string>(trainingSkills
+                .Where(x => !string.IsNullOrWhiteSpace(x.SkillId)).Select(x => x.SkillId.Trim()), StringComparer.OrdinalIgnoreCase);
+            HashSet<string> trainingIds = new HashSet<string>((profile.TrainingCatalog?.Items ?? new System.Collections.ObjectModel.ObservableCollection<TrainingCatalogItem>())
+                .Where(x => x != null && !string.IsNullOrWhiteSpace(x.TrainingId)).Select(x => x.TrainingId.Trim()), StringComparer.OrdinalIgnoreCase);
+            HashSet<string> nodeIds = new HashSet<string>(nodes
+                .Where(x => !string.IsNullOrWhiteSpace(x.NodeId)).Select(x => x.NodeId.Trim()), StringComparer.OrdinalIgnoreCase);
+            List<ProductionStatusCheckItem> checks = new List<ProductionStatusCheckItem>
+            {
+                Check("ツリーノード登録", nodes.Count > 0, nodes.Count > 0 ? $"{nodes.Count} 件登録済みです。" : "ノードを1件以上登録してください。"),
+                Check("ルートノード", nodes.Any(x => x.PrerequisiteNodeIds == null || x.PrerequisiteNodeIds.Count == 0),
+                    nodes.Any(x => x.PrerequisiteNodeIds == null || x.PrerequisiteNodeIds.Count == 0) ? "前提なしのルートがあります。" : "前提なしのルートノードが必要です。"),
+                Check("NodeId", nodes.All(x => !string.IsNullOrWhiteSpace(x.NodeId)) && nodeIds.Count == nodes.Count,
+                    nodes.All(x => !string.IsNullOrWhiteSpace(x.NodeId)) && nodeIds.Count == nodes.Count ? "空ID・重複IDはありません。" : "空IDまたは重複IDがあります。")
+            };
+            bool trainingSkillsValid = trainingSkills.All(x => !string.IsNullOrWhiteSpace(x.SkillId) && !string.IsNullOrWhiteSpace(x.DisplayName)) &&
+                trainingSkillIds.Count == trainingSkills.Count;
+            checks.Add(Check("訓練SkillId", trainingSkillsValid,
+                trainingSkillsValid ? $"訓練スキル {trainingSkills.Count} 件のIDと表示名は有効です。" : "訓練スキルに空ID、重複ID、表示名不足があります。"));
+            foreach (HeroineSkillTreeNode node in nodes)
+            {
+                string label = string.IsNullOrWhiteSpace(node.NodeId) ? "NodeId未設定" : node.NodeId.Trim();
+                List<string> problems = new List<string>();
+                if (string.IsNullOrWhiteSpace(node.DisplayName)) problems.Add("表示名");
+                if (node.SkillPointCost < 0) problems.Add("SP");
+                foreach (string id in node.PrerequisiteNodeIds ?? new System.Collections.ObjectModel.ObservableCollection<string>())
+                    if (!nodeIds.Contains(id) || string.Equals(id, node.NodeId, StringComparison.OrdinalIgnoreCase)) problems.Add("前提:" + id);
+                if (!string.IsNullOrWhiteSpace(node.GrantedHeroineSkillId) && !battleSkillIds.Contains(node.GrantedHeroineSkillId))
+                    problems.Add("戦闘Skill:" + node.GrantedHeroineSkillId);
+                if (!string.IsNullOrWhiteSpace(node.TrainingSkillId) && !trainingSkillIds.Contains(node.TrainingSkillId))
+                    problems.Add("訓練Skill:" + node.TrainingSkillId);
+                foreach (string id in node.UnlockedTrainingIds ?? new System.Collections.ObjectModel.ObservableCollection<string>())
+                    if (!trainingIds.Contains(id)) problems.Add("解放Training:" + id);
+                bool hasReward = !string.IsNullOrWhiteSpace(node.GrantedHeroineSkillId) ||
+                    !string.IsNullOrWhiteSpace(node.TrainingSkillId) || (node.UnlockedTrainingIds?.Count ?? 0) > 0;
+                if (!hasReward) problems.Add("付与内容なし");
+                checks.Add(Check($"ノード {label}", problems.Count == 0,
+                    problems.Count == 0 ? "前提と付与先の参照は有効です。" : "要確認: " + string.Join(", ", problems)));
+            }
+            int complete = checks.Count(x => x.IsComplete);
+            return Cell(profile, "スキルツリー", 0, Kind(complete, checks.Count),
+                $"完成条件 {complete}/{checks.Count}。ルート、ID、前提、付与スキル、解放訓練を確認します。", checks);
         }
 
         private static ProductionStatusCell EvaluateConversations(HeroineProfile profile)

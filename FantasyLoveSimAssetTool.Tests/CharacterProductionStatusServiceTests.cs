@@ -25,6 +25,8 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(ProductionStatusKind.Complete, row.Conversations.Kind);
             Assert.AreEqual(ProductionStatusKind.Complete, row.Expressions.Kind);
             Assert.AreEqual(ProductionStatusKind.Complete, row.Costumes.Kind);
+            Assert.AreEqual(ProductionStatusKind.Complete, row.BattleSkills.Kind);
+            Assert.AreEqual(ProductionStatusKind.Complete, row.SkillTree.Kind);
             Assert.IsFalse(row.HasIncomplete);
         }
 
@@ -70,6 +72,22 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.IsTrue(row.Expressions.Checks.Any(x => x.Name.Contains("UnknownExpression") && !x.IsComplete));
             Assert.AreEqual(ProductionStatusKind.Partial, row.Costumes.Kind);
             Assert.IsTrue(row.Costumes.Checks.Any(x => x.Name.Contains("UnknownCostume") && !x.IsComplete));
+        }
+
+        [TestMethod]
+        public void Evaluate_BrokenSkillTreeReferences_ReturnsPartialDetails()
+        {
+            HeroineProfile profile = CompleteProfile();
+            profile.HeroineSkillTree.Nodes[1].PrerequisiteNodeIds.Add("MissingNode");
+            profile.HeroineSkillTree.Nodes[1].GrantedHeroineSkillId = "MissingBattleSkill";
+            profile.HeroineSkillTree.Nodes[1].UnlockedTrainingIds.Add("MissingTraining");
+
+            CharacterProductionStatusRow row = EvaluateWithDefinitions(profile);
+
+            Assert.AreEqual(ProductionStatusKind.Partial, row.SkillTree.Kind);
+            Assert.IsTrue(row.SkillTree.Checks.Any(x => x.Details.Contains("MissingNode") && !x.IsComplete));
+            Assert.IsTrue(row.SkillTree.Checks.Any(x => x.Details.Contains("MissingBattleSkill") && !x.IsComplete));
+            Assert.IsTrue(row.SkillTree.Checks.Any(x => x.Details.Contains("MissingTraining") && !x.IsComplete));
         }
 
         private static HeroineProfile CompleteProfile()
@@ -122,6 +140,36 @@ namespace FantasyLoveSimAssetTool.Tests
                     Message = "message"
                 });
             }
+            profile.BattleSkills.Add(new HeroineBattleSkill
+            {
+                SkillId = "BattleSkillA",
+                DisplayName = "攻撃",
+                EffectType = "Damage",
+                Target = "Enemy",
+                Cost = 2,
+                Power = 10,
+                UseChancePercent = 50,
+                MaxUsesPerBattle = 2
+            });
+            profile.HeroineSkillTree.TrainingSkills.Add(new HeroineTrainingSkill
+            {
+                SkillId = "TrainingSkillA",
+                DisplayName = "訓練補助"
+            });
+            profile.HeroineSkillTree.Nodes.Add(new HeroineSkillTreeNode
+            {
+                NodeId = "Root",
+                DisplayName = "ルート",
+                GrantedHeroineSkillId = "BattleSkillA"
+            });
+            profile.HeroineSkillTree.Nodes.Add(new HeroineSkillTreeNode
+            {
+                NodeId = "TrainingNode",
+                DisplayName = "訓練ノード",
+                TrainingSkillId = "TrainingSkillA",
+                PrerequisiteNodeIds = new ObservableCollection<string> { "Root" },
+                UnlockedTrainingIds = new ObservableCollection<string> { "TrainingA" }
+            });
             foreach (string id in new[] { "A1", "A2", "A3", "A4", "A5" })
             {
                 profile.Assets.Add(new HeroineAsset { AssetId = id, Status = AssetStatus.Accepted });
