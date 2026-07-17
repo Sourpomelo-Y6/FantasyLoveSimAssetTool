@@ -142,8 +142,43 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string lastBattleMessageImportReport;
         private int selectedMainTabIndex;
         private bool showOnlyIncompleteProductionStatus;
+        private HeroineBattleSkill selectedProductionBattleSkill;
+        private HeroineTrainingSkill selectedProductionTrainingSkill;
+        private HeroineSkillTreeNode selectedProductionSkillTreeNode;
+        private bool isBattleSkillEditorExpanded;
+        private bool isSkillTreeEditorExpanded;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
+
+        public HeroineBattleSkill SelectedProductionBattleSkill
+        {
+            get => selectedProductionBattleSkill;
+            set { if (selectedProductionBattleSkill != value) { selectedProductionBattleSkill = value; OnPropertyChanged(nameof(SelectedProductionBattleSkill)); } }
+        }
+
+        public HeroineTrainingSkill SelectedProductionTrainingSkill
+        {
+            get => selectedProductionTrainingSkill;
+            set { if (selectedProductionTrainingSkill != value) { selectedProductionTrainingSkill = value; OnPropertyChanged(nameof(SelectedProductionTrainingSkill)); } }
+        }
+
+        public HeroineSkillTreeNode SelectedProductionSkillTreeNode
+        {
+            get => selectedProductionSkillTreeNode;
+            set { if (selectedProductionSkillTreeNode != value) { selectedProductionSkillTreeNode = value; OnPropertyChanged(nameof(SelectedProductionSkillTreeNode)); } }
+        }
+
+        public bool IsBattleSkillEditorExpanded
+        {
+            get => isBattleSkillEditorExpanded;
+            set { if (isBattleSkillEditorExpanded != value) { isBattleSkillEditorExpanded = value; OnPropertyChanged(nameof(IsBattleSkillEditorExpanded)); } }
+        }
+
+        public bool IsSkillTreeEditorExpanded
+        {
+            get => isSkillTreeEditorExpanded;
+            set { if (isSkillTreeEditorExpanded != value) { isSkillTreeEditorExpanded = value; OnPropertyChanged(nameof(IsSkillTreeEditorExpanded)); } }
+        }
 
         public ObservableCollection<ProductionStatusCell> ProductionStatusCategories { get; }
 
@@ -2020,7 +2055,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedProfile != null);
             OpenBattleMessagesTabCommand = new RelayCommand(() => SelectedMainTabIndex = 2);
             RefreshProductionStatusCommand = new RelayCommand(RefreshProductionStatus);
-            OpenProductionStatusTargetCommand = new RelayCommand<ProductionStatusCell>(OpenProductionStatusTarget);
+            OpenProductionStatusTargetCommand = new RelayCommand<object>(OpenProductionStatusTarget);
             AddOutfitMessageOverrideCommand = new RelayCommand(
                 AddOutfitMessageOverride,
                 () => SelectedProfile != null);
@@ -9203,22 +9238,78 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
-        private void OpenProductionStatusTarget(ProductionStatusCell cell)
+        private void OpenProductionStatusTarget(object targetInfo)
         {
-            if (cell == null)
+            ProductionStatusCell cell = targetInfo as ProductionStatusCell;
+            ProductionStatusCheckItem check = targetInfo as ProductionStatusCheckItem;
+            if (cell == null && check == null)
             {
                 return;
             }
 
+            string characterId = cell?.CharacterId ?? check.CharacterId;
+            int tabIndex = cell?.TargetTabIndex ?? check.TargetTabIndex;
+            string details = cell?.Details ?? check.Details;
+
             HeroineProfile target = Profiles.FirstOrDefault(profile =>
-                string.Equals(profile.HeroineId, cell.CharacterId, StringComparison.OrdinalIgnoreCase));
+                string.Equals(profile.HeroineId, characterId, StringComparison.OrdinalIgnoreCase));
             if (target != null)
             {
                 SelectedProfile = target;
             }
 
-            SelectedMainTabIndex = cell.TargetTabIndex;
-            StatusMessage = $"{cell.CharacterId} の修正対象へ移動しました。{cell.Details}";
+            SelectedMainTabIndex = tabIndex;
+            if (check != null)
+            {
+                SelectProductionStatusDetail(check);
+            }
+            StatusMessage = $"{characterId} の修正対象へ移動しました。{details}";
+        }
+
+        private void SelectProductionStatusDetail(ProductionStatusCheckItem check)
+        {
+            if (SelectedProfile == null || string.IsNullOrWhiteSpace(check.TargetId)) return;
+            switch (check.TargetKind)
+            {
+                case ProductionStatusTargetKind.Conversation:
+                    SelectedConversationDataKind = check.ConversationKind;
+                    RefreshFilteredConversationEntries();
+                    SelectedConversationEntry = FilteredConversationEntries.FirstOrDefault(x =>
+                        string.Equals(x.Id, check.TargetId, StringComparison.OrdinalIgnoreCase));
+                    break;
+                case ProductionStatusTargetKind.Asset:
+                    SelectedAssetStatusFilter = "All";
+                    SelectedAsset = SelectedProfile.Assets?.FirstOrDefault(x =>
+                        string.Equals(x.AssetId, check.TargetId, StringComparison.OrdinalIgnoreCase));
+                    break;
+                case ProductionStatusTargetKind.BattleSkill:
+                    IsBattleSkillEditorExpanded = true;
+                    SelectedProductionBattleSkill = SelectedProfile.BattleSkills?.FirstOrDefault(x =>
+                        string.Equals(x.SkillId, check.TargetId, StringComparison.OrdinalIgnoreCase));
+                    break;
+                case ProductionStatusTargetKind.TrainingSkill:
+                    IsSkillTreeEditorExpanded = true;
+                    SelectedProductionTrainingSkill = SelectedProfile.HeroineSkillTree?.TrainingSkills?.FirstOrDefault(x =>
+                        string.Equals(x.SkillId, check.TargetId, StringComparison.OrdinalIgnoreCase));
+                    break;
+                case ProductionStatusTargetKind.SkillTreeNode:
+                    IsSkillTreeEditorExpanded = true;
+                    SelectedProductionSkillTreeNode = SelectedProfile.HeroineSkillTree?.Nodes?.FirstOrDefault(x =>
+                        string.Equals(x.NodeId, check.TargetId, StringComparison.OrdinalIgnoreCase));
+                    break;
+                case ProductionStatusTargetKind.Expression:
+                    SelectedExpressionDefinition = ExpressionDefinitions.FirstOrDefault(x =>
+                        string.Equals(x.ExpressionId, check.TargetId, StringComparison.OrdinalIgnoreCase));
+                    break;
+                case ProductionStatusTargetKind.Costume:
+                    SelectedCostumeDefinition = CostumeDefinitions.FirstOrDefault(x =>
+                        string.Equals(x.CostumeId, check.TargetId, StringComparison.OrdinalIgnoreCase));
+                    break;
+                case ProductionStatusTargetKind.LayerAsset:
+                    SelectedLayerAssetDefinition = LayerAssetDefinitions.FirstOrDefault(x =>
+                        string.Equals(x.AssetId, check.TargetId, StringComparison.OrdinalIgnoreCase));
+                    break;
+            }
         }
 
         private void LoadEnemies()

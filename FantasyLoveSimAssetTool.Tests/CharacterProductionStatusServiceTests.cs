@@ -130,6 +130,24 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.IsTrue(row.ExportReadiness.Checks.Any(x => x.Details.Contains("A1") && !x.IsComplete));
         }
 
+        [TestMethod]
+        public void Evaluate_DetailChecksContainNavigationTargets()
+        {
+            HeroineProfile profile = CompleteProfile();
+
+            CharacterProductionStatusRow row = EvaluateWithDefinitions(profile);
+
+            ProductionStatusCheckItem gameEvent = row.Events.Checks.First(x => x.Name.Contains("GameEvents01"));
+            Assert.AreEqual(ProductionStatusTargetKind.Conversation, gameEvent.TargetKind);
+            Assert.AreEqual(ConversationDataKind.GameEvents, gameEvent.ConversationKind);
+            Assert.AreEqual("GameEvents01", gameEvent.TargetId);
+            Assert.AreEqual(1, gameEvent.TargetTabIndex);
+
+            ProductionStatusCheckItem battleSkill = row.BattleSkills.Checks.First(x => x.Name.Contains("BattleSkillA"));
+            Assert.AreEqual(ProductionStatusTargetKind.BattleSkill, battleSkill.TargetKind);
+            Assert.AreEqual("BattleSkillA", battleSkill.TargetId);
+        }
+
         private static HeroineProfile CompleteProfile()
         {
             HeroineProfile profile = new HeroineProfile

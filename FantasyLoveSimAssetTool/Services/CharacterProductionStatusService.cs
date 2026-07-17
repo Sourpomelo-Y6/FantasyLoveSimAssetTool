@@ -81,7 +81,8 @@ namespace FantasyLoveSimAssetTool.Services
                 foreach (string assetId in SplitIds(entry.ImageAssetIdsText)) if (!acceptedAssetIds.Contains(assetId)) problems.Add("画像:" + assetId);
                 foreach (string skillId in RequiredSkillIdSyncService.NormalizeText(entry.Conditions?.RequiredSkillIdsText))
                     if (!skillIds.Contains(skillId)) problems.Add("スキル:" + skillId);
-                checks.Add(Check(label, problems.Count == 0, problems.Count == 0 ? "本文・条件・参照は有効です。" : "要確認: " + string.Join(", ", problems.Distinct())));
+                checks.Add(Check(label, problems.Count == 0, problems.Count == 0 ? "本文・条件・参照は有効です。" : "要確認: " + string.Join(", ", problems.Distinct()),
+                    ProductionStatusTargetKind.Conversation, entry.Id, 1, entry.Kind));
             }
             int complete = checks.Count(x => x.IsComplete);
             return Cell(profile, "イベント", 1, Kind(complete, checks.Count),
@@ -101,10 +102,17 @@ namespace FantasyLoveSimAssetTool.Services
             List<HeroineAsset> missingFiles = accepted.Where(asset => !fileCheck(asset)).ToList();
             List<ProductionStatusCheckItem> checks = categories.Select(category => Check(
                 category.CategoryName, category.Kind == ProductionStatusKind.Complete,
-                category.Kind == ProductionStatusKind.Complete ? "完成判定です。" : category.Symbol + " " + category.Details)).ToList();
+                category.Kind == ProductionStatusKind.Complete ? "完成判定です。" : category.Symbol + " " + category.Details,
+                ProductionStatusTargetKind.None, null, category.TargetTabIndex)).ToList();
             checks.Add(Check("Accepted画像の実ファイル", missingFiles.Count == 0,
                 missingFiles.Count == 0 ? $"Accepted画像 {accepted.Count} 件の保存先を確認しました。" :
-                $"{missingFiles.Count}/{accepted.Count} 件でファイルが見つかりません: {string.Join(", ", missingFiles.Select(x => x.AssetId))}"));
+                $"{missingFiles.Count}/{accepted.Count} 件でファイルが見つかりません。"));
+            foreach (HeroineAsset missingFile in missingFiles)
+            {
+                checks.Add(Check("画像ファイル " + missingFile.AssetId, false,
+                    $"StoredPathの実ファイルが見つかりません: {missingFile.StoredPath}",
+                    ProductionStatusTargetKind.Asset, missingFile.AssetId, 3));
+            }
             int entryCount = profile.ConversationEntries?.Count ?? 0;
             checks.Add(Check("Export対象件数", true,
                 $"画像 {accepted.Count} 件、会話・イベント {entryCount} 件、戦闘スキル {profile.BattleSkills?.Count ?? 0} 件が対象です。"));
@@ -145,7 +153,8 @@ namespace FantasyLoveSimAssetTool.Services
                     skill.UseChancePercent >= 0 && skill.UseChancePercent <= 100 && skill.MaxUsesPerBattle >= 0;
                 checks.Add(Check($"戦闘スキル {label}", valid, valid
                     ? $"{skill.DisplayName} / {skill.EffectType} / {skill.Target} / MP {skill.Cost}"
-                    : "表示名、効果、対象、MP・威力・期間・確率・回数の値を確認してください。"));
+                    : "表示名、効果、対象、MP・威力・期間・確率・回数の値を確認してください。",
+                    ProductionStatusTargetKind.BattleSkill, skill.SkillId));
             }
             int complete = checks.Count(x => x.IsComplete);
             return Cell(profile, "戦闘スキル", 0, Kind(complete, checks.Count),
@@ -177,7 +186,8 @@ namespace FantasyLoveSimAssetTool.Services
             bool trainingSkillsValid = trainingSkills.All(x => !string.IsNullOrWhiteSpace(x.SkillId) && !string.IsNullOrWhiteSpace(x.DisplayName)) &&
                 trainingSkillIds.Count == trainingSkills.Count;
             checks.Add(Check("訓練SkillId", trainingSkillsValid,
-                trainingSkillsValid ? $"訓練スキル {trainingSkills.Count} 件のIDと表示名は有効です。" : "訓練スキルに空ID、重複ID、表示名不足があります。"));
+                trainingSkillsValid ? $"訓練スキル {trainingSkills.Count} 件のIDと表示名は有効です。" : "訓練スキルに空ID、重複ID、表示名不足があります。",
+                ProductionStatusTargetKind.TrainingSkill, trainingSkills.FirstOrDefault(x => string.IsNullOrWhiteSpace(x.SkillId) || string.IsNullOrWhiteSpace(x.DisplayName))?.SkillId));
             foreach (HeroineSkillTreeNode node in nodes)
             {
                 string label = string.IsNullOrWhiteSpace(node.NodeId) ? "NodeId未設定" : node.NodeId.Trim();
@@ -196,7 +206,8 @@ namespace FantasyLoveSimAssetTool.Services
                     !string.IsNullOrWhiteSpace(node.TrainingSkillId) || (node.UnlockedTrainingIds?.Count ?? 0) > 0;
                 if (!hasReward) problems.Add("付与内容なし");
                 checks.Add(Check($"ノード {label}", problems.Count == 0,
-                    problems.Count == 0 ? "前提と付与先の参照は有効です。" : "要確認: " + string.Join(", ", problems)));
+                    problems.Count == 0 ? "前提と付与先の参照は有効です。" : "要確認: " + string.Join(", ", problems),
+                    ProductionStatusTargetKind.SkillTreeNode, node.NodeId));
             }
             int complete = checks.Count(x => x.IsComplete);
             return Cell(profile, "スキルツリー", 0, Kind(complete, checks.Count),
@@ -244,7 +255,8 @@ namespace FantasyLoveSimAssetTool.Services
                 LayerAssetDefinition layer = layers.FirstOrDefault(x => IsLayerKind(x, "Expression") &&
                     string.Equals(x.ExpressionId, expressionId, StringComparison.OrdinalIgnoreCase));
                 checks.Add(Check($"表情レイヤー {expressionId}", HasAcceptedLayer(profile, layer),
-                    BuildLayerDetails(profile, layer)));
+                    BuildLayerDetails(profile, layer), layer == null ? ProductionStatusTargetKind.Expression : ProductionStatusTargetKind.LayerAsset,
+                    layer == null ? expressionId : layer.AssetId));
             }
             HashSet<string> references = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (ConversationLine line in (profile.ConversationEntries ?? new System.Collections.ObjectModel.ObservableCollection<ConversationEntry>())
@@ -254,7 +266,8 @@ namespace FantasyLoveSimAssetTool.Services
                 if (item != null && !string.IsNullOrWhiteSpace(item.ExpressionId)) references.Add(item.ExpressionId.Trim());
             foreach (string reference in references.OrderBy(x => x))
                 checks.Add(Check($"表情参照 {reference}", definitionIds.Contains(reference),
-                    definitionIds.Contains(reference) ? "登録済み表情を参照しています。" : "参照先の表情定義がありません。"));
+                    definitionIds.Contains(reference) ? "登録済み表情を参照しています。" : "参照先の表情定義がありません。",
+                    ProductionStatusTargetKind.Expression, reference));
             int complete = checks.Count(x => x.IsComplete);
             return Cell(profile, "表情", 8, Kind(complete, checks.Count),
                 $"完成条件 {complete}/{checks.Count}。Neutral、表情レイヤー、会話・戦闘からの参照を確認します。", checks);
@@ -276,7 +289,9 @@ namespace FantasyLoveSimAssetTool.Services
             {
                 LayerAssetDefinition layer = layers.FirstOrDefault(x => IsLayerKind(x, "Costume") &&
                     string.Equals(x.CostumeId, costumeId, StringComparison.OrdinalIgnoreCase));
-                checks.Add(Check($"衣装レイヤー {costumeId}", HasAcceptedLayer(profile, layer), BuildLayerDetails(profile, layer)));
+                checks.Add(Check($"衣装レイヤー {costumeId}", HasAcceptedLayer(profile, layer), BuildLayerDetails(profile, layer),
+                    layer == null ? ProductionStatusTargetKind.Costume : ProductionStatusTargetKind.LayerAsset,
+                    layer == null ? costumeId : layer.AssetId));
             }
             HashSet<string> references = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (ConversationEntry entry in profile.ConversationEntries ?? new System.Collections.ObjectModel.ObservableCollection<ConversationEntry>())
@@ -285,7 +300,8 @@ namespace FantasyLoveSimAssetTool.Services
                 foreach (string id in item?.UnlockedOutfitIds ?? Array.Empty<string>()) if (!string.IsNullOrWhiteSpace(id)) references.Add(id.Trim());
             foreach (string reference in references.OrderBy(x => x))
                 checks.Add(Check($"衣装参照 {reference}", definitionIds.Contains(reference),
-                    definitionIds.Contains(reference) ? "登録済み衣装を参照しています。" : "参照先の衣装定義がありません。"));
+                    definitionIds.Contains(reference) ? "登録済み衣装を参照しています。" : "参照先の衣装定義がありません。",
+                    ProductionStatusTargetKind.Costume, reference));
             int complete = checks.Count(x => x.IsComplete);
             return Cell(profile, "衣装", 8, Kind(complete, checks.Count),
                 $"完成条件 {complete}/{checks.Count}。Default、衣装レイヤー、会話・戦闘からの参照を確認します。", checks);
@@ -380,7 +396,8 @@ namespace FantasyLoveSimAssetTool.Services
                         assets.TryGetValue(assetId, out HeroineAsset asset) && asset.Status == AssetStatus.Accepted;
                     checks.Add(Check($"{trainingId} / {stateNames[i]}", acceptedSlot,
                         string.IsNullOrWhiteSpace(assetId) ? "画像AssetIdが未設定です。" :
-                        acceptedSlot ? $"{assetId} はAcceptedです。" : $"{assetId} は未採用です。"));
+                        acceptedSlot ? $"{assetId} はAcceptedです。" : $"{assetId} は未採用です。",
+                        ProductionStatusTargetKind.Asset, assetId, 3));
                 }
             }
 
@@ -393,8 +410,24 @@ namespace FantasyLoveSimAssetTool.Services
             return Cell(profile, "訓練画像", 4, kind, details, checks);
         }
 
-        private static ProductionStatusCheckItem Check(string name, bool complete, string details) =>
-            new ProductionStatusCheckItem { Name = name, IsComplete = complete, Details = details };
+        private static ProductionStatusCheckItem Check(
+            string name,
+            bool complete,
+            string details,
+            ProductionStatusTargetKind targetKind = ProductionStatusTargetKind.None,
+            string targetId = null,
+            int? targetTabIndex = null,
+            ConversationDataKind conversationKind = ConversationDataKind.Conversations) =>
+            new ProductionStatusCheckItem
+            {
+                Name = name,
+                IsComplete = complete,
+                Details = details,
+                TargetKind = targetKind,
+                TargetId = targetId ?? string.Empty,
+                TargetTabIndex = targetTabIndex ?? 0,
+                ConversationKind = conversationKind
+            };
 
         private static ProductionStatusKind Kind(int complete, int total) =>
             complete == total ? ProductionStatusKind.Complete :
@@ -424,8 +457,14 @@ namespace FantasyLoveSimAssetTool.Services
             int tabIndex,
             ProductionStatusKind kind,
             string details,
-            IReadOnlyList<ProductionStatusCheckItem> checks) =>
-            new ProductionStatusCell
+            IReadOnlyList<ProductionStatusCheckItem> checks)
+        {
+            foreach (ProductionStatusCheckItem check in checks ?? Array.Empty<ProductionStatusCheckItem>())
+            {
+                check.CharacterId = profile.HeroineId ?? string.Empty;
+                if (check.TargetTabIndex == 0) check.TargetTabIndex = tabIndex;
+            }
+            return new ProductionStatusCell
             {
                 CategoryName = categoryName,
                 CharacterId = profile.HeroineId ?? string.Empty,
@@ -434,5 +473,6 @@ namespace FantasyLoveSimAssetTool.Services
                 Details = details,
                 Checks = checks
             };
+        }
     }
 }

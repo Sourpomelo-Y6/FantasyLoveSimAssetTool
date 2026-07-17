@@ -315,8 +315,9 @@
                                     </Expander>
 
                                     <Expander Grid.Row="20" Grid.Column="0" Grid.ColumnSpan="2"
-                                              Header="ヒロイン戦闘スキル" IsExpanded="False" Margin="0,4,0,0">
+                                              Header="ヒロイン戦闘スキル" IsExpanded="{Binding IsBattleSkillEditorExpanded}" Margin="0,4,0,0">
                                         <DataGrid ItemsSource="{Binding SelectedProfile.BattleSkills}"
+                                                  SelectedItem="{Binding SelectedProductionBattleSkill}"
                                                   AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True"
                                                   Height="180" Margin="0,8,0,0">
                                             <DataGrid.Columns>
@@ -336,10 +337,11 @@
                                     </Expander>
 
                                     <Expander Grid.Row="21" Grid.Column="0" Grid.ColumnSpan="2"
-                                              Header="ヒロイン訓練スキル・スキルツリー" IsExpanded="False" Margin="0,8,0,0">
+                                              Header="ヒロイン訓練スキル・スキルツリー" IsExpanded="{Binding IsSkillTreeEditorExpanded}" Margin="0,8,0,0">
                                         <StackPanel Margin="0,8,0,0">
                                             <TextBlock Text="訓練スキル" FontWeight="SemiBold" Margin="0,0,0,4"/>
                                             <DataGrid ItemsSource="{Binding SelectedProfile.HeroineSkillTree.TrainingSkills}"
+                                                      SelectedItem="{Binding SelectedProductionTrainingSkill}"
                                                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True"
                                                       Height="170" Margin="0,0,0,8">
                                                 <DataGrid.Columns>
@@ -356,6 +358,7 @@
                                             <TextBlock Text="ヒロインスキルツリーノード（前提・解放訓練・条件の詳細はJSON往復でも保持されます）"
                                                        FontWeight="SemiBold" Margin="0,0,0,4"/>
                                             <DataGrid ItemsSource="{Binding SelectedProfile.HeroineSkillTree.Nodes}"
+                                                      SelectedItem="{Binding SelectedProductionSkillTreeNode}"
                                                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True"
                                                       Height="170">
                                                 <DataGrid.Columns>
@@ -2819,7 +2822,7 @@
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
                                                                 <Button Command="{Binding Data.OpenProductionStatusTargetCommand, Source={StaticResource ViewModelProxy}}"
-                                                                        CommandParameter="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                        CommandParameter="{Binding}"
                                                                         ToolTip="{Binding Details}" HorizontalContentAlignment="Left"
                                                                         Margin="8,2" Padding="6,3">
                                                                     <DockPanel>

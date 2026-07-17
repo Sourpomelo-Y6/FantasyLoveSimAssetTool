@@ -10,6 +10,19 @@ namespace FantasyLoveSimAssetTool.Models
         NotApplicable
     }
 
+    public enum ProductionStatusTargetKind
+    {
+        None,
+        Conversation,
+        Asset,
+        BattleSkill,
+        TrainingSkill,
+        SkillTreeNode,
+        Expression,
+        Costume,
+        LayerAsset
+    }
+
     public sealed class ProductionStatusCell
     {
         public string CategoryName { get; set; } = string.Empty;
@@ -29,6 +42,11 @@ namespace FantasyLoveSimAssetTool.Models
         public string Name { get; set; } = string.Empty;
         public bool IsComplete { get; set; }
         public string Details { get; set; } = string.Empty;
+        public string CharacterId { get; set; } = string.Empty;
+        public int TargetTabIndex { get; set; }
+        public ProductionStatusTargetKind TargetKind { get; set; }
+        public string TargetId { get; set; } = string.Empty;
+        public ConversationDataKind ConversationKind { get; set; }
         public string Symbol => IsComplete ? "○" : "×";
     }
 
