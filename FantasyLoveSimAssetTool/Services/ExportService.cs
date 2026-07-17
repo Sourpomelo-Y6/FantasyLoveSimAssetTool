@@ -166,6 +166,8 @@ namespace FantasyLoveSimAssetTool.Services
             File.WriteAllText(Path.Combine(dataDirectory, "training_images_export.json"), BuildTrainingImagesExportJson(profile, acceptedAssets, report));
             File.WriteAllText(Path.Combine(dataDirectory, "training_dialogues_export.json"), TrainingDialogueSyncService.BuildExportJson(profile, report));
             File.WriteAllText(Path.Combine(dataDirectory, "heroine_skills_export.json"), HeroineSkillTreeSyncService.BuildExportJson(profile));
+            File.WriteAllText(Path.Combine(dataDirectory, "battle_result_events_export.json"), BattleMessageSyncService.BuildResultEventsJson(profile));
+            File.WriteAllText(Path.Combine(dataDirectory, "battle_panel_result_messages_export.json"), BattleMessageSyncService.BuildPanelMessagesJson(profile));
             File.WriteAllText(Path.Combine(dataDirectory, "conversations_export.json"), BuildConversationExportJson(profile, ConversationDataKind.Conversations));
             File.WriteAllText(Path.Combine(dataDirectory, "game_events_export.json"), BuildConversationExportJson(profile, ConversationDataKind.GameEvents));
             File.WriteAllText(Path.Combine(dataDirectory, "scheduled_events_export.json"), BuildScheduledEventsExportJson(profile));

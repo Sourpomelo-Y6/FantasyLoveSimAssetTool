@@ -80,6 +80,8 @@ namespace FantasyLoveSimAssetTool.Models
 
         public HeroineSkillTreeSettings HeroineSkillTree { get; set; }
 
+        public BattleMessageSettings BattleMessages { get; set; }
+
         // 古い profile.json と「空配列を明示」の区別を維持するための互換フラグ。
         public bool BattleSkillsSpecified { get; set; }
 
@@ -132,6 +134,7 @@ namespace FantasyLoveSimAssetTool.Models
             TrainingDialogues = new TrainingDialogueSettings();
             TrainingCatalog = new TrainingCatalogSettings();
             HeroineSkillTree = new HeroineSkillTreeSettings();
+            BattleMessages = new BattleMessageSettings();
             ConversationResourcePath = string.Empty;
             GameEventResourcePath = string.Empty;
             ActionResourcePath = string.Empty;

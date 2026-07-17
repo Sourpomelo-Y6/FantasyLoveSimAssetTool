@@ -6695,11 +6695,30 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     HeroineSkillTreeSyncService.Deserialize(File.ReadAllText(heroineSkillsPath)));
             }
 
+            string fromUnityFolder = Path.GetDirectoryName(filePath) ?? string.Empty;
+            string battleEventsPath = Path.Combine(fromUnityFolder, "battle_result_events_from_unity.json");
+            string battlePanelMessagesPath = Path.Combine(fromUnityFolder, "battle_panel_result_messages_from_unity.json");
+            bool importedBattleMessages = false;
+            if (File.Exists(battleEventsPath))
+            {
+                BattleMessageSyncService.ApplyResultEvents(
+                    SelectedProfile,
+                    BattleMessageSyncService.DeserializeResultEvents(File.ReadAllText(battleEventsPath)));
+                importedBattleMessages = true;
+            }
+            if (File.Exists(battlePanelMessagesPath))
+            {
+                BattleMessageSyncService.ApplyPanelMessages(
+                    SelectedProfile,
+                    BattleMessageSyncService.DeserializePanelMessages(File.ReadAllText(battlePanelMessagesPath)));
+                importedBattleMessages = true;
+            }
+
             characterProjectService.SaveProfile(SelectedProfile);
             SelectedOutfitMessageOverride = SelectedProfile.OutfitMessageOverrides.FirstOrDefault();
             SelectedOutfitReactionMessageOverride = SelectedProfile.OutfitReactionMessageOverrides.FirstOrDefault();
             OnPropertyChanged(nameof(SelectedProfile));
-            StatusMessage = $"FromUnity profile を取り込みました。衣装 {addedOutfitCount} 件追加/{skippedOutfitCount} 件スキップ、反応 {addedReactionCount} 件追加/{skippedReactionCount} 件スキップ、ヒロインスキル {(importedHeroineSkills ? "更新" : "維持")}。";
+            StatusMessage = $"FromUnity profile を取り込みました。衣装 {addedOutfitCount} 件追加/{skippedOutfitCount} 件スキップ、反応 {addedReactionCount} 件追加/{skippedReactionCount} 件スキップ、ヒロインスキル {(importedHeroineSkills ? "更新" : "維持")}、戦闘文 {(importedBattleMessages ? "更新" : "維持")}。";
         }
 
         private static void ApplyOptionalProfileText(string value, Action<string> apply)

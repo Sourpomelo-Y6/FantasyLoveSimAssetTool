@@ -1,0 +1,97 @@
+using FantasyLoveSimAssetTool.Models;
+using FantasyLoveSimAssetTool.Services;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.ObjectModel;
+using System.Linq;
+
+namespace FantasyLoveSimAssetTool.Tests
+{
+    [TestClass]
+    public class BattleMessageSyncServiceTests
+    {
+        [TestMethod]
+        public void ExportAndImport_RoundTripsResultEventsAndPanelMessages()
+        {
+            HeroineProfile source = Profile();
+            HeroineProfile target = new HeroineProfile { HeroineId = "TestHeroine" };
+
+            BattleMessageSyncService.ApplyResultEvents(target,
+                BattleMessageSyncService.DeserializeResultEvents(BattleMessageSyncService.BuildResultEventsJson(source)));
+            BattleMessageSyncService.ApplyPanelMessages(target,
+                BattleMessageSyncService.DeserializePanelMessages(BattleMessageSyncService.BuildPanelMessagesJson(source)));
+
+            BattleResultEventEntry result = target.BattleMessages.ResultEvents.Single();
+            Assert.AreEqual("DuoVictory_Forest", result.EventId);
+            Assert.AreEqual("Forest", result.BattleContextId);
+            Assert.AreEqual("Formal, Casual", result.UnlockedOutfitIdsText);
+            Assert.AreEqual(3, result.AffectionChange);
+            Assert.AreEqual("勝利しました", target.BattleMessages.PanelMessages.Single().Message);
+        }
+
+        [TestMethod]
+        public void Apply_MissingItemsPreservesExistingData()
+        {
+            HeroineProfile profile = Profile();
+            BattleMessageSyncService.ApplyResultEvents(profile,
+                BattleMessageSyncService.DeserializeResultEvents("{\"schemaVersion\":1,\"heroineId\":\"TestHeroine\"}"));
+            BattleMessageSyncService.ApplyPanelMessages(profile,
+                BattleMessageSyncService.DeserializePanelMessages("{\"schemaVersion\":1,\"heroineId\":\"TestHeroine\"}"));
+
+            Assert.AreEqual(1, profile.BattleMessages.ResultEvents.Count);
+            Assert.AreEqual(1, profile.BattleMessages.PanelMessages.Count);
+        }
+
+        [TestMethod]
+        public void Apply_ExplicitEmptyItemsClearsData()
+        {
+            HeroineProfile profile = Profile();
+            BattleMessageSyncService.ApplyResultEvents(profile,
+                BattleMessageSyncService.DeserializeResultEvents("{\"schemaVersion\":1,\"heroineId\":\"TestHeroine\",\"items\":[]}"));
+            BattleMessageSyncService.ApplyPanelMessages(profile,
+                BattleMessageSyncService.DeserializePanelMessages("{\"schemaVersion\":1,\"heroineId\":\"TestHeroine\",\"items\":[]}"));
+
+            Assert.AreEqual(0, profile.BattleMessages.ResultEvents.Count);
+            Assert.AreEqual(0, profile.BattleMessages.PanelMessages.Count);
+        }
+
+        [TestMethod]
+        public void Apply_RejectsDifferentHeroine()
+        {
+            Assert.ThrowsException<System.InvalidOperationException>(() =>
+                BattleMessageSyncService.ApplyResultEvents(Profile(), new BattleResultEventsDataFile { HeroineId = "Other" }));
+        }
+
+        private static HeroineProfile Profile()
+        {
+            return new HeroineProfile
+            {
+                HeroineId = "TestHeroine",
+                BattleMessages = new BattleMessageSettings
+                {
+                    ResultEvents = new ObservableCollection<BattleResultEventEntry>
+                    {
+                        new BattleResultEventEntry
+                        {
+                            EventId = "DuoVictory_Forest",
+                            ResultType = "DuoVictory",
+                            BattleContextId = "Forest",
+                            Message = "二人で勝てましたね",
+                            StillId = "VictoryStill",
+                            AffectionChange = 3,
+                            UnlockedOutfitIdsText = " Formal, Casual, Formal "
+                        }
+                    },
+                    PanelMessages = new ObservableCollection<BattlePanelResultMessageEntry>
+                    {
+                        new BattlePanelResultMessageEntry
+                        {
+                            MessageId = "Victory",
+                            ResultType = "Victory",
+                            Message = "勝利しました"
+                        }
+                    }
+                }
+            };
+        }
+    }
+}

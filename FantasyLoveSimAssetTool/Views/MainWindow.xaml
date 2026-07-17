@@ -797,6 +797,45 @@
                         </Grid>
                     </TabItem>
 
+                    <TabItem Header="戦闘メッセージ">
+                        <Grid Margin="0,12,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="戦闘後イベント（結果種別、戦闘Context、本文、スチル、好感度、解放衣装）"
+                                       FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedProfile.BattleMessages.ResultEvents}"
+                                      AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True"
+                                      Margin="0,0,0,12">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="EventId" Binding="{Binding EventId}" Width="130"/>
+                                    <DataGridTextColumn Header="結果種別" Binding="{Binding ResultType}" Width="110"/>
+                                    <DataGridTextColumn Header="BattleContextId" Binding="{Binding BattleContextId}" Width="130"/>
+                                    <DataGridTextColumn Header="メッセージ" Binding="{Binding Message}" Width="*"/>
+                                    <DataGridTextColumn Header="StillId" Binding="{Binding StillId}" Width="110"/>
+                                    <DataGridTextColumn Header="好感度" Binding="{Binding AffectionChange}" Width="65"/>
+                                    <DataGridTextColumn Header="解放OutfitId（カンマ区切り）" Binding="{Binding UnlockedOutfitIdsText}" Width="180"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <TextBlock Grid.Row="2" Text="戦闘パネル結果メッセージ" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <DataGrid Grid.Row="3" ItemsSource="{Binding SelectedProfile.BattleMessages.PanelMessages}"
+                                      AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="MessageId" Binding="{Binding MessageId}" Width="130"/>
+                                    <DataGridTextColumn Header="結果種別" Binding="{Binding ResultType}" Width="110"/>
+                                    <DataGridTextColumn Header="メッセージ" Binding="{Binding Message}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <Button Grid.Row="4" Content="戦闘メッセージ保存"
+                                    Command="{Binding SaveSelectedProfileCommand}" Width="160" Height="30"
+                                    HorizontalAlignment="Right" Margin="0,12,0,0"/>
+                        </Grid>
+                    </TabItem>
+
                     <TabItem Header="画像">
                         <Grid Margin="0,12,0,0">
                             <Grid.RowDefinitions>
