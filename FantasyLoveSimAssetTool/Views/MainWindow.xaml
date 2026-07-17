@@ -99,6 +99,7 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="HeroineId" VerticalAlignment="Center" Margin="0,0,8,8"/>
@@ -297,9 +298,48 @@
                                         </DataGrid>
                                     </Expander>
 
+                                    <Expander Grid.Row="21" Grid.Column="0" Grid.ColumnSpan="2"
+                                              Header="ヒロイン訓練スキル・スキルツリー" IsExpanded="False" Margin="0,8,0,0">
+                                        <StackPanel Margin="0,8,0,0">
+                                            <TextBlock Text="訓練スキル" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                                            <DataGrid ItemsSource="{Binding SelectedProfile.HeroineSkillTree.TrainingSkills}"
+                                                      AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True"
+                                                      Height="170" Margin="0,0,0,8">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="SkillId" Binding="{Binding SkillId}" Width="120"/>
+                                                    <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName}" Width="120"/>
+                                                    <DataGridTextColumn Header="主人公HP軽減" Binding="{Binding PlayerHpCostReduction}" Width="90"/>
+                                                    <DataGridTextColumn Header="ヒロインHP軽減" Binding="{Binding HeroineHpCostReduction}" Width="100"/>
+                                                    <DataGridTextColumn Header="好感度補正" Binding="{Binding AffectionRewardModifier}" Width="80"/>
+                                                    <DataGridTextColumn Header="熟練度補正" Binding="{Binding ProficiencyRewardModifier}" Width="80"/>
+                                                    <DataGridTextColumn Header="適用範囲" Binding="{Binding ApplicationScope}" Width="110"/>
+                                                    <DataGridTextColumn Header="対象ID" Binding="{Binding ApplicationTargetId}" Width="120"/>
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                            <TextBlock Text="ヒロインスキルツリーノード（前提・解放訓練・条件の詳細はJSON往復でも保持されます）"
+                                                       FontWeight="SemiBold" Margin="0,0,0,4"/>
+                                            <DataGrid ItemsSource="{Binding SelectedProfile.HeroineSkillTree.Nodes}"
+                                                      AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True"
+                                                      Height="170">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="NodeId" Binding="{Binding NodeId}" Width="120"/>
+                                                    <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName}" Width="120"/>
+                                                    <DataGridTextColumn Header="訓練SkillId" Binding="{Binding TrainingSkillId}" Width="120"/>
+                                                    <DataGridTextColumn Header="戦闘SkillId" Binding="{Binding GrantedHeroineSkillId}" Width="120"/>
+                                                    <DataGridTextColumn Header="SP" Binding="{Binding SkillPointCost}" Width="45"/>
+                                                    <DataGridTextColumn Header="前提NodeId（カンマ区切り）" Binding="{Binding PrerequisiteNodeIdsText}" Width="170"/>
+                                                    <DataGridTextColumn Header="解放TrainingId（カンマ区切り）" Binding="{Binding UnlockedTrainingIdsText}" Width="180"/>
+                                                    <DataGridTextColumn Header="条件 Type|Scope|Target|Value（;区切り）" Binding="{Binding UnlockConditionsText}" Width="240"/>
+                                                    <DataGridTextColumn Header="X" Binding="{Binding TreePositionX}" Width="55"/>
+                                                    <DataGridTextColumn Header="Y" Binding="{Binding TreePositionY}" Width="55"/>
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                        </StackPanel>
+                                    </Expander>
+
                                     <Border Grid.Row="0"
                                             Grid.Column="2"
-                                            Grid.RowSpan="21"
+                                            Grid.RowSpan="22"
                                             BorderBrush="#DDDDDD"
                                             BorderThickness="1"
                                             Padding="10"

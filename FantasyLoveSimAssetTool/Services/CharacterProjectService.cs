@@ -74,6 +74,7 @@ namespace FantasyLoveSimAssetTool.Services
             NormalizeTrainingImages(profile);
             NormalizeTrainingDialogues(profile);
             NormalizeTrainingCatalog(profile);
+            profile.HeroineSkillTree = HeroineSkillTreeSyncService.Normalize(profile.HeroineSkillTree);
             if (profile.BattleSkills.Count > 0)
             {
                 profile.BattleSkillsSpecified = true;
@@ -227,6 +228,7 @@ namespace FantasyLoveSimAssetTool.Services
             NormalizeTrainingImages(profile);
             NormalizeTrainingDialogues(profile);
             NormalizeTrainingCatalog(profile);
+            profile.HeroineSkillTree = HeroineSkillTreeSyncService.Normalize(profile.HeroineSkillTree);
             profile.AppearancePrompt ??= string.Empty;
             profile.StillCommonPositivePrompt ??= string.Empty;
             NormalizeProfileCompatibilityFields(profile);

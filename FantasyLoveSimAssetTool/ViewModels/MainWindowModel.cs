@@ -6686,11 +6686,20 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             BattleSkillSyncService.ApplyImportedValues(SelectedProfile, profileData.BattleSkills);
 
+            string heroineSkillsPath = Path.Combine(Path.GetDirectoryName(filePath) ?? string.Empty, "heroine_skills_from_unity.json");
+            bool importedHeroineSkills = File.Exists(heroineSkillsPath);
+            if (importedHeroineSkills)
+            {
+                HeroineSkillTreeSyncService.ApplyImportedValues(
+                    SelectedProfile,
+                    HeroineSkillTreeSyncService.Deserialize(File.ReadAllText(heroineSkillsPath)));
+            }
+
             characterProjectService.SaveProfile(SelectedProfile);
             SelectedOutfitMessageOverride = SelectedProfile.OutfitMessageOverrides.FirstOrDefault();
             SelectedOutfitReactionMessageOverride = SelectedProfile.OutfitReactionMessageOverrides.FirstOrDefault();
             OnPropertyChanged(nameof(SelectedProfile));
-            StatusMessage = $"FromUnity profile を取り込みました。衣装 {addedOutfitCount} 件追加/{skippedOutfitCount} 件スキップ、反応 {addedReactionCount} 件追加/{skippedReactionCount} 件スキップ。";
+            StatusMessage = $"FromUnity profile を取り込みました。衣装 {addedOutfitCount} 件追加/{skippedOutfitCount} 件スキップ、反応 {addedReactionCount} 件追加/{skippedReactionCount} 件スキップ、ヒロインスキル {(importedHeroineSkills ? "更新" : "維持")}。";
         }
 
         private static void ApplyOptionalProfileText(string value, Action<string> apply)
