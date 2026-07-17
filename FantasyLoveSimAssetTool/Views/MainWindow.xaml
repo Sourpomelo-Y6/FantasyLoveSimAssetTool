@@ -813,12 +813,35 @@
                                       Margin="0,0,0,12">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="EventId" Binding="{Binding EventId}" Width="130"/>
-                                    <DataGridTextColumn Header="結果種別" Binding="{Binding ResultType}" Width="110"/>
+                                    <DataGridTemplateColumn Header="結果種別" Width="120">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ComboBox ItemsSource="{Binding Data.BattleResultTypeOptions, Source={StaticResource ViewModelProxy}}"
+                                                          SelectedItem="{Binding ResultType, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                     <DataGridTextColumn Header="BattleContextId" Binding="{Binding BattleContextId}" Width="130"/>
                                     <DataGridTextColumn Header="メッセージ" Binding="{Binding Message}" Width="*"/>
-                                    <DataGridTextColumn Header="StillId" Binding="{Binding StillId}" Width="110"/>
+                                    <DataGridTemplateColumn Header="StillId" Width="140">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ComboBox ItemsSource="{Binding Data.BattleStillIdOptions, Source={StaticResource ViewModelProxy}}"
+                                                          Text="{Binding StillId, UpdateSourceTrigger=PropertyChanged}"
+                                                          IsEditable="True"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                     <DataGridTextColumn Header="好感度" Binding="{Binding AffectionChange}" Width="65"/>
-                                    <DataGridTextColumn Header="解放OutfitId（カンマ区切り）" Binding="{Binding UnlockedOutfitIdsText}" Width="180"/>
+                                    <DataGridTemplateColumn Header="解放OutfitId（カンマ区切り）" Width="210">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ComboBox ItemsSource="{Binding Data.CostumeIdOptions, Source={StaticResource ViewModelProxy}}"
+                                                          Text="{Binding UnlockedOutfitIdsText, UpdateSourceTrigger=PropertyChanged}"
+                                                          IsEditable="True" ToolTip="候補を1件選択、または複数IDをカンマ区切りで入力"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
                             <TextBlock Grid.Row="2" Text="戦闘パネル結果メッセージ" FontWeight="SemiBold" Margin="0,0,0,6"/>
@@ -826,7 +849,14 @@
                                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="MessageId" Binding="{Binding MessageId}" Width="130"/>
-                                    <DataGridTextColumn Header="結果種別" Binding="{Binding ResultType}" Width="110"/>
+                                    <DataGridTemplateColumn Header="結果種別" Width="120">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ComboBox ItemsSource="{Binding Data.BattlePanelResultTypeOptions, Source={StaticResource ViewModelProxy}}"
+                                                          SelectedItem="{Binding ResultType, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                     <DataGridTextColumn Header="メッセージ" Binding="{Binding Message}" Width="*"/>
                                 </DataGrid.Columns>
                             </DataGrid>

@@ -59,6 +59,13 @@ namespace FantasyLoveSimAssetTool.Services
                 AcceptedAssetCount = acceptedAssets.Count
             };
             ValidateConversationEntries(profile, acceptedAssets, report);
+            foreach (string warning in BattleMessageSyncService.Validate(
+                profile,
+                stillDefinitionService.GetDefaultDefinitions().Where(x => x != null).Select(x => x.AssetId),
+                GetConversationCostumeIds()))
+            {
+                report.Warnings.Add(warning);
+            }
 
             foreach (HeroineAsset asset in acceptedAssets)
             {

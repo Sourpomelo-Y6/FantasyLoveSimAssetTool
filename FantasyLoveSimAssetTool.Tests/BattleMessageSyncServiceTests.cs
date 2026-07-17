@@ -61,6 +61,57 @@ namespace FantasyLoveSimAssetTool.Tests
                 BattleMessageSyncService.ApplyResultEvents(Profile(), new BattleResultEventsDataFile { HeroineId = "Other" }));
         }
 
+        [TestMethod]
+        public void Validate_ReportsDuplicateUnknownAndMissingValues()
+        {
+            HeroineProfile profile = Profile();
+            profile.BattleMessages.ResultEvents.Add(new BattleResultEventEntry
+            {
+                EventId = "OtherId",
+                ResultType = "DuoVictory",
+                BattleContextId = "Forest",
+                Message = string.Empty,
+                StillId = "UnknownStill",
+                UnlockedOutfitIds = new[] { "UnknownOutfit" }
+            });
+            profile.BattleMessages.PanelMessages.Add(new BattlePanelResultMessageEntry
+            {
+                MessageId = "duplicate",
+                ResultType = "Victory",
+                Message = string.Empty
+            });
+            profile.BattleMessages.PanelMessages.Add(new BattlePanelResultMessageEntry
+            {
+                MessageId = string.Empty,
+                ResultType = "FutureResult",
+                Message = "future"
+            });
+
+            string[] messages = BattleMessageSyncService.Validate(
+                profile,
+                new[] { "VictoryStill" },
+                new[] { "Formal", "Casual" }).ToArray();
+
+            Assert.IsTrue(messages.Any(x => x.Contains("resultType + battleContextId")));
+            Assert.IsTrue(messages.Any(x => x.Contains("message が空")));
+            Assert.IsTrue(messages.Any(x => x.Contains("UnknownStill")));
+            Assert.IsTrue(messages.Any(x => x.Contains("UnknownOutfit")));
+            Assert.IsTrue(messages.Any(x => x.Contains("FutureResult")));
+            Assert.IsTrue(messages.Any(x => x.Contains("MessageId が空")));
+            Assert.IsTrue(messages.Any(x => x.Contains("resultType `Victory` が重複")));
+        }
+
+        [TestMethod]
+        public void Validate_AcceptsKnownCompleteValues()
+        {
+            string[] messages = BattleMessageSyncService.Validate(
+                Profile(),
+                new[] { "VictoryStill" },
+                new[] { "Formal", "Casual" }).ToArray();
+
+            Assert.AreEqual(0, messages.Length);
+        }
+
         private static HeroineProfile Profile()
         {
             return new HeroineProfile

@@ -64,6 +64,46 @@ namespace FantasyLoveSimAssetTool.Services
             profile.BattleMessages.PanelMessages = NormalizePanelMessages(profile.BattleMessages.PanelMessages);
         }
 
+        public static IReadOnlyList<string> Validate(
+            HeroineProfile profile,
+            IEnumerable<string> knownStillIds,
+            IEnumerable<string> knownOutfitIds)
+        {
+            List<string> messages = new List<string>();
+            BattleMessageSettings settings = profile?.BattleMessages ?? new BattleMessageSettings();
+            HashSet<string> resultTypes = new HashSet<string>(new[]
+            { "SoloVictory", "DuoVictory", "SoloDefeat", "DuoDefeat", "SoloEscape", "DuoEscape" }, StringComparer.Ordinal);
+            HashSet<string> panelTypes = new HashSet<string>(new[] { "Victory", "Defeat", "Escape", "Default" }, StringComparer.Ordinal);
+            HashSet<string> stillIds = new HashSet<string>(knownStillIds ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+            HashSet<string> outfitIds = new HashSet<string>(knownOutfitIds ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+            List<BattleResultEventEntry> events = (settings.ResultEvents ?? new ObservableCollection<BattleResultEventEntry>()).Where(x => x != null).ToList();
+            foreach (IGrouping<string, BattleResultEventEntry> group in events.Where(x => !string.IsNullOrWhiteSpace(x.EventId)).GroupBy(x => x.EventId.Trim(), StringComparer.OrdinalIgnoreCase).Where(x => x.Count() > 1))
+                messages.Add($"[Error] 戦闘結果: EventId `{group.Key}` が重複しています。");
+            foreach (IGrouping<string, BattleResultEventEntry> group in events.GroupBy(x => (x.ResultType?.Trim() ?? "") + "|" + (x.BattleContextId?.Trim() ?? ""), StringComparer.OrdinalIgnoreCase).Where(x => x.Count() > 1))
+                messages.Add($"[Error] 戦闘結果: resultType + battleContextId `{group.Key}` が重複しています。");
+            foreach (BattleResultEventEntry item in events)
+            {
+                string label = string.IsNullOrWhiteSpace(item.EventId) ? "EventId未設定" : item.EventId.Trim();
+                if (string.IsNullOrWhiteSpace(item.EventId)) messages.Add("[Error] 戦闘結果: EventId が空です。");
+                if (!resultTypes.Contains(item.ResultType?.Trim() ?? "")) messages.Add($"[Error] 戦闘結果 `{label}`: resultType `{item.ResultType}` は候補外です。");
+                if (string.IsNullOrWhiteSpace(item.Message)) messages.Add($"[Error] 戦闘結果 `{label}`: message が空です。");
+                if (!string.IsNullOrWhiteSpace(item.StillId) && !stillIds.Contains(item.StillId.Trim())) messages.Add($"[Warning] 戦闘結果 `{label}`: stillId `{item.StillId}` は登録済み候補にありません。");
+                foreach (string outfitId in item.UnlockedOutfitIds ?? new string[0])
+                    if (!string.IsNullOrWhiteSpace(outfitId) && !outfitIds.Contains(outfitId.Trim())) messages.Add($"[Warning] 戦闘結果 `{label}`: outfitId `{outfitId}` は登録済み候補にありません。");
+            }
+            List<BattlePanelResultMessageEntry> panels = (settings.PanelMessages ?? new ObservableCollection<BattlePanelResultMessageEntry>()).Where(x => x != null).ToList();
+            foreach (IGrouping<string, BattlePanelResultMessageEntry> group in panels.GroupBy(x => x.ResultType?.Trim() ?? "", StringComparer.OrdinalIgnoreCase).Where(x => x.Count() > 1))
+                messages.Add($"[Error] 戦闘パネル: resultType `{group.Key}` が重複しています。");
+            foreach (BattlePanelResultMessageEntry item in panels)
+            {
+                string label = string.IsNullOrWhiteSpace(item.MessageId) ? "MessageId未設定" : item.MessageId.Trim();
+                if (string.IsNullOrWhiteSpace(item.MessageId)) messages.Add("[Error] 戦闘パネル: MessageId が空です。");
+                if (!panelTypes.Contains(item.ResultType?.Trim() ?? "")) messages.Add($"[Error] 戦闘パネル `{label}`: resultType `{item.ResultType}` は候補外です。");
+                if (string.IsNullOrWhiteSpace(item.Message)) messages.Add($"[Error] 戦闘パネル `{label}`: message が空です。");
+            }
+            return messages;
+        }
+
         private static ObservableCollection<BattleResultEventEntry> NormalizeEvents(IEnumerable<BattleResultEventEntry> source)
         {
             List<BattleResultEventEntry> result = new List<BattleResultEventEntry>();

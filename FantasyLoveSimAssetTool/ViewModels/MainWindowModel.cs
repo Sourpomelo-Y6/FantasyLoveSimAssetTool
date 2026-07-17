@@ -202,6 +202,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ObservableCollection<string> CostumeIdOptions { get; }
 
+        public ObservableCollection<string> BattleResultTypeOptions { get; }
+
+        public ObservableCollection<string> BattlePanelResultTypeOptions { get; }
+
+        public ObservableCollection<string> BattleStillIdOptions { get; }
+
         public ObservableCollection<string> LayerPreviewBaseBodyOptions { get; }
 
         public ObservableCollection<string> LayerPreviewCostumeOptions { get; }
@@ -1792,6 +1798,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
             };
             ExpressionIdOptions = new ObservableCollection<string>();
             CostumeIdOptions = new ObservableCollection<string>();
+            BattleResultTypeOptions = new ObservableCollection<string>(new[]
+            {
+                "SoloVictory", "DuoVictory", "SoloDefeat", "DuoDefeat", "SoloEscape", "DuoEscape"
+            });
+            BattlePanelResultTypeOptions = new ObservableCollection<string>(new[]
+            {
+                "Victory", "Defeat", "Escape", "Default"
+            });
+            BattleStillIdOptions = new ObservableCollection<string>();
             LayerPreviewBaseBodyOptions = new ObservableCollection<string>();
             LayerPreviewCostumeOptions = new ObservableCollection<string>();
             LayerPreviewExpressionOptions = new ObservableCollection<string>();
@@ -6123,6 +6138,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             ApplyStillWorkItemsToDefinitions();
+            RefreshStringOptions(BattleStillIdOptions, StillDefinitions.Where(x => x != null).Select(x => x.AssetId), includeEmpty: true);
             RefreshFilteredStillDefinitions();
         }
 
