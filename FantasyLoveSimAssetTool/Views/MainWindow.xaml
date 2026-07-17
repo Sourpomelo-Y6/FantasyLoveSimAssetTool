@@ -44,6 +44,44 @@
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Top" Text="キャラクター" FontWeight="SemiBold" Margin="0,0,0,8"/>
 
+                    <Border DockPanel.Dock="Top"
+                            BorderBrush="#DDDDDD"
+                            BorderThickness="1"
+                            Padding="8"
+                            Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="220"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0"
+                                       Text="選択中のキャラクター画像"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,6"/>
+                            <Grid Grid.Row="1" Background="#F7F7F7" ClipToBounds="True">
+                                <Image Source="{Binding ProfilePreviewImagePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}"
+                                       Stretch="Uniform"/>
+                                <ItemsControl ItemsSource="{Binding ProfilePreviewItems}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate><Grid/></ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Image Source="{Binding ImagePath, Converter={StaticResource StringToImageSourceConverter}}"
+                                                   Stretch="Uniform"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                            <TextBlock Grid.Row="2"
+                                       Text="{Binding ProfilePreviewMessage}"
+                                       Foreground="Gray"
+                                       TextWrapping="Wrap"
+                                       Margin="0,6,0,0"/>
+                        </Grid>
+                    </Border>
+
                     <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
                         <TextBlock Text="HeroineId"/>
                         <TextBox Text="{Binding HeroineIdInput, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,8"/>
@@ -75,7 +113,6 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="140"/>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="260"/>
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -337,53 +374,6 @@
                                         </StackPanel>
                                     </Expander>
 
-                                    <Border Grid.Row="0"
-                                            Grid.Column="2"
-                                            Grid.RowSpan="22"
-                                            BorderBrush="#DDDDDD"
-                                            BorderThickness="1"
-                                            Padding="10"
-                                            Margin="16,0,0,0">
-                                        <Grid>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="*"/>
-                                                <RowDefinition Height="Auto"/>
-                                            </Grid.RowDefinitions>
-
-                                            <TextBlock Grid.Row="0"
-                                                       Text="キャラクター画像"
-                                                       FontWeight="SemiBold"
-                                                       Margin="0,0,0,8"/>
-
-                                            <Grid Grid.Row="1"
-                                                  Background="#F7F7F7"
-                                                  MinHeight="360"
-                                                  ClipToBounds="True">
-                                                <Image Source="{Binding ProfilePreviewImagePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}"
-                                                       Stretch="Uniform"/>
-                                                <ItemsControl ItemsSource="{Binding ProfilePreviewItems}">
-                                                    <ItemsControl.ItemsPanel>
-                                                        <ItemsPanelTemplate>
-                                                            <Grid/>
-                                                        </ItemsPanelTemplate>
-                                                    </ItemsControl.ItemsPanel>
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <Image Source="{Binding ImagePath, Converter={StaticResource StringToImageSourceConverter}}"
-                                                                   Stretch="Uniform"/>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </Grid>
-
-                                            <TextBlock Grid.Row="2"
-                                                       Text="{Binding ProfilePreviewMessage}"
-                                                       Foreground="Gray"
-                                                       TextWrapping="Wrap"
-                                                       Margin="0,8,0,0"/>
-                                        </Grid>
-                                    </Border>
                                 </Grid>
                             </ScrollViewer>
 
