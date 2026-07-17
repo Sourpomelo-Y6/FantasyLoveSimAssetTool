@@ -841,6 +841,15 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="表示方式" Width="145">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ComboBox ItemsSource="{Binding Data.BattleVisualModeOptions, Source={StaticResource ViewModelProxy}}"
+                                                          SelectedItem="{Binding VisualMode, UpdateSourceTrigger=PropertyChanged}"
+                                                          ToolTip="Auto: スチル優先／未解決時は暗幕+立ち絵、StillOnly: スチルのみ、StillWithPortrait: 暗幕+スチル+立ち絵、PortraitOnly: 暗幕+立ち絵"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                     <DataGridTemplateColumn Header="表情" Width="120">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>

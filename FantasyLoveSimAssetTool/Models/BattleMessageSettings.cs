@@ -13,6 +13,7 @@ namespace FantasyLoveSimAssetTool.Models
         public string SpeakerName { get; set; } = string.Empty;
         public string Message { get; set; } = string.Empty;
         public string StillId { get; set; } = string.Empty;
+        public string VisualMode { get; set; } = "Auto";
         public string ExpressionId { get; set; } = string.Empty;
         public int AffectionChange { get; set; }
         public string[] UnlockedOutfitIds { get; set; } = new string[0];

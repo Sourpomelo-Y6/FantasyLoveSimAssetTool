@@ -208,6 +208,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ObservableCollection<string> BattleSpeakerTypeOptions { get; }
 
+        public ObservableCollection<string> BattleVisualModeOptions { get; }
+
         public ObservableCollection<string> BattleStillIdOptions { get; }
 
         public ObservableCollection<string> LayerPreviewBaseBodyOptions { get; }
@@ -1811,6 +1813,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             BattleSpeakerTypeOptions = new ObservableCollection<string>(new[]
             {
                 "Heroine", "System", "Schedule", "Outfit", "Player"
+            });
+            BattleVisualModeOptions = new ObservableCollection<string>(new[]
+            {
+                "Auto", "StillOnly", "StillWithPortrait", "PortraitOnly"
             });
             BattleStillIdOptions = new ObservableCollection<string>();
             LayerPreviewBaseBodyOptions = new ObservableCollection<string>();

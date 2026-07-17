@@ -79,6 +79,7 @@ namespace FantasyLoveSimAssetTool.Services
             HashSet<string> outfitIds = new HashSet<string>(knownOutfitIds ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
             HashSet<string> expressionIds = new HashSet<string>(knownExpressionIds ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
             HashSet<string> speakerTypes = new HashSet<string>(new[] { "Heroine", "System", "Schedule", "Outfit", "Player" }, StringComparer.Ordinal);
+            HashSet<string> visualModes = new HashSet<string>(new[] { "Auto", "StillOnly", "StillWithPortrait", "PortraitOnly" }, StringComparer.Ordinal);
             List<BattleResultEventEntry> events = (settings.ResultEvents ?? new ObservableCollection<BattleResultEventEntry>()).Where(x => x != null).ToList();
             foreach (IGrouping<string, BattleResultEventEntry> group in events.Where(x => !string.IsNullOrWhiteSpace(x.EventId)).GroupBy(x => x.EventId.Trim(), StringComparer.OrdinalIgnoreCase).Where(x => x.Count() > 1))
                 messages.Add($"[Error] 戦闘結果: EventId `{group.Key}` が重複しています。");
@@ -90,6 +91,7 @@ namespace FantasyLoveSimAssetTool.Services
                 if (string.IsNullOrWhiteSpace(item.EventId)) messages.Add("[Error] 戦闘結果: EventId が空です。");
                 if (!resultTypes.Contains(item.ResultType?.Trim() ?? "")) messages.Add($"[Error] 戦闘結果 `{label}`: resultType `{item.ResultType}` は候補外です。");
                 if (!speakerTypes.Contains(item.SpeakerType?.Trim() ?? "")) messages.Add($"[Error] 戦闘結果 `{label}`: speakerType `{item.SpeakerType}` は候補外です。");
+                if (!visualModes.Contains(item.VisualMode?.Trim() ?? "")) messages.Add($"[Error] 戦闘結果 `{label}`: visualMode `{item.VisualMode}` は候補外です。");
                 if (string.IsNullOrWhiteSpace(item.Message)) messages.Add($"[Error] 戦闘結果 `{label}`: message が空です。");
                 if (!string.IsNullOrWhiteSpace(item.StillId) && !stillIds.Contains(item.StillId.Trim())) messages.Add($"[Warning] 戦闘結果 `{label}`: stillId `{item.StillId}` は登録済み候補にありません。");
                 if (!string.IsNullOrWhiteSpace(item.ExpressionId) && !expressionIds.Contains(item.ExpressionId.Trim())) messages.Add($"[Warning] 戦闘結果 `{label}`: expressionId `{item.ExpressionId}` は登録済み候補にありません。");
@@ -126,6 +128,7 @@ namespace FantasyLoveSimAssetTool.Services
                 if (!ids.Add(item.EventId)) continue;
                 item.Message ??= string.Empty;
                 item.StillId = item.StillId?.Trim() ?? string.Empty;
+                item.VisualMode = string.IsNullOrWhiteSpace(item.VisualMode) ? "Auto" : item.VisualMode.Trim();
                 item.ExpressionId = item.ExpressionId?.Trim() ?? string.Empty;
                 item.UnlockedOutfitIdsText = JoinIds(item.UnlockedOutfitIdsText);
                 result.Add(item);

@@ -25,6 +25,7 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual("Forest", result.BattleContextId);
             Assert.AreEqual("Formal, Casual", result.UnlockedOutfitIdsText);
             Assert.AreEqual(3, result.AffectionChange);
+            Assert.AreEqual("StillWithPortrait", result.VisualMode);
             Assert.AreEqual("勝利しました", target.BattleMessages.PanelMessages.Single().Message);
         }
 
@@ -71,6 +72,7 @@ namespace FantasyLoveSimAssetTool.Tests
                 ResultType = "DuoVictory",
                 BattleContextId = "Forest",
                 SpeakerType = "FutureSpeaker",
+                VisualMode = "FutureVisual",
                 Message = string.Empty,
                 StillId = "UnknownStill",
                 ExpressionId = "UnknownExpression",
@@ -100,6 +102,7 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.IsTrue(messages.Any(x => x.Contains("UnknownStill")));
             Assert.IsTrue(messages.Any(x => x.Contains("UnknownOutfit")));
             Assert.IsTrue(messages.Any(x => x.Contains("FutureSpeaker")));
+            Assert.IsTrue(messages.Any(x => x.Contains("FutureVisual")));
             Assert.IsTrue(messages.Any(x => x.Contains("UnknownExpression")));
             Assert.IsTrue(messages.Any(x => x.Contains("FutureResult")));
             Assert.IsTrue(messages.Any(x => x.Contains("MessageId が空")));
@@ -134,6 +137,7 @@ namespace FantasyLoveSimAssetTool.Tests
                             BattleContextId = "Forest",
                             SpeakerType = "Heroine",
                             SpeakerName = "テストヒロイン",
+                            VisualMode = "StillWithPortrait",
                             Message = "二人で勝てましたね",
                             StillId = "VictoryStill",
                             ExpressionId = "Smile",
