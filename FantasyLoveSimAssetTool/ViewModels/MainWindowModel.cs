@@ -9179,7 +9179,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 SelectedProfile,
                 ExpressionDefinitions,
                 CostumeDefinitions,
-                LayerAssetDefinitions);
+                LayerAssetDefinitions,
+                asset => asset != null && !string.IsNullOrWhiteSpace(asset.StoredPath) && File.Exists(Path.Combine(
+                    characterProjectService.GetCharacterDirectory(SelectedProfile.HeroineId), asset.StoredPath)));
             foreach (ProductionStatusCell cell in new[]
             {
                 row.BasicInformation,
@@ -9189,7 +9191,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 row.Expressions,
                 row.Costumes,
                 row.BattleSkills,
-                row.SkillTree
+                row.SkillTree,
+                row.Events,
+                row.ExportReadiness
             })
             {
                 if (!ShowOnlyIncompleteProductionStatus || cell.Kind != ProductionStatusKind.Complete)

@@ -27,6 +27,8 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(ProductionStatusKind.Complete, row.Costumes.Kind);
             Assert.AreEqual(ProductionStatusKind.Complete, row.BattleSkills.Kind);
             Assert.AreEqual(ProductionStatusKind.Complete, row.SkillTree.Kind);
+            Assert.AreEqual(ProductionStatusKind.Complete, row.Events.Kind);
+            Assert.AreEqual(ProductionStatusKind.Complete, row.ExportReadiness.Kind);
             Assert.IsFalse(row.HasIncomplete);
         }
 
@@ -88,6 +90,44 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.IsTrue(row.SkillTree.Checks.Any(x => x.Details.Contains("MissingNode") && !x.IsComplete));
             Assert.IsTrue(row.SkillTree.Checks.Any(x => x.Details.Contains("MissingBattleSkill") && !x.IsComplete));
             Assert.IsTrue(row.SkillTree.Checks.Any(x => x.Details.Contains("MissingTraining") && !x.IsComplete));
+        }
+
+        [TestMethod]
+        public void Evaluate_BrokenEventReferences_ReturnsPartialDetails()
+        {
+            HeroineProfile profile = CompleteProfile();
+            ConversationEntry gameEvent = profile.ConversationEntries.First(x => x.Kind == ConversationDataKind.GameEvents);
+            gameEvent.Conditions.Once = true;
+            gameEvent.Conditions.CostumeId = "MissingCostume";
+            gameEvent.ImageAssetIdsText = "MissingImage";
+            gameEvent.Conditions.RequiredSkillIdsText = "MissingSkill";
+
+            CharacterProductionStatusRow row = EvaluateWithDefinitions(profile);
+
+            Assert.AreEqual(ProductionStatusKind.Partial, row.Events.Kind);
+            Assert.IsTrue(row.Events.Checks.Any(x => x.Details.Contains("Once用フラグ") && !x.IsComplete));
+            Assert.IsTrue(row.Events.Checks.Any(x => x.Details.Contains("MissingImage") && !x.IsComplete));
+            Assert.AreEqual(ProductionStatusKind.Partial, row.ExportReadiness.Kind);
+        }
+
+        [TestMethod]
+        public void Evaluate_MissingAcceptedImageFile_ReturnsPartialExportReadiness()
+        {
+            HeroineProfile profile = CompleteProfile();
+
+            CharacterProductionStatusRow row = CharacterProductionStatusService.Evaluate(
+                profile,
+                new[] { new ExpressionDefinition { ExpressionId = "Neutral" } },
+                new[] { new CostumeDefinition { CostumeId = "Default" } },
+                new[]
+                {
+                    new LayerAssetDefinition { AssetId = "Expression_Neutral", LayerKind = "Expression", ExpressionId = "Neutral" },
+                    new LayerAssetDefinition { AssetId = "Costume_Default", LayerKind = "Costume", CostumeId = "Default" }
+                },
+                asset => asset.AssetId != "A1");
+
+            Assert.AreEqual(ProductionStatusKind.Partial, row.ExportReadiness.Kind);
+            Assert.IsTrue(row.ExportReadiness.Checks.Any(x => x.Details.Contains("A1") && !x.IsComplete));
         }
 
         private static HeroineProfile CompleteProfile()
@@ -172,10 +212,10 @@ namespace FantasyLoveSimAssetTool.Tests
             });
             foreach (string id in new[] { "A1", "A2", "A3", "A4", "A5" })
             {
-                profile.Assets.Add(new HeroineAsset { AssetId = id, Status = AssetStatus.Accepted });
+                profile.Assets.Add(new HeroineAsset { AssetId = id, Status = AssetStatus.Accepted, StoredPath = id + ".png" });
             }
-            profile.Assets.Add(new HeroineAsset { AssetId = "Expression_Neutral", Status = AssetStatus.Accepted });
-            profile.Assets.Add(new HeroineAsset { AssetId = "Costume_Default", Status = AssetStatus.Accepted });
+            profile.Assets.Add(new HeroineAsset { AssetId = "Expression_Neutral", Status = AssetStatus.Accepted, StoredPath = "Expression_Neutral.png" });
+            profile.Assets.Add(new HeroineAsset { AssetId = "Costume_Default", Status = AssetStatus.Accepted, StoredPath = "Costume_Default.png" });
             profile.ConversationEntries.Add(new ConversationEntry
             {
                 Id = "Conversation01",
@@ -185,6 +225,23 @@ namespace FantasyLoveSimAssetTool.Tests
                     new ConversationLine { Text = "こんにちは", Expression = "Neutral" }
                 }
             });
+            foreach (ConversationDataKind kind in new[]
+            {
+                ConversationDataKind.GameEvents,
+                ConversationDataKind.ScheduledEvents,
+                ConversationDataKind.Endings
+            })
+            {
+                profile.ConversationEntries.Add(new ConversationEntry
+                {
+                    Id = kind + "01",
+                    Kind = kind,
+                    Lines = new ObservableCollection<ConversationLine>
+                    {
+                        new ConversationLine { Text = kind + "の本文", Expression = "Neutral" }
+                    }
+                });
+            }
             return profile;
         }
 
