@@ -822,12 +822,30 @@
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
                                     <DataGridTextColumn Header="BattleContextId" Binding="{Binding BattleContextId}" Width="130"/>
+                                    <DataGridTemplateColumn Header="話者種別" Width="110">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ComboBox ItemsSource="{Binding Data.BattleSpeakerTypeOptions, Source={StaticResource ViewModelProxy}}"
+                                                          SelectedItem="{Binding SpeakerType, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="話者名" Binding="{Binding SpeakerName}" Width="120"/>
                                     <DataGridTextColumn Header="メッセージ" Binding="{Binding Message}" Width="*"/>
                                     <DataGridTemplateColumn Header="StillId" Width="140">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <ComboBox ItemsSource="{Binding Data.BattleStillIdOptions, Source={StaticResource ViewModelProxy}}"
                                                           Text="{Binding StillId, UpdateSourceTrigger=PropertyChanged}"
+                                                          IsEditable="True"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="表情" Width="120">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ComboBox ItemsSource="{Binding Data.ExpressionIdOptions, Source={StaticResource ViewModelProxy}}"
+                                                          Text="{Binding ExpressionId, UpdateSourceTrigger=PropertyChanged}"
                                                           IsEditable="True"/>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>

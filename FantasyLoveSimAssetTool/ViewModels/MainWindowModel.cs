@@ -206,6 +206,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ObservableCollection<string> BattlePanelResultTypeOptions { get; }
 
+        public ObservableCollection<string> BattleSpeakerTypeOptions { get; }
+
         public ObservableCollection<string> BattleStillIdOptions { get; }
 
         public ObservableCollection<string> LayerPreviewBaseBodyOptions { get; }
@@ -1805,6 +1807,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             BattlePanelResultTypeOptions = new ObservableCollection<string>(new[]
             {
                 "Victory", "Defeat", "Escape", "Default"
+            });
+            BattleSpeakerTypeOptions = new ObservableCollection<string>(new[]
+            {
+                "Heroine", "System", "Schedule", "Outfit", "Player"
             });
             BattleStillIdOptions = new ObservableCollection<string>();
             LayerPreviewBaseBodyOptions = new ObservableCollection<string>();

@@ -62,7 +62,9 @@ namespace FantasyLoveSimAssetTool.Services
             foreach (string warning in BattleMessageSyncService.Validate(
                 profile,
                 stillDefinitionService.GetDefaultDefinitions().Where(x => x != null).Select(x => x.AssetId),
-                GetConversationCostumeIds()))
+                GetConversationCostumeIds(),
+                definitionCatalogService.LoadExpressionDefinitionFile().Expressions
+                    .Where(x => x != null).Select(x => x.ExpressionId)))
             {
                 report.Warnings.Add(warning);
             }

@@ -70,8 +70,10 @@ namespace FantasyLoveSimAssetTool.Tests
                 EventId = "OtherId",
                 ResultType = "DuoVictory",
                 BattleContextId = "Forest",
+                SpeakerType = "FutureSpeaker",
                 Message = string.Empty,
                 StillId = "UnknownStill",
+                ExpressionId = "UnknownExpression",
                 UnlockedOutfitIds = new[] { "UnknownOutfit" }
             });
             profile.BattleMessages.PanelMessages.Add(new BattlePanelResultMessageEntry
@@ -90,12 +92,15 @@ namespace FantasyLoveSimAssetTool.Tests
             string[] messages = BattleMessageSyncService.Validate(
                 profile,
                 new[] { "VictoryStill" },
-                new[] { "Formal", "Casual" }).ToArray();
+                new[] { "Formal", "Casual" },
+                new[] { "Smile" }).ToArray();
 
             Assert.IsTrue(messages.Any(x => x.Contains("resultType + battleContextId")));
             Assert.IsTrue(messages.Any(x => x.Contains("message が空")));
             Assert.IsTrue(messages.Any(x => x.Contains("UnknownStill")));
             Assert.IsTrue(messages.Any(x => x.Contains("UnknownOutfit")));
+            Assert.IsTrue(messages.Any(x => x.Contains("FutureSpeaker")));
+            Assert.IsTrue(messages.Any(x => x.Contains("UnknownExpression")));
             Assert.IsTrue(messages.Any(x => x.Contains("FutureResult")));
             Assert.IsTrue(messages.Any(x => x.Contains("MessageId が空")));
             Assert.IsTrue(messages.Any(x => x.Contains("resultType `Victory` が重複")));
@@ -107,7 +112,8 @@ namespace FantasyLoveSimAssetTool.Tests
             string[] messages = BattleMessageSyncService.Validate(
                 Profile(),
                 new[] { "VictoryStill" },
-                new[] { "Formal", "Casual" }).ToArray();
+                new[] { "Formal", "Casual" },
+                new[] { "Smile" }).ToArray();
 
             Assert.AreEqual(0, messages.Length);
         }
@@ -126,8 +132,11 @@ namespace FantasyLoveSimAssetTool.Tests
                             EventId = "DuoVictory_Forest",
                             ResultType = "DuoVictory",
                             BattleContextId = "Forest",
+                            SpeakerType = "Heroine",
+                            SpeakerName = "テストヒロイン",
                             Message = "二人で勝てましたね",
                             StillId = "VictoryStill",
+                            ExpressionId = "Smile",
                             AffectionChange = 3,
                             UnlockedOutfitIdsText = " Formal, Casual, Formal "
                         }

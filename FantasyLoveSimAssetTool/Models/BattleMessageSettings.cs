@@ -9,8 +9,11 @@ namespace FantasyLoveSimAssetTool.Models
         public string EventId { get; set; } = string.Empty;
         public string ResultType { get; set; } = "SoloVictory";
         public string BattleContextId { get; set; } = string.Empty;
+        public string SpeakerType { get; set; } = "Heroine";
+        public string SpeakerName { get; set; } = string.Empty;
         public string Message { get; set; } = string.Empty;
         public string StillId { get; set; } = string.Empty;
+        public string ExpressionId { get; set; } = string.Empty;
         public int AffectionChange { get; set; }
         public string[] UnlockedOutfitIds { get; set; } = new string[0];
 
