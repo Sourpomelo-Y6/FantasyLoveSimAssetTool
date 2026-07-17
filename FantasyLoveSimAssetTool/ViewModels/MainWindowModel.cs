@@ -141,8 +141,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string statusMessage;
         private string lastBattleMessageImportReport;
         private int selectedMainTabIndex;
+        private bool showOnlyIncompleteProductionStatus;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
+
+        public ObservableCollection<ProductionStatusCell> ProductionStatusCategories { get; }
 
         public ObservableCollection<EnemyProfile> EnemyProfiles { get; }
 
@@ -680,6 +683,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 ClearComfyPreviewImage();
                 hasComfyInterruptRequested = false;
                 RefreshSelectedStillStatus();
+                RefreshProductionStatus();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -1598,6 +1602,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public bool ShowOnlyIncompleteProductionStatus
+        {
+            get { return showOnlyIncompleteProductionStatus; }
+            set
+            {
+                if (showOnlyIncompleteProductionStatus == value) { return; }
+                showOnlyIncompleteProductionStatus = value;
+                OnPropertyChanged(nameof(ShowOnlyIncompleteProductionStatus));
+                RefreshProductionStatus();
+            }
+        }
+
         public ICommand CreateCharacterCommand { get; }
 
         public ICommand SaveSelectedProfileCommand { get; }
@@ -1605,6 +1621,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ICommand ImportHeroineProfileFromUnityCommand { get; }
 
         public ICommand OpenBattleMessagesTabCommand { get; }
+
+        public ICommand RefreshProductionStatusCommand { get; }
+
+        public ICommand OpenProductionStatusTargetCommand { get; }
 
         public ICommand AddOutfitMessageOverrideCommand { get; }
 
@@ -1793,6 +1813,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             enemyExportService = new EnemyExportService(enemyProjectService, imageInspectionService);
             playerExportService = new PlayerExportService(playerProjectService, imageInspectionService);
             Profiles = new ObservableCollection<HeroineProfile>();
+            ProductionStatusCategories = new ObservableCollection<ProductionStatusCell>();
             EnemyProfiles = new ObservableCollection<EnemyProfile>();
             FilteredAssets = new ObservableCollection<HeroineAsset>();
             AcceptedAssets = new ObservableCollection<HeroineAsset>();
@@ -1990,6 +2011,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             statusMessage = string.Empty;
             lastBattleMessageImportReport = "Unityから戦闘メッセージを読み込むと、ここに差分が表示されます。";
             selectedMainTabIndex = 0;
+            showOnlyIncompleteProductionStatus = false;
 
             CreateCharacterCommand = new RelayCommand(CreateCharacter);
             SaveSelectedProfileCommand = new RelayCommand(SaveSelectedProfile, () => SelectedProfile != null);
@@ -1997,6 +2019,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 ImportHeroineProfileFromUnity,
                 () => SelectedProfile != null);
             OpenBattleMessagesTabCommand = new RelayCommand(() => SelectedMainTabIndex = 2);
+            RefreshProductionStatusCommand = new RelayCommand(RefreshProductionStatus);
+            OpenProductionStatusTargetCommand = new RelayCommand<ProductionStatusCell>(OpenProductionStatusTarget);
             AddOutfitMessageOverrideCommand = new RelayCommand(
                 AddOutfitMessageOverride,
                 () => SelectedProfile != null);
@@ -6536,6 +6560,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 characterProjectService.SaveProfile(SelectedProfile);
                 RefreshStillPromptAfterProfilePromptChanged();
                 RefreshSelectedStillStatus();
+                RefreshProductionStatus();
                 StatusMessage = $"{SelectedProfile.HeroineId} を保存しました。";
             }
             catch (Exception ex)
@@ -6797,6 +6822,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SelectedOutfitMessageOverride = SelectedProfile.OutfitMessageOverrides.FirstOrDefault();
             SelectedOutfitReactionMessageOverride = SelectedProfile.OutfitReactionMessageOverrides.FirstOrDefault();
             OnPropertyChanged(nameof(SelectedProfile));
+            RefreshProductionStatus();
             StatusMessage = $"FromUnity profile を取り込みました。衣装 {addedOutfitCount} 件追加/{skippedOutfitCount} 件スキップ、反応 {addedReactionCount} 件追加/{skippedReactionCount} 件スキップ、ヒロインスキル {(importedHeroineSkills ? "更新" : "維持")}、戦闘文 {(importedBattleMessages ? "更新" : "維持")}。";
         }
 
@@ -9130,11 +9156,54 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 {
                     SelectedProfile = Profiles[0];
                 }
+
+                RefreshProductionStatus();
             }
             catch (Exception ex)
             {
                 StatusMessage = $"読み込みに失敗しました: {ex.Message}";
             }
+        }
+
+        private void RefreshProductionStatus()
+        {
+            ProductionStatusCategories.Clear();
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            CharacterProductionStatusRow row = CharacterProductionStatusService.Evaluate(SelectedProfile);
+            foreach (ProductionStatusCell cell in new[]
+            {
+                row.BasicInformation,
+                row.BattleMessages,
+                row.TrainingImages
+            })
+            {
+                if (!ShowOnlyIncompleteProductionStatus || cell.Kind != ProductionStatusKind.Complete)
+                {
+                    ProductionStatusCategories.Add(cell);
+                }
+            }
+        }
+
+        private void OpenProductionStatusTarget(ProductionStatusCell cell)
+        {
+            if (cell == null)
+            {
+                return;
+            }
+
+            HeroineProfile target = Profiles.FirstOrDefault(profile =>
+                string.Equals(profile.HeroineId, cell.CharacterId, StringComparison.OrdinalIgnoreCase));
+            if (target != null)
+            {
+                SelectedProfile = target;
+            }
+
+            SelectedMainTabIndex = cell.TargetTabIndex;
+            StatusMessage = $"{cell.CharacterId} の修正対象へ移動しました。{cell.Details}";
         }
 
         private void LoadEnemies()

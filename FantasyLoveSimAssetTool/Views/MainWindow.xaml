@@ -2783,6 +2783,61 @@
                             </StackPanel>
                         </Grid>
                     </TabItem>
+                    <TabItem Header="制作状況">
+                        <Grid Margin="0,12,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <DockPanel Grid.Row="0" Margin="0,0,0,10">
+                                <Button DockPanel.Dock="Right" Content="再集計"
+                                        Command="{Binding RefreshProductionStatusCommand}"
+                                        Width="90" Height="28"/>
+                                <CheckBox Content="未完成のみ表示"
+                                          IsChecked="{Binding ShowOnlyIncompleteProductionStatus}"
+                                          VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding SelectedProfile.DisplayName, StringFormat=選択中: {0}}"
+                                           FontWeight="SemiBold" VerticalAlignment="Center" Margin="16,0,0,0"/>
+                            </DockPanel>
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding ProductionStatusCategories}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="#D5D5D5" BorderThickness="1" CornerRadius="4"
+                                                    Padding="10" Margin="0,0,0,10" Background="#FAFAFA">
+                                                <StackPanel>
+                                                    <Button Command="{Binding Data.OpenProductionStatusTargetCommand, Source={StaticResource ViewModelProxy}}"
+                                                            CommandParameter="{Binding}" ToolTip="クリックすると編集画面へ移動します"
+                                                            HorizontalContentAlignment="Left" Padding="8,5">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding Symbol}" FontSize="20" FontWeight="Bold" Width="34"/>
+                                                            <TextBlock Text="{Binding CategoryName}" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <TextBlock Text="{Binding Details}" TextWrapping="Wrap" Margin="8,8,8,6"/>
+                                                    <ItemsControl ItemsSource="{Binding Checks}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Button Command="{Binding Data.OpenProductionStatusTargetCommand, Source={StaticResource ViewModelProxy}}"
+                                                                        CommandParameter="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                        ToolTip="{Binding Details}" HorizontalContentAlignment="Left"
+                                                                        Margin="8,2" Padding="6,3">
+                                                                    <DockPanel>
+                                                                        <TextBlock DockPanel.Dock="Left" Text="{Binding Symbol}" FontWeight="Bold" Width="28"/>
+                                                                        <TextBlock Text="{Binding Name}" TextWrapping="Wrap"/>
+                                                                    </DockPanel>
+                                                                </Button>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </TabItem>
                 </TabControl>
             </Border>
         </Grid>
