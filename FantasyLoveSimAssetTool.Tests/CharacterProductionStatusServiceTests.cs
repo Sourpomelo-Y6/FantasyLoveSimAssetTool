@@ -14,7 +14,7 @@ namespace FantasyLoveSimAssetTool.Tests
         {
             HeroineProfile profile = CompleteProfile();
 
-            CharacterProductionStatusRow row = CharacterProductionStatusService.Evaluate(profile);
+            CharacterProductionStatusRow row = EvaluateWithDefinitions(profile);
 
             Assert.AreEqual(ProductionStatusKind.Complete, row.BasicInformation.Kind);
             Assert.AreEqual(ProductionStatusKind.Complete, row.BattleMessages.Kind);
@@ -22,6 +22,9 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(4, row.BasicInformation.Checks.Count);
             Assert.AreEqual(7, row.BattleMessages.Checks.Count);
             Assert.AreEqual(5, row.TrainingImages.Checks.Count);
+            Assert.AreEqual(ProductionStatusKind.Complete, row.Conversations.Kind);
+            Assert.AreEqual(ProductionStatusKind.Complete, row.Expressions.Kind);
+            Assert.AreEqual(ProductionStatusKind.Complete, row.Costumes.Kind);
             Assert.IsFalse(row.HasIncomplete);
         }
 
@@ -33,7 +36,7 @@ namespace FantasyLoveSimAssetTool.Tests
             profile.BattleMessages.ResultEvents.RemoveAt(0);
             profile.Assets[0].Status = AssetStatus.Pending;
 
-            CharacterProductionStatusRow row = CharacterProductionStatusService.Evaluate(profile);
+            CharacterProductionStatusRow row = EvaluateWithDefinitions(profile);
 
             Assert.AreEqual(ProductionStatusKind.Partial, row.BasicInformation.Kind);
             StringAssert.Contains(row.BasicInformation.Details, "性格");
@@ -54,6 +57,21 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(ProductionStatusKind.Missing, row.TrainingImages.Kind);
         }
 
+        [TestMethod]
+        public void Evaluate_UnknownExpressionAndCostumeReferences_ReturnsPartialDetails()
+        {
+            HeroineProfile profile = CompleteProfile();
+            profile.ConversationEntries[0].Lines[0].Expression = "UnknownExpression";
+            profile.ConversationEntries[0].Conditions.CostumeId = "UnknownCostume";
+
+            CharacterProductionStatusRow row = EvaluateWithDefinitions(profile);
+
+            Assert.AreEqual(ProductionStatusKind.Partial, row.Expressions.Kind);
+            Assert.IsTrue(row.Expressions.Checks.Any(x => x.Name.Contains("UnknownExpression") && !x.IsComplete));
+            Assert.AreEqual(ProductionStatusKind.Partial, row.Costumes.Kind);
+            Assert.IsTrue(row.Costumes.Checks.Any(x => x.Name.Contains("UnknownCostume") && !x.IsComplete));
+        }
+
         private static HeroineProfile CompleteProfile()
         {
             HeroineProfile profile = new HeroineProfile
@@ -62,6 +80,7 @@ namespace FantasyLoveSimAssetTool.Tests
                 DisplayName = "テストヒロイン",
                 Personality = "強気",
                 SpeakingStyle = "丁寧",
+                InitialDialogueMessage = "こんにちは",
                 TrainingCatalog = new TrainingCatalogSettings
                 {
                     Items = new ObservableCollection<TrainingCatalogItem>
@@ -107,7 +126,29 @@ namespace FantasyLoveSimAssetTool.Tests
             {
                 profile.Assets.Add(new HeroineAsset { AssetId = id, Status = AssetStatus.Accepted });
             }
+            profile.Assets.Add(new HeroineAsset { AssetId = "Expression_Neutral", Status = AssetStatus.Accepted });
+            profile.Assets.Add(new HeroineAsset { AssetId = "Costume_Default", Status = AssetStatus.Accepted });
+            profile.ConversationEntries.Add(new ConversationEntry
+            {
+                Id = "Conversation01",
+                Kind = ConversationDataKind.Conversations,
+                Lines = new ObservableCollection<ConversationLine>
+                {
+                    new ConversationLine { Text = "こんにちは", Expression = "Neutral" }
+                }
+            });
             return profile;
         }
+
+        private static CharacterProductionStatusRow EvaluateWithDefinitions(HeroineProfile profile) =>
+            CharacterProductionStatusService.Evaluate(
+                profile,
+                new[] { new ExpressionDefinition { ExpressionId = "Neutral" } },
+                new[] { new CostumeDefinition { CostumeId = "Default" } },
+                new[]
+                {
+                    new LayerAssetDefinition { AssetId = "Expression_Neutral", LayerKind = "Expression", ExpressionId = "Neutral" },
+                    new LayerAssetDefinition { AssetId = "Costume_Default", LayerKind = "Costume", CostumeId = "Default" }
+                });
     }
 }

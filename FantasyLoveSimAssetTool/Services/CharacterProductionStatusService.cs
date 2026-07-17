@@ -11,17 +11,115 @@ namespace FantasyLoveSimAssetTool.Services
             { "SoloVictory", "DuoVictory", "SoloDefeat", "DuoDefeat" };
         private static readonly string[] RequiredPanelTypes = { "Victory", "Defeat" };
 
-        public static CharacterProductionStatusRow Evaluate(HeroineProfile profile)
+        public static CharacterProductionStatusRow Evaluate(
+            HeroineProfile profile,
+            IEnumerable<ExpressionDefinition> expressions = null,
+            IEnumerable<CostumeDefinition> costumes = null,
+            IEnumerable<LayerAssetDefinition> layers = null)
         {
             if (profile == null) throw new ArgumentNullException(nameof(profile));
+            List<ExpressionDefinition> expressionList = (expressions ?? Enumerable.Empty<ExpressionDefinition>()).Where(x => x != null).ToList();
+            List<CostumeDefinition> costumeList = (costumes ?? Enumerable.Empty<CostumeDefinition>()).Where(x => x != null).ToList();
+            List<LayerAssetDefinition> layerList = (layers ?? Enumerable.Empty<LayerAssetDefinition>()).Where(x => x != null).ToList();
             return new CharacterProductionStatusRow
             {
                 CharacterId = profile.HeroineId ?? string.Empty,
                 DisplayName = string.IsNullOrWhiteSpace(profile.DisplayName) ? profile.HeroineId : profile.DisplayName,
                 BasicInformation = EvaluateBasicInformation(profile),
                 BattleMessages = EvaluateBattleMessages(profile),
-                TrainingImages = EvaluateTrainingImages(profile)
+                TrainingImages = EvaluateTrainingImages(profile),
+                Conversations = EvaluateConversations(profile),
+                Expressions = EvaluateExpressions(profile, expressionList, layerList),
+                Costumes = EvaluateCostumes(profile, costumeList, layerList)
             };
+        }
+
+        private static ProductionStatusCell EvaluateConversations(HeroineProfile profile)
+        {
+            List<ConversationEntry> entries = profile.ConversationEntries?.Where(x => x != null).ToList()
+                ?? new List<ConversationEntry>();
+            List<ConversationEntry> normal = entries.Where(x => x.Kind == ConversationDataKind.Conversations).ToList();
+            bool hasNormal = normal.Count > 0;
+            bool hasInitial = !string.IsNullOrWhiteSpace(profile.InitialDialogueMessage);
+            bool idsValid = entries.All(x => !string.IsNullOrWhiteSpace(x.Id)) &&
+                entries.GroupBy(x => x.Kind).All(kind => kind.Where(x => !string.IsNullOrWhiteSpace(x.Id))
+                    .GroupBy(x => x.Id.Trim(), StringComparer.OrdinalIgnoreCase).All(ids => ids.Count() == 1));
+            bool textValid = entries.All(x => x.Lines != null && x.Lines.Count > 0 &&
+                x.Lines.All(line => line != null && !string.IsNullOrWhiteSpace(line.Text)));
+            ProductionStatusCheckItem[] checks =
+            {
+                Check("通常会話", hasNormal, hasNormal ? $"{normal.Count} 件登録済みです。" : "通常会話を1件以上登録してください。"),
+                Check("開始時メッセージ", hasInitial, hasInitial ? "設定済みです。" : "InitialDialogueMessageが未設定です。"),
+                Check("会話ID", idsValid, idsValid ? "空ID・重複IDはありません。" : "空IDまたは同じ種別内の重複IDがあります。"),
+                Check("会話本文", textValid, textValid ? "全データに本文があります。" : "台詞行がない、または本文が空のデータがあります。")
+            };
+            int complete = checks.Count(x => x.IsComplete);
+            return Cell(profile, "会話データ", 1, Kind(complete, checks.Length),
+                $"完成条件 {complete}/{checks.Length}。通常会話、開始時文、ID、本文を確認します。", checks);
+        }
+
+        private static ProductionStatusCell EvaluateExpressions(
+            HeroineProfile profile,
+            IReadOnlyList<ExpressionDefinition> expressions,
+            IReadOnlyList<LayerAssetDefinition> layers)
+        {
+            HashSet<string> definitionIds = new HashSet<string>(expressions
+                .Where(x => !string.IsNullOrWhiteSpace(x.ExpressionId)).Select(x => x.ExpressionId.Trim()), StringComparer.OrdinalIgnoreCase);
+            List<ProductionStatusCheckItem> checks = new List<ProductionStatusCheckItem>
+            {
+                Check("Neutral表情定義", definitionIds.Contains("Neutral"),
+                    definitionIds.Contains("Neutral") ? "Neutralを登録済みです。" : "Neutral表情定義が必要です。")
+            };
+            foreach (string expressionId in definitionIds.OrderBy(x => x))
+            {
+                LayerAssetDefinition layer = layers.FirstOrDefault(x => IsLayerKind(x, "Expression") &&
+                    string.Equals(x.ExpressionId, expressionId, StringComparison.OrdinalIgnoreCase));
+                checks.Add(Check($"表情レイヤー {expressionId}", HasAcceptedLayer(profile, layer),
+                    BuildLayerDetails(profile, layer)));
+            }
+            HashSet<string> references = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (ConversationLine line in (profile.ConversationEntries ?? new System.Collections.ObjectModel.ObservableCollection<ConversationEntry>())
+                .Where(x => x?.Lines != null).SelectMany(x => x.Lines).Where(x => x != null && !string.IsNullOrWhiteSpace(x.Expression)))
+                references.Add(line.Expression.Trim());
+            foreach (BattleResultEventEntry item in profile.BattleMessages?.ResultEvents ?? new System.Collections.ObjectModel.ObservableCollection<BattleResultEventEntry>())
+                if (item != null && !string.IsNullOrWhiteSpace(item.ExpressionId)) references.Add(item.ExpressionId.Trim());
+            foreach (string reference in references.OrderBy(x => x))
+                checks.Add(Check($"表情参照 {reference}", definitionIds.Contains(reference),
+                    definitionIds.Contains(reference) ? "登録済み表情を参照しています。" : "参照先の表情定義がありません。"));
+            int complete = checks.Count(x => x.IsComplete);
+            return Cell(profile, "表情", 8, Kind(complete, checks.Count),
+                $"完成条件 {complete}/{checks.Count}。Neutral、表情レイヤー、会話・戦闘からの参照を確認します。", checks);
+        }
+
+        private static ProductionStatusCell EvaluateCostumes(
+            HeroineProfile profile,
+            IReadOnlyList<CostumeDefinition> costumes,
+            IReadOnlyList<LayerAssetDefinition> layers)
+        {
+            HashSet<string> definitionIds = new HashSet<string>(costumes
+                .Where(x => !string.IsNullOrWhiteSpace(x.CostumeId)).Select(x => x.CostumeId.Trim()), StringComparer.OrdinalIgnoreCase);
+            List<ProductionStatusCheckItem> checks = new List<ProductionStatusCheckItem>
+            {
+                Check("Default衣装定義", definitionIds.Contains("Default"),
+                    definitionIds.Contains("Default") ? "Defaultを登録済みです。" : "Default衣装定義が必要です。")
+            };
+            foreach (string costumeId in definitionIds.OrderBy(x => x))
+            {
+                LayerAssetDefinition layer = layers.FirstOrDefault(x => IsLayerKind(x, "Costume") &&
+                    string.Equals(x.CostumeId, costumeId, StringComparison.OrdinalIgnoreCase));
+                checks.Add(Check($"衣装レイヤー {costumeId}", HasAcceptedLayer(profile, layer), BuildLayerDetails(profile, layer)));
+            }
+            HashSet<string> references = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (ConversationEntry entry in profile.ConversationEntries ?? new System.Collections.ObjectModel.ObservableCollection<ConversationEntry>())
+                if (entry?.Conditions != null && !string.IsNullOrWhiteSpace(entry.Conditions.CostumeId)) references.Add(entry.Conditions.CostumeId.Trim());
+            foreach (BattleResultEventEntry item in profile.BattleMessages?.ResultEvents ?? new System.Collections.ObjectModel.ObservableCollection<BattleResultEventEntry>())
+                foreach (string id in item?.UnlockedOutfitIds ?? Array.Empty<string>()) if (!string.IsNullOrWhiteSpace(id)) references.Add(id.Trim());
+            foreach (string reference in references.OrderBy(x => x))
+                checks.Add(Check($"衣装参照 {reference}", definitionIds.Contains(reference),
+                    definitionIds.Contains(reference) ? "登録済み衣装を参照しています。" : "参照先の衣装定義がありません。"));
+            int complete = checks.Count(x => x.IsComplete);
+            return Cell(profile, "衣装", 8, Kind(complete, checks.Count),
+                $"完成条件 {complete}/{checks.Count}。Default、衣装レイヤー、会話・戦闘からの参照を確認します。", checks);
         }
 
         private static ProductionStatusCell EvaluateBasicInformation(HeroineProfile profile)
@@ -128,6 +226,28 @@ namespace FantasyLoveSimAssetTool.Services
 
         private static ProductionStatusCheckItem Check(string name, bool complete, string details) =>
             new ProductionStatusCheckItem { Name = name, IsComplete = complete, Details = details };
+
+        private static ProductionStatusKind Kind(int complete, int total) =>
+            complete == total ? ProductionStatusKind.Complete :
+            complete == 0 ? ProductionStatusKind.Missing : ProductionStatusKind.Partial;
+
+        private static bool IsLayerKind(LayerAssetDefinition layer, string kind) =>
+            layer != null && string.Equals(layer.LayerKind, kind, StringComparison.OrdinalIgnoreCase);
+
+        private static bool HasAcceptedLayer(HeroineProfile profile, LayerAssetDefinition layer) =>
+            layer != null && !string.IsNullOrWhiteSpace(layer.AssetId) &&
+            profile.Assets != null && profile.Assets.Any(asset => asset != null &&
+                string.Equals(asset.AssetId, layer.AssetId, StringComparison.OrdinalIgnoreCase) &&
+                asset.Status == AssetStatus.Accepted);
+
+        private static string BuildLayerDetails(HeroineProfile profile, LayerAssetDefinition layer)
+        {
+            if (layer == null) return "対応するレイヤー定義がありません。";
+            if (string.IsNullOrWhiteSpace(layer.AssetId)) return "レイヤーのAssetIdが空です。";
+            return HasAcceptedLayer(profile, layer)
+                ? $"{layer.AssetId} はAcceptedです。"
+                : $"{layer.AssetId} に対応するAccepted画像がありません。";
+        }
 
         private static ProductionStatusCell Cell(
             HeroineProfile profile,

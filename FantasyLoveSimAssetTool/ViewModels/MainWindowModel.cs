@@ -5418,6 +5418,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 RefreshLayerPreviewOptions();
                 RefreshLayerPreview();
                 RefreshConversationExpressionSuggestionsFromDefinitions();
+                RefreshProductionStatus();
                 StatusMessage = "差分定義を読み込みました。";
             }
             catch (Exception ex)
@@ -6950,6 +6951,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             try
             {
                 characterProjectService.SaveProfile(SelectedProfile);
+                RefreshProductionStatus();
                 StatusMessage = $"{SelectedProfile.HeroineId} の会話データを保存しました。";
             }
             catch (Exception ex)
@@ -9173,12 +9175,19 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 return;
             }
 
-            CharacterProductionStatusRow row = CharacterProductionStatusService.Evaluate(SelectedProfile);
+            CharacterProductionStatusRow row = CharacterProductionStatusService.Evaluate(
+                SelectedProfile,
+                ExpressionDefinitions,
+                CostumeDefinitions,
+                LayerAssetDefinitions);
             foreach (ProductionStatusCell cell in new[]
             {
                 row.BasicInformation,
                 row.BattleMessages,
-                row.TrainingImages
+                row.TrainingImages,
+                row.Conversations,
+                row.Expressions,
+                row.Costumes
             })
             {
                 if (!ShowOnlyIncompleteProductionStatus || cell.Kind != ProductionStatusKind.Complete)
