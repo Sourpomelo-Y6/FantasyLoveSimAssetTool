@@ -121,6 +121,39 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(0, messages.Length);
         }
 
+        [TestMethod]
+        public void AnalyzeChanges_ReportsResultDetailsAndPanelCounts()
+        {
+            BattleResultEventEntry before = Profile().BattleMessages.ResultEvents.Single();
+            BattleResultEventEntry updated = new BattleResultEventEntry
+            {
+                EventId = before.EventId,
+                ResultType = before.ResultType,
+                BattleContextId = before.BattleContextId,
+                SpeakerType = "Player",
+                SpeakerName = "主人公",
+                Message = before.Message,
+                StillId = before.StillId,
+                VisualMode = "PortraitOnly",
+                ExpressionId = "Angry",
+                AffectionChange = before.AffectionChange,
+                UnlockedOutfitIds = before.UnlockedOutfitIds
+            };
+            BattleMessageChangeSummary summary = BattleMessageSyncService.AnalyzeChanges(
+                new[] { before, new BattleResultEventEntry { EventId = "Deleted" } },
+                new[] { updated, new BattleResultEventEntry { EventId = "Added" } },
+                new[] { new BattlePanelResultMessageEntry { MessageId = "Victory", Message = "old" } },
+                new[] { new BattlePanelResultMessageEntry { MessageId = "Victory", Message = "new" } });
+
+            Assert.AreEqual(1, summary.ResultAdded);
+            Assert.AreEqual(1, summary.ResultUpdated);
+            Assert.AreEqual(1, summary.ResultDeleted);
+            Assert.AreEqual(1, summary.PanelUpdated);
+            Assert.AreEqual(1, summary.SpeakerChanged);
+            Assert.AreEqual(1, summary.ExpressionChanged);
+            Assert.AreEqual(1, summary.VisualModeChanged);
+        }
+
         private static HeroineProfile Profile()
         {
             return new HeroineProfile

@@ -100,7 +100,7 @@
             </Border>
 
             <Border Grid.Column="2" BorderBrush="#DDDDDD" BorderThickness="1" Padding="12">
-                <TabControl>
+                <TabControl SelectedIndex="{Binding SelectedMainTabIndex, Mode=TwoWay}">
                     <TabItem Header="基本情報">
                         <Grid Margin="0,12,0,0">
                             <Grid.RowDefinitions>
@@ -887,9 +887,19 @@
                                     <DataGridTextColumn Header="メッセージ" Binding="{Binding Message}" Width="*"/>
                                 </DataGrid.Columns>
                             </DataGrid>
-                            <Button Grid.Row="4" Content="戦闘メッセージ保存"
-                                    Command="{Binding SaveSelectedProfileCommand}" Width="160" Height="30"
-                                    HorizontalAlignment="Right" Margin="0,12,0,0"/>
+                            <Grid Grid.Row="4" Margin="0,12,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Border Grid.Row="0" Background="#F5F5F5" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8">
+                                    <TextBlock Text="{Binding LastBattleMessageImportReport}"
+                                               TextWrapping="Wrap"/>
+                                </Border>
+                                <Button Grid.Row="1" Content="戦闘メッセージ保存"
+                                        Command="{Binding SaveSelectedProfileCommand}" Width="160" Height="30"
+                                        HorizontalAlignment="Right" Margin="0,8,0,0"/>
+                            </Grid>
                         </Grid>
                     </TabItem>
 
@@ -2777,6 +2787,11 @@
             </Border>
         </Grid>
 
-        <TextBox Grid.Row="2" Text="{Binding StatusMessage}" Foreground="#444444" Margin="0,12,0,0" IsReadOnly="True" />
+        <DockPanel Grid.Row="2" Margin="0,12,0,0">
+            <Button DockPanel.Dock="Right" Content="戦闘メッセージへ"
+                    Command="{Binding OpenBattleMessagesTabCommand}"
+                    Width="130" Height="28" Margin="8,0,0,0"/>
+            <TextBox Text="{Binding StatusMessage}" Foreground="#444444" IsReadOnly="True" />
+        </DockPanel>
     </Grid>
 </Window>

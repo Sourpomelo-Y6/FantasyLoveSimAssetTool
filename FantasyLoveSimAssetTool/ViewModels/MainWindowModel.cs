@@ -139,6 +139,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private bool isComfyWaitingResult;
         private bool isComfyInterrupting;
         private string statusMessage;
+        private string lastBattleMessageImportReport;
+        private int selectedMainTabIndex;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
 
@@ -1574,11 +1576,35 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public string LastBattleMessageImportReport
+        {
+            get { return lastBattleMessageImportReport; }
+            set
+            {
+                if (lastBattleMessageImportReport == value) { return; }
+                lastBattleMessageImportReport = value;
+                OnPropertyChanged(nameof(LastBattleMessageImportReport));
+            }
+        }
+
+        public int SelectedMainTabIndex
+        {
+            get { return selectedMainTabIndex; }
+            set
+            {
+                if (selectedMainTabIndex == value) { return; }
+                selectedMainTabIndex = value;
+                OnPropertyChanged(nameof(SelectedMainTabIndex));
+            }
+        }
+
         public ICommand CreateCharacterCommand { get; }
 
         public ICommand SaveSelectedProfileCommand { get; }
 
         public ICommand ImportHeroineProfileFromUnityCommand { get; }
+
+        public ICommand OpenBattleMessagesTabCommand { get; }
 
         public ICommand AddOutfitMessageOverrideCommand { get; }
 
@@ -1962,12 +1988,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
             isComfyWaitingResult = false;
             isComfyInterrupting = false;
             statusMessage = string.Empty;
+            lastBattleMessageImportReport = "Unityから戦闘メッセージを読み込むと、ここに差分が表示されます。";
+            selectedMainTabIndex = 0;
 
             CreateCharacterCommand = new RelayCommand(CreateCharacter);
             SaveSelectedProfileCommand = new RelayCommand(SaveSelectedProfile, () => SelectedProfile != null);
             ImportHeroineProfileFromUnityCommand = new RelayCommand(
                 ImportHeroineProfileFromUnity,
                 () => SelectedProfile != null);
+            OpenBattleMessagesTabCommand = new RelayCommand(() => SelectedMainTabIndex = 2);
             AddOutfitMessageOverrideCommand = new RelayCommand(
                 AddOutfitMessageOverride,
                 () => SelectedProfile != null);
@@ -6726,6 +6755,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             string fromUnityFolder = Path.GetDirectoryName(filePath) ?? string.Empty;
             string battleEventsPath = Path.Combine(fromUnityFolder, "battle_result_events_from_unity.json");
             string battlePanelMessagesPath = Path.Combine(fromUnityFolder, "battle_panel_result_messages_from_unity.json");
+            BattleResultEventEntry[] beforeBattleEvents = SelectedProfile.BattleMessages?.ResultEvents?.ToArray()
+                ?? Array.Empty<BattleResultEventEntry>();
+            BattlePanelResultMessageEntry[] beforePanelMessages = SelectedProfile.BattleMessages?.PanelMessages?.ToArray()
+                ?? Array.Empty<BattlePanelResultMessageEntry>();
             bool importedBattleMessages = false;
             if (File.Exists(battleEventsPath))
             {
@@ -6734,6 +6767,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     BattleMessageSyncService.DeserializeResultEvents(File.ReadAllText(battleEventsPath)));
                 importedBattleMessages = true;
             }
+
             if (File.Exists(battlePanelMessagesPath))
             {
                 BattleMessageSyncService.ApplyPanelMessages(
@@ -6741,6 +6775,23 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     BattleMessageSyncService.DeserializePanelMessages(File.ReadAllText(battlePanelMessagesPath)));
                 importedBattleMessages = true;
             }
+
+            BattleMessageChangeSummary battleSummary = BattleMessageSyncService.AnalyzeChanges(
+                beforeBattleEvents,
+                SelectedProfile.BattleMessages?.ResultEvents,
+                beforePanelMessages,
+                SelectedProfile.BattleMessages?.PanelMessages);
+            List<string> battleFiles = new List<string>();
+            if (File.Exists(battleEventsPath)) battleFiles.Add(Path.GetFileName(battleEventsPath));
+            if (File.Exists(battlePanelMessagesPath)) battleFiles.Add(Path.GetFileName(battlePanelMessagesPath));
+            int skippedBattleFiles = 2 - battleFiles.Count;
+            LastBattleMessageImportReport = importedBattleMessages
+                ? $"読込: {string.Join(", ", battleFiles)}\n" +
+                  $"戦闘結果: 追加 {battleSummary.ResultAdded} / 更新 {battleSummary.ResultUpdated} / 削除 {battleSummary.ResultDeleted} / 維持 {battleSummary.ResultUnchanged}\n" +
+                  $"戦闘パネル文: 追加 {battleSummary.PanelAdded} / 更新 {battleSummary.PanelUpdated} / 削除 {battleSummary.PanelDeleted} / 維持 {battleSummary.PanelUnchanged}\n" +
+                  $"詳細変更: 話者 {battleSummary.SpeakerChanged} / 表情 {battleSummary.ExpressionChanged} / 表示方式 {battleSummary.VisualModeChanged}" +
+                  (skippedBattleFiles > 0 ? $"\nスキップ: 同じフォルダに存在しない戦闘メッセージファイル {skippedBattleFiles} 件" : string.Empty)
+                : "戦闘メッセージ用FromUnity JSONが同じフォルダにないため、戦闘文は維持しました。";
 
             characterProjectService.SaveProfile(SelectedProfile);
             SelectedOutfitMessageOverride = SelectedProfile.OutfitMessageOverrides.FirstOrDefault();

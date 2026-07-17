@@ -64,6 +64,43 @@ namespace FantasyLoveSimAssetTool.Services
             profile.BattleMessages.PanelMessages = NormalizePanelMessages(profile.BattleMessages.PanelMessages);
         }
 
+        public static BattleMessageChangeSummary AnalyzeChanges(
+            IEnumerable<BattleResultEventEntry> beforeEvents,
+            IEnumerable<BattleResultEventEntry> afterEvents,
+            IEnumerable<BattlePanelResultMessageEntry> beforePanelMessages,
+            IEnumerable<BattlePanelResultMessageEntry> afterPanelMessages)
+        {
+            BattleMessageChangeSummary summary = new BattleMessageChangeSummary();
+            Dictionary<string, BattleResultEventEntry> beforeResultMap = ToMap(beforeEvents, x => x.EventId);
+            Dictionary<string, BattleResultEventEntry> afterResultMap = ToMap(afterEvents, x => x.EventId);
+            summary.ResultAdded = afterResultMap.Keys.Count(x => !beforeResultMap.ContainsKey(x));
+            summary.ResultDeleted = beforeResultMap.Keys.Count(x => !afterResultMap.ContainsKey(x));
+            foreach (string id in beforeResultMap.Keys.Where(afterResultMap.ContainsKey))
+            {
+                BattleResultEventEntry before = beforeResultMap[id];
+                BattleResultEventEntry after = afterResultMap[id];
+                if (ResultEventEquals(before, after)) summary.ResultUnchanged++;
+                else summary.ResultUpdated++;
+                if (!Same(before.SpeakerType, after.SpeakerType) || !Same(before.SpeakerName, after.SpeakerName)) summary.SpeakerChanged++;
+                if (!Same(before.ExpressionId, after.ExpressionId)) summary.ExpressionChanged++;
+                if (!Same(before.VisualMode, after.VisualMode)) summary.VisualModeChanged++;
+            }
+
+            Dictionary<string, BattlePanelResultMessageEntry> beforePanelMap = ToMap(beforePanelMessages, x => x.MessageId);
+            Dictionary<string, BattlePanelResultMessageEntry> afterPanelMap = ToMap(afterPanelMessages, x => x.MessageId);
+            summary.PanelAdded = afterPanelMap.Keys.Count(x => !beforePanelMap.ContainsKey(x));
+            summary.PanelDeleted = beforePanelMap.Keys.Count(x => !afterPanelMap.ContainsKey(x));
+            foreach (string id in beforePanelMap.Keys.Where(afterPanelMap.ContainsKey))
+            {
+                BattlePanelResultMessageEntry before = beforePanelMap[id];
+                BattlePanelResultMessageEntry after = afterPanelMap[id];
+                if (Same(before.ResultType, after.ResultType) && Same(before.Message, after.Message)) summary.PanelUnchanged++;
+                else summary.PanelUpdated++;
+            }
+
+            return summary;
+        }
+
         public static IReadOnlyList<string> Validate(
             HeroineProfile profile,
             IEnumerable<string> knownStillIds,
@@ -155,6 +192,18 @@ namespace FantasyLoveSimAssetTool.Services
         private static string JoinIds(string value) => string.Join(", ", (value ?? string.Empty).Split(',')
             .Select(x => x.Trim()).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase));
         private static string BuildId(string type, string context) => string.IsNullOrWhiteSpace(context) ? type : type + "_" + context;
+        private static Dictionary<string, T> ToMap<T>(IEnumerable<T> source, Func<T, string> getId) where T : class =>
+            (source ?? Enumerable.Empty<T>()).Where(x => x != null && !string.IsNullOrWhiteSpace(getId(x)))
+                .GroupBy(x => getId(x).Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(x => x.Key, x => x.Last(), StringComparer.OrdinalIgnoreCase);
+        private static bool Same(string left, string right) => string.Equals(left ?? string.Empty, right ?? string.Empty, StringComparison.Ordinal);
+        private static bool ResultEventEquals(BattleResultEventEntry left, BattleResultEventEntry right) =>
+            Same(left.ResultType, right.ResultType) && Same(left.BattleContextId, right.BattleContextId) &&
+            Same(left.SpeakerType, right.SpeakerType) && Same(left.SpeakerName, right.SpeakerName) &&
+            Same(left.Message, right.Message) && Same(left.StillId, right.StillId) &&
+            Same(left.VisualMode, right.VisualMode) && Same(left.ExpressionId, right.ExpressionId) &&
+            left.AffectionChange == right.AffectionChange &&
+            (left.UnlockedOutfitIds ?? Array.Empty<string>()).SequenceEqual(right.UnlockedOutfitIds ?? Array.Empty<string>(), StringComparer.Ordinal);
         private static void ValidateHeroine(HeroineProfile profile, string heroineId)
         {
             if (profile == null) throw new ArgumentNullException(nameof(profile));
@@ -168,5 +217,20 @@ namespace FantasyLoveSimAssetTool.Services
             if (version != 1) throw new InvalidOperationException($"未対応の schemaVersion です: {version}");
             return data;
         }
+    }
+
+    public sealed class BattleMessageChangeSummary
+    {
+        public int ResultAdded { get; set; }
+        public int ResultUpdated { get; set; }
+        public int ResultDeleted { get; set; }
+        public int ResultUnchanged { get; set; }
+        public int PanelAdded { get; set; }
+        public int PanelUpdated { get; set; }
+        public int PanelDeleted { get; set; }
+        public int PanelUnchanged { get; set; }
+        public int SpeakerChanged { get; set; }
+        public int ExpressionChanged { get; set; }
+        public int VisualModeChanged { get; set; }
     }
 }
