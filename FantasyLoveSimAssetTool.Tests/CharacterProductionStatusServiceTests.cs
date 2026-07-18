@@ -20,6 +20,7 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(ProductionStatusKind.Complete, row.BattleMessages.Kind);
             Assert.AreEqual(ProductionStatusKind.Complete, row.TrainingImages.Kind);
             Assert.AreEqual(ProductionStatusKind.Complete, row.TrainingDialogues.Kind);
+            Assert.AreEqual(ProductionStatusKind.Complete, row.CharacterImages.Kind);
             Assert.AreEqual(4, row.BasicInformation.Checks.Count);
             Assert.AreEqual(7, row.BattleMessages.Checks.Count);
             Assert.AreEqual(5, row.TrainingImages.Checks.Count);
@@ -165,6 +166,44 @@ namespace FantasyLoveSimAssetTool.Tests
 
             Assert.AreEqual(ProductionStatusKind.Partial, row.TrainingDialogues.Kind);
             Assert.IsTrue(row.TrainingDialogues.Checks.Any(x => !x.IsComplete && x.Details.Contains("本文")));
+        }
+
+        [TestMethod]
+        public void Evaluate_CharacterImages_DistinguishesRequiredAndOptionalDefinitions()
+        {
+            HeroineProfile profile = CompleteProfile();
+            profile.Assets.Add(new HeroineAsset
+            {
+                AssetId = "Heroine_Normal",
+                Usage = AssetUsage.Sprites,
+                Status = AssetStatus.Pending
+            });
+            StillDefinition[] stills =
+            {
+                new StillDefinition { AssetId = "Heroine_Normal", Usage = AssetUsage.Sprites },
+                new StillDefinition { AssetId = "OptionalEnding", Usage = AssetUsage.Ending }
+            };
+
+            CharacterProductionStatusRow row = CharacterProductionStatusService.Evaluate(
+                profile,
+                new[] { new ExpressionDefinition { ExpressionId = "Neutral" } },
+                new[] { new CostumeDefinition { CostumeId = "Default" } },
+                new[]
+                {
+                    new LayerAssetDefinition { AssetId = "Expression_Neutral", LayerKind = "Expression", ExpressionId = "Neutral" },
+                    new LayerAssetDefinition { AssetId = "Costume_Default", LayerKind = "Costume", CostumeId = "Default" }
+                },
+                asset => !string.IsNullOrWhiteSpace(asset.StoredPath),
+                null,
+                stills);
+
+            Assert.AreEqual(ProductionStatusKind.Partial, row.CharacterImages.Kind);
+            ProductionStatusCheckItem required = row.CharacterImages.Checks.First(x => x.TargetId == "Heroine_Normal");
+            ProductionStatusCheckItem optional = row.CharacterImages.Checks.First(x => x.TargetId == "OptionalEnding");
+            Assert.AreEqual("×", required.Symbol);
+            Assert.AreEqual("―", optional.Symbol);
+            Assert.AreEqual(ProductionStatusTargetKind.StillDefinition, required.TargetKind);
+            Assert.AreEqual(7, required.TargetTabIndex);
         }
 
         private static HeroineProfile CompleteProfile()

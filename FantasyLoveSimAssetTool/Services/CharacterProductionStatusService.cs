@@ -17,12 +17,14 @@ namespace FantasyLoveSimAssetTool.Services
             IEnumerable<CostumeDefinition> costumes = null,
             IEnumerable<LayerAssetDefinition> layers = null,
             Func<HeroineAsset, bool> acceptedAssetFileExists = null,
-            ExportValidationResult exportValidation = null)
+            ExportValidationResult exportValidation = null,
+            IEnumerable<StillDefinition> stillDefinitions = null)
         {
             if (profile == null) throw new ArgumentNullException(nameof(profile));
             List<ExpressionDefinition> expressionList = (expressions ?? Enumerable.Empty<ExpressionDefinition>()).Where(x => x != null).ToList();
             List<CostumeDefinition> costumeList = (costumes ?? Enumerable.Empty<CostumeDefinition>()).Where(x => x != null).ToList();
             List<LayerAssetDefinition> layerList = (layers ?? Enumerable.Empty<LayerAssetDefinition>()).Where(x => x != null).ToList();
+            List<StillDefinition> stillList = (stillDefinitions ?? Enumerable.Empty<StillDefinition>()).Where(x => x != null).ToList();
             CharacterProductionStatusRow row = new CharacterProductionStatusRow
             {
                 CharacterId = profile.HeroineId ?? string.Empty,
@@ -31,6 +33,7 @@ namespace FantasyLoveSimAssetTool.Services
                 BattleMessages = EvaluateBattleMessages(profile),
                 TrainingImages = EvaluateTrainingImages(profile),
                 TrainingDialogues = EvaluateTrainingDialogues(profile),
+                CharacterImages = EvaluateCharacterImages(profile, stillList, acceptedAssetFileExists),
                 Conversations = EvaluateConversations(profile),
                 Expressions = EvaluateExpressions(profile, expressionList, layerList),
                 Costumes = EvaluateCostumes(profile, costumeList, layerList),
@@ -41,6 +44,74 @@ namespace FantasyLoveSimAssetTool.Services
             row.ExportReadiness = EvaluateExportReadiness(profile, row, acceptedAssetFileExists, exportValidation);
             return row;
         }
+
+        private static ProductionStatusCell EvaluateCharacterImages(
+            HeroineProfile profile,
+            IReadOnlyList<StillDefinition> definitions,
+            Func<HeroineAsset, bool> assetFileExists)
+        {
+            AssetUsage[] targetUsages = { AssetUsage.Sprites, AssetUsage.Battle, AssetUsage.Event, AssetUsage.Actions, AssetUsage.Ending };
+            List<HeroineAsset> assets = (profile.Assets ?? new System.Collections.ObjectModel.ObservableCollection<HeroineAsset>())
+                .Where(x => x != null && targetUsages.Contains(x.Usage) && !string.IsNullOrWhiteSpace(x.AssetId)).ToList();
+            Dictionary<string, HeroineAsset> assetById = assets.GroupBy(x => x.AssetId.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(x => x.Key, x => x.Last(), StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, StillDefinition> definitionById = definitions
+                .Where(x => targetUsages.Contains(x.Usage) && !string.IsNullOrWhiteSpace(x.AssetId))
+                .GroupBy(x => x.AssetId.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(x => x.Key, x => x.First(), StringComparer.OrdinalIgnoreCase);
+            string[] coreIds =
+            {
+                "Heroine_Normal", "Battle_Heroine_Idle", "Battle_Heroine_Attack", "Battle_Heroine_Damage",
+                "Battle_Heroine_Victory", "Battle_Heroine_Defeat"
+            };
+            HashSet<string> requiredIds = new HashSet<string>(coreIds.Where(definitionById.ContainsKey), StringComparer.OrdinalIgnoreCase);
+            foreach (HeroineAsset asset in assets) requiredIds.Add(asset.AssetId.Trim());
+            foreach (ConversationEntry entry in profile.ConversationEntries ?? new System.Collections.ObjectModel.ObservableCollection<ConversationEntry>())
+                foreach (string id in SplitIds(entry?.ImageAssetIdsText)) requiredIds.Add(id);
+            foreach (BattleResultEventEntry entry in profile.BattleMessages?.ResultEvents ?? new System.Collections.ObjectModel.ObservableCollection<BattleResultEventEntry>())
+                if (entry != null && !string.IsNullOrWhiteSpace(entry.StillId)) requiredIds.Add(entry.StillId.Trim());
+
+            HashSet<string> allIds = new HashSet<string>(definitionById.Keys, StringComparer.OrdinalIgnoreCase);
+            allIds.UnionWith(requiredIds);
+            allIds.UnionWith(assetById.Keys);
+            Func<HeroineAsset, bool> fileCheck = assetFileExists ?? (asset => !string.IsNullOrWhiteSpace(asset.StoredPath));
+            List<ProductionStatusCheckItem> checks = new List<ProductionStatusCheckItem>();
+            int requiredCount = 0;
+            int completedCount = 0;
+            foreach (string id in allIds.OrderBy(x => GetImageUsageOrder(definitionById.TryGetValue(x, out StillDefinition d) ? d.Usage :
+                assetById.TryGetValue(x, out HeroineAsset a) ? a.Usage : AssetUsage.Event)).ThenBy(x => x, StringComparer.OrdinalIgnoreCase))
+            {
+                bool required = requiredIds.Contains(id);
+                assetById.TryGetValue(id, out HeroineAsset asset);
+                definitionById.TryGetValue(id, out StillDefinition definition);
+                AssetUsage usage = definition?.Usage ?? asset?.Usage ?? AssetUsage.Event;
+                bool complete = asset != null && asset.Status == AssetStatus.Accepted && fileCheck(asset);
+                if (required)
+                {
+                    requiredCount++;
+                    if (complete) completedCount++;
+                }
+                string details = !required ? "現在は未参照の任意候補です。" : asset == null ? "画像Assetが未登録です。" :
+                    asset.Status != AssetStatus.Accepted ? $"AssetStatusが {asset.Status} です。" :
+                    !fileCheck(asset) ? "Acceptedですが実ファイルが見つかりません。" : "Accepted画像と実ファイルを確認しました。";
+                ProductionStatusCheckItem check = Check($"{GetImageUsageLabel(usage)} / {id}", complete, details,
+                    definition != null ? ProductionStatusTargetKind.StillDefinition : ProductionStatusTargetKind.Asset,
+                    id, definition != null ? 7 : 3);
+                check.IsApplicable = required;
+                checks.Add(check);
+            }
+            ProductionStatusKind kind = requiredCount == 0 ? ProductionStatusKind.NotApplicable :
+                completedCount == requiredCount ? ProductionStatusKind.Complete :
+                completedCount == 0 ? ProductionStatusKind.Missing : ProductionStatusKind.Partial;
+            return Cell(profile, "キャラクター画像", 7, kind,
+                $"必須画像 {completedCount}/{requiredCount}。未参照の定義候補 {checks.Count(x => !x.IsApplicable)} 件は任意です。", checks);
+        }
+
+        private static int GetImageUsageOrder(AssetUsage usage) => usage == AssetUsage.Sprites ? 0 : usage == AssetUsage.Battle ? 1 :
+            usage == AssetUsage.Event ? 2 : usage == AssetUsage.Actions ? 3 : usage == AssetUsage.Ending ? 4 : 5;
+
+        private static string GetImageUsageLabel(AssetUsage usage) => usage == AssetUsage.Sprites ? "立ち絵" : usage == AssetUsage.Battle ? "戦闘" :
+            usage == AssetUsage.Event ? "イベント" : usage == AssetUsage.Actions ? "行動" : usage == AssetUsage.Ending ? "エンディング" : usage.ToString();
 
         private static ProductionStatusCell EvaluateTrainingDialogues(HeroineProfile profile)
         {
@@ -145,7 +216,7 @@ namespace FantasyLoveSimAssetTool.Services
             Func<HeroineAsset, bool> acceptedAssetFileExists,
             ExportValidationResult exportValidation)
         {
-            ProductionStatusCell[] categories = { row.BasicInformation, row.BattleMessages, row.TrainingImages, row.TrainingDialogues, row.Conversations,
+            ProductionStatusCell[] categories = { row.BasicInformation, row.BattleMessages, row.TrainingImages, row.TrainingDialogues, row.CharacterImages, row.Conversations,
                 row.Expressions, row.Costumes, row.BattleSkills, row.SkillTree, row.Events };
             List<HeroineAsset> accepted = (profile.Assets ?? new System.Collections.ObjectModel.ObservableCollection<HeroineAsset>())
                 .Where(x => x != null && x.Status == AssetStatus.Accepted).ToList();

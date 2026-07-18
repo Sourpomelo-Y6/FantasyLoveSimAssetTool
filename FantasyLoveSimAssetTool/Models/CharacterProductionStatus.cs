@@ -21,7 +21,8 @@ namespace FantasyLoveSimAssetTool.Models
         SkillTreeNode,
         Expression,
         Costume,
-        LayerAsset
+        LayerAsset,
+        StillDefinition
     }
 
     public sealed class ProductionStatusCell
@@ -42,6 +43,7 @@ namespace FantasyLoveSimAssetTool.Models
     {
         public string Name { get; set; } = string.Empty;
         public bool IsComplete { get; set; }
+        public bool IsApplicable { get; set; } = true;
         public string Details { get; set; } = string.Empty;
         public string CharacterId { get; set; } = string.Empty;
         public int TargetTabIndex { get; set; }
@@ -49,7 +51,7 @@ namespace FantasyLoveSimAssetTool.Models
         public string TargetId { get; set; } = string.Empty;
         public string TargetSubId { get; set; } = string.Empty;
         public ConversationDataKind ConversationKind { get; set; }
-        public string Symbol => IsComplete ? "○" : "×";
+        public string Symbol => !IsApplicable ? "―" : IsComplete ? "○" : "×";
     }
 
     public sealed class CharacterProductionStatusRow
@@ -60,6 +62,7 @@ namespace FantasyLoveSimAssetTool.Models
         public ProductionStatusCell BattleMessages { get; set; }
         public ProductionStatusCell TrainingImages { get; set; }
         public ProductionStatusCell TrainingDialogues { get; set; }
+        public ProductionStatusCell CharacterImages { get; set; }
         public ProductionStatusCell Conversations { get; set; }
         public ProductionStatusCell Expressions { get; set; }
         public ProductionStatusCell Costumes { get; set; }
@@ -73,6 +76,7 @@ namespace FantasyLoveSimAssetTool.Models
             BattleMessages?.Kind != ProductionStatusKind.Complete ||
             TrainingImages?.Kind != ProductionStatusKind.Complete ||
             TrainingDialogues?.Kind != ProductionStatusKind.Complete ||
+            CharacterImages?.Kind != ProductionStatusKind.Complete ||
             Conversations?.Kind != ProductionStatusKind.Complete ||
             Expressions?.Kind != ProductionStatusKind.Complete ||
             Costumes?.Kind != ProductionStatusKind.Complete ||

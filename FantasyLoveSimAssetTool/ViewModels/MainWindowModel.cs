@@ -9234,13 +9234,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 LayerAssetDefinitions,
                 asset => asset != null && !string.IsNullOrWhiteSpace(asset.StoredPath) && File.Exists(Path.Combine(
                     characterProjectService.GetCharacterDirectory(SelectedProfile.HeroineId), asset.StoredPath)),
-                exportService.Validate(SelectedProfile));
+                exportService.Validate(SelectedProfile),
+                StillDefinitions);
             foreach (ProductionStatusCell cell in new[]
             {
                 row.BasicInformation,
                 row.BattleMessages,
                 row.TrainingImages,
                 row.TrainingDialogues,
+                row.CharacterImages,
                 row.Conversations,
                 row.Expressions,
                 row.Costumes,
@@ -9339,6 +9341,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 case ProductionStatusTargetKind.LayerAsset:
                     SelectedLayerAssetDefinition = LayerAssetDefinitions.FirstOrDefault(x =>
                         string.Equals(x.AssetId, check.TargetId, StringComparison.OrdinalIgnoreCase));
+                    break;
+                case ProductionStatusTargetKind.StillDefinition:
+                    StillDefinition still = StillDefinitions.FirstOrDefault(x =>
+                        string.Equals(x.AssetId, check.TargetId, StringComparison.OrdinalIgnoreCase));
+                    if (still != null)
+                    {
+                        SelectedStillUsageFilter = still.Usage.ToString();
+                        SelectedStillDefinition = still;
+                    }
                     break;
             }
         }
