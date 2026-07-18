@@ -1,0 +1,113 @@
+using FantasyLoveSimAssetTool.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+
+namespace FantasyLoveSimAssetTool.Services
+{
+    /// <summary>Exportを書き込まず、制作状況と実Exportで共有する検証結果を生成します。</summary>
+    public sealed class ExportValidationService
+    {
+        private readonly CharacterProjectService projectService;
+        private readonly DefinitionCatalogService catalogService;
+        private readonly StillDefinitionService stillService;
+
+        public ExportValidationService(CharacterProjectService projectService)
+        {
+            this.projectService = projectService ?? throw new ArgumentNullException(nameof(projectService));
+            catalogService = new DefinitionCatalogService(projectService.WorkspaceRoot);
+            stillService = new StillDefinitionService(projectService.WorkspaceRoot);
+        }
+
+        public ExportValidationResult Validate(HeroineProfile profile)
+        {
+            if (profile == null) throw new ArgumentNullException(nameof(profile));
+            List<ExportValidationIssue> issues = new List<ExportValidationIssue>();
+            List<HeroineAsset> accepted = (profile.Assets ?? new System.Collections.ObjectModel.ObservableCollection<HeroineAsset>())
+                .Where(x => x != null && x.Status == AssetStatus.Accepted).ToList();
+            HashSet<string> acceptedIds = IdSet(accepted.Select(x => x.AssetId));
+            HashSet<string> expressionIds = IdSet(catalogService.LoadExpressionDefinitionFile().Expressions
+                .Where(x => x != null).Select(x => x.ExpressionId));
+            HashSet<string> costumeIds = IdSet(catalogService.LoadCostumeDefinitionFile().Costumes
+                .Where(x => x != null).Select(x => x.CostumeId));
+            HashSet<string> skillIds = IdSet((profile.BattleSkills ?? new System.Collections.ObjectModel.ObservableCollection<HeroineBattleSkill>())
+                .Where(x => x != null).Select(x => x.SkillId));
+            foreach (HeroineTrainingSkill skill in profile.HeroineSkillTree?.TrainingSkills ?? new System.Collections.ObjectModel.ObservableCollection<HeroineTrainingSkill>())
+                if (skill != null && !string.IsNullOrWhiteSpace(skill.SkillId)) skillIds.Add(skill.SkillId.Trim());
+
+            if (string.IsNullOrWhiteSpace(profile.HeroineId)) Add(issues, ExportValidationSeverity.Error, "HeroineId が空です。");
+            foreach (HeroineAsset asset in accepted)
+            {
+                string directory = projectService.GetCharacterDirectory(profile.HeroineId);
+                if (string.IsNullOrWhiteSpace(asset.StoredPath) || !File.Exists(Path.Combine(directory, asset.StoredPath)))
+                    Add(issues, ExportValidationSeverity.Error, $"{asset.AssetId}: Accepted画像の実ファイルが見つかりません。",
+                        ProductionStatusTargetKind.Asset, asset.AssetId, 3);
+                if (string.IsNullOrWhiteSpace(asset.PromptRecordPath) || !File.Exists(Path.Combine(directory, asset.PromptRecordPath)))
+                    Add(issues, ExportValidationSeverity.Warning, $"{asset.AssetId}: prompt JSON が見つかりません。",
+                        ProductionStatusTargetKind.Asset, asset.AssetId, 3);
+            }
+
+            List<ConversationEntry> entries = (profile.ConversationEntries ?? new System.Collections.ObjectModel.ObservableCollection<ConversationEntry>())
+                .Where(x => x != null).ToList();
+            foreach (IGrouping<ConversationDataKind, ConversationEntry> kind in entries.GroupBy(x => x.Kind))
+                foreach (IGrouping<string, ConversationEntry> duplicate in kind.Where(x => !string.IsNullOrWhiteSpace(x.Id))
+                    .GroupBy(x => x.Id.Trim(), StringComparer.OrdinalIgnoreCase).Where(x => x.Count() > 1))
+                    Add(issues, ExportValidationSeverity.Error, $"{kind.Key}: ID {duplicate.Key} が重複しています。",
+                        ProductionStatusTargetKind.Conversation, duplicate.Key, 1, kind.Key);
+
+            foreach (ConversationEntry entry in entries)
+            {
+                string label = string.IsNullOrWhiteSpace(entry.Id) ? entry.Kind + "/ID未設定" : entry.Kind + "/" + entry.Id;
+                if (string.IsNullOrWhiteSpace(entry.Id)) AddConversation(issues, entry, ExportValidationSeverity.Error, label + ": ID が空です。");
+                if (string.IsNullOrWhiteSpace(entry.Title)) AddConversation(issues, entry, ExportValidationSeverity.Warning, label + ": タイトルが空です。");
+                if (string.IsNullOrWhiteSpace(entry.Category)) AddConversation(issues, entry, ExportValidationSeverity.Warning, label + ": カテゴリが空です。");
+                if (entry.Priority < 0) AddConversation(issues, entry, ExportValidationSeverity.Error, label + ": 優先度が0未満です。");
+                if (entry.Lines == null || entry.Lines.Count == 0 || entry.Lines.Any(x => x == null || string.IsNullOrWhiteSpace(x.Text)))
+                    AddConversation(issues, entry, ExportValidationSeverity.Error, label + ": 台詞本文が空です。");
+                ValidateCondition(issues, entry, label, costumeIds, skillIds);
+                foreach (ConversationLine line in entry.Lines ?? new System.Collections.ObjectModel.ObservableCollection<ConversationLine>())
+                    if (line != null && !string.IsNullOrWhiteSpace(line.Expression) && !expressionIds.Contains(line.Expression.Trim()))
+                        AddConversation(issues, entry, ExportValidationSeverity.Error, label + $": 表情 {line.Expression} が未登録です。");
+                foreach (string id in SplitIds(entry.ImageAssetIdsText))
+                    if (!acceptedIds.Contains(id)) AddConversation(issues, entry, ExportValidationSeverity.Error, label + $": 画像 {id} がAcceptedではありません。");
+            }
+
+            foreach (string warning in BattleMessageSyncService.Validate(profile,
+                stillService.GetDefaultDefinitions().Where(x => x != null).Select(x => x.AssetId), costumeIds, expressionIds))
+                Add(issues, ExportValidationSeverity.Warning, warning);
+            Add(issues, ExportValidationSeverity.Information,
+                $"Export対象: Accepted画像 {accepted.Count} 件、会話・イベント {entries.Count} 件、戦闘スキル {profile.BattleSkills?.Count ?? 0} 件。");
+            return new ExportValidationResult { Issues = issues };
+        }
+
+        private static void ValidateCondition(List<ExportValidationIssue> issues, ConversationEntry entry, string label,
+            HashSet<string> costumeIds, HashSet<string> skillIds)
+        {
+            if (entry.Conditions == null) return;
+            if (entry.Conditions.MinAffection > entry.Conditions.MaxAffection)
+                AddConversation(issues, entry, ExportValidationSeverity.Error, label + ": 好感度の最小値が最大値を超えています。");
+            if (entry.Kind == ConversationDataKind.GameEvents && entry.Conditions.Once && string.IsNullOrWhiteSpace(entry.Conditions.RequiredFlagIdsText))
+                AddConversation(issues, entry, ExportValidationSeverity.Warning, label + ": onceイベントの必須フラグが空です。");
+            if (!string.IsNullOrWhiteSpace(entry.Conditions.CostumeId) && !costumeIds.Contains(entry.Conditions.CostumeId.Trim()))
+                AddConversation(issues, entry, ExportValidationSeverity.Error, label + $": 衣装 {entry.Conditions.CostumeId} が未登録です。");
+            foreach (string id in RequiredSkillIdSyncService.NormalizeText(entry.Conditions.RequiredSkillIdsText))
+                if (!skillIds.Contains(id)) AddConversation(issues, entry, ExportValidationSeverity.Error, label + $": スキル {id} が未登録です。");
+        }
+
+        private static HashSet<string> IdSet(IEnumerable<string> values) => new HashSet<string>((values ?? Array.Empty<string>())
+            .Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()), StringComparer.OrdinalIgnoreCase);
+        private static void AddConversation(List<ExportValidationIssue> issues, ConversationEntry entry, ExportValidationSeverity severity, string message) =>
+            Add(issues, severity, message, ProductionStatusTargetKind.Conversation, entry.Id, 1, entry.Kind);
+        private static void Add(List<ExportValidationIssue> issues, ExportValidationSeverity severity, string message,
+            ProductionStatusTargetKind targetKind = ProductionStatusTargetKind.None, string targetId = null, int targetTabIndex = 12,
+            ConversationDataKind conversationKind = ConversationDataKind.Conversations) => issues.Add(new ExportValidationIssue
+            {
+                Severity = severity, Message = message, TargetKind = targetKind, TargetId = targetId ?? string.Empty,
+                TargetTabIndex = targetTabIndex, ConversationKind = conversationKind
+            });
+        private static IEnumerable<string> SplitIds(string text) => string.IsNullOrWhiteSpace(text)
+            ? Enumerable.Empty<string>()
+            : text.Split(new[] { '\r', '\n', ',', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Where(x => x.Length > 0);
+    }
+}

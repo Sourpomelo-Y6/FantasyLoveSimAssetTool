@@ -15,6 +15,7 @@ namespace FantasyLoveSimAssetTool.Services
         private readonly ImageInspectionService imageInspectionService;
         private readonly StillDefinitionService stillDefinitionService;
         private readonly DefinitionCatalogService definitionCatalogService;
+        private readonly ExportValidationService exportValidationService;
 
         public string ExportDirectory
         {
@@ -32,7 +33,10 @@ namespace FantasyLoveSimAssetTool.Services
             this.imageInspectionService = imageInspectionService ?? throw new ArgumentNullException(nameof(imageInspectionService));
             stillDefinitionService = new StillDefinitionService(this.characterProjectService.WorkspaceRoot);
             definitionCatalogService = new DefinitionCatalogService(this.characterProjectService.WorkspaceRoot);
+            exportValidationService = new ExportValidationService(this.characterProjectService);
         }
+
+        public ExportValidationResult Validate(HeroineProfile profile) => exportValidationService.Validate(profile);
 
         public ExportReport ExportHeroine(HeroineProfile profile)
         {
@@ -58,15 +62,10 @@ namespace FantasyLoveSimAssetTool.Services
                 ExportPath = heroineExportDirectory,
                 AcceptedAssetCount = acceptedAssets.Count
             };
-            ValidateConversationEntries(profile, acceptedAssets, report);
-            foreach (string warning in BattleMessageSyncService.Validate(
-                profile,
-                stillDefinitionService.GetDefaultDefinitions().Where(x => x != null).Select(x => x.AssetId),
-                GetConversationCostumeIds(),
-                definitionCatalogService.LoadExpressionDefinitionFile().Expressions
-                    .Where(x => x != null).Select(x => x.ExpressionId)))
+            ExportValidationResult validation = Validate(profile);
+            foreach (ExportValidationIssue issue in validation.Issues.Where(x => x.Severity != ExportValidationSeverity.Information))
             {
-                report.Warnings.Add(warning);
+                report.Warnings.Add($"{issue.Severity}: {issue.Message}");
             }
 
             foreach (HeroineAsset asset in acceptedAssets)
@@ -87,6 +86,9 @@ namespace FantasyLoveSimAssetTool.Services
             }
 
             WriteDataFiles(profile, acceptedAssets, heroineExportDirectory, report);
+
+            report.Warnings = new System.Collections.ObjectModel.ObservableCollection<string>(
+                report.Warnings.Distinct(StringComparer.Ordinal));
 
             return report;
         }

@@ -6880,6 +6880,23 @@ namespace FantasyLoveSimAssetTool.ViewModels
             try
             {
                 characterProjectService.SaveProfile(SelectedProfile);
+                ExportValidationResult validation = exportService.Validate(SelectedProfile);
+                if (validation.ErrorCount > 0)
+                {
+                    MessageBoxResult result = MessageBox.Show(
+                        $"Export前検証で Error {validation.ErrorCount} 件、Warning {validation.WarningCount} 件が見つかりました。\n" +
+                        "Errorがあるため一部データや画像を出力できない可能性があります。続行しますか？",
+                        "Export前検証",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+                    if (result != MessageBoxResult.Yes)
+                    {
+                        RefreshProductionStatus();
+                        SelectedMainTabIndex = 13;
+                        StatusMessage = "Exportを中止しました。制作状況のExport準備から修正対象を確認してください。";
+                        return;
+                    }
+                }
                 LastExportReport = exportService.ExportHeroine(SelectedProfile);
                 StatusMessage = $"{SelectedProfile.HeroineId} を export しました。画像 {LastExportReport.ExportedImageCount}/{LastExportReport.AcceptedAssetCount} 件、prompt {LastExportReport.ExportedPromptCount} 件、会話データ {LastExportReport.TotalConversationDataCount} 件、警告 {LastExportReport.Warnings.Count} 件。";
             }
@@ -9216,7 +9233,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 CostumeDefinitions,
                 LayerAssetDefinitions,
                 asset => asset != null && !string.IsNullOrWhiteSpace(asset.StoredPath) && File.Exists(Path.Combine(
-                    characterProjectService.GetCharacterDirectory(SelectedProfile.HeroineId), asset.StoredPath)));
+                    characterProjectService.GetCharacterDirectory(SelectedProfile.HeroineId), asset.StoredPath)),
+                exportService.Validate(SelectedProfile));
             foreach (ProductionStatusCell cell in new[]
             {
                 row.BasicInformation,

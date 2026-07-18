@@ -16,7 +16,8 @@ namespace FantasyLoveSimAssetTool.Services
             IEnumerable<ExpressionDefinition> expressions = null,
             IEnumerable<CostumeDefinition> costumes = null,
             IEnumerable<LayerAssetDefinition> layers = null,
-            Func<HeroineAsset, bool> acceptedAssetFileExists = null)
+            Func<HeroineAsset, bool> acceptedAssetFileExists = null,
+            ExportValidationResult exportValidation = null)
         {
             if (profile == null) throw new ArgumentNullException(nameof(profile));
             List<ExpressionDefinition> expressionList = (expressions ?? Enumerable.Empty<ExpressionDefinition>()).Where(x => x != null).ToList();
@@ -36,7 +37,7 @@ namespace FantasyLoveSimAssetTool.Services
                 SkillTree = EvaluateSkillTree(profile),
                 Events = EvaluateEvents(profile, expressionList, costumeList)
             };
-            row.ExportReadiness = EvaluateExportReadiness(profile, row, acceptedAssetFileExists);
+            row.ExportReadiness = EvaluateExportReadiness(profile, row, acceptedAssetFileExists, exportValidation);
             return row;
         }
 
@@ -92,7 +93,8 @@ namespace FantasyLoveSimAssetTool.Services
         private static ProductionStatusCell EvaluateExportReadiness(
             HeroineProfile profile,
             CharacterProductionStatusRow row,
-            Func<HeroineAsset, bool> acceptedAssetFileExists)
+            Func<HeroineAsset, bool> acceptedAssetFileExists,
+            ExportValidationResult exportValidation)
         {
             ProductionStatusCell[] categories = { row.BasicInformation, row.BattleMessages, row.TrainingImages, row.Conversations,
                 row.Expressions, row.Costumes, row.BattleSkills, row.SkillTree, row.Events };
@@ -104,6 +106,22 @@ namespace FantasyLoveSimAssetTool.Services
                 category.CategoryName, category.Kind == ProductionStatusKind.Complete,
                 category.Kind == ProductionStatusKind.Complete ? "完成判定です。" : category.Symbol + " " + category.Details,
                 ProductionStatusTargetKind.None, null, category.TargetTabIndex)).ToList();
+            if (exportValidation != null)
+            {
+                foreach (ExportValidationIssue issue in exportValidation.Issues)
+                {
+                    checks.Add(Check(issue.Severity + ": " + issue.Message,
+                        issue.Severity == ExportValidationSeverity.Information,
+                        issue.Message, issue.TargetKind, issue.TargetId, issue.TargetTabIndex, issue.ConversationKind));
+                }
+                int validationErrors = exportValidation.ErrorCount;
+                int validationWarnings = exportValidation.WarningCount;
+                ProductionStatusKind validationKind = validationErrors == 0 && validationWarnings == 0
+                    ? ProductionStatusKind.Complete : ProductionStatusKind.Partial;
+                return Cell(profile, "Export準備", 12, validationKind,
+                    validationErrors == 0 && validationWarnings == 0 ? "共通Export検証でエラー・警告はありません。" :
+                    $"共通Export検証: Error {validationErrors} 件、Warning {validationWarnings} 件。詳細から修正対象へ移動できます。", checks);
+            }
             checks.Add(Check("Accepted画像の実ファイル", missingFiles.Count == 0,
                 missingFiles.Count == 0 ? $"Accepted画像 {accepted.Count} 件の保存先を確認しました。" :
                 $"{missingFiles.Count}/{accepted.Count} 件でファイルが見つかりません。"));
