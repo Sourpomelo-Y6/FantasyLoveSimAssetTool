@@ -37,6 +37,7 @@ namespace FantasyLoveSimAssetTool.Models
         public int SkillPointCost { get; set; } = 1;
         public ObservableCollection<string> PrerequisiteNodeIds { get; set; } = new ObservableCollection<string>();
         public ObservableCollection<string> UnlockedTrainingIds { get; set; } = new ObservableCollection<string>();
+        public string UnlockEventId { get; set; } = string.Empty;
         public ObservableCollection<HeroineSkillTreeCondition> UnlockConditions { get; set; } =
             new ObservableCollection<HeroineSkillTreeCondition>();
         public float TreePositionX { get; set; }

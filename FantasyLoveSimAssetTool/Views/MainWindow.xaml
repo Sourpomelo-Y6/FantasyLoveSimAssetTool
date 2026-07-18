@@ -369,6 +369,7 @@
                                                     <DataGridTextColumn Header="SP" Binding="{Binding SkillPointCost}" Width="45"/>
                                                     <DataGridTextColumn Header="前提NodeId（カンマ区切り）" Binding="{Binding PrerequisiteNodeIdsText}" Width="170"/>
                                                     <DataGridTextColumn Header="解放TrainingId（カンマ区切り）" Binding="{Binding UnlockedTrainingIdsText}" Width="180"/>
+                                                    <DataGridTextColumn Header="取得時EventId" Binding="{Binding UnlockEventId}" Width="150"/>
                                                     <DataGridTextColumn Header="条件 Type|Scope|Target|Value（;区切り）" Binding="{Binding UnlockConditionsText}" Width="240"/>
                                                     <DataGridTextColumn Header="X" Binding="{Binding TreePositionX}" Width="55"/>
                                                     <DataGridTextColumn Header="Y" Binding="{Binding TreePositionY}" Width="55"/>

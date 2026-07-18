@@ -416,6 +416,9 @@ namespace FantasyLoveSimAssetTool.Services
                 .Where(x => x != null && !string.IsNullOrWhiteSpace(x.TrainingId)).Select(x => x.TrainingId.Trim()), StringComparer.OrdinalIgnoreCase);
             HashSet<string> nodeIds = new HashSet<string>(nodes
                 .Where(x => !string.IsNullOrWhiteSpace(x.NodeId)).Select(x => x.NodeId.Trim()), StringComparer.OrdinalIgnoreCase);
+            HashSet<string> eventIds = new HashSet<string>((profile.ConversationEntries ?? new System.Collections.ObjectModel.ObservableCollection<ConversationEntry>())
+                .Where(x => x != null && x.Kind == ConversationDataKind.GameEvents && !string.IsNullOrWhiteSpace(x.Id))
+                .Select(x => x.Id.Trim()), StringComparer.OrdinalIgnoreCase);
             List<ProductionStatusCheckItem> checks = new List<ProductionStatusCheckItem>
             {
                 Check("ツリーノード登録", nodes.Count > 0, nodes.Count > 0 ? $"{nodes.Count} 件登録済みです。" : "ノードを1件以上登録してください。"),
@@ -443,8 +446,12 @@ namespace FantasyLoveSimAssetTool.Services
                     problems.Add("訓練Skill:" + node.TrainingSkillId);
                 foreach (string id in node.UnlockedTrainingIds ?? new System.Collections.ObjectModel.ObservableCollection<string>())
                     if (!trainingIds.Contains(id)) problems.Add("解放Training:" + id);
+                if (!string.IsNullOrWhiteSpace(node.UnlockEventId) && !eventIds.Contains(node.UnlockEventId.Trim()))
+                    problems.Add("取得時Event:" + node.UnlockEventId.Trim());
                 bool hasReward = !string.IsNullOrWhiteSpace(node.GrantedHeroineSkillId) ||
-                    !string.IsNullOrWhiteSpace(node.TrainingSkillId) || (node.UnlockedTrainingIds?.Count ?? 0) > 0;
+                    !string.IsNullOrWhiteSpace(node.TrainingSkillId) ||
+                    !string.IsNullOrWhiteSpace(node.UnlockEventId) ||
+                    (node.UnlockedTrainingIds?.Count ?? 0) > 0;
                 if (!hasReward) problems.Add("付与内容なし");
                 checks.Add(Check($"ノード {label}", problems.Count == 0,
                     problems.Count == 0 ? "前提と付与先の参照は有効です。" : "要確認: " + string.Join(", ", problems),

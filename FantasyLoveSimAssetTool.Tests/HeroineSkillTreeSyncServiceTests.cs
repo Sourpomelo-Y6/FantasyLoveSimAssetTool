@@ -26,6 +26,7 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual("node_care", node.NodeId);
             Assert.AreEqual("training_care", node.TrainingSkillId);
             Assert.AreEqual("CooperativeDrill", node.UnlockedTrainingIds.Single());
+            Assert.AreEqual("Manual_Care_01", node.UnlockEventId);
             Assert.AreEqual("TrainingCount", node.UnlockConditions.Single().ConditionType);
             Assert.AreEqual(10, node.UnlockConditions.Single().RequiredValue);
         }
@@ -92,6 +93,7 @@ namespace FantasyLoveSimAssetTool.Tests
                             DisplayName = "気遣い",
                             TrainingSkillId = "training_care",
                             SkillPointCost = 2,
+                            UnlockEventId = "Manual_Care_01",
                             UnlockedTrainingIds = new ObservableCollection<string> { "CooperativeDrill" },
                             UnlockConditions = new ObservableCollection<HeroineSkillTreeCondition>
                             {

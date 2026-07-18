@@ -101,6 +101,7 @@ namespace FantasyLoveSimAssetTool.Services
                 item.DisplayName = item.DisplayName?.Trim() ?? string.Empty;
                 item.TrainingSkillId = item.TrainingSkillId?.Trim() ?? string.Empty;
                 item.GrantedHeroineSkillId = item.GrantedHeroineSkillId?.Trim() ?? string.Empty;
+                item.UnlockEventId = item.UnlockEventId?.Trim() ?? string.Empty;
                 item.SkillPointCost = Math.Max(0, item.SkillPointCost);
                 item.PrerequisiteNodeIds = NormalizeIds(item.PrerequisiteNodeIds);
                 item.UnlockedTrainingIds = NormalizeIds(item.UnlockedTrainingIds);
