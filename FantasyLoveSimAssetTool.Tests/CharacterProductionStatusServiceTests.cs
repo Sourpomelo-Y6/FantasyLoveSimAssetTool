@@ -19,6 +19,7 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(ProductionStatusKind.Complete, row.BasicInformation.Kind);
             Assert.AreEqual(ProductionStatusKind.Complete, row.BattleMessages.Kind);
             Assert.AreEqual(ProductionStatusKind.Complete, row.TrainingImages.Kind);
+            Assert.AreEqual(ProductionStatusKind.Complete, row.TrainingDialogues.Kind);
             Assert.AreEqual(4, row.BasicInformation.Checks.Count);
             Assert.AreEqual(7, row.BattleMessages.Checks.Count);
             Assert.AreEqual(5, row.TrainingImages.Checks.Count);
@@ -146,6 +147,24 @@ namespace FantasyLoveSimAssetTool.Tests
             ProductionStatusCheckItem battleSkill = row.BattleSkills.Checks.First(x => x.Name.Contains("BattleSkillA"));
             Assert.AreEqual(ProductionStatusTargetKind.BattleSkill, battleSkill.TargetKind);
             Assert.AreEqual("BattleSkillA", battleSkill.TargetId);
+
+            ProductionStatusCheckItem trainingDialogue = row.TrainingDialogues.Checks.First();
+            Assert.AreEqual(ProductionStatusTargetKind.TrainingDialogue, trainingDialogue.TargetKind);
+            Assert.AreEqual("TrainingA", trainingDialogue.TargetId);
+            Assert.AreEqual("SelectedBeforeFirstStep", trainingDialogue.TargetSubId);
+            Assert.AreEqual(4, trainingDialogue.TargetTabIndex);
+        }
+
+        [TestMethod]
+        public void Evaluate_MissingTrainingDialogueText_ReturnsPartialDetails()
+        {
+            HeroineProfile profile = CompleteProfile();
+            profile.TrainingDialogues.Items[0].Messages[0].Text = string.Empty;
+
+            CharacterProductionStatusRow row = EvaluateWithDefinitions(profile);
+
+            Assert.AreEqual(ProductionStatusKind.Partial, row.TrainingDialogues.Kind);
+            Assert.IsTrue(row.TrainingDialogues.Checks.Any(x => !x.IsComplete && x.Details.Contains("本文")));
         }
 
         private static HeroineProfile CompleteProfile()
@@ -234,6 +253,22 @@ namespace FantasyLoveSimAssetTool.Tests
             }
             profile.Assets.Add(new HeroineAsset { AssetId = "Expression_Neutral", Status = AssetStatus.Accepted, StoredPath = "Expression_Neutral.png" });
             profile.Assets.Add(new HeroineAsset { AssetId = "Costume_Default", Status = AssetStatus.Accepted, StoredPath = "Costume_Default.png" });
+            foreach (string state in new[]
+            {
+                "SelectedBeforeFirstStep", "SelectedAfterFirstStep", "PlayerLpConsumed",
+                "HeroineLpConsumed", "SimultaneousLpConsumed"
+            })
+            {
+                profile.TrainingDialogues.Items.Add(new TrainingDialogueEntry
+                {
+                    TrainingId = "TrainingA",
+                    VisualState = state,
+                    Messages = new ObservableCollection<TrainingDialogueMessage>
+                    {
+                        new TrainingDialogueMessage { Text = state + "のセリフ" }
+                    }
+                });
+            }
             profile.ConversationEntries.Add(new ConversationEntry
             {
                 Id = "Conversation01",

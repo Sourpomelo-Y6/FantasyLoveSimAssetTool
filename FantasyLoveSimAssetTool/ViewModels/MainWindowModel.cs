@@ -9240,6 +9240,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 row.BasicInformation,
                 row.BattleMessages,
                 row.TrainingImages,
+                row.TrainingDialogues,
                 row.Conversations,
                 row.Expressions,
                 row.Costumes,
@@ -9309,6 +9310,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     IsSkillTreeEditorExpanded = true;
                     SelectedProductionTrainingSkill = SelectedProfile.HeroineSkillTree?.TrainingSkills?.FirstOrDefault(x =>
                         string.Equals(x.SkillId, check.TargetId, StringComparison.OrdinalIgnoreCase));
+                    break;
+                case ProductionStatusTargetKind.TrainingDialogue:
+                    string normalizedState = TrainingDialogueSyncService.NormalizeVisualState(check.TargetSubId);
+                    string assetId = $"Training_{check.TargetId}_{normalizedState}";
+                    HeroineAsset trainingAsset = SelectedProfile.Assets?.FirstOrDefault(x =>
+                        string.Equals(x.AssetId, assetId, StringComparison.OrdinalIgnoreCase));
+                    if (trainingAsset != null) SelectedTrainingAsset = trainingAsset;
+                    SelectedTrainingDialogueEntry = SelectedProfile.TrainingDialogues?.Items?.FirstOrDefault(x =>
+                        string.Equals(x.TrainingId, check.TargetId, StringComparison.Ordinal) &&
+                        string.Equals(TrainingDialogueSyncService.NormalizeVisualState(x.VisualState), normalizedState, StringComparison.Ordinal));
+                    SelectedTrainingDialogueMessage = SelectedTrainingDialogueEntry?.Messages?.FirstOrDefault(x =>
+                        x == null || string.IsNullOrWhiteSpace(x.Text)) ?? SelectedTrainingDialogueEntry?.Messages?.FirstOrDefault();
                     break;
                 case ProductionStatusTargetKind.SkillTreeNode:
                     IsSkillTreeEditorExpanded = true;

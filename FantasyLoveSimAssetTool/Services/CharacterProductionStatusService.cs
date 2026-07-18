@@ -30,6 +30,7 @@ namespace FantasyLoveSimAssetTool.Services
                 BasicInformation = EvaluateBasicInformation(profile),
                 BattleMessages = EvaluateBattleMessages(profile),
                 TrainingImages = EvaluateTrainingImages(profile),
+                TrainingDialogues = EvaluateTrainingDialogues(profile),
                 Conversations = EvaluateConversations(profile),
                 Expressions = EvaluateExpressions(profile, expressionList, layerList),
                 Costumes = EvaluateCostumes(profile, costumeList, layerList),
@@ -39,6 +40,54 @@ namespace FantasyLoveSimAssetTool.Services
             };
             row.ExportReadiness = EvaluateExportReadiness(profile, row, acceptedAssetFileExists, exportValidation);
             return row;
+        }
+
+        private static ProductionStatusCell EvaluateTrainingDialogues(HeroineProfile profile)
+        {
+            string[] states =
+            {
+                "SelectedBeforeFirstStep", "SelectedAfterFirstStep", "PlayerLpConsumed",
+                "HeroineLpConsumed", "SimultaneousLpConsumed"
+            };
+            string[] trainingIds = profile.TrainingCatalog?.Items?
+                .Where(x => x != null && !string.IsNullOrWhiteSpace(x.TrainingId))
+                .Select(x => x.TrainingId.Trim()).Distinct(StringComparer.Ordinal).ToArray() ?? Array.Empty<string>();
+            if (trainingIds.Length == 0)
+            {
+                return Cell(profile, "訓練セリフ", 4, ProductionStatusKind.Missing,
+                    "登録済み訓練がありません。先にUnity訓練一覧を読み込んでください。",
+                    new[] { Check("訓練一覧", false, "Unity訓練一覧を読み込んでください。") });
+            }
+
+            List<TrainingDialogueEntry> entries = (profile.TrainingDialogues?.Items ??
+                new System.Collections.ObjectModel.ObservableCollection<TrainingDialogueEntry>()).Where(x => x != null).ToList();
+            List<ProductionStatusCheckItem> checks = new List<ProductionStatusCheckItem>();
+            int completedSlots = 0;
+            foreach (string trainingId in trainingIds)
+            {
+                foreach (string state in states)
+                {
+                    List<TrainingDialogueEntry> matches = entries.Where(x =>
+                        string.Equals((x.TrainingId ?? string.Empty).Trim(), trainingId, StringComparison.Ordinal) &&
+                        string.Equals(TrainingDialogueSyncService.NormalizeVisualState(x.VisualState), state, StringComparison.Ordinal)).ToList();
+                    int messageCount = matches.SelectMany(x => x.Messages ?? new System.Collections.ObjectModel.ObservableCollection<TrainingDialogueMessage>())
+                        .Count(x => x != null && !string.IsNullOrWhiteSpace(x.Text));
+                    bool complete = matches.Count == 1 && messageCount > 0;
+                    if (complete) completedSlots++;
+                    ProductionStatusCheckItem check = Check($"{trainingId} / {state}", complete,
+                        matches.Count == 0 ? "セリフ枠が未登録です。" :
+                        matches.Count > 1 ? $"同じ枠が {matches.Count} 件重複しています。" :
+                        messageCount == 0 ? "本文入りのセリフ候補がありません。" : $"本文入り候補 {messageCount} 件。",
+                        ProductionStatusTargetKind.TrainingDialogue, trainingId, 4);
+                    check.TargetSubId = state;
+                    checks.Add(check);
+                }
+            }
+            int totalSlots = trainingIds.Length * states.Length;
+            ProductionStatusKind kind = completedSlots == totalSlots ? ProductionStatusKind.Complete :
+                completedSlots == 0 ? ProductionStatusKind.Missing : ProductionStatusKind.Partial;
+            return Cell(profile, "訓練セリフ", 4, kind,
+                $"完成枠 {completedSlots}/{totalSlots}。登録済み訓練 {trainingIds.Length} 件 × 5状態を確認します。", checks);
         }
 
         private static ProductionStatusCell EvaluateEvents(
@@ -96,7 +145,7 @@ namespace FantasyLoveSimAssetTool.Services
             Func<HeroineAsset, bool> acceptedAssetFileExists,
             ExportValidationResult exportValidation)
         {
-            ProductionStatusCell[] categories = { row.BasicInformation, row.BattleMessages, row.TrainingImages, row.Conversations,
+            ProductionStatusCell[] categories = { row.BasicInformation, row.BattleMessages, row.TrainingImages, row.TrainingDialogues, row.Conversations,
                 row.Expressions, row.Costumes, row.BattleSkills, row.SkillTree, row.Events };
             List<HeroineAsset> accepted = (profile.Assets ?? new System.Collections.ObjectModel.ObservableCollection<HeroineAsset>())
                 .Where(x => x != null && x.Status == AssetStatus.Accepted).ToList();
