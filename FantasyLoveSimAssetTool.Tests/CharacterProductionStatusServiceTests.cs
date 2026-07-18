@@ -230,6 +230,23 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void Evaluate_ActionReactionWithoutUnconditionalFallback_ReturnsPartial()
+        {
+            HeroineProfile profile = CompleteProfile();
+            ConversationEntry tea = profile.ConversationEntries.First(x =>
+                x.Kind == ConversationDataKind.ActionReactions && x.Conditions.ActionId == "Tea");
+            tea.Priority = 10;
+            tea.Conditions.Once = true;
+
+            CharacterProductionStatusRow row = EvaluateWithDefinitions(profile);
+
+            Assert.AreEqual(ProductionStatusKind.Partial, row.ActionReactions.Kind);
+            ProductionStatusCheckItem fallback = row.ActionReactions.Checks.First(x => x.Name == "Tea フォールバック");
+            Assert.IsFalse(fallback.IsComplete);
+            StringAssert.Contains(fallback.Details, "priority 0");
+        }
+
+        [TestMethod]
         public void Evaluate_UnknownConversationCategoryAndMissingFallback_ReturnsPartial()
         {
             HeroineProfile profile = CompleteProfile();
@@ -394,6 +411,8 @@ namespace FantasyLoveSimAssetTool.Tests
                 {
                     Id = "Reaction_" + actionId + "_01",
                     Kind = ConversationDataKind.ActionReactions,
+                    Priority = 0,
+                    Conditions = new ConversationCondition { MinAffection = 0, MaxAffection = 9999 },
                     Lines = new ObservableCollection<ConversationLine>
                     {
                         new ConversationLine { Text = actionId + "への反応", Expression = "Neutral" }

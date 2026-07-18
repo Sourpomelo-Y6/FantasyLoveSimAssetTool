@@ -72,6 +72,15 @@ namespace FantasyLoveSimAssetTool.Services
                 checks.Add(Check("主要行動 " + actionId, match != null,
                     match == null ? "対応する行動反応がありません。" : $"{match.Id} を登録済みです。",
                     ProductionStatusTargetKind.Conversation, match?.Id, 1, ConversationDataKind.ActionReactions));
+                ConversationEntry fallback = entries.FirstOrDefault(x =>
+                    string.Equals(x.Conditions?.ActionId, actionId, StringComparison.OrdinalIgnoreCase) &&
+                    IsActionReactionFallback(x));
+                checks.Add(Check(actionId + " フォールバック", fallback != null,
+                    fallback == null
+                        ? "priority 0・一度限りOFF・無条件の反応が必要です。"
+                        : fallback.Id + " を無条件のフォールバックとして使用できます。",
+                    ProductionStatusTargetKind.Conversation, fallback?.Id ?? match?.Id, 1,
+                    ConversationDataKind.ActionReactions));
             }
             bool idsValid = entries.All(x => !string.IsNullOrWhiteSpace(x.Id)) && entries.Where(x => !string.IsNullOrWhiteSpace(x.Id))
                 .GroupBy(x => x.Id.Trim(), StringComparer.OrdinalIgnoreCase).All(x => x.Count() == 1);
@@ -119,8 +128,24 @@ namespace FantasyLoveSimAssetTool.Services
             {
                 condition.ActionId, condition.LocationId, condition.MinAffection.ToString(), condition.MaxAffection.ToString(),
                 condition.Weather, condition.Season, condition.TimeOfDay, condition.CostumeId, condition.RequiredItemId,
-                condition.RequiredFlagIdsText, condition.RequiredSkillIdsText, (entry?.Priority ?? 0).ToString()
+                condition.RequiredFlagIdsText, condition.RequiredSkillIdsText, condition.Once.ToString(),
+                (entry?.Priority ?? 0).ToString()
             }.Select(x => (x ?? string.Empty).Trim()));
+        }
+
+        private static bool IsActionReactionFallback(ConversationEntry entry)
+        {
+            ConversationCondition condition = entry?.Conditions;
+            return entry != null && entry.Priority == 0 && condition != null && !condition.Once &&
+                condition.MinAffection <= 0 && condition.MaxAffection >= 9999 &&
+                string.IsNullOrWhiteSpace(condition.LocationId) &&
+                string.IsNullOrWhiteSpace(condition.Weather) &&
+                string.IsNullOrWhiteSpace(condition.Season) &&
+                string.IsNullOrWhiteSpace(condition.TimeOfDay) &&
+                string.IsNullOrWhiteSpace(condition.CostumeId) &&
+                string.IsNullOrWhiteSpace(condition.RequiredItemId) &&
+                string.IsNullOrWhiteSpace(condition.RequiredFlagIdsText) &&
+                string.IsNullOrWhiteSpace(condition.RequiredSkillIdsText);
         }
 
         private static ProductionStatusCell EvaluateCharacterImages(

@@ -7085,15 +7085,33 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 }
 
                 string actionId = item.Id.Trim();
-                if (HasExistingActionReaction(actionId))
+                List<FromUnityActionReaction> reactions = item.Reactions ?? new List<FromUnityActionReaction>();
+                if (reactions.Count == 0)
                 {
-                    skippedCount++;
+                    if (HasExistingActionReaction(actionId, null))
+                    {
+                        skippedCount++;
+                        continue;
+                    }
+
+                    ConversationEntry fallbackEntry = CreateActionReactionFromUnityAction(item);
+                    SelectedProfile.ConversationEntries.Add(fallbackEntry);
+                    importedEntries.Add(fallbackEntry);
                     continue;
                 }
 
-                ConversationEntry entry = CreateActionReactionFromUnityAction(item);
-                SelectedProfile.ConversationEntries.Add(entry);
-                importedEntries.Add(entry);
+                foreach (FromUnityActionReaction reaction in reactions)
+                {
+                    if (reaction == null || HasExistingActionReaction(actionId, reaction.Id))
+                    {
+                        skippedCount++;
+                        continue;
+                    }
+
+                    ConversationEntry entry = CreateActionReactionFromUnityReaction(item, reaction);
+                    SelectedProfile.ConversationEntries.Add(entry);
+                    importedEntries.Add(entry);
+                }
             }
 
             characterProjectService.SaveProfile(SelectedProfile);
@@ -7108,18 +7126,71 @@ namespace FantasyLoveSimAssetTool.ViewModels
             StatusMessage = $"FromUnity actions を取り込みました。追加 {importedEntries.Count} 件、スキップ {skippedCount} 件。";
         }
 
-        private bool HasExistingActionReaction(string actionId)
+        private bool HasExistingActionReaction(string actionId, string reactionId)
         {
             if (SelectedProfile == null || SelectedProfile.ConversationEntries == null)
             {
                 return false;
             }
 
-            string generatedId = CreateActionReactionEntryId(actionId);
+            string generatedId = string.IsNullOrWhiteSpace(reactionId)
+                ? CreateActionReactionEntryId(actionId)
+                : reactionId.Trim();
             return SelectedProfile.ConversationEntries.Any(entry => entry != null
                 && entry.Kind == ConversationDataKind.ActionReactions
-                && (string.Equals(entry.Id, generatedId, StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(entry.Conditions?.ActionId, actionId, StringComparison.OrdinalIgnoreCase)));
+                && string.Equals(entry.Id, generatedId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static ConversationEntry CreateActionReactionFromUnityReaction(
+            FromUnityActionDataItem action,
+            FromUnityActionReaction reaction)
+        {
+            FromUnityActionReactionCondition condition = reaction.Conditions ?? new FromUnityActionReactionCondition();
+            ConversationEntry entry = new ConversationEntry
+            {
+                Kind = ConversationDataKind.ActionReactions,
+                Id = string.IsNullOrWhiteSpace(reaction.Id)
+                    ? CreateActionReactionEntryId(action.Id.Trim())
+                    : reaction.Id.Trim(),
+                Title = string.IsNullOrWhiteSpace(action.DisplayName) ? action.Id.Trim() : action.DisplayName.Trim(),
+                Category = string.IsNullOrWhiteSpace(action.Category) ? action.Id.Trim() : action.Category.Trim(),
+                ImageAssetIdsText = JoinImportList(reaction.ImageAssetIds),
+                Priority = reaction.Priority,
+                Memo = BuildFromUnityActionMemo(action),
+                Conditions = new ConversationCondition
+                {
+                    ActionId = action.Id.Trim(),
+                    MinAffection = condition.MinAffection,
+                    MaxAffection = condition.MaxAffection > 0 ? condition.MaxAffection : 9999,
+                    TimeOfDay = FirstImportValue(condition.TimeSlots),
+                    Weather = FirstImportValue(condition.Weathers),
+                    Season = FirstImportValue(condition.Seasons),
+                    CostumeId = condition.CostumeId ?? string.Empty,
+                    Once = condition.Once,
+                    RequiredFlagIdsText = JoinImportList(condition.RequiredFlagIds),
+                    RequiredSkillIdsText = JoinImportList(condition.RequiredSkillIds),
+                    RequiredSkillIdsSpecified = condition.RequiredSkillIds != null
+                }
+            };
+            entry.Lines.Clear();
+            foreach (FromUnityActionLine line in reaction.ResultLines ?? new List<FromUnityActionLine>())
+            {
+                if (line != null)
+                    entry.Lines.Add(new ConversationLine
+                    {
+                        Speaker = string.IsNullOrWhiteSpace(line.Speaker) ? "Heroine" : line.Speaker.Trim(),
+                        Text = line.Text ?? string.Empty,
+                        Expression = line.Expression ?? string.Empty
+                    });
+            }
+            if (entry.Lines.Count == 0) entry.Lines.Add(new ConversationLine());
+            return entry;
+        }
+
+        private static string FirstImportValue(IEnumerable<string> values)
+        {
+            return values?.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))?.Trim()
+                ?? string.Empty;
         }
 
         private static ConversationEntry CreateActionReactionFromUnityAction(FromUnityActionDataItem item)

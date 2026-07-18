@@ -32,6 +32,30 @@ namespace FantasyLoveSimAssetTool.Models
         public int Priority { get; set; }
 
         public string Memo { get; set; }
+
+        public List<FromUnityActionReaction> Reactions { get; set; }
+    }
+
+    public class FromUnityActionReaction
+    {
+        public string Id { get; set; }
+        public List<FromUnityActionLine> ResultLines { get; set; }
+        public List<string> ImageAssetIds { get; set; }
+        public int Priority { get; set; }
+        public FromUnityActionReactionCondition Conditions { get; set; }
+    }
+
+    public class FromUnityActionReactionCondition
+    {
+        public int MinAffection { get; set; }
+        public int MaxAffection { get; set; }
+        public List<string> TimeSlots { get; set; }
+        public List<string> Weathers { get; set; }
+        public List<string> Seasons { get; set; }
+        public string CostumeId { get; set; }
+        public bool Once { get; set; }
+        public List<string> RequiredFlagIds { get; set; }
+        public List<string> RequiredSkillIds { get; set; }
     }
 
     public class FromUnityActionLine
