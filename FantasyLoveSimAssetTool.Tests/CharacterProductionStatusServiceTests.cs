@@ -229,6 +229,21 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(gift.Id, check.TargetId);
         }
 
+        [TestMethod]
+        public void Evaluate_UnknownConversationCategoryAndMissingFallback_ReturnsPartial()
+        {
+            HeroineProfile profile = CompleteProfile();
+            ConversationEntry foodFallback = profile.ConversationEntries.First(x =>
+                x.Kind == ConversationDataKind.Conversations && x.Category == "Food" && x.Priority == 0);
+            foodFallback.Category = "LocationTalk";
+
+            CharacterProductionStatusRow row = EvaluateWithDefinitions(profile);
+
+            Assert.AreEqual(ProductionStatusKind.Partial, row.Conversations.Kind);
+            Assert.IsTrue(row.Conversations.Checks.Any(x => x.Name == "通常会話category" && !x.IsComplete));
+            Assert.IsTrue(row.Conversations.Checks.Any(x => x.Name == "Food フォールバック" && !x.IsComplete));
+        }
+
         private static HeroineProfile CompleteProfile()
         {
             HeroineProfile profile = new HeroineProfile
@@ -335,11 +350,27 @@ namespace FantasyLoveSimAssetTool.Tests
             {
                 Id = "Conversation01",
                 Kind = ConversationDataKind.Conversations,
+                Category = "Daily",
                 Lines = new ObservableCollection<ConversationLine>
                 {
                     new ConversationLine { Text = "こんにちは", Expression = "Neutral" }
                 }
             });
+            foreach (string genre in ConversationValueCatalog.ConversationGenres)
+            {
+                profile.ConversationEntries.Add(new ConversationEntry
+                {
+                    Id = "Conv_" + genre + "_Fallback_01",
+                    Kind = ConversationDataKind.Conversations,
+                    Category = genre,
+                    Priority = 0,
+                    Conditions = new ConversationCondition { MinAffection = 0, MaxAffection = 9999 },
+                    Lines = new ObservableCollection<ConversationLine>
+                    {
+                        new ConversationLine { Text = genre + "の基本会話", Expression = "Neutral" }
+                    }
+                });
+            }
             foreach (ConversationDataKind kind in new[]
             {
                 ConversationDataKind.GameEvents,

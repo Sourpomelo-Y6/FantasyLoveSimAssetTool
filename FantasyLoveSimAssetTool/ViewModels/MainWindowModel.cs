@@ -7318,7 +7318,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 Kind = ConversationDataKind.Conversations,
                 Id = item.Id.Trim(),
                 Title = string.IsNullOrWhiteSpace(item.Title) ? item.Id.Trim() : item.Title.Trim(),
-                Category = string.IsNullOrWhiteSpace(item.Category) ? "LocationTalk" : item.Category.Trim(),
+                Category = string.IsNullOrWhiteSpace(item.Category) ? "Daily" : item.Category.Trim(),
                 ImageAssetIdsText = JoinImportList(item.ImageAssetIds),
                 Priority = item.Priority,
                 Memo = BuildFromUnityConversationMemo(item)
@@ -8990,6 +8990,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 Category = CreateDefaultConversationCategory(kind),
                 Priority = 100
             };
+            if (kind == ConversationDataKind.Conversations)
+            {
+                entry.Id = $"Conv_Daily_General_{nextNumber:D2}";
+                entry.Conditions.MaxAffection = 9999;
+            }
             entry.Lines.Add(new ConversationLine());
             if (kind == ConversationDataKind.ScheduledEvents)
             {
@@ -9024,7 +9029,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     prefix = "Ending";
                     break;
                 default:
-                    prefix = "Talk";
+                    prefix = "Conv";
                     break;
             }
 
@@ -9049,7 +9054,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     prefix = "Ending";
                     break;
                 default:
-                    prefix = "Talk";
+                    prefix = "Conv";
                     break;
             }
 
@@ -9080,7 +9085,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 case ConversationDataKind.Endings:
                     return new[] { "Good", "Normal", "Bad" };
                 default:
-                    return new[] { "LocationTalk", "AffectionTalk", "WeatherTalk", "SeasonTalk", "TimeTalk" };
+                    return ConversationValueCatalog.ConversationGenres;
             }
         }
 
@@ -9112,7 +9117,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 case ConversationDataKind.Endings:
                     return "Good";
                 default:
-                    return "LocationTalk";
+                    return "Daily";
             }
         }
 

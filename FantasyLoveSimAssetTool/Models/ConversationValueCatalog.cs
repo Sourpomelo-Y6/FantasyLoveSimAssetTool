@@ -2,6 +2,11 @@ namespace FantasyLoveSimAssetTool.Models
 {
     public static class ConversationValueCatalog
     {
+        public static readonly string[] ConversationGenres =
+        {
+            "Daily", "Food", "Adventure", "Love"
+        };
+
         public static readonly string[] Locations =
         {
             "Forest",

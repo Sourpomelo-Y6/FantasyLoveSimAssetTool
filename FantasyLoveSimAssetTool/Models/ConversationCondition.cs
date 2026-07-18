@@ -31,7 +31,7 @@ namespace FantasyLoveSimAssetTool.Models
         public ConversationCondition()
         {
             LocationId = string.Empty;
-            MaxAffection = 100;
+            MaxAffection = 9999;
             Weather = string.Empty;
             Season = string.Empty;
             TimeOfDay = string.Empty;

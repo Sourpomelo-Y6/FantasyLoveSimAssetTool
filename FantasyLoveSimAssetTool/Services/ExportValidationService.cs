@@ -62,10 +62,17 @@ namespace FantasyLoveSimAssetTool.Services
                 if (string.IsNullOrWhiteSpace(entry.Id)) AddConversation(issues, entry, ExportValidationSeverity.Error, label + ": ID が空です。");
                 if (string.IsNullOrWhiteSpace(entry.Title)) AddConversation(issues, entry, ExportValidationSeverity.Warning, label + ": タイトルが空です。");
                 if (string.IsNullOrWhiteSpace(entry.Category)) AddConversation(issues, entry, ExportValidationSeverity.Warning, label + ": カテゴリが空です。");
+                if (entry.Kind == ConversationDataKind.Conversations &&
+                    !ConversationValueCatalog.ConversationGenres.Contains(entry.Category, StringComparer.OrdinalIgnoreCase))
+                    AddConversation(issues, entry, ExportValidationSeverity.Warning,
+                        label + ": categoryは Daily / Food / Adventure / Love のいずれかにしてください。");
                 if (entry.Priority < 0) AddConversation(issues, entry, ExportValidationSeverity.Error, label + ": 優先度が0未満です。");
                 if (entry.Lines == null || entry.Lines.Count == 0 || entry.Lines.Any(x => x == null || string.IsNullOrWhiteSpace(x.Text)))
                     AddConversation(issues, entry, ExportValidationSeverity.Error, label + ": 台詞本文が空です。");
                 ValidateCondition(issues, entry, label, costumeIds, skillIds);
+                if (entry.Kind == ConversationDataKind.Conversations && HasUnsupportedConversationConditions(entry.Conditions))
+                    AddConversation(issues, entry, ExportValidationSeverity.Warning,
+                        label + ": locationId、actionId、Item、Flag、Skill条件は通常会話のUnity選択処理では使われません。");
                 foreach (ConversationLine line in entry.Lines ?? new System.Collections.ObjectModel.ObservableCollection<ConversationLine>())
                     if (line != null && !string.IsNullOrWhiteSpace(line.Expression) && !expressionIds.Contains(line.Expression.Trim()))
                         AddConversation(issues, entry, ExportValidationSeverity.Error, label + $": 表情 {line.Expression} が未登録です。");
@@ -94,6 +101,11 @@ namespace FantasyLoveSimAssetTool.Services
             foreach (string id in RequiredSkillIdSyncService.NormalizeText(entry.Conditions.RequiredSkillIdsText))
                 if (!skillIds.Contains(id)) AddConversation(issues, entry, ExportValidationSeverity.Error, label + $": スキル {id} が未登録です。");
         }
+
+        private static bool HasUnsupportedConversationConditions(ConversationCondition condition) => condition != null &&
+            (!string.IsNullOrWhiteSpace(condition.LocationId) || !string.IsNullOrWhiteSpace(condition.ActionId) ||
+             !string.IsNullOrWhiteSpace(condition.RequiredItemId) || !string.IsNullOrWhiteSpace(condition.RequiredFlagIdsText) ||
+             !string.IsNullOrWhiteSpace(condition.RequiredSkillIdsText));
 
         private static HashSet<string> IdSet(IEnumerable<string> values) => new HashSet<string>((values ?? Array.Empty<string>())
             .Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()), StringComparer.OrdinalIgnoreCase);

@@ -442,16 +442,39 @@ namespace FantasyLoveSimAssetTool.Services
                     .GroupBy(x => x.Id.Trim(), StringComparer.OrdinalIgnoreCase).All(ids => ids.Count() == 1));
             bool textValid = entries.All(x => x.Lines != null && x.Lines.Count > 0 &&
                 x.Lines.All(line => line != null && !string.IsNullOrWhiteSpace(line.Text)));
-            ProductionStatusCheckItem[] checks =
+            List<ProductionStatusCheckItem> checks = new List<ProductionStatusCheckItem>
             {
                 Check("通常会話", hasNormal, hasNormal ? $"{normal.Count} 件登録済みです。" : "通常会話を1件以上登録してください。"),
                 Check("開始時メッセージ", hasInitial, hasInitial ? "設定済みです。" : "InitialDialogueMessageが未設定です。"),
                 Check("会話ID", idsValid, idsValid ? "空ID・重複IDはありません。" : "空IDまたは同じ種別内の重複IDがあります。"),
                 Check("会話本文", textValid, textValid ? "全データに本文があります。" : "台詞行がない、または本文が空のデータがあります。")
             };
+            bool categoriesValid = normal.All(x => ConversationValueCatalog.ConversationGenres.Contains(x.Category, StringComparer.OrdinalIgnoreCase));
+            checks.Add(Check("通常会話category", categoriesValid,
+                categoriesValid ? "Daily / Food / Adventure / Love のみを使用しています。" : "通常会話に空またはUnityでDailyへフォールバックする未知categoryがあります。",
+                ProductionStatusTargetKind.Conversation,
+                normal.FirstOrDefault(x => !ConversationValueCatalog.ConversationGenres.Contains(x.Category, StringComparer.OrdinalIgnoreCase))?.Id,
+                1, ConversationDataKind.Conversations));
+            foreach (string genre in ConversationValueCatalog.ConversationGenres)
+            {
+                ConversationEntry fallback = normal.FirstOrDefault(x =>
+                    string.Equals(x.Category, genre, StringComparison.OrdinalIgnoreCase) && IsConversationFallback(x));
+                checks.Add(Check(genre + " フォールバック", fallback != null,
+                    fallback == null ? "priority 0・条件なし・once=falseの会話が必要です。" : fallback.Id + " を使用します。",
+                    ProductionStatusTargetKind.Conversation, fallback?.Id, 1, ConversationDataKind.Conversations));
+            }
             int complete = checks.Count(x => x.IsComplete);
-            return Cell(profile, "会話データ", 1, Kind(complete, checks.Length),
-                $"完成条件 {complete}/{checks.Length}。通常会話、開始時文、ID、本文を確認します。", checks);
+            return Cell(profile, "会話データ", 1, Kind(complete, checks.Count),
+                $"完成条件 {complete}/{checks.Count}。通常会話、4ジャンル、フォールバック、ID、本文を確認します。", checks);
+        }
+
+        private static bool IsConversationFallback(ConversationEntry entry)
+        {
+            ConversationCondition condition = entry?.Conditions;
+            return entry != null && entry.Priority == 0 && condition != null && !condition.Once &&
+                condition.MinAffection <= 0 && condition.MaxAffection >= 9999 &&
+                string.IsNullOrWhiteSpace(condition.CostumeId) && string.IsNullOrWhiteSpace(condition.TimeOfDay) &&
+                string.IsNullOrWhiteSpace(condition.Season) && string.IsNullOrWhiteSpace(condition.Weather);
         }
 
         private static ProductionStatusCell EvaluateExpressions(

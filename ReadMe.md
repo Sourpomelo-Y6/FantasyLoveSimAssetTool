@@ -6,7 +6,7 @@ Stable Diffusion などで生成した立ち絵、イベントスチル、行動
 
 詳細仕様は [Docs/CharacterAssetGenerationToolSpec.md](Docs/CharacterAssetGenerationToolSpec.md) を参照してください。
 操作画面の整理方針と段階的な再構成案は [Docs/ToolUsabilityReorganizationPlan.md](Docs/ToolUsabilityReorganizationPlan.md) にまとめています。
-Unity 取り込み方針は [Docs/Extra/UnityImportPlan.md](Docs/Extra/UnityImportPlan.md)、Unity Editor 側の実装計画は [Docs/Extra/UnityEditorImportImplementationPlan.md](Docs/Extra/UnityEditorImportImplementationPlan.md)、敵キャラ素材の export / Unity import 仕様は [Docs/Extra/EnemyExportUnityImportSpec.md](Docs/Extra/EnemyExportUnityImportSpec.md)、プレイヤー素材の管理方針は [Docs/PlayerAssetManagementPlan.md](Docs/PlayerAssetManagementPlan.md)、会話データ拡張案は [Docs/Extra/ConversationDataPlan.md](Docs/Extra/ConversationDataPlan.md)、表情・衣装差分ロードマップは [Docs/ExpressionCostumeVariantRoadmap.md](Docs/ExpressionCostumeVariantRoadmap.md)、透過レイヤー素材の作成手順は [Docs/TransparentLayerAssetWorkflow.md](Docs/TransparentLayerAssetWorkflow.md) を参照してください。
+Unity 取り込み方針は [Docs/Extra/UnityImportPlan.md](Docs/Extra/UnityImportPlan.md)、Unity Editor 側の実装計画は [Docs/Extra/UnityEditorImportImplementationPlan.md](Docs/Extra/UnityEditorImportImplementationPlan.md)、敵キャラ素材の export / Unity import 仕様は [Docs/Extra/EnemyExportUnityImportSpec.md](Docs/Extra/EnemyExportUnityImportSpec.md)、プレイヤー素材の管理方針は [Docs/PlayerAssetManagementPlan.md](Docs/PlayerAssetManagementPlan.md)、会話データ拡張案は [Docs/Extra/ConversationDataPlan.md](Docs/Extra/ConversationDataPlan.md)、通常会話の分類規則は [Docs/ConversationClassificationRules.md](Docs/ConversationClassificationRules.md)、表情・衣装差分ロードマップは [Docs/ExpressionCostumeVariantRoadmap.md](Docs/ExpressionCostumeVariantRoadmap.md)、透過レイヤー素材の作成手順は [Docs/TransparentLayerAssetWorkflow.md](Docs/TransparentLayerAssetWorkflow.md) を参照してください。
 
 ## 現在の状態
 
