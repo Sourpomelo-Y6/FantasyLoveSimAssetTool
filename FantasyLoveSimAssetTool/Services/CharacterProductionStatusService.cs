@@ -419,6 +419,10 @@ namespace FantasyLoveSimAssetTool.Services
             HashSet<string> eventIds = new HashSet<string>((profile.ConversationEntries ?? new System.Collections.ObjectModel.ObservableCollection<ConversationEntry>())
                 .Where(x => x != null && x.Kind == ConversationDataKind.GameEvents && !string.IsNullOrWhiteSpace(x.Id))
                 .Select(x => x.Id.Trim()), StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, ConversationEntry> eventsById = (profile.ConversationEntries ?? new System.Collections.ObjectModel.ObservableCollection<ConversationEntry>())
+                .Where(x => x != null && x.Kind == ConversationDataKind.GameEvents && !string.IsNullOrWhiteSpace(x.Id))
+                .GroupBy(x => x.Id.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(x => x.Key, x => x.First(), StringComparer.OrdinalIgnoreCase);
             List<ProductionStatusCheckItem> checks = new List<ProductionStatusCheckItem>
             {
                 Check("ツリーノード登録", nodes.Count > 0, nodes.Count > 0 ? $"{nodes.Count} 件登録済みです。" : "ノードを1件以上登録してください。"),
@@ -448,6 +452,10 @@ namespace FantasyLoveSimAssetTool.Services
                     if (!trainingIds.Contains(id)) problems.Add("解放Training:" + id);
                 if (!string.IsNullOrWhiteSpace(node.UnlockEventId) && !eventIds.Contains(node.UnlockEventId.Trim()))
                     problems.Add("取得時Event:" + node.UnlockEventId.Trim());
+                else if (!string.IsNullOrWhiteSpace(node.UnlockEventId) &&
+                    eventsById.TryGetValue(node.UnlockEventId.Trim(), out ConversationEntry unlockEvent) &&
+                    (unlockEvent.Conditions == null || !unlockEvent.Conditions.Once))
+                    problems.Add("取得時EventのOnce:" + node.UnlockEventId.Trim());
                 bool hasReward = !string.IsNullOrWhiteSpace(node.GrantedHeroineSkillId) ||
                     !string.IsNullOrWhiteSpace(node.TrainingSkillId) ||
                     !string.IsNullOrWhiteSpace(node.UnlockEventId) ||

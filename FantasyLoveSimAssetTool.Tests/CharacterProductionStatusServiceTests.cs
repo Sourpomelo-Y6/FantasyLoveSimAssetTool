@@ -96,6 +96,26 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void Evaluate_SkillTreeAcquisitionEventRequiresExistingOnceEvent()
+        {
+            HeroineProfile profile = CompleteProfile();
+            HeroineSkillTreeNode node = profile.HeroineSkillTree.Nodes[0];
+            node.UnlockEventId = "GameEvents01";
+
+            CharacterProductionStatusRow notOnce = EvaluateWithDefinitions(profile);
+
+            Assert.AreEqual(ProductionStatusKind.Partial, notOnce.SkillTree.Kind);
+            Assert.IsTrue(notOnce.SkillTree.Checks.Any(x =>
+                !x.IsComplete && x.Details.Contains("取得時EventのOnce:GameEvents01")));
+
+            profile.ConversationEntries.First(x => x.Id == "GameEvents01").Conditions.Once = true;
+            CharacterProductionStatusRow valid = EvaluateWithDefinitions(profile);
+
+            Assert.IsTrue(valid.SkillTree.Checks.All(x =>
+                x.IsComplete || !x.Details.Contains("取得時Event")));
+        }
+
+        [TestMethod]
         public void Evaluate_BrokenEventReferences_ReturnsPartialDetails()
         {
             HeroineProfile profile = CompleteProfile();
