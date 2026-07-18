@@ -30,6 +30,7 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(ProductionStatusKind.Complete, row.BattleSkills.Kind);
             Assert.AreEqual(ProductionStatusKind.Complete, row.SkillTree.Kind);
             Assert.AreEqual(ProductionStatusKind.Complete, row.Events.Kind);
+            Assert.AreEqual(ProductionStatusKind.Complete, row.ActionReactions.Kind);
             Assert.AreEqual(ProductionStatusKind.Complete, row.ExportReadiness.Kind);
             Assert.IsFalse(row.HasIncomplete);
         }
@@ -206,6 +207,28 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(7, required.TargetTabIndex);
         }
 
+        [TestMethod]
+        public void Evaluate_InvalidActionReaction_ReturnsNavigablePartialDetails()
+        {
+            HeroineProfile profile = CompleteProfile();
+            ConversationEntry gift = profile.ConversationEntries.First(x =>
+                x.Kind == ConversationDataKind.ActionReactions && x.Conditions.ActionId == "Gift");
+            gift.Lines[0].Text = string.Empty;
+            gift.ImageAssetIdsText = "MissingActionImage";
+            gift.Priority = -1;
+
+            CharacterProductionStatusRow row = EvaluateWithDefinitions(profile);
+
+            Assert.AreEqual(ProductionStatusKind.Partial, row.ActionReactions.Kind);
+            ProductionStatusCheckItem check = row.ActionReactions.Checks.First(x => x.Name.Contains(gift.Id));
+            Assert.IsFalse(check.IsComplete);
+            StringAssert.Contains(check.Details, "台詞本文");
+            StringAssert.Contains(check.Details, "MissingActionImage");
+            Assert.AreEqual(ProductionStatusTargetKind.Conversation, check.TargetKind);
+            Assert.AreEqual(ConversationDataKind.ActionReactions, check.ConversationKind);
+            Assert.AreEqual(gift.Id, check.TargetId);
+        }
+
         private static HeroineProfile CompleteProfile()
         {
             HeroineProfile profile = new HeroineProfile
@@ -333,6 +356,20 @@ namespace FantasyLoveSimAssetTool.Tests
                         new ConversationLine { Text = kind + "の本文", Expression = "Neutral" }
                     }
                 });
+            }
+            foreach (string actionId in ConversationValueCatalog.Actions)
+            {
+                ConversationEntry reaction = new ConversationEntry
+                {
+                    Id = "Reaction_" + actionId + "_01",
+                    Kind = ConversationDataKind.ActionReactions,
+                    Lines = new ObservableCollection<ConversationLine>
+                    {
+                        new ConversationLine { Text = actionId + "への反応", Expression = "Neutral" }
+                    }
+                };
+                reaction.Conditions.ActionId = actionId;
+                profile.ConversationEntries.Add(reaction);
             }
             return profile;
         }

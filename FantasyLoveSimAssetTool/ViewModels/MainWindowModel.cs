@@ -9249,6 +9249,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 row.BattleSkills,
                 row.SkillTree,
                 row.Events,
+                row.ActionReactions,
                 row.ExportReadiness
             })
             {
@@ -9289,14 +9290,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private void SelectProductionStatusDetail(ProductionStatusCheckItem check)
         {
-            if (SelectedProfile == null || string.IsNullOrWhiteSpace(check.TargetId)) return;
+            if (SelectedProfile == null) return;
             switch (check.TargetKind)
             {
                 case ProductionStatusTargetKind.Conversation:
                     SelectedConversationDataKind = check.ConversationKind;
                     RefreshFilteredConversationEntries();
-                    SelectedConversationEntry = FilteredConversationEntries.FirstOrDefault(x =>
-                        string.Equals(x.Id, check.TargetId, StringComparison.OrdinalIgnoreCase));
+                    SelectedConversationEntry = string.IsNullOrWhiteSpace(check.TargetId) ? null :
+                        FilteredConversationEntries.FirstOrDefault(x =>
+                            string.Equals(x.Id, check.TargetId, StringComparison.OrdinalIgnoreCase));
                     break;
                 case ProductionStatusTargetKind.Asset:
                     SelectedAssetStatusFilter = "All";

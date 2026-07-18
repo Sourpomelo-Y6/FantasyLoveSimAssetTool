@@ -39,10 +39,88 @@ namespace FantasyLoveSimAssetTool.Services
                 Costumes = EvaluateCostumes(profile, costumeList, layerList),
                 BattleSkills = EvaluateBattleSkills(profile),
                 SkillTree = EvaluateSkillTree(profile),
-                Events = EvaluateEvents(profile, expressionList, costumeList)
+                Events = EvaluateEvents(profile, expressionList, costumeList),
+                ActionReactions = EvaluateActionReactions(profile, expressionList, costumeList)
             };
             row.ExportReadiness = EvaluateExportReadiness(profile, row, acceptedAssetFileExists, exportValidation);
             return row;
+        }
+
+        private static ProductionStatusCell EvaluateActionReactions(
+            HeroineProfile profile,
+            IReadOnlyList<ExpressionDefinition> expressions,
+            IReadOnlyList<CostumeDefinition> costumes)
+        {
+            List<ConversationEntry> entries = (profile.ConversationEntries ?? new System.Collections.ObjectModel.ObservableCollection<ConversationEntry>())
+                .Where(x => x != null && x.Kind == ConversationDataKind.ActionReactions).ToList();
+            HashSet<string> expressionIds = new HashSet<string>(expressions.Where(x => !string.IsNullOrWhiteSpace(x.ExpressionId))
+                .Select(x => x.ExpressionId.Trim()), StringComparer.OrdinalIgnoreCase);
+            HashSet<string> costumeIds = new HashSet<string>(costumes.Where(x => !string.IsNullOrWhiteSpace(x.CostumeId))
+                .Select(x => x.CostumeId.Trim()), StringComparer.OrdinalIgnoreCase);
+            HashSet<string> acceptedAssetIds = new HashSet<string>((profile.Assets ?? new System.Collections.ObjectModel.ObservableCollection<HeroineAsset>())
+                .Where(x => x != null && x.Status == AssetStatus.Accepted && !string.IsNullOrWhiteSpace(x.AssetId))
+                .Select(x => x.AssetId.Trim()), StringComparer.OrdinalIgnoreCase);
+            HashSet<string> skillIds = new HashSet<string>((profile.BattleSkills ?? new System.Collections.ObjectModel.ObservableCollection<HeroineBattleSkill>())
+                .Where(x => x != null && !string.IsNullOrWhiteSpace(x.SkillId)).Select(x => x.SkillId.Trim()), StringComparer.OrdinalIgnoreCase);
+            foreach (HeroineTrainingSkill skill in profile.HeroineSkillTree?.TrainingSkills ?? new System.Collections.ObjectModel.ObservableCollection<HeroineTrainingSkill>())
+                if (skill != null && !string.IsNullOrWhiteSpace(skill.SkillId)) skillIds.Add(skill.SkillId.Trim());
+
+            List<ProductionStatusCheckItem> checks = new List<ProductionStatusCheckItem>();
+            foreach (string actionId in ConversationValueCatalog.Actions)
+            {
+                ConversationEntry match = entries.FirstOrDefault(x => string.Equals(x.Conditions?.ActionId, actionId, StringComparison.OrdinalIgnoreCase));
+                checks.Add(Check("主要行動 " + actionId, match != null,
+                    match == null ? "対応する行動反応がありません。" : $"{match.Id} を登録済みです。",
+                    ProductionStatusTargetKind.Conversation, match?.Id, 1, ConversationDataKind.ActionReactions));
+            }
+            bool idsValid = entries.All(x => !string.IsNullOrWhiteSpace(x.Id)) && entries.Where(x => !string.IsNullOrWhiteSpace(x.Id))
+                .GroupBy(x => x.Id.Trim(), StringComparer.OrdinalIgnoreCase).All(x => x.Count() == 1);
+            checks.Add(Check("行動反応ID", idsValid, idsValid ? "空ID・重複IDはありません。" : "空IDまたは重複IDがあります。",
+                ProductionStatusTargetKind.Conversation, entries.FirstOrDefault(x => string.IsNullOrWhiteSpace(x.Id))?.Id, 1,
+                ConversationDataKind.ActionReactions));
+
+            HashSet<string> duplicateIds = new HashSet<string>(entries.Where(x => !string.IsNullOrWhiteSpace(x.Id))
+                .GroupBy(x => x.Id.Trim(), StringComparer.OrdinalIgnoreCase).Where(x => x.Count() > 1).Select(x => x.Key),
+                StringComparer.OrdinalIgnoreCase);
+            HashSet<ConversationEntry> duplicateConditions = new HashSet<ConversationEntry>();
+            foreach (IGrouping<string, ConversationEntry> group in entries.GroupBy(BuildActionReactionConditionKey, StringComparer.OrdinalIgnoreCase).Where(x => x.Count() > 1))
+                foreach (ConversationEntry entry in group) duplicateConditions.Add(entry);
+            foreach (ConversationEntry entry in entries)
+            {
+                string label = string.IsNullOrWhiteSpace(entry.Id) ? "ID未設定" : entry.Id.Trim();
+                List<string> problems = new List<string>();
+                if (string.IsNullOrWhiteSpace(entry.Id)) problems.Add("ID");
+                else if (duplicateIds.Contains(entry.Id.Trim())) problems.Add("重複ID");
+                if (string.IsNullOrWhiteSpace(entry.Conditions?.ActionId)) problems.Add("actionId");
+                if (entry.Priority < 0) problems.Add("優先度");
+                if (entry.Lines == null || entry.Lines.Count == 0 || entry.Lines.Any(x => x == null || string.IsNullOrWhiteSpace(x.Text))) problems.Add("台詞本文");
+                if (entry.Conditions != null && entry.Conditions.MinAffection > entry.Conditions.MaxAffection) problems.Add("好感度範囲");
+                if (duplicateConditions.Contains(entry)) problems.Add("同条件・同優先度の重複");
+                foreach (ConversationLine line in entry.Lines ?? new System.Collections.ObjectModel.ObservableCollection<ConversationLine>())
+                    if (line != null && !string.IsNullOrWhiteSpace(line.Expression) && !expressionIds.Contains(line.Expression.Trim())) problems.Add("表情:" + line.Expression.Trim());
+                if (entry.Conditions != null && !string.IsNullOrWhiteSpace(entry.Conditions.CostumeId) && !costumeIds.Contains(entry.Conditions.CostumeId.Trim()))
+                    problems.Add("衣装:" + entry.Conditions.CostumeId.Trim());
+                foreach (string id in SplitIds(entry.ImageAssetIdsText)) if (!acceptedAssetIds.Contains(id)) problems.Add("画像:" + id);
+                foreach (string id in RequiredSkillIdSyncService.NormalizeText(entry.Conditions?.RequiredSkillIdsText))
+                    if (!skillIds.Contains(id)) problems.Add("スキル:" + id);
+                checks.Add(Check("行動反応 " + label, problems.Count == 0,
+                    problems.Count == 0 ? "本文・条件・参照は有効です。" : "要確認: " + string.Join(", ", problems.Distinct()),
+                    ProductionStatusTargetKind.Conversation, entry.Id, 1, ConversationDataKind.ActionReactions));
+            }
+            int complete = checks.Count(x => x.IsComplete);
+            return Cell(profile, "行動反応", 1, Kind(complete, checks.Count),
+                $"完成条件 {complete}/{checks.Count}。主要行動、ID、本文、条件、優先度、参照先を確認します。", checks);
+        }
+
+        private static string BuildActionReactionConditionKey(ConversationEntry entry)
+        {
+            ConversationCondition condition = entry?.Conditions ?? new ConversationCondition();
+            return string.Join("|", new[]
+            {
+                condition.ActionId, condition.LocationId, condition.MinAffection.ToString(), condition.MaxAffection.ToString(),
+                condition.Weather, condition.Season, condition.TimeOfDay, condition.CostumeId, condition.RequiredItemId,
+                condition.RequiredFlagIdsText, condition.RequiredSkillIdsText, (entry?.Priority ?? 0).ToString()
+            }.Select(x => (x ?? string.Empty).Trim()));
         }
 
         private static ProductionStatusCell EvaluateCharacterImages(
@@ -217,7 +295,7 @@ namespace FantasyLoveSimAssetTool.Services
             ExportValidationResult exportValidation)
         {
             ProductionStatusCell[] categories = { row.BasicInformation, row.BattleMessages, row.TrainingImages, row.TrainingDialogues, row.CharacterImages, row.Conversations,
-                row.Expressions, row.Costumes, row.BattleSkills, row.SkillTree, row.Events };
+                row.Expressions, row.Costumes, row.BattleSkills, row.SkillTree, row.Events, row.ActionReactions };
             List<HeroineAsset> accepted = (profile.Assets ?? new System.Collections.ObjectModel.ObservableCollection<HeroineAsset>())
                 .Where(x => x != null && x.Status == AssetStatus.Accepted).ToList();
             Func<HeroineAsset, bool> fileCheck = acceptedAssetFileExists ?? (asset => !string.IsNullOrWhiteSpace(asset.StoredPath));

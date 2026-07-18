@@ -69,6 +69,7 @@ namespace FantasyLoveSimAssetTool.Models
         public ProductionStatusCell BattleSkills { get; set; }
         public ProductionStatusCell SkillTree { get; set; }
         public ProductionStatusCell Events { get; set; }
+        public ProductionStatusCell ActionReactions { get; set; }
         public ProductionStatusCell ExportReadiness { get; set; }
 
         public bool HasIncomplete =>
@@ -83,6 +84,7 @@ namespace FantasyLoveSimAssetTool.Models
             BattleSkills?.Kind != ProductionStatusKind.Complete ||
             SkillTree?.Kind != ProductionStatusKind.Complete ||
             Events?.Kind != ProductionStatusKind.Complete ||
+            ActionReactions?.Kind != ProductionStatusKind.Complete ||
             ExportReadiness?.Kind != ProductionStatusKind.Complete;
     }
 }
