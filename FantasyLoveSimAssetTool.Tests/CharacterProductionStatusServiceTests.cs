@@ -344,21 +344,21 @@ namespace FantasyLoveSimAssetTool.Tests
             });
             profile.HeroineSkillTree.TrainingSkills.Add(new HeroineTrainingSkill
             {
-                SkillId = "TrainingSkillA",
+                SkillId = "TestHeroine_TrainingSkillA",
                 DisplayName = "訓練補助"
             });
             profile.HeroineSkillTree.Nodes.Add(new HeroineSkillTreeNode
             {
-                NodeId = "Root",
+                NodeId = "TestHeroine_Root",
                 DisplayName = "ルート",
                 GrantedHeroineSkillId = "BattleSkillA"
             });
             profile.HeroineSkillTree.Nodes.Add(new HeroineSkillTreeNode
             {
-                NodeId = "TrainingNode",
+                NodeId = "TestHeroine_TrainingNode",
                 DisplayName = "訓練ノード",
-                TrainingSkillId = "TrainingSkillA",
-                PrerequisiteNodeIds = new ObservableCollection<string> { "Root" },
+                TrainingSkillId = "TestHeroine_TrainingSkillA",
+                PrerequisiteNodeIds = new ObservableCollection<string> { "TestHeroine_Root" },
                 UnlockedTrainingIds = new ObservableCollection<string> { "TrainingA" }
             });
             foreach (string id in new[] { "A1", "A2", "A3", "A4", "A5" })

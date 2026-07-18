@@ -19,12 +19,12 @@ namespace FantasyLoveSimAssetTool.Tests
             HeroineSkillTreeSyncService.ApplyImportedValues(target, HeroineSkillTreeSyncService.Deserialize(json));
 
             HeroineTrainingSkill skill = target.HeroineSkillTree.TrainingSkills.Single();
-            Assert.AreEqual("training_care", skill.SkillId);
+            Assert.AreEqual("TestHeroine_training_care", skill.SkillId);
             Assert.AreEqual("TrainingCategory", skill.ApplicationScope);
             Assert.AreEqual("Cooperative", skill.ApplicationTargetId);
             HeroineSkillTreeNode node = target.HeroineSkillTree.Nodes.Single();
-            Assert.AreEqual("node_care", node.NodeId);
-            Assert.AreEqual("training_care", node.TrainingSkillId);
+            Assert.AreEqual("TestHeroine_node_care", node.NodeId);
+            Assert.AreEqual("TestHeroine_training_care", node.TrainingSkillId);
             Assert.AreEqual("CooperativeDrill", node.UnlockedTrainingIds.Single());
             Assert.AreEqual("Manual_Care_01", node.UnlockEventId);
             Assert.AreEqual("TrainingCount", node.UnlockConditions.Single().ConditionType);
@@ -78,7 +78,7 @@ namespace FantasyLoveSimAssetTool.Tests
                     {
                         new HeroineTrainingSkill
                         {
-                            SkillId = "training_care",
+                            SkillId = "TestHeroine_training_care",
                             DisplayName = "気遣い",
                             PlayerHpCostReduction = 1,
                             ApplicationScope = "TrainingCategory",
@@ -89,9 +89,9 @@ namespace FantasyLoveSimAssetTool.Tests
                     {
                         new HeroineSkillTreeNode
                         {
-                            NodeId = "node_care",
+                            NodeId = "TestHeroine_node_care",
                             DisplayName = "気遣い",
-                            TrainingSkillId = "training_care",
+                            TrainingSkillId = "TestHeroine_training_care",
                             SkillPointCost = 2,
                             UnlockEventId = "Manual_Care_01",
                             UnlockedTrainingIds = new ObservableCollection<string> { "CooperativeDrill" },

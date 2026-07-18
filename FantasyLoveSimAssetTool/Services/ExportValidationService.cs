@@ -37,6 +37,7 @@ namespace FantasyLoveSimAssetTool.Services
                 if (skill != null && !string.IsNullOrWhiteSpace(skill.SkillId)) skillIds.Add(skill.SkillId.Trim());
 
             if (string.IsNullOrWhiteSpace(profile.HeroineId)) Add(issues, ExportValidationSeverity.Error, "HeroineId が空です。");
+            ValidateHeroineSkillTreeNamespaces(issues, profile);
             foreach (HeroineAsset asset in accepted)
             {
                 string directory = projectService.GetCharacterDirectory(profile.HeroineId);
@@ -86,6 +87,28 @@ namespace FantasyLoveSimAssetTool.Services
             Add(issues, ExportValidationSeverity.Information,
                 $"Export対象: Accepted画像 {accepted.Count} 件、会話・イベント {entries.Count} 件、戦闘スキル {profile.BattleSkills?.Count ?? 0} 件。");
             return new ExportValidationResult { Issues = issues };
+        }
+
+        private static void ValidateHeroineSkillTreeNamespaces(List<ExportValidationIssue> issues, HeroineProfile profile)
+        {
+            if (string.IsNullOrWhiteSpace(profile.HeroineId)) return;
+            string prefix = profile.HeroineId.Trim() + "_";
+            foreach (HeroineTrainingSkill skill in profile.HeroineSkillTree?.TrainingSkills ?? new System.Collections.ObjectModel.ObservableCollection<HeroineTrainingSkill>())
+            {
+                if (skill != null && !string.IsNullOrWhiteSpace(skill.SkillId) &&
+                    !skill.SkillId.StartsWith(prefix, StringComparison.Ordinal))
+                    Add(issues, ExportValidationSeverity.Error,
+                        $"訓練SkillId {skill.SkillId} は {prefix} で始めてください。",
+                        ProductionStatusTargetKind.TrainingSkill, skill.SkillId, 6);
+            }
+            foreach (HeroineSkillTreeNode node in profile.HeroineSkillTree?.Nodes ?? new System.Collections.ObjectModel.ObservableCollection<HeroineSkillTreeNode>())
+            {
+                if (node != null && !string.IsNullOrWhiteSpace(node.NodeId) &&
+                    !node.NodeId.StartsWith(prefix, StringComparison.Ordinal))
+                    Add(issues, ExportValidationSeverity.Error,
+                        $"NodeId {node.NodeId} は {prefix} で始めてください。",
+                        ProductionStatusTargetKind.SkillTreeNode, node.NodeId, 6);
+            }
         }
 
         private static void ValidateCondition(List<ExportValidationIssue> issues, ConversationEntry entry, string label,

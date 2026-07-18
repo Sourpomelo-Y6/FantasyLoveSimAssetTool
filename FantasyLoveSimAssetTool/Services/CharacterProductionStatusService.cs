@@ -436,6 +436,19 @@ namespace FantasyLoveSimAssetTool.Services
             checks.Add(Check("訓練SkillId", trainingSkillsValid,
                 trainingSkillsValid ? $"訓練スキル {trainingSkills.Count} 件のIDと表示名は有効です。" : "訓練スキルに空ID、重複ID、表示名不足があります。",
                 ProductionStatusTargetKind.TrainingSkill, trainingSkills.FirstOrDefault(x => string.IsNullOrWhiteSpace(x.SkillId) || string.IsNullOrWhiteSpace(x.DisplayName))?.SkillId));
+            string idPrefix = string.IsNullOrWhiteSpace(profile.HeroineId) ? string.Empty : profile.HeroineId.Trim() + "_";
+            bool skillNamespacesValid = !string.IsNullOrEmpty(idPrefix) && trainingSkills.All(x =>
+                !string.IsNullOrWhiteSpace(x.SkillId) && x.SkillId.StartsWith(idPrefix, StringComparison.Ordinal));
+            bool nodeNamespacesValid = !string.IsNullOrEmpty(idPrefix) && nodes.All(x =>
+                !string.IsNullOrWhiteSpace(x.NodeId) && x.NodeId.StartsWith(idPrefix, StringComparison.Ordinal));
+            checks.Add(Check("訓練SkillId名前空間", skillNamespacesValid,
+                skillNamespacesValid ? idPrefix + " で統一されています。" : "ヒロイン固有訓練SkillIdは " + idPrefix + " で始めてください。",
+                ProductionStatusTargetKind.TrainingSkill, trainingSkills.FirstOrDefault(x =>
+                    string.IsNullOrWhiteSpace(x.SkillId) || !x.SkillId.StartsWith(idPrefix, StringComparison.Ordinal))?.SkillId));
+            checks.Add(Check("NodeId名前空間", nodeNamespacesValid,
+                nodeNamespacesValid ? idPrefix + " で統一されています。" : "ヒロイン固有NodeIdは " + idPrefix + " で始めてください。",
+                ProductionStatusTargetKind.SkillTreeNode, nodes.FirstOrDefault(x =>
+                    string.IsNullOrWhiteSpace(x.NodeId) || !x.NodeId.StartsWith(idPrefix, StringComparison.Ordinal))?.NodeId));
             foreach (HeroineSkillTreeNode node in nodes)
             {
                 string label = string.IsNullOrWhiteSpace(node.NodeId) ? "NodeId未設定" : node.NodeId.Trim();

@@ -59,6 +59,30 @@ namespace FantasyLoveSimAssetTool.Tests
             }
         }
 
+        [TestMethod]
+        public void Validate_UnnamespacedHeroineSkillTreeIds_ReturnsNavigableErrors()
+        {
+            string workspace = CreateWorkspace();
+            try
+            {
+                CharacterProjectService project = new CharacterProjectService(workspace);
+                HeroineProfile profile = project.CreateCharacter("TestHeroine", "Test");
+                profile.HeroineSkillTree.TrainingSkills.Add(new HeroineTrainingSkill { SkillId = "SharedSkill" });
+                profile.HeroineSkillTree.Nodes.Add(new HeroineSkillTreeNode { NodeId = "SharedNode" });
+
+                ExportValidationResult result = new ExportValidationService(project).Validate(profile);
+
+                Assert.IsTrue(result.Issues.Any(x => x.Severity == ExportValidationSeverity.Error &&
+                    x.TargetKind == ProductionStatusTargetKind.TrainingSkill && x.TargetId == "SharedSkill"));
+                Assert.IsTrue(result.Issues.Any(x => x.Severity == ExportValidationSeverity.Error &&
+                    x.TargetKind == ProductionStatusTargetKind.SkillTreeNode && x.TargetId == "SharedNode"));
+            }
+            finally
+            {
+                Directory.Delete(workspace, true);
+            }
+        }
+
         private static string CreateWorkspace()
         {
             string path = Path.Combine(Path.GetTempPath(), "FantasyLoveSimAssetToolTests", Guid.NewGuid().ToString("N"));
