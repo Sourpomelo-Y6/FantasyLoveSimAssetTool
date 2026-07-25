@@ -49,6 +49,7 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual("素敵ですね", loaded.OutfitReactionMessageOverrides[0].Message);
             Assert.IsTrue(loaded.BattleSkillsSpecified);
             Assert.AreEqual("heroine_heal", loaded.BattleSkills[0].SkillId);
+            Assert.AreEqual(12, loaded.ConversationEntries[0].AffectionChange);
         }
 
         [TestMethod]
@@ -75,6 +76,17 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual("heroine_heal", root.GetProperty("battleSkills")[0].GetProperty("skillId").GetString());
             Assert.AreEqual(source.ConversationResourcePath, root.GetProperty("conversationResourcePath").GetString());
             Assert.AreEqual(source.EndingResourcePath, root.GetProperty("endingResourcePath").GetString());
+
+            string gameEventPath = Path.Combine(
+                workspaceRoot,
+                "Export",
+                source.HeroineId,
+                "Data",
+                "game_events_export.json");
+            using JsonDocument gameEvents = JsonDocument.Parse(File.ReadAllText(gameEventPath));
+            Assert.AreEqual(
+                12,
+                gameEvents.RootElement.GetProperty("items")[0].GetProperty("affectionChange").GetInt32());
         }
 
         [TestMethod]
@@ -135,6 +147,21 @@ namespace FantasyLoveSimAssetTool.Tests
                         Target = "LowestHpAlly",
                         Cost = 3,
                         Power = 12
+                    }
+                },
+                ConversationEntries = new ObservableCollection<ConversationEntry>
+                {
+                    new ConversationEntry
+                    {
+                        Kind = ConversationDataKind.GameEvents,
+                        Id = "CompletionRewardEvent",
+                        Title = "完了報酬イベント",
+                        Category = "Manual",
+                        AffectionChange = 12,
+                        Lines = new ObservableCollection<ConversationLine>
+                        {
+                            new ConversationLine { Speaker = "Heroine", Text = "完了です。" }
+                        }
                     }
                 },
                 ConversationResourcePath = "Heroines/TestHeroine/Conversations",

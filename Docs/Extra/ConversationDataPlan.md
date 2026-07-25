@@ -188,6 +188,7 @@ Unity 側の対応先は `ConversationData` を想定する。
         "GameStartIntro_01"
       ],
       "priority": 100,
+      "affectionChange": 10,
       "memo": ""
     }
   ]
@@ -195,6 +196,9 @@ Unity 側の対応先は `ConversationData` を想定する。
 ```
 
 Unity 側の対応先は `GameEventData` を想定する。
+`affectionChange` はイベント全体の完了効果で、Unityでは全ページの表示完了時に
+一度だけ反映する。AssetToolではイベント編集欄の「イベント完了時変化」で編集し、
+Unity向けexportとFromUnity importの両方で維持する。
 
 ## scheduled_events_export.json
 

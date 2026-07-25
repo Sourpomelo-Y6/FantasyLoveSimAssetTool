@@ -7591,6 +7591,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 Category = string.IsNullOrWhiteSpace(item.Category) ? "Manual" : item.Category.Trim(),
                 ImageAssetIdsText = JoinImportList(item.ImageAssetIds),
                 Priority = item.Priority,
+                AffectionChange = item.AffectionChange,
                 Memo = BuildFromUnityGameEventMemo(item)
             };
 

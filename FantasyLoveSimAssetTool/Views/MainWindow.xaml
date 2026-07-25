@@ -632,6 +632,11 @@
                                                       IsChecked="{Binding SelectedConversationEntry.Conditions.Once}"
                                                       VerticalAlignment="Center"
                                                       Margin="24,0,0,0"/>
+                                            <TextBlock Text="イベント完了時変化"
+                                                       VerticalAlignment="Center"
+                                                       Margin="24,0,8,0"/>
+                                            <TextBox Text="{Binding SelectedConversationEntry.AffectionChange, UpdateSourceTrigger=PropertyChanged}"
+                                                     Width="80"/>
                                         </StackPanel>
 
                                         <TextBlock Grid.Row="5" Grid.Column="0" Text="天候/季節/時間" VerticalAlignment="Center" Margin="0,0,8,8"/>

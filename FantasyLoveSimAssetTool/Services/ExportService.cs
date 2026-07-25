@@ -931,6 +931,7 @@ namespace FantasyLoveSimAssetTool.Services
                         }).ToList(),
                     imageAssetIds = SplitList(entry.ImageAssetIdsText),
                     priority = entry.Priority,
+                    affectionChange = entry.AffectionChange,
                     memo = entry.Memo
                 }).ToList()
             };

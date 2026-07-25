@@ -33,6 +33,8 @@ namespace FantasyLoveSimAssetTool.Models
 
         public int Priority { get; set; }
 
+        public int AffectionChange { get; set; }
+
         public string Memo { get; set; }
     }
 

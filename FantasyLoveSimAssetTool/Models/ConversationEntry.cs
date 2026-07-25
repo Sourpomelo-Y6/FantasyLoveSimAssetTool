@@ -24,6 +24,8 @@ namespace FantasyLoveSimAssetTool.Models
 
         public int Priority { get; set; }
 
+        public int AffectionChange { get; set; }
+
         public string Memo { get; set; }
 
         [JsonIgnore]
@@ -52,6 +54,7 @@ namespace FantasyLoveSimAssetTool.Models
             Choices = new ObservableCollection<ConversationChoice>();
             ImageAssetIdsText = string.Empty;
             Priority = 100;
+            AffectionChange = 0;
             Memo = string.Empty;
             ValidationWarningText = string.Empty;
             TriggerCandidateText = string.Empty;
