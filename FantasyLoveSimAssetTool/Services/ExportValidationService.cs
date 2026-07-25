@@ -68,6 +68,13 @@ namespace FantasyLoveSimAssetTool.Services
                     AddConversation(issues, entry, ExportValidationSeverity.Warning,
                         label + ": categoryは Daily / Food / Adventure / Love のいずれかにしてください。");
                 if (entry.Priority < 0) AddConversation(issues, entry, ExportValidationSeverity.Error, label + ": 優先度が0未満です。");
+                if (entry.Kind == ConversationDataKind.GameEvents &&
+                    (entry.AffectionChange < -9999 || entry.AffectionChange > 9999))
+                    AddConversation(
+                        issues,
+                        entry,
+                        ExportValidationSeverity.Error,
+                        label + ": イベント完了時の好感度変化は -9999〜9999 で指定してください。");
                 if (entry.Lines == null || entry.Lines.Count == 0 || entry.Lines.Any(x => x == null || string.IsNullOrWhiteSpace(x.Text)))
                     AddConversation(issues, entry, ExportValidationSeverity.Error, label + ": 台詞本文が空です。");
                 ValidateCondition(issues, entry, label, costumeIds, skillIds);

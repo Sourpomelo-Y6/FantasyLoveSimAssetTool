@@ -165,6 +165,7 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(ConversationDataKind.GameEvents, gameEvent.ConversationKind);
             Assert.AreEqual("GameEvents01", gameEvent.TargetId);
             Assert.AreEqual(1, gameEvent.TargetTabIndex);
+            StringAssert.Contains(gameEvent.Details, "完了時好感度 0");
 
             ProductionStatusCheckItem battleSkill = row.BattleSkills.Checks.First(x => x.Name.Contains("BattleSkillA"));
             Assert.AreEqual(ProductionStatusTargetKind.BattleSkill, battleSkill.TargetKind);
@@ -175,6 +176,28 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual("TrainingA", trainingDialogue.TargetId);
             Assert.AreEqual("SelectedBeforeFirstStep", trainingDialogue.TargetSubId);
             Assert.AreEqual(4, trainingDialogue.TargetTabIndex);
+        }
+
+        [TestMethod]
+        public void Evaluate_GameEventShowsCompletionAffectionAndRejectsOutOfRangeValue()
+        {
+            HeroineProfile profile = CompleteProfile();
+            ConversationEntry gameEvent =
+                profile.ConversationEntries.First(x => x.Kind == ConversationDataKind.GameEvents);
+            gameEvent.AffectionChange = 30;
+
+            CharacterProductionStatusRow valid = EvaluateWithDefinitions(profile);
+            ProductionStatusCheckItem validCheck =
+                valid.Events.Checks.First(x => x.Name.Contains(gameEvent.Id));
+            Assert.IsTrue(validCheck.IsComplete);
+            StringAssert.Contains(validCheck.Details, "完了時好感度 +30");
+
+            gameEvent.AffectionChange = 10000;
+            CharacterProductionStatusRow invalid = EvaluateWithDefinitions(profile);
+            ProductionStatusCheckItem invalidCheck =
+                invalid.Events.Checks.First(x => x.Name.Contains(gameEvent.Id));
+            Assert.IsFalse(invalidCheck.IsComplete);
+            StringAssert.Contains(invalidCheck.Details, "完了時好感度:10000");
         }
 
         [TestMethod]

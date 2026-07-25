@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.IO;
 using System.Linq;
+using System.Collections.ObjectModel;
 
 namespace FantasyLoveSimAssetTool.Tests
 {
@@ -76,6 +77,45 @@ namespace FantasyLoveSimAssetTool.Tests
                     x.TargetKind == ProductionStatusTargetKind.TrainingSkill && x.TargetId == "SharedSkill"));
                 Assert.IsTrue(result.Issues.Any(x => x.Severity == ExportValidationSeverity.Error &&
                     x.TargetKind == ProductionStatusTargetKind.SkillTreeNode && x.TargetId == "SharedNode"));
+            }
+            finally
+            {
+                Directory.Delete(workspace, true);
+            }
+        }
+
+        [TestMethod]
+        public void Validate_OutOfRangeGameEventAffectionReturnsNavigableError()
+        {
+            string workspace = CreateWorkspace();
+            try
+            {
+                CharacterProjectService project = new CharacterProjectService(workspace);
+                HeroineProfile profile = project.CreateCharacter("TestHeroine", "Test");
+                profile.ConversationEntries = new ObservableCollection<ConversationEntry>
+                {
+                    new ConversationEntry
+                    {
+                        Id = "Event01",
+                        Title = "Event",
+                        Category = "Manual",
+                        Kind = ConversationDataKind.GameEvents,
+                        AffectionChange = 10000,
+                        Lines = new ObservableCollection<ConversationLine>
+                        {
+                            new ConversationLine { Text = "本文" }
+                        }
+                    }
+                };
+
+                ExportValidationResult result =
+                    new ExportValidationService(project).Validate(profile);
+
+                ExportValidationIssue issue = result.Issues.First(x =>
+                    x.Message.Contains("イベント完了時の好感度変化"));
+                Assert.AreEqual(ExportValidationSeverity.Error, issue.Severity);
+                Assert.AreEqual(ProductionStatusTargetKind.Conversation, issue.TargetKind);
+                Assert.AreEqual("Event01", issue.TargetId);
             }
             finally
             {

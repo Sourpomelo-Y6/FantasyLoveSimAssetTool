@@ -298,6 +298,9 @@ namespace FantasyLoveSimAssetTool.Services
                 if (entry.Lines == null || entry.Lines.Count == 0 || entry.Lines.Any(x => x == null || string.IsNullOrWhiteSpace(x.Text))) problems.Add("台詞本文");
                 if (entry.Conditions != null && entry.Conditions.MinAffection > entry.Conditions.MaxAffection) problems.Add("好感度範囲");
                 if (entry.Conditions != null && entry.Conditions.Once && string.IsNullOrWhiteSpace(entry.Conditions.RequiredFlagIdsText)) problems.Add("Once用フラグ");
+                if (entry.Kind == ConversationDataKind.GameEvents &&
+                    (entry.AffectionChange < -9999 || entry.AffectionChange > 9999))
+                    problems.Add("完了時好感度:" + entry.AffectionChange);
                 foreach (ConversationLine line in entry.Lines ?? new System.Collections.ObjectModel.ObservableCollection<ConversationLine>())
                     if (line != null && !string.IsNullOrWhiteSpace(line.Expression) && !expressionIds.Contains(line.Expression.Trim())) problems.Add("表情:" + line.Expression.Trim());
                 if (entry.Conditions != null && !string.IsNullOrWhiteSpace(entry.Conditions.CostumeId) && !costumeIds.Contains(entry.Conditions.CostumeId.Trim()))
@@ -305,7 +308,12 @@ namespace FantasyLoveSimAssetTool.Services
                 foreach (string assetId in SplitIds(entry.ImageAssetIdsText)) if (!acceptedAssetIds.Contains(assetId)) problems.Add("画像:" + assetId);
                 foreach (string skillId in RequiredSkillIdSyncService.NormalizeText(entry.Conditions?.RequiredSkillIdsText))
                     if (!skillIds.Contains(skillId)) problems.Add("スキル:" + skillId);
-                checks.Add(Check(label, problems.Count == 0, problems.Count == 0 ? "本文・条件・参照は有効です。" : "要確認: " + string.Join(", ", problems.Distinct()),
+                string completionEffect = entry.Kind == ConversationDataKind.GameEvents
+                    ? " 完了時好感度 " + FormatSignedValue(entry.AffectionChange) + "。"
+                    : string.Empty;
+                checks.Add(Check(label, problems.Count == 0, problems.Count == 0
+                    ? "本文・条件・参照は有効です。" + completionEffect
+                    : "要確認: " + string.Join(", ", problems.Distinct()) + completionEffect,
                     ProductionStatusTargetKind.Conversation, entry.Id, 1, entry.Kind));
             }
             int complete = checks.Count(x => x.IsComplete);
@@ -371,6 +379,11 @@ namespace FantasyLoveSimAssetTool.Services
         private static IEnumerable<string> SplitIds(string text) => string.IsNullOrWhiteSpace(text)
             ? Enumerable.Empty<string>()
             : text.Split(new[] { '\r', '\n', ',', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Where(x => x.Length > 0);
+
+        private static string FormatSignedValue(int value)
+        {
+            return value > 0 ? "+" + value : value.ToString();
+        }
 
         private static ProductionStatusCell EvaluateBattleSkills(HeroineProfile profile)
         {
