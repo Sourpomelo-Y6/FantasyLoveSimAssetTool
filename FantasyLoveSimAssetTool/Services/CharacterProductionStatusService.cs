@@ -301,6 +301,12 @@ namespace FantasyLoveSimAssetTool.Services
                 if (entry.Kind == ConversationDataKind.GameEvents &&
                     (entry.AffectionChange < -9999 || entry.AffectionChange > 9999))
                     problems.Add("完了時好感度:" + entry.AffectionChange);
+                string triggerType = entry.Conditions?.GameEventTriggerType?.Trim() ?? string.Empty;
+                string triggerContextId = entry.Conditions?.TriggerContextId?.Trim() ?? string.Empty;
+                if (entry.Kind == ConversationDataKind.GameEvents &&
+                    RequiresGameEventTriggerContext(triggerType) &&
+                    string.IsNullOrEmpty(triggerContextId))
+                    problems.Add("発火対象ID");
                 foreach (ConversationLine line in entry.Lines ?? new System.Collections.ObjectModel.ObservableCollection<ConversationLine>())
                     if (line != null && !string.IsNullOrWhiteSpace(line.Expression) && !expressionIds.Contains(line.Expression.Trim())) problems.Add("表情:" + line.Expression.Trim());
                 if (entry.Conditions != null && !string.IsNullOrWhiteSpace(entry.Conditions.CostumeId) && !costumeIds.Contains(entry.Conditions.CostumeId.Trim()))
@@ -309,7 +315,8 @@ namespace FantasyLoveSimAssetTool.Services
                 foreach (string skillId in RequiredSkillIdSyncService.NormalizeText(entry.Conditions?.RequiredSkillIdsText))
                     if (!skillIds.Contains(skillId)) problems.Add("スキル:" + skillId);
                 string completionEffect = entry.Kind == ConversationDataKind.GameEvents
-                    ? " 完了時好感度 " + FormatSignedValue(entry.AffectionChange) + "。"
+                    ? " 発火 " + FormatGameEventTrigger(triggerType, triggerContextId) +
+                        " / 完了時好感度 " + FormatSignedValue(entry.AffectionChange) + "。"
                     : string.Empty;
                 checks.Add(Check(label, problems.Count == 0, problems.Count == 0
                     ? "本文・条件・参照は有効です。" + completionEffect
@@ -383,6 +390,26 @@ namespace FantasyLoveSimAssetTool.Services
         private static string FormatSignedValue(int value)
         {
             return value > 0 ? "+" + value : value.ToString();
+        }
+
+        private static bool RequiresGameEventTriggerContext(string triggerType)
+        {
+            return string.Equals(triggerType, "ScheduledEventCompleted", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(triggerType, "ActionCompleted", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(triggerType, "LocationEntered", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(triggerType, "QuestCompleted", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string FormatGameEventTrigger(
+            string triggerType,
+            string triggerContextId)
+        {
+            string resolvedType = string.IsNullOrEmpty(triggerType)
+                ? "未指定（従来カテゴリ）"
+                : triggerType;
+            return string.IsNullOrEmpty(triggerContextId)
+                ? resolvedType
+                : resolvedType + ":" + triggerContextId;
         }
 
         private static ProductionStatusCell EvaluateBattleSkills(HeroineProfile profile)

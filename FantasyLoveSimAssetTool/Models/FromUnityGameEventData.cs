@@ -40,6 +40,10 @@ namespace FantasyLoveSimAssetTool.Models
 
     public class FromUnityGameEventCondition
     {
+        public string TriggerType { get; set; }
+
+        public string TriggerContextId { get; set; }
+
         public string LocationId { get; set; }
 
         public int MinAffection { get; set; }

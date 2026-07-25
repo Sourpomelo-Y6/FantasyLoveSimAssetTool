@@ -7438,7 +7438,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             target.LocationId = source.LocationId ?? string.Empty;
             target.MinAffection = source.MinAffection;
-            target.MaxAffection = source.MaxAffection == 0 ? 100 : source.MaxAffection;
+            target.MaxAffection = source.MaxAffection == 0 ? 9999 : source.MaxAffection;
             target.Weather = source.Weather ?? string.Empty;
             target.Season = source.Season ?? string.Empty;
             target.TimeOfDay = source.TimeOfDay ?? string.Empty;
@@ -7637,8 +7637,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             target.LocationId = source.LocationId ?? string.Empty;
+            target.GameEventTriggerType = source.TriggerType ?? string.Empty;
+            target.TriggerContextId = source.TriggerContextId ?? string.Empty;
             target.MinAffection = source.MinAffection;
-            target.MaxAffection = source.MaxAffection == 0 ? 100 : source.MaxAffection;
+            target.MaxAffection = source.MaxAffection == 0 ? 9999 : source.MaxAffection;
             target.Weather = source.Weather ?? string.Empty;
             target.Season = source.Season ?? string.Empty;
             target.TimeOfDay = source.TimeOfDay ?? string.Empty;

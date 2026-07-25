@@ -9,6 +9,20 @@ namespace FantasyLoveSimAssetTool.Services
     /// <summary>Exportを書き込まず、制作状況と実Exportで共有する検証結果を生成します。</summary>
     public sealed class ExportValidationService
     {
+        private static readonly HashSet<string> GameEventTriggerTypes =
+            new HashSet<string>(
+                new[]
+                {
+                    "GameStart",
+                    "DayStart",
+                    "Manual",
+                    "ScheduledEventCompleted",
+                    "ActionCompleted",
+                    "LocationEntered",
+                    "QuestCompleted"
+                },
+                StringComparer.OrdinalIgnoreCase);
+
         private readonly CharacterProjectService projectService;
         private readonly DefinitionCatalogService catalogService;
         private readonly StillDefinitionService stillService;
@@ -75,6 +89,7 @@ namespace FantasyLoveSimAssetTool.Services
                         entry,
                         ExportValidationSeverity.Error,
                         label + ": イベント完了時の好感度変化は -9999〜9999 で指定してください。");
+                ValidateGameEventTrigger(issues, entry, label);
                 if (entry.Lines == null || entry.Lines.Count == 0 || entry.Lines.Any(x => x == null || string.IsNullOrWhiteSpace(x.Text)))
                     AddConversation(issues, entry, ExportValidationSeverity.Error, label + ": 台詞本文が空です。");
                 ValidateCondition(issues, entry, label, costumeIds, skillIds);
@@ -94,6 +109,48 @@ namespace FantasyLoveSimAssetTool.Services
             Add(issues, ExportValidationSeverity.Information,
                 $"Export対象: Accepted画像 {accepted.Count} 件、会話・イベント {entries.Count} 件、戦闘スキル {profile.BattleSkills?.Count ?? 0} 件。");
             return new ExportValidationResult { Issues = issues };
+        }
+
+        private static void ValidateGameEventTrigger(
+            List<ExportValidationIssue> issues,
+            ConversationEntry entry,
+            string label)
+        {
+            if (entry.Kind != ConversationDataKind.GameEvents ||
+                entry.Conditions == null ||
+                string.IsNullOrWhiteSpace(entry.Conditions.GameEventTriggerType))
+            {
+                return;
+            }
+
+            string triggerType = entry.Conditions.GameEventTriggerType.Trim();
+            if (!GameEventTriggerTypes.Contains(triggerType))
+            {
+                AddConversation(
+                    issues,
+                    entry,
+                    ExportValidationSeverity.Error,
+                    label + ": 未対応のイベント発火種類です: " + triggerType);
+                return;
+            }
+
+            if (RequiresGameEventTriggerContext(triggerType) &&
+                string.IsNullOrWhiteSpace(entry.Conditions.TriggerContextId))
+            {
+                AddConversation(
+                    issues,
+                    entry,
+                    ExportValidationSeverity.Error,
+                    label + ": " + triggerType + " には発火対象IDが必要です。");
+            }
+        }
+
+        private static bool RequiresGameEventTriggerContext(string triggerType)
+        {
+            return string.Equals(triggerType, "ScheduledEventCompleted", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(triggerType, "ActionCompleted", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(triggerType, "LocationEntered", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(triggerType, "QuestCompleted", StringComparison.OrdinalIgnoreCase);
         }
 
         private static void ValidateHeroineSkillTreeNamespaces(List<ExportValidationIssue> issues, HeroineProfile profile)

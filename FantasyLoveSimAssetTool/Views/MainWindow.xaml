@@ -620,8 +620,20 @@
                                                     Margin="8,0,0,0"/>
                                         </Grid>
 
-                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="場所" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding SelectedConversationEntry.Conditions.LocationId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="場所/イベント発火" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                        <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.LocationId, UpdateSourceTrigger=PropertyChanged}"
+                                                     Width="180"
+                                                     ToolTip="場所条件"/>
+                                            <TextBlock Text="発火種類" VerticalAlignment="Center" Margin="16,0,8,0"/>
+                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.GameEventTriggerType, UpdateSourceTrigger=PropertyChanged}"
+                                                     Width="190"
+                                                     ToolTip="例: ScheduledEventCompleted"/>
+                                            <TextBlock Text="対象ID" VerticalAlignment="Center" Margin="16,0,8,0"/>
+                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.TriggerContextId, UpdateSourceTrigger=PropertyChanged}"
+                                                     Width="140"
+                                                     ToolTip="例: Forest"/>
+                                        </StackPanel>
 
                                         <TextBlock Grid.Row="4" Grid.Column="0" Text="好感度" VerticalAlignment="Center" Margin="0,0,8,8"/>
                                         <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">

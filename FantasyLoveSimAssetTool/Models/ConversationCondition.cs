@@ -4,6 +4,10 @@ namespace FantasyLoveSimAssetTool.Models
     {
         public string LocationId { get; set; }
 
+        public string GameEventTriggerType { get; set; }
+
+        public string TriggerContextId { get; set; }
+
         public int MinAffection { get; set; }
 
         public int MaxAffection { get; set; }
@@ -31,6 +35,8 @@ namespace FantasyLoveSimAssetTool.Models
         public ConversationCondition()
         {
             LocationId = string.Empty;
+            GameEventTriggerType = string.Empty;
+            TriggerContextId = string.Empty;
             MaxAffection = 9999;
             Weather = string.Empty;
             Season = string.Empty;

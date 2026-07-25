@@ -123,6 +123,47 @@ namespace FantasyLoveSimAssetTool.Tests
             }
         }
 
+        [TestMethod]
+        public void Validate_ContextGameEventWithoutTargetReturnsNavigableError()
+        {
+            string workspace = CreateWorkspace();
+            try
+            {
+                CharacterProjectService project = new CharacterProjectService(workspace);
+                HeroineProfile profile = project.CreateCharacter("TestHeroine", "Test");
+                profile.ConversationEntries = new ObservableCollection<ConversationEntry>
+                {
+                    new ConversationEntry
+                    {
+                        Id = "ForestEvent",
+                        Title = "Forest",
+                        Category = "Location",
+                        Kind = ConversationDataKind.GameEvents,
+                        Conditions = new ConversationCondition
+                        {
+                            GameEventTriggerType = "ScheduledEventCompleted"
+                        },
+                        Lines = new ObservableCollection<ConversationLine>
+                        {
+                            new ConversationLine { Text = "本文" }
+                        }
+                    }
+                };
+
+                ExportValidationResult result =
+                    new ExportValidationService(project).Validate(profile);
+
+                ExportValidationIssue issue = result.Issues.First(x =>
+                    x.Message.Contains("発火対象ID"));
+                Assert.AreEqual(ExportValidationSeverity.Error, issue.Severity);
+                Assert.AreEqual("ForestEvent", issue.TargetId);
+            }
+            finally
+            {
+                Directory.Delete(workspace, true);
+            }
+        }
+
         private static string CreateWorkspace()
         {
             string path = Path.Combine(Path.GetTempPath(), "FantasyLoveSimAssetToolTests", Guid.NewGuid().ToString("N"));

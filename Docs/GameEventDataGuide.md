@@ -22,8 +22,9 @@
 5. `イベント雛形` を押す。
 6. 自動入力された `Id`、`タイトル`、条件、台詞行をイベント内容に合わせて修正する。
 7. `イベント完了時変化` に全ページ表示後の好感度変化を入力する。変化なしは `0` とする。
-8. 必要なら `画像AssetId` に `GameStartIntro_01` などを入れる。
-9. `会話データ保存` を押す。
+8. 自動発火させる場合は `発火種類` と `対象ID` を入力する。
+9. 必要なら `画像AssetId` に `GameStartIntro_01` などを入れる。
+10. `会話データ保存` を押す。
 
 `イベント雛形` は、選択中のイベント行に対してカテゴリ、ID、タイトル、条件、台詞の初期行を設定する。
 既に台詞本文が入っている場合、本文は置き換えない。
@@ -69,6 +70,25 @@ Unityではイベントの全ページ表示完了時に反映し、`once=true` 
 同時に一度だけ確定する。開始演出や自動発生イベントで報酬が不要なら `0` を明示する。
 入力可能範囲は `-9999〜9999`。制作状況のイベント詳細には符号付きの値を表示し、
 範囲外は制作状況とExport前検証の両方でエラーにする。
+
+## 発火種類と対象ID
+
+イベントの内容分類である `category` とは別に、Unityでの実行接続を
+`conditions.triggerType` と `conditions.triggerContextId` に保存する。
+
+| triggerType | 用途 | 対象ID例 |
+| --- | --- | --- |
+| `GameStart` | 新規ゲーム開始 | 空 |
+| `DayStart` | 翌朝 | 空 |
+| `Manual` | スキル取得やデバッグから明示起動 | 空 |
+| `ScheduledEventCompleted` | 予定結果を読み終えた後 | `Forest`, `Cave`, `Lake` |
+| `ActionCompleted` | 通常行動完了後の将来接続 | `Tea`, `Walk` |
+| `LocationEntered` | 場所へ入った時の将来接続 | `Forest`, `Town` |
+| `QuestCompleted` | クエスト完了後の将来接続 | `Quest_01` |
+
+末尾4種類は対象ID必須。現在Unityで通常プレイへ接続済みなのは
+`ScheduledEventCompleted` で、TestHeroineの `Event_Location_Forest_01` は
+`ScheduledEventCompleted:Forest` として森探索完了後に再生する。
 
 ## once とフラグ運用
 

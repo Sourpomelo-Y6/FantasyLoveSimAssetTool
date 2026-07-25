@@ -902,6 +902,8 @@ namespace FantasyLoveSimAssetTool.Services
                     category = entry.Category,
                     conditions = new
                     {
+                        triggerType = entry.Conditions == null ? string.Empty : entry.Conditions.GameEventTriggerType,
+                        triggerContextId = entry.Conditions == null ? string.Empty : entry.Conditions.TriggerContextId,
                         locationId = entry.Conditions == null ? string.Empty : entry.Conditions.LocationId,
                         minAffection = entry.Conditions == null ? 0 : entry.Conditions.MinAffection,
                         maxAffection = entry.Conditions == null ? 100 : entry.Conditions.MaxAffection,

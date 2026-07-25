@@ -50,6 +50,12 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.IsTrue(loaded.BattleSkillsSpecified);
             Assert.AreEqual("heroine_heal", loaded.BattleSkills[0].SkillId);
             Assert.AreEqual(12, loaded.ConversationEntries[0].AffectionChange);
+            Assert.AreEqual(
+                "ScheduledEventCompleted",
+                loaded.ConversationEntries[0].Conditions.GameEventTriggerType);
+            Assert.AreEqual(
+                "Forest",
+                loaded.ConversationEntries[0].Conditions.TriggerContextId);
         }
 
         [TestMethod]
@@ -87,6 +93,12 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(
                 12,
                 gameEvents.RootElement.GetProperty("items")[0].GetProperty("affectionChange").GetInt32());
+            JsonElement conditions =
+                gameEvents.RootElement.GetProperty("items")[0].GetProperty("conditions");
+            Assert.AreEqual(
+                "ScheduledEventCompleted",
+                conditions.GetProperty("triggerType").GetString());
+            Assert.AreEqual("Forest", conditions.GetProperty("triggerContextId").GetString());
         }
 
         [TestMethod]
@@ -158,6 +170,11 @@ namespace FantasyLoveSimAssetTool.Tests
                         Title = "完了報酬イベント",
                         Category = "Manual",
                         AffectionChange = 12,
+                        Conditions = new ConversationCondition
+                        {
+                            GameEventTriggerType = "ScheduledEventCompleted",
+                            TriggerContextId = "Forest"
+                        },
                         Lines = new ObservableCollection<ConversationLine>
                         {
                             new ConversationLine { Speaker = "Heroine", Text = "完了です。" }

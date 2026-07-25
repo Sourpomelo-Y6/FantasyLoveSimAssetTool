@@ -201,6 +201,30 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void Evaluate_ContextGameEventRequiresTargetAndShowsTriggerDetails()
+        {
+            HeroineProfile profile = CompleteProfile();
+            ConversationEntry gameEvent =
+                profile.ConversationEntries.First(x => x.Kind == ConversationDataKind.GameEvents);
+            gameEvent.Conditions.GameEventTriggerType = "ScheduledEventCompleted";
+
+            CharacterProductionStatusRow missingTarget = EvaluateWithDefinitions(profile);
+            ProductionStatusCheckItem missingTargetCheck =
+                missingTarget.Events.Checks.First(x => x.Name.Contains(gameEvent.Id));
+            Assert.IsFalse(missingTargetCheck.IsComplete);
+            StringAssert.Contains(missingTargetCheck.Details, "発火対象ID");
+
+            gameEvent.Conditions.TriggerContextId = "Forest";
+            CharacterProductionStatusRow valid = EvaluateWithDefinitions(profile);
+            ProductionStatusCheckItem validCheck =
+                valid.Events.Checks.First(x => x.Name.Contains(gameEvent.Id));
+            Assert.IsTrue(validCheck.IsComplete);
+            StringAssert.Contains(
+                validCheck.Details,
+                "ScheduledEventCompleted:Forest");
+        }
+
+        [TestMethod]
         public void Evaluate_MissingTrainingDialogueText_ReturnsPartialDetails()
         {
             HeroineProfile profile = CompleteProfile();
