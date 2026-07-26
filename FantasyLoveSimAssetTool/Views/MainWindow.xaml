@@ -1182,6 +1182,10 @@
                                                              Height="72"/>
                                                     <TextBox Text="{Binding SelectedTrainingDialogueMessage.Text, UpdateSourceTrigger=PropertyChanged}"
                                                              AcceptsReturn="True" TextWrapping="Wrap" Height="56" Margin="0,6,0,6"/>
+                                                    <TextBlock Text="Voice ID（拡張子なし）"/>
+                                                    <TextBox Text="{Binding SelectedTrainingDialogueMessage.VoiceId, UpdateSourceTrigger=PropertyChanged}"
+                                                             ToolTip="Resources/Audio/Voice/&lt;HeroineId&gt;/ 以下のパス。例: Training/LightPractice01"
+                                                             Margin="0,4,0,6"/>
                                                     <WrapPanel HorizontalAlignment="Right">
                                                         <Button Content="候補追加" Command="{Binding AddTrainingDialogueMessageCommand}" Width="84" Margin="0,0,6,0"/>
                                                         <Button Content="候補削除" Command="{Binding RemoveTrainingDialogueMessageCommand}" Width="84"/>

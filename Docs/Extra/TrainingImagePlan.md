@@ -220,6 +220,7 @@ messages[]
 - 同じ枠に複数候補がある場合は、直前と同じセリフを除外してランダム選択
 - `trainingId` が空のエントリは、ヒロイン内の状態共通フォールバック
 - データまたはUIが未設定でも例外を発生させない
+- 音声付き候補は本文と `voiceId` を組で保持し、従来の音声なし候補も維持する
 
 `TrainingPanel` のUIには次のTextMeshProUGUIを追加する。
 
@@ -234,6 +235,8 @@ TrainingMessageText
 ### AssetToolとUnity Importer
 
 AssetToolの訓練画像タブでは、選択中の画像枠に対応するセリフ候補を追加、編集、削除できる。
+候補を選択すると本文と `Voice ID（拡張子なし）` を編集できる。Voice IDは
+`Training/LightPractice01` のように、`Resources/Audio/Voice/<HeroineId>/` 以下の相対パスを入力する。
 `標準15枠を準備` は不足する画像枠とセリフ枠を同時に作成し、既存候補は上書きしない。
 Export時は次のファイルを生成する。
 
@@ -241,8 +244,12 @@ Export時は次のファイルを生成する。
 Data/training_dialogues_export.json
 ```
 
-JSONは `heroineId` と、`trainingId`、`visualState`、`messages[]` の一覧を持つ。
+JSONは `heroineId` と、`trainingId`、`visualState`、音声なしの `messages[]`、
+本文とVoice IDを組にした `voicedMessages[]` の一覧を持つ。
 Unity Importerはファイルが存在する場合だけ `HeroineTrainingDialogueData.asset` を更新する。旧Exportのようにファイルが存在しない場合は既存セリフを維持する。
+`voicedMessages` キーがない旧JSONでは既存Voice IDを維持し、新形式の空配列だけを削除として扱う。
+UnityからToolへ戻す場合は本文一致で候補を重複追加せずVoice IDを更新する。
+実音声ファイルは同期・Git管理せず、文字列IDだけを往復する。
 空のセリフ、重複キー、存在しないTrainingId、未知のVisualStateは警告またはスキップ対象とする。
 
 ## prompt JSON

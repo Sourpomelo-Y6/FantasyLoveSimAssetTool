@@ -35,6 +35,7 @@ namespace FantasyLoveSimAssetTool.Models
     public class TrainingDialogueMessage : ObservableObject
     {
         private string text = string.Empty;
+        private string voiceId = string.Empty;
 
         public string Text
         {
@@ -44,6 +45,17 @@ namespace FantasyLoveSimAssetTool.Models
                 if (text == value) { return; }
                 text = value;
                 OnPropertyChanged(nameof(Text));
+            }
+        }
+
+        public string VoiceId
+        {
+            get { return voiceId; }
+            set
+            {
+                if (voiceId == value) { return; }
+                voiceId = value;
+                OnPropertyChanged(nameof(VoiceId));
             }
         }
     }

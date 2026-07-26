@@ -20,5 +20,14 @@ namespace FantasyLoveSimAssetTool.Models
         public string VisualState { get; set; }
 
         public List<string> Messages { get; set; }
+
+        public List<FromUnityTrainingDialogueVoiceItem> VoicedMessages { get; set; }
+    }
+
+    public class FromUnityTrainingDialogueVoiceItem
+    {
+        public string Message { get; set; }
+
+        public string VoiceId { get; set; }
     }
 }

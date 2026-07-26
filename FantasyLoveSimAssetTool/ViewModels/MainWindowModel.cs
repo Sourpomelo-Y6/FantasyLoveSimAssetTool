@@ -4842,7 +4842,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RefreshSelectedTrainingDialogueEntry();
             OnPropertyChanged(nameof(SelectedProfile));
             StatusMessage =
-                $"FromUnity 訓練セリフを取り込みました。枠追加 {result.AddedEntryCount} 件、候補追加 {result.AddedMessageCount} 件、重複・不正値スキップ {result.SkippedCount} 件。";
+                $"FromUnity 訓練セリフを取り込みました。枠追加 {result.AddedEntryCount} 件、候補追加 {result.AddedMessageCount} 件、Voice ID更新 {result.UpdatedVoiceIdCount} 件、重複・不正値スキップ {result.SkippedCount} 件。";
         }
 
         private void RefreshSelectedTrainingDialogueEntry()

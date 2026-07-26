@@ -121,6 +121,77 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual("TestHeroine", root.GetProperty("heroineId").GetString());
             Assert.AreEqual("CooperativeDrill", item.GetProperty("trainingId").GetString());
             CollectionAssert.AreEqual(new[] { "セリフA", "セリフB" }, item.GetProperty("messages").EnumerateArray().Select(x => x.GetString()).ToArray());
+            Assert.AreEqual(0, item.GetProperty("voicedMessages").GetArrayLength());
+        }
+
+        [TestMethod]
+        public void BuildExportJson_SeparatesVoicedMessages()
+        {
+            TrainingDialogueSettings settings =
+                SettingsWith("CooperativeDrill", "PlayerLpConsumed", "通常", "音声付き");
+            settings.Items[0].Messages[1].VoiceId = " Training/Line01 ";
+            HeroineProfile profile = new HeroineProfile
+            {
+                HeroineId = "TestHeroine",
+                TrainingDialogues = settings
+            };
+
+            string json = TrainingDialogueSyncService.BuildExportJson(
+                profile,
+                new ExportReport());
+            using JsonDocument document = JsonDocument.Parse(json);
+            JsonElement item = document.RootElement.GetProperty("items")[0];
+            JsonElement voiced = item.GetProperty("voicedMessages")[0];
+
+            CollectionAssert.AreEqual(
+                new[] { "通常" },
+                item.GetProperty("messages").EnumerateArray()
+                    .Select(x => x.GetString()).ToArray());
+            Assert.AreEqual("音声付き", voiced.GetProperty("message").GetString());
+            Assert.AreEqual("Training/Line01", voiced.GetProperty("voiceId").GetString());
+        }
+
+        [TestMethod]
+        public void MergeFromUnity_UpdatesVoiceIdByMessageWithoutDuplicatingText()
+        {
+            TrainingDialogueSettings settings =
+                SettingsWith("CooperativeDrill", "PlayerLpConsumed", "音声付き");
+            FromUnityTrainingDialogueItem item =
+                Item("CooperativeDrill", "PlayerLpConsumed");
+            item.VoicedMessages = new List<FromUnityTrainingDialogueVoiceItem>
+            {
+                new FromUnityTrainingDialogueVoiceItem
+                {
+                    Message = "音声付き",
+                    VoiceId = "Training/Line01"
+                }
+            };
+
+            TrainingDialogueMergeResult result = TrainingDialogueSyncService.MergeFromUnity(
+                settings,
+                "TestHeroine",
+                Data(item));
+
+            Assert.AreEqual(1, settings.Items[0].Messages.Count);
+            Assert.AreEqual("Training/Line01", settings.Items[0].Messages[0].VoiceId);
+            Assert.AreEqual(1, result.UpdatedVoiceIdCount);
+        }
+
+        [TestMethod]
+        public void MergeFromUnity_LegacyMessagesPreserveExistingVoiceId()
+        {
+            TrainingDialogueSettings settings =
+                SettingsWith("CooperativeDrill", "PlayerLpConsumed", "既存");
+            settings.Items[0].Messages[0].VoiceId = "Training/Existing01";
+
+            TrainingDialogueSyncService.MergeFromUnity(
+                settings,
+                "TestHeroine",
+                Data(Item("CooperativeDrill", "PlayerLpConsumed", "既存")));
+
+            Assert.AreEqual(
+                "Training/Existing01",
+                settings.Items[0].Messages[0].VoiceId);
         }
 
         [TestMethod]

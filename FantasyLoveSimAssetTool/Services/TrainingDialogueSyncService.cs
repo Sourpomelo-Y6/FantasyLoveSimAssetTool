@@ -11,6 +11,7 @@ namespace FantasyLoveSimAssetTool.Services
     {
         public int AddedEntryCount { get; internal set; }
         public int AddedMessageCount { get; internal set; }
+        public int UpdatedVoiceIdCount { get; internal set; }
         public int SkippedCount { get; internal set; }
     }
 
@@ -68,14 +69,57 @@ namespace FantasyLoveSimAssetTool.Services
                 foreach (string sourceMessage in item.Messages ?? new List<string>())
                 {
                     string message = (sourceMessage ?? string.Empty).Trim();
-                    if (message.Length == 0 || entry.Messages.Any(existing =>
-                        existing != null && string.Equals(existing.Text?.Trim(), message, StringComparison.Ordinal)))
+                    if (message.Length == 0)
                     {
+                        result.SkippedCount++;
+                        continue;
+                    }
+                    if (entry.Messages.Any(existing =>
+                        existing != null &&
+                        string.Equals(existing.Text?.Trim(), message, StringComparison.Ordinal)))
+                    {
+                        // 旧JSONの本文だけでは、既存のVoice IDを消さない。
                         result.SkippedCount++;
                         continue;
                     }
                     entry.Messages.Add(new TrainingDialogueMessage { Text = message });
                     result.AddedMessageCount++;
+                }
+                foreach (FromUnityTrainingDialogueVoiceItem sourceCandidate in
+                    item.VoicedMessages ?? new List<FromUnityTrainingDialogueVoiceItem>())
+                {
+                    string message = (sourceCandidate?.Message ?? string.Empty).Trim();
+                    string voiceId = (sourceCandidate?.VoiceId ?? string.Empty).Trim();
+                    if (message.Length == 0)
+                    {
+                        result.SkippedCount++;
+                        continue;
+                    }
+
+                    TrainingDialogueMessage existing = entry.Messages.FirstOrDefault(value =>
+                        value != null &&
+                        string.Equals(value.Text?.Trim(), message, StringComparison.Ordinal));
+                    if (existing == null)
+                    {
+                        entry.Messages.Add(new TrainingDialogueMessage
+                        {
+                            Text = message,
+                            VoiceId = voiceId
+                        });
+                        result.AddedMessageCount++;
+                    }
+                    else if (!string.Equals(
+                        (existing.VoiceId ?? string.Empty).Trim(),
+                        voiceId,
+                        StringComparison.Ordinal))
+                    {
+                        existing.VoiceId = voiceId;
+                        result.UpdatedVoiceIdCount++;
+                    }
+                    else
+                    {
+                        result.SkippedCount++;
+                    }
                 }
             }
             return result;
@@ -93,6 +137,17 @@ namespace FantasyLoveSimAssetTool.Services
                 else if (!keys.Add(key)) report.Warnings.Add($"訓練セリフが重複しています: {item.TrainingId} / {item.VisualState}");
                 if (item.Messages == null || !item.Messages.Any(message => message != null && !string.IsNullOrWhiteSpace(message.Text)))
                     report.Warnings.Add($"訓練セリフが空です: {item.TrainingId} / {item.VisualState}");
+                foreach (IGrouping<string, TrainingDialogueMessage> duplicate in
+                    (item.Messages ?? new ObservableCollection<TrainingDialogueMessage>())
+                        .Where(message => message != null && !string.IsNullOrWhiteSpace(message.Text))
+                        .GroupBy(message => message.Text.Trim(), StringComparer.Ordinal)
+                        .Where(group => group.Select(message =>
+                            (message.VoiceId ?? string.Empty).Trim())
+                            .Distinct(StringComparer.Ordinal).Count() > 1))
+                {
+                    report.Warnings.Add(
+                        $"同じ訓練セリフ本文に異なるVoice IDがあります: {item.TrainingId} / {item.VisualState} / {duplicate.Key}");
+                }
             }
             object exportModel = new
             {
@@ -102,9 +157,16 @@ namespace FantasyLoveSimAssetTool.Services
                 {
                     trainingId = item.TrainingId,
                     visualState = item.VisualState,
-                    messages = (item.Messages ?? new ObservableCollection<TrainingDialogueMessage>())
-                        .Where(message => message != null && !string.IsNullOrWhiteSpace(message.Text))
-                        .Select(message => message.Text.Trim()).Distinct().ToList()
+                    messages = NormalizeMessagesForExport(item.Messages)
+                        .Where(message => string.IsNullOrEmpty(message.VoiceId))
+                        .Select(message => message.Text).ToList(),
+                    voicedMessages = NormalizeMessagesForExport(item.Messages)
+                        .Where(message => !string.IsNullOrEmpty(message.VoiceId))
+                        .Select(message => new
+                        {
+                            message = message.Text,
+                            voiceId = message.VoiceId
+                        }).ToList()
                 }).ToList()
             };
             return JsonSerializer.Serialize(exportModel, new JsonSerializerOptions { WriteIndented = true });
@@ -123,6 +185,39 @@ namespace FantasyLoveSimAssetTool.Services
                 case "SimultaneousLpConsumed": return "SimultaneousLpConsumed";
                 default: return string.Empty;
             }
+        }
+
+        private static List<TrainingDialogueMessage> NormalizeMessagesForExport(
+            IEnumerable<TrainingDialogueMessage> source)
+        {
+            List<TrainingDialogueMessage> result = new List<TrainingDialogueMessage>();
+            foreach (TrainingDialogueMessage message in source ??
+                Enumerable.Empty<TrainingDialogueMessage>())
+            {
+                string text = (message?.Text ?? string.Empty).Trim();
+                string voiceId = (message?.VoiceId ?? string.Empty).Trim();
+                if (text.Length == 0)
+                {
+                    continue;
+                }
+
+                TrainingDialogueMessage existing = result.FirstOrDefault(value =>
+                    string.Equals(value.Text, text, StringComparison.Ordinal));
+                if (existing == null)
+                {
+                    result.Add(new TrainingDialogueMessage
+                    {
+                        Text = text,
+                        VoiceId = voiceId
+                    });
+                }
+                else if (string.IsNullOrEmpty(existing.VoiceId) &&
+                    !string.IsNullOrEmpty(voiceId))
+                {
+                    existing.VoiceId = voiceId;
+                }
+            }
+            return result;
         }
     }
 }

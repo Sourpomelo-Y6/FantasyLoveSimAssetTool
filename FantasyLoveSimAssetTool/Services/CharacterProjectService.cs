@@ -404,6 +404,7 @@ namespace FantasyLoveSimAssetTool.Services
                         if (message != null)
                         {
                             message.Text ??= string.Empty;
+                            message.VoiceId ??= string.Empty;
                         }
                     }
                 }
