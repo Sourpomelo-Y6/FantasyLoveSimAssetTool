@@ -65,6 +65,72 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void EvaluateVoice_WithoutUnityProject_IsNotApplicable()
+        {
+            HeroineProfile profile = CompleteProfile();
+
+            CharacterProductionStatusRow row = CharacterProductionStatusService.Evaluate(
+                profile,
+                audioItems: null,
+                isAudioProjectConfigured: false);
+
+            Assert.AreEqual(ProductionStatusKind.NotApplicable, row.Voice.Kind);
+            Assert.AreEqual("―", row.Voice.Symbol);
+            StringAssert.Contains(row.Voice.Details, "未選択");
+        }
+
+        [TestMethod]
+        public void EvaluateVoice_DetectsMissingReferencedAndUnusedFiles()
+        {
+            HeroineProfile profile = CompleteProfile();
+            ConversationLine line = profile.ConversationEntries
+                .SelectMany(entry => entry.Lines)
+                .First();
+            line.VoiceId = "Event/Required01";
+            AudioLibraryItem missing = new AudioLibraryItem
+            {
+                Category = "VOICE",
+                HeroineId = profile.HeroineId,
+                LogicalId = profile.HeroineId + "/Event/Required01",
+                ExpectedPath = "Required01.*",
+                IsAvailable = false,
+                ReferenceCount = 1
+            };
+            AudioLibraryItem unused = new AudioLibraryItem
+            {
+                Category = "VOICE",
+                HeroineId = profile.HeroineId,
+                LogicalId = profile.HeroineId + "/Event/Unused01",
+                FilePath = "Unused01.ogg",
+                IsAvailable = true,
+                ReferenceCount = 0
+            };
+
+            CharacterProductionStatusRow missingRow =
+                EvaluateWithDefinitions(
+                    profile,
+                    audioItems: new[] { missing, unused },
+                    isAudioProjectConfigured: true);
+
+            Assert.AreEqual(ProductionStatusKind.Missing, missingRow.Voice.Kind);
+            Assert.IsTrue(missingRow.Voice.Checks.Any(check =>
+                !check.IsComplete && check.TargetKind == ProductionStatusTargetKind.Audio));
+            Assert.IsTrue(missingRow.Voice.Checks.Any(check =>
+                check.IsWarning && check.Symbol == "△"));
+
+            missing.IsAvailable = true;
+            missing.FilePath = "Required01.ogg";
+            CharacterProductionStatusRow warningRow =
+                EvaluateWithDefinitions(
+                    profile,
+                    audioItems: new[] { missing, unused },
+                    isAudioProjectConfigured: true);
+
+            Assert.AreEqual(ProductionStatusKind.Partial, warningRow.Voice.Kind);
+            Assert.IsFalse(warningRow.HasIncomplete);
+        }
+
+        [TestMethod]
         public void Evaluate_UnknownExpressionAndCostumeReferences_ReturnsPartialDetails()
         {
             HeroineProfile profile = CompleteProfile();
@@ -491,7 +557,10 @@ namespace FantasyLoveSimAssetTool.Tests
             return profile;
         }
 
-        private static CharacterProductionStatusRow EvaluateWithDefinitions(HeroineProfile profile) =>
+        private static CharacterProductionStatusRow EvaluateWithDefinitions(
+            HeroineProfile profile,
+            System.Collections.Generic.IEnumerable<AudioLibraryItem> audioItems = null,
+            bool isAudioProjectConfigured = false) =>
             CharacterProductionStatusService.Evaluate(
                 profile,
                 new[] { new ExpressionDefinition { ExpressionId = "Neutral" } },
@@ -500,6 +569,8 @@ namespace FantasyLoveSimAssetTool.Tests
                 {
                     new LayerAssetDefinition { AssetId = "Expression_Neutral", LayerKind = "Expression", ExpressionId = "Neutral" },
                     new LayerAssetDefinition { AssetId = "Costume_Default", LayerKind = "Costume", CostumeId = "Default" }
-                });
+                },
+                audioItems: audioItems,
+                isAudioProjectConfigured: isAudioProjectConfigured);
     }
 }

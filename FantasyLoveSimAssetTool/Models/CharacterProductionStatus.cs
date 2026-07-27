@@ -22,7 +22,8 @@ namespace FantasyLoveSimAssetTool.Models
         Expression,
         Costume,
         LayerAsset,
-        StillDefinition
+        StillDefinition,
+        Audio
     }
 
     public sealed class ProductionStatusCell
@@ -43,6 +44,7 @@ namespace FantasyLoveSimAssetTool.Models
     {
         public string Name { get; set; } = string.Empty;
         public bool IsComplete { get; set; }
+        public bool IsWarning { get; set; }
         public bool IsApplicable { get; set; } = true;
         public string Details { get; set; } = string.Empty;
         public string CharacterId { get; set; } = string.Empty;
@@ -51,7 +53,7 @@ namespace FantasyLoveSimAssetTool.Models
         public string TargetId { get; set; } = string.Empty;
         public string TargetSubId { get; set; } = string.Empty;
         public ConversationDataKind ConversationKind { get; set; }
-        public string Symbol => !IsApplicable ? "―" : IsComplete ? "○" : "×";
+        public string Symbol => !IsApplicable ? "―" : IsWarning ? "△" : IsComplete ? "○" : "×";
     }
 
     public sealed class CharacterProductionStatusRow
@@ -70,6 +72,7 @@ namespace FantasyLoveSimAssetTool.Models
         public ProductionStatusCell SkillTree { get; set; }
         public ProductionStatusCell Events { get; set; }
         public ProductionStatusCell ActionReactions { get; set; }
+        public ProductionStatusCell Voice { get; set; }
         public ProductionStatusCell ExportReadiness { get; set; }
 
         public bool HasIncomplete =>
@@ -85,6 +88,7 @@ namespace FantasyLoveSimAssetTool.Models
             SkillTree?.Kind != ProductionStatusKind.Complete ||
             Events?.Kind != ProductionStatusKind.Complete ||
             ActionReactions?.Kind != ProductionStatusKind.Complete ||
+            Voice?.Kind == ProductionStatusKind.Missing ||
             ExportReadiness?.Kind != ProductionStatusKind.Complete;
     }
 }

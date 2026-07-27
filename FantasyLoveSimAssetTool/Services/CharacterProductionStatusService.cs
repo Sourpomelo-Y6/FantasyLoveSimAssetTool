@@ -18,7 +18,9 @@ namespace FantasyLoveSimAssetTool.Services
             IEnumerable<LayerAssetDefinition> layers = null,
             Func<HeroineAsset, bool> acceptedAssetFileExists = null,
             ExportValidationResult exportValidation = null,
-            IEnumerable<StillDefinition> stillDefinitions = null)
+            IEnumerable<StillDefinition> stillDefinitions = null,
+            IEnumerable<AudioLibraryItem> audioItems = null,
+            bool isAudioProjectConfigured = false)
         {
             if (profile == null) throw new ArgumentNullException(nameof(profile));
             List<ExpressionDefinition> expressionList = (expressions ?? Enumerable.Empty<ExpressionDefinition>()).Where(x => x != null).ToList();
@@ -40,10 +42,138 @@ namespace FantasyLoveSimAssetTool.Services
                 BattleSkills = EvaluateBattleSkills(profile),
                 SkillTree = EvaluateSkillTree(profile),
                 Events = EvaluateEvents(profile, expressionList, costumeList),
-                ActionReactions = EvaluateActionReactions(profile, expressionList, costumeList)
+                ActionReactions = EvaluateActionReactions(profile, expressionList, costumeList),
+                Voice = EvaluateVoice(profile, audioItems, isAudioProjectConfigured)
             };
             row.ExportReadiness = EvaluateExportReadiness(profile, row, acceptedAssetFileExists, exportValidation);
             return row;
+        }
+
+        private static ProductionStatusCell EvaluateVoice(
+            HeroineProfile profile,
+            IEnumerable<AudioLibraryItem> audioItems,
+            bool isAudioProjectConfigured)
+        {
+            const int voiceTabIndex = 15;
+            if (!isAudioProjectConfigured)
+            {
+                ProductionStatusCheckItem guide = Check(
+                    "Unityプロジェクト",
+                    false,
+                    "音声検証にはBGM・SEまたはVOICEタブでUnityプロジェクトを選択してください。",
+                    ProductionStatusTargetKind.Audio,
+                    string.Empty,
+                    voiceTabIndex);
+                guide.IsApplicable = false;
+                return Cell(
+                    profile,
+                    "VOICE",
+                    voiceTabIndex,
+                    ProductionStatusKind.NotApplicable,
+                    "Unityプロジェクト未選択のため、VOICEファイルの配置を検証していません。",
+                    new[] { guide });
+            }
+
+            List<AudioLibraryItem> items = (audioItems ?? Enumerable.Empty<AudioLibraryItem>())
+                .Where(item => item != null && item.Category == "VOICE")
+                .ToList();
+            Dictionary<string, int> references =
+                AudioLibraryService.CollectVoiceReferences(new[] { profile });
+            List<ProductionStatusCheckItem> checks = new List<ProductionStatusCheckItem>();
+            int missingCount = 0;
+            foreach (KeyValuePair<string, int> reference in references.OrderBy(pair => pair.Key))
+            {
+                string logicalId = reference.Key.StartsWith(
+                    "Voice/",
+                    StringComparison.OrdinalIgnoreCase)
+                    ? reference.Key.Substring("Voice/".Length)
+                    : reference.Key;
+                AudioLibraryItem item = items.FirstOrDefault(candidate =>
+                    string.Equals(candidate.LogicalId, logicalId, StringComparison.OrdinalIgnoreCase));
+                bool validId = IsValidVoiceLogicalId(logicalId, profile.HeroineId);
+                bool complete = validId && item != null && item.IsAvailable;
+                if (!complete) missingCount++;
+                string details = !validId
+                    ? $"Voice IDまたはキャラクターIDを含むパスが不正です: {logicalId}"
+                    : item == null || !item.IsAvailable
+                        ? $"参照数 {reference.Value}。期待パス: {item?.ExpectedPath ?? logicalId}"
+                        : $"参照数 {reference.Value}。配置済み: {item.FilePath}";
+                checks.Add(Check(
+                    "参照VOICE / " + logicalId,
+                    complete,
+                    details,
+                    ProductionStatusTargetKind.Audio,
+                    logicalId,
+                    voiceTabIndex));
+            }
+
+            List<AudioLibraryItem> unused = items
+                .Where(item =>
+                    item.IsUnusedVoice &&
+                    string.Equals(
+                        item.HeroineId,
+                        profile.HeroineId,
+                        StringComparison.OrdinalIgnoreCase))
+                .OrderBy(item => item.LogicalId)
+                .ToList();
+            foreach (AudioLibraryItem item in unused)
+            {
+                ProductionStatusCheckItem warning = Check(
+                    "未使用VOICE / " + item.LogicalId,
+                    true,
+                    "Toolデータ内の参照数が0です。Unity側の直接参照を確認してから整理してください。",
+                    ProductionStatusTargetKind.Audio,
+                    item.LogicalId,
+                    voiceTabIndex);
+                warning.IsWarning = true;
+                checks.Add(warning);
+            }
+
+            if (checks.Count == 0)
+            {
+                ProductionStatusCheckItem none = Check(
+                    "Voice ID",
+                    false,
+                    "このキャラクターにはVoice IDもVOICEファイルもありません。",
+                    ProductionStatusTargetKind.Audio,
+                    string.Empty,
+                    voiceTabIndex);
+                none.IsApplicable = false;
+                checks.Add(none);
+                return Cell(
+                    profile,
+                    "VOICE",
+                    voiceTabIndex,
+                    ProductionStatusKind.NotApplicable,
+                    "Voice IDが未登録のため、VOICE検証は対象外です。",
+                    checks);
+            }
+
+            ProductionStatusKind kind = missingCount > 0
+                ? ProductionStatusKind.Missing
+                : unused.Count > 0
+                    ? ProductionStatusKind.Partial
+                    : ProductionStatusKind.Complete;
+            return Cell(
+                profile,
+                "VOICE",
+                voiceTabIndex,
+                kind,
+                $"参照 {references.Count} ID / 未配置・不正 {missingCount} / 未使用 {unused.Count}。",
+                checks);
+        }
+
+        private static bool IsValidVoiceLogicalId(string logicalId, string heroineId)
+        {
+            if (string.IsNullOrWhiteSpace(logicalId) || string.IsNullOrWhiteSpace(heroineId))
+                return false;
+            string normalized = logicalId.Replace('\\', '/').Trim('/');
+            string expectedPrefix = heroineId.Trim() + "/";
+            return normalized.StartsWith(expectedPrefix, StringComparison.OrdinalIgnoreCase) &&
+                normalized.Split('/').All(part =>
+                    !string.IsNullOrWhiteSpace(part) &&
+                    part != "." &&
+                    part != "..");
         }
 
         private static ProductionStatusCell EvaluateActionReactions(
@@ -344,6 +474,17 @@ namespace FantasyLoveSimAssetTool.Services
                 category.CategoryName, category.Kind == ProductionStatusKind.Complete,
                 category.Kind == ProductionStatusKind.Complete ? "完成判定です。" : category.Symbol + " " + category.Details,
                 ProductionStatusTargetKind.None, null, category.TargetTabIndex)).ToList();
+            if (row.Voice?.Kind == ProductionStatusKind.Missing)
+            {
+                ProductionStatusCheckItem voiceCheck = Check(
+                    row.Voice.CategoryName,
+                    row.Voice.Kind != ProductionStatusKind.Missing,
+                    row.Voice.Details,
+                    ProductionStatusTargetKind.Audio,
+                    string.Empty,
+                    row.Voice.TargetTabIndex);
+                checks.Add(voiceCheck);
+            }
             if (exportValidation != null)
             {
                 foreach (ExportValidationIssue issue in exportValidation.Issues)
@@ -354,11 +495,18 @@ namespace FantasyLoveSimAssetTool.Services
                 }
                 int validationErrors = exportValidation.ErrorCount;
                 int validationWarnings = exportValidation.WarningCount;
-                ProductionStatusKind validationKind = validationErrors == 0 && validationWarnings == 0
+                int voiceErrors = row.Voice?.Kind == ProductionStatusKind.Missing ? 1 : 0;
+                ProductionStatusKind validationKind =
+                    validationErrors + voiceErrors == 0 &&
+                    validationWarnings == 0
                     ? ProductionStatusKind.Complete : ProductionStatusKind.Partial;
                 return Cell(profile, "Export準備", 12, validationKind,
-                    validationErrors == 0 && validationWarnings == 0 ? "共通Export検証でエラー・警告はありません。" :
-                    $"共通Export検証: Error {validationErrors} 件、Warning {validationWarnings} 件。詳細から修正対象へ移動できます。", checks);
+                    validationErrors + voiceErrors == 0 &&
+                    validationWarnings == 0
+                        ? "共通Export検証とVOICE検証にExportを妨げる問題はありません。"
+                        : $"共通Export検証＋VOICE: Error {validationErrors + voiceErrors} 件、" +
+                          $"Warning {validationWarnings} 件。詳細から修正対象へ移動できます。",
+                    checks);
             }
             checks.Add(Check("Accepted画像の実ファイル", missingFiles.Count == 0,
                 missingFiles.Count == 0 ? $"Accepted画像 {accepted.Count} 件の保存先を確認しました。" :

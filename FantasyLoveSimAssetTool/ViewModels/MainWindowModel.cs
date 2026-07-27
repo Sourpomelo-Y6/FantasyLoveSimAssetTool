@@ -2658,6 +2658,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 AudioLibrarySummary = result.CreateSummary();
                 RefreshAvailableVoiceIds();
                 RefreshFilteredAudioLibrary();
+                RefreshProductionStatus();
                 StatusMessage = "Unity音声ライブラリを再走査しました。";
             }
             catch (Exception ex)
@@ -10085,7 +10086,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 asset => asset != null && !string.IsNullOrWhiteSpace(asset.StoredPath) && File.Exists(Path.Combine(
                     characterProjectService.GetCharacterDirectory(SelectedProfile.HeroineId), asset.StoredPath)),
                 exportService.Validate(SelectedProfile),
-                StillDefinitions);
+                StillDefinitions,
+                allAudioLibraryItems,
+                AudioLibraryService.IsUnityProjectPath(UnityProjectPath));
             foreach (ProductionStatusCell cell in new[]
             {
                 row.BasicInformation,
@@ -10100,6 +10103,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 row.SkillTree,
                 row.Events,
                 row.ActionReactions,
+                row.Voice,
                 row.ExportReadiness
             })
             {
@@ -10202,6 +10206,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
                         SelectedStillUsageFilter = still.Usage.ToString();
                         SelectedStillDefinition = still;
                     }
+                    break;
+                case ProductionStatusTargetKind.Audio:
+                    ShowOnlyUnusedVoice = false;
+                    VoiceAudioSearchText = string.Empty;
+                    RefreshFilteredAudioLibrary();
+                    SelectedAudioLibraryItem = string.IsNullOrWhiteSpace(check.TargetId)
+                        ? null
+                        : VoiceAudioItems.FirstOrDefault(item =>
+                            string.Equals(
+                                item.LogicalId,
+                                check.TargetId,
+                                StringComparison.OrdinalIgnoreCase));
                     break;
             }
         }
