@@ -33,6 +33,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly EnemyExportService enemyExportService;
         private readonly PlayerProjectService playerProjectService;
         private readonly PlayerExportService playerExportService;
+        private readonly AudioLibraryService audioLibraryService;
+        private readonly AudioPreviewService audioPreviewService;
+        private readonly List<AudioLibraryItem> allAudioLibraryItems =
+            new List<AudioLibraryItem>();
         private OutfitMessageOverride selectedOutfitMessageOverride;
         private OutfitReactionMessageOverride selectedOutfitReactionMessageOverride;
         private TrainingImageEntry selectedTrainingImageEntry;
@@ -142,6 +146,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string lastBattleMessageImportReport;
         private int selectedMainTabIndex;
         private bool showOnlyIncompleteProductionStatus;
+        private string unityProjectPath;
+        private string audioLibrarySearchText;
+        private string selectedAudioCategory;
+        private bool showOnlySelectedHeroineAudio;
+        private string audioLibrarySummary;
+        private AudioLibraryItem selectedAudioLibraryItem;
         private HeroineBattleSkill selectedProductionBattleSkill;
         private HeroineTrainingSkill selectedProductionTrainingSkill;
         private HeroineSkillTreeNode selectedProductionSkillTreeNode;
@@ -149,6 +159,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private bool isSkillTreeEditorExpanded;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
+
+        public ObservableCollection<AudioLibraryItem> AudioLibraryItems { get; }
+
+        public ObservableCollection<string> AudioCategoryOptions { get; }
+
+        public ObservableCollection<string> AvailableVoiceIds { get; }
 
         public HeroineBattleSkill SelectedProductionBattleSkill
         {
@@ -1219,6 +1235,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 RefreshConversationCategorySuggestions();
                 RefreshFilteredConversationEntries();
                 RefreshSelectedStillStatus();
+                RefreshAvailableVoiceIds();
+                RefreshFilteredAudioLibrary();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -1649,6 +1667,77 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public string UnityProjectPath
+        {
+            get { return unityProjectPath; }
+            set
+            {
+                if (unityProjectPath == value) { return; }
+                unityProjectPath = value;
+                OnPropertyChanged(nameof(UnityProjectPath));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public string AudioLibrarySearchText
+        {
+            get { return audioLibrarySearchText; }
+            set
+            {
+                if (audioLibrarySearchText == value) { return; }
+                audioLibrarySearchText = value;
+                OnPropertyChanged(nameof(AudioLibrarySearchText));
+                RefreshFilteredAudioLibrary();
+            }
+        }
+
+        public string SelectedAudioCategory
+        {
+            get { return selectedAudioCategory; }
+            set
+            {
+                if (selectedAudioCategory == value) { return; }
+                selectedAudioCategory = value;
+                OnPropertyChanged(nameof(SelectedAudioCategory));
+                RefreshFilteredAudioLibrary();
+            }
+        }
+
+        public bool ShowOnlySelectedHeroineAudio
+        {
+            get { return showOnlySelectedHeroineAudio; }
+            set
+            {
+                if (showOnlySelectedHeroineAudio == value) { return; }
+                showOnlySelectedHeroineAudio = value;
+                OnPropertyChanged(nameof(ShowOnlySelectedHeroineAudio));
+                RefreshFilteredAudioLibrary();
+            }
+        }
+
+        public string AudioLibrarySummary
+        {
+            get { return audioLibrarySummary; }
+            set
+            {
+                if (audioLibrarySummary == value) { return; }
+                audioLibrarySummary = value;
+                OnPropertyChanged(nameof(AudioLibrarySummary));
+            }
+        }
+
+        public AudioLibraryItem SelectedAudioLibraryItem
+        {
+            get { return selectedAudioLibraryItem; }
+            set
+            {
+                if (selectedAudioLibraryItem == value) { return; }
+                selectedAudioLibraryItem = value;
+                OnPropertyChanged(nameof(SelectedAudioLibraryItem));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
         public ICommand CreateCharacterCommand { get; }
 
         public ICommand SaveSelectedProfileCommand { get; }
@@ -1660,6 +1749,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ICommand RefreshProductionStatusCommand { get; }
 
         public ICommand OpenProductionStatusTargetCommand { get; }
+
+        public ICommand BrowseUnityProjectCommand { get; }
+
+        public ICommand RefreshAudioLibraryCommand { get; }
+
+        public ICommand PlaySelectedAudioCommand { get; }
+
+        public ICommand StopAudioPreviewCommand { get; }
 
         public ICommand AddOutfitMessageOverrideCommand { get; }
 
@@ -1847,8 +1944,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
             exportService = new ExportService(characterProjectService, imageInspectionService);
             enemyExportService = new EnemyExportService(enemyProjectService, imageInspectionService);
             playerExportService = new PlayerExportService(playerProjectService, imageInspectionService);
+            audioLibraryService = new AudioLibraryService();
+            audioPreviewService = new AudioPreviewService();
             Profiles = new ObservableCollection<HeroineProfile>();
             ProductionStatusCategories = new ObservableCollection<ProductionStatusCell>();
+            AudioLibraryItems = new ObservableCollection<AudioLibraryItem>();
+            AudioCategoryOptions = new ObservableCollection<string>
+            {
+                "すべて", "BGM", "SE", "VOICE", "未配置"
+            };
+            AvailableVoiceIds = new ObservableCollection<string>();
             EnemyProfiles = new ObservableCollection<EnemyProfile>();
             FilteredAssets = new ObservableCollection<HeroineAsset>();
             AcceptedAssets = new ObservableCollection<HeroineAsset>();
@@ -2047,6 +2152,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
             lastBattleMessageImportReport = "Unityから戦闘メッセージを読み込むと、ここに差分が表示されます。";
             selectedMainTabIndex = 0;
             showOnlyIncompleteProductionStatus = false;
+            unityProjectPath = AudioLibraryService.LoadUnityProjectPath();
+            audioLibrarySearchText = string.Empty;
+            selectedAudioCategory = "すべて";
+            showOnlySelectedHeroineAudio = true;
+            audioLibrarySummary = string.IsNullOrWhiteSpace(unityProjectPath)
+                ? "Unityプロジェクトを選択してください。"
+                : "「再走査」で音声導入状況を確認できます。";
 
             CreateCharacterCommand = new RelayCommand(CreateCharacter);
             SaveSelectedProfileCommand = new RelayCommand(SaveSelectedProfile, () => SelectedProfile != null);
@@ -2056,6 +2168,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
             OpenBattleMessagesTabCommand = new RelayCommand(() => SelectedMainTabIndex = 2);
             RefreshProductionStatusCommand = new RelayCommand(RefreshProductionStatus);
             OpenProductionStatusTargetCommand = new RelayCommand<object>(OpenProductionStatusTarget);
+            BrowseUnityProjectCommand = new RelayCommand(BrowseUnityProject);
+            RefreshAudioLibraryCommand = new RelayCommand(RefreshAudioLibrary);
+            PlaySelectedAudioCommand = new RelayCommand(
+                PlaySelectedAudio,
+                () => SelectedAudioLibraryItem != null &&
+                    SelectedAudioLibraryItem.IsAvailable);
+            StopAudioPreviewCommand = new RelayCommand(StopAudioPreview);
             AddOutfitMessageOverrideCommand = new RelayCommand(
                 AddOutfitMessageOverride,
                 () => SelectedProfile != null);
@@ -2304,7 +2423,131 @@ namespace FantasyLoveSimAssetTool.ViewModels
             LoadProfiles();
             LoadEnemies();
             LoadPlayerProfile();
+            if (AudioLibraryService.IsUnityProjectPath(UnityProjectPath))
+            {
+                RefreshAudioLibrary();
+            }
             StatusMessage = "キャラクター基本情報の保存準備ができています。";
+        }
+
+        private void BrowseUnityProject()
+        {
+            OpenFileDialog dialog = new OpenFileDialog
+            {
+                Title = "Unityプロジェクトの ProjectSettings/ProjectVersion.txt を選択",
+                Filter = "Unity ProjectVersion|ProjectVersion.txt|すべてのファイル|*.*",
+                CheckFileExists = true
+            };
+            if (!string.IsNullOrWhiteSpace(UnityProjectPath))
+            {
+                string settingsFolder = Path.Combine(UnityProjectPath, "ProjectSettings");
+                if (Directory.Exists(settingsFolder)) dialog.InitialDirectory = settingsFolder;
+            }
+            if (dialog.ShowDialog() != true) return;
+
+            DirectoryInfo projectSettings = Directory.GetParent(dialog.FileName);
+            DirectoryInfo projectRoot = projectSettings?.Parent;
+            UnityProjectPath = projectRoot?.FullName ?? string.Empty;
+            RefreshAudioLibrary();
+        }
+
+        private void RefreshAudioLibrary()
+        {
+            try
+            {
+                AudioLibraryScanResult result =
+                    audioLibraryService.Scan(UnityProjectPath, Profiles);
+                AudioLibraryService.SaveUnityProjectPath(UnityProjectPath);
+                allAudioLibraryItems.Clear();
+                allAudioLibraryItems.AddRange(result.Items);
+                AudioLibrarySummary = result.CreateSummary();
+                RefreshAvailableVoiceIds();
+                RefreshFilteredAudioLibrary();
+                StatusMessage = "Unity音声ライブラリを再走査しました。";
+            }
+            catch (Exception ex)
+            {
+                allAudioLibraryItems.Clear();
+                AudioLibraryItems.Clear();
+                AvailableVoiceIds.Clear();
+                AudioLibrarySummary = "走査できません: " + ex.Message;
+                StatusMessage = AudioLibrarySummary;
+            }
+        }
+
+        private void RefreshFilteredAudioLibrary()
+        {
+            if (AudioLibraryItems == null) return;
+            AudioLibraryItems.Clear();
+            string search = (AudioLibrarySearchText ?? string.Empty).Trim();
+            string heroineId = SelectedProfile?.HeroineId ?? string.Empty;
+            foreach (AudioLibraryItem item in allAudioLibraryItems
+                .Where(item => MatchesAudioCategory(item, SelectedAudioCategory))
+                .Where(item =>
+                    !ShowOnlySelectedHeroineAudio ||
+                    item.Category != "VOICE" ||
+                    string.Equals(item.HeroineId, heroineId, StringComparison.OrdinalIgnoreCase))
+                .Where(item =>
+                    string.IsNullOrEmpty(search) ||
+                    (item.LogicalId ?? string.Empty).IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    (item.FilePath ?? string.Empty).IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
+                .OrderBy(item => item.Category)
+                .ThenBy(item => item.LogicalId))
+            {
+                AudioLibraryItems.Add(item);
+            }
+        }
+
+        private void RefreshAvailableVoiceIds()
+        {
+            AvailableVoiceIds.Clear();
+            AvailableVoiceIds.Add(string.Empty);
+            string heroineId = SelectedProfile?.HeroineId ?? string.Empty;
+            string prefix = heroineId + "/";
+            foreach (string voiceId in allAudioLibraryItems
+                .Where(item =>
+                    item.Category == "VOICE" &&
+                    string.Equals(item.HeroineId, heroineId, StringComparison.OrdinalIgnoreCase))
+                .Select(item =>
+                    item.LogicalId.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                        ? item.LogicalId.Substring(prefix.Length)
+                        : item.LogicalId)
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(id => id))
+            {
+                AvailableVoiceIds.Add(voiceId);
+            }
+        }
+
+        private void PlaySelectedAudio()
+        {
+            try
+            {
+                audioPreviewService.Play(SelectedAudioLibraryItem?.FilePath);
+                StatusMessage = "音声を再生しています: " +
+                    SelectedAudioLibraryItem?.LogicalId;
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = "音声を再生できません: " + ex.Message;
+            }
+        }
+
+        private void StopAudioPreview()
+        {
+            audioPreviewService.Stop();
+            StatusMessage = "音声プレビューを停止しました。";
+        }
+
+        private static bool MatchesAudioCategory(
+            AudioLibraryItem item,
+            string category)
+        {
+            if (item == null) return false;
+            if (string.IsNullOrWhiteSpace(category) || category == "すべて") return true;
+            if (category == "未配置") return !item.IsAvailable;
+            return string.Equals(item.Category, category, StringComparison.OrdinalIgnoreCase);
         }
 
         private void CreateCharacter()
