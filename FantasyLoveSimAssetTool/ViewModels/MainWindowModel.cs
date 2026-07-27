@@ -152,6 +152,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private bool showOnlySelectedHeroineAudio;
         private string audioLibrarySummary;
         private AudioLibraryItem selectedAudioLibraryItem;
+        private string selectedVoiceUsage;
+        private string voiceRegistrationId;
+        private string selectedVoiceAssignmentTarget;
+        private BattleResultEventEntry selectedBattleResultEvent;
+        private BattlePanelResultMessageEntry selectedBattlePanelMessage;
         private HeroineBattleSkill selectedProductionBattleSkill;
         private HeroineTrainingSkill selectedProductionTrainingSkill;
         private HeroineSkillTreeNode selectedProductionSkillTreeNode;
@@ -165,6 +170,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<string> AudioCategoryOptions { get; }
 
         public ObservableCollection<string> AvailableVoiceIds { get; }
+
+        public ObservableCollection<string> VoiceUsageOptions { get; }
+
+        public ObservableCollection<string> VoiceAssignmentTargetOptions { get; }
 
         public HeroineBattleSkill SelectedProductionBattleSkill
         {
@@ -1225,6 +1234,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 SelectedOutfitMessageOverride = selectedProfile?.OutfitMessageOverrides?.FirstOrDefault();
                 SelectedOutfitReactionMessageOverride = selectedProfile?.OutfitReactionMessageOverrides?.FirstOrDefault();
                 SelectedTrainingImageEntry = selectedProfile?.TrainingImages?.Items?.FirstOrDefault();
+                SelectedBattleResultEvent = null;
+                SelectedBattlePanelMessage = null;
                 RefreshStillPromptAfterProfilePromptChanged();
                 LoadStillDefinitions();
                 RefreshFilteredAssets();
@@ -1738,6 +1749,66 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public string SelectedVoiceUsage
+        {
+            get { return selectedVoiceUsage; }
+            set
+            {
+                if (selectedVoiceUsage == value) { return; }
+                selectedVoiceUsage = value;
+                OnPropertyChanged(nameof(SelectedVoiceUsage));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public string VoiceRegistrationId
+        {
+            get { return voiceRegistrationId; }
+            set
+            {
+                if (voiceRegistrationId == value) { return; }
+                voiceRegistrationId = value;
+                OnPropertyChanged(nameof(VoiceRegistrationId));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public string SelectedVoiceAssignmentTarget
+        {
+            get { return selectedVoiceAssignmentTarget; }
+            set
+            {
+                if (selectedVoiceAssignmentTarget == value) { return; }
+                selectedVoiceAssignmentTarget = value;
+                OnPropertyChanged(nameof(SelectedVoiceAssignmentTarget));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public BattleResultEventEntry SelectedBattleResultEvent
+        {
+            get { return selectedBattleResultEvent; }
+            set
+            {
+                if (selectedBattleResultEvent == value) { return; }
+                selectedBattleResultEvent = value;
+                OnPropertyChanged(nameof(SelectedBattleResultEvent));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public BattlePanelResultMessageEntry SelectedBattlePanelMessage
+        {
+            get { return selectedBattlePanelMessage; }
+            set
+            {
+                if (selectedBattlePanelMessage == value) { return; }
+                selectedBattlePanelMessage = value;
+                OnPropertyChanged(nameof(SelectedBattlePanelMessage));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
         public ICommand CreateCharacterCommand { get; }
 
         public ICommand SaveSelectedProfileCommand { get; }
@@ -1761,6 +1832,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ICommand RegisterSelectedAudioCommand { get; }
 
         public ICommand OpenSelectedAudioFolderCommand { get; }
+
+        public ICommand RegisterVoiceCommand { get; }
+
+        public ICommand OpenVoiceFolderCommand { get; }
 
         public ICommand AddOutfitMessageOverrideCommand { get; }
 
@@ -1959,6 +2034,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 "すべて", "BGM", "SE", "VOICE", "未配置"
             };
             AvailableVoiceIds = new ObservableCollection<string>();
+            VoiceUsageOptions = new ObservableCollection<string>
+            {
+                "Training", "Battle", "Conversation", "Event", "Other"
+            };
+            VoiceAssignmentTargetOptions = new ObservableCollection<string>
+            {
+                "登録のみ",
+                "選択中の訓練セリフ",
+                "選択中の戦闘後イベント",
+                "選択中の戦闘パネルメッセージ"
+            };
             EnemyProfiles = new ObservableCollection<EnemyProfile>();
             FilteredAssets = new ObservableCollection<HeroineAsset>();
             AcceptedAssets = new ObservableCollection<HeroineAsset>();
@@ -2161,6 +2247,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             audioLibrarySearchText = string.Empty;
             selectedAudioCategory = "すべて";
             showOnlySelectedHeroineAudio = true;
+            selectedVoiceUsage = "Training";
+            voiceRegistrationId = string.Empty;
+            selectedVoiceAssignmentTarget = "登録のみ";
             audioLibrarySummary = string.IsNullOrWhiteSpace(unityProjectPath)
                 ? "Unityプロジェクトを選択してください。"
                 : "「再走査」で音声導入状況を確認できます。";
@@ -2186,6 +2275,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
             OpenSelectedAudioFolderCommand = new RelayCommand(
                 OpenSelectedAudioFolder,
                 CanRegisterSelectedAudio);
+            RegisterVoiceCommand = new RelayCommand(
+                RegisterVoice,
+                CanRegisterVoice);
+            OpenVoiceFolderCommand = new RelayCommand(
+                OpenVoiceFolder,
+                () => SelectedProfile != null &&
+                    !string.IsNullOrWhiteSpace(SelectedVoiceUsage));
             AddOutfitMessageOverrideCommand = new RelayCommand(
                 AddOutfitMessageOverride,
                 () => SelectedProfile != null);
@@ -2655,6 +2751,142 @@ namespace FantasyLoveSimAssetTool.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = "音声の保存先を開けません: " + ex.Message;
+            }
+        }
+
+        private bool CanRegisterVoice()
+        {
+            if (SelectedProfile == null ||
+                string.IsNullOrWhiteSpace(SelectedProfile.HeroineId) ||
+                string.IsNullOrWhiteSpace(SelectedVoiceUsage) ||
+                string.IsNullOrWhiteSpace(VoiceRegistrationId))
+            {
+                return false;
+            }
+            if (SelectedVoiceAssignmentTarget == "選択中の訓練セリフ")
+                return SelectedTrainingDialogueMessage != null;
+            if (SelectedVoiceAssignmentTarget == "選択中の戦闘後イベント")
+                return SelectedBattleResultEvent != null;
+            if (SelectedVoiceAssignmentTarget == "選択中の戦闘パネルメッセージ")
+                return SelectedBattlePanelMessage != null;
+            return true;
+        }
+
+        private void RegisterVoice()
+        {
+            OpenFileDialog dialog = new OpenFileDialog
+            {
+                Title = $"{SelectedProfile.HeroineId} のVOICEとして登録する音声を選択",
+                Filter = "音声ファイル|*.wav;*.mp3;*.ogg;*.aif;*.aiff|" +
+                    "WAV|*.wav|MP3|*.mp3|Ogg Vorbis|*.ogg|AIFF|*.aif;*.aiff",
+                CheckFileExists = true,
+                Multiselect = false
+            };
+            if (dialog.ShowDialog() != true) return;
+
+            try
+            {
+                AudioRegistrationPlan plan = audioLibraryService.CreateVoiceRegistrationPlan(
+                    UnityProjectPath,
+                    SelectedProfile.HeroineId,
+                    SelectedVoiceUsage,
+                    VoiceRegistrationId,
+                    dialog.FileName);
+                bool replaceExisting = ConfirmAudioReplacement(plan);
+                if (plan.HasConflicts && !replaceExisting)
+                {
+                    StatusMessage = "VOICEファイルの登録をキャンセルしました。";
+                    return;
+                }
+
+                string destination = audioLibraryService.RegisterAudio(plan, replaceExisting);
+                string heroinePrefix = SelectedProfile.HeroineId.Trim() + "/";
+                string relativeVoiceId = plan.LogicalId.StartsWith(
+                    heroinePrefix,
+                    StringComparison.OrdinalIgnoreCase)
+                    ? plan.LogicalId.Substring(heroinePrefix.Length)
+                    : plan.LogicalId;
+                AssignRegisteredVoiceId(relativeVoiceId);
+                RefreshAudioLibrary();
+                SelectedAudioLibraryItem = AudioLibraryItems.FirstOrDefault(item =>
+                    item.Category == "VOICE" &&
+                    string.Equals(
+                        item.LogicalId,
+                        plan.LogicalId,
+                        StringComparison.OrdinalIgnoreCase));
+                VoiceRegistrationId = string.Empty;
+                StatusMessage = $"VOICEを登録しました: {destination}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.Message,
+                    "VOICEファイルを登録できません",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                StatusMessage = "VOICEファイルを登録できません: " + ex.Message;
+            }
+        }
+
+        private bool ConfirmAudioReplacement(AudioRegistrationPlan plan)
+        {
+            if (!plan.HasConflicts) return false;
+            string existingFiles = string.Join(
+                Environment.NewLine,
+                plan.ExistingPaths.Select(path => "・" + path));
+            return MessageBox.Show(
+                $"同じIDの音声がすでに存在します。{Environment.NewLine}{Environment.NewLine}" +
+                existingFiles + Environment.NewLine + Environment.NewLine +
+                $"次のファイルへ置き換えますか？{Environment.NewLine}{plan.DestinationPath}" +
+                Environment.NewLine + Environment.NewLine +
+                "別拡張子の既存ファイルと、その.metaも削除されます。",
+                "音声ファイルの置き換え確認",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning) == MessageBoxResult.Yes;
+        }
+
+        private void AssignRegisteredVoiceId(string voiceId)
+        {
+            if (SelectedVoiceAssignmentTarget == "選択中の訓練セリフ")
+            {
+                SelectedTrainingDialogueMessage.VoiceId = voiceId;
+            }
+            else if (SelectedVoiceAssignmentTarget == "選択中の戦闘後イベント")
+            {
+                SelectedBattleResultEvent.VoiceId = voiceId;
+                OnPropertyChanged(nameof(SelectedBattleResultEvent));
+            }
+            else if (SelectedVoiceAssignmentTarget == "選択中の戦闘パネルメッセージ")
+            {
+                SelectedBattlePanelMessage.VoiceId = voiceId;
+                OnPropertyChanged(nameof(SelectedBattlePanelMessage));
+            }
+            else
+            {
+                return;
+            }
+            characterProjectService.SaveProfile(SelectedProfile);
+        }
+
+        private void OpenVoiceFolder()
+        {
+            try
+            {
+                string folder = audioLibraryService.GetVoiceRegistrationDirectory(
+                    UnityProjectPath,
+                    SelectedProfile.HeroineId,
+                    SelectedVoiceUsage);
+                Directory.CreateDirectory(folder);
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = folder,
+                    UseShellExecute = true
+                });
+                StatusMessage = "VOICEの保存先を開きました: " + folder;
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = "VOICEの保存先を開けません: " + ex.Message;
             }
         }
 

@@ -188,6 +188,56 @@ namespace FantasyLoveSimAssetTool.Services
             return plan;
         }
 
+        public AudioRegistrationPlan CreateVoiceRegistrationPlan(
+            string unityProjectPath,
+            string heroineId,
+            string usage,
+            string voiceId,
+            string sourcePath)
+        {
+            ValidateUnityProjectPath(unityProjectPath);
+            if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
+            {
+                throw new FileNotFoundException("登録する音声ファイルが見つかりません。", sourcePath);
+            }
+            string extension = Path.GetExtension(sourcePath);
+            if (!SupportedExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "対応する音声形式は .wav / .mp3 / .ogg / .aif / .aiff です。");
+            }
+
+            string normalizedHeroineId = ValidateLogicalId(heroineId);
+            string normalizedUsage = ValidateLogicalId(usage);
+            string normalizedVoiceId = ValidateLogicalId(voiceId);
+            string relativeVoiceId = normalizedVoiceId.StartsWith(
+                normalizedUsage + "/",
+                StringComparison.OrdinalIgnoreCase)
+                ? normalizedVoiceId
+                : normalizedUsage + "/" + normalizedVoiceId;
+            string audioRoot = Path.GetFullPath(Path.Combine(
+                unityProjectPath,
+                "Assets",
+                "Resources",
+                "Audio"));
+            string destinationBase = Path.GetFullPath(Path.Combine(
+                audioRoot,
+                "Voice",
+                normalizedHeroineId.Replace('/', Path.DirectorySeparatorChar),
+                relativeVoiceId.Replace('/', Path.DirectorySeparatorChar)));
+            EnsurePathIsUnder(destinationBase, audioRoot);
+
+            AudioRegistrationPlan plan = new AudioRegistrationPlan
+            {
+                Category = "VOICE",
+                LogicalId = normalizedHeroineId + "/" + relativeVoiceId,
+                SourcePath = Path.GetFullPath(sourcePath),
+                DestinationPath = destinationBase + extension.ToLowerInvariant()
+            };
+            AddExistingAudioPaths(plan, destinationBase);
+            return plan;
+        }
+
         public string RegisterAudio(AudioRegistrationPlan plan, bool replaceExisting)
         {
             if (plan == null) throw new ArgumentNullException(nameof(plan));
@@ -244,6 +294,24 @@ namespace FantasyLoveSimAssetTool.Services
                 "Audio",
                 folder,
                 logicalId.Replace('/', Path.DirectorySeparatorChar)));
+        }
+
+        public string GetVoiceRegistrationDirectory(
+            string unityProjectPath,
+            string heroineId,
+            string usage)
+        {
+            ValidateUnityProjectPath(unityProjectPath);
+            string normalizedHeroineId = ValidateLogicalId(heroineId);
+            string normalizedUsage = ValidateLogicalId(usage);
+            return Path.Combine(
+                Path.GetFullPath(unityProjectPath),
+                "Assets",
+                "Resources",
+                "Audio",
+                "Voice",
+                normalizedHeroineId.Replace('/', Path.DirectorySeparatorChar),
+                normalizedUsage.Replace('/', Path.DirectorySeparatorChar));
         }
 
         public static string GetSettingsPath()
@@ -476,6 +544,27 @@ namespace FantasyLoveSimAssetTool.Services
             if (!path.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException("音声の保存先がUnityプロジェクト外です。");
+            }
+        }
+
+        private static void AddExistingAudioPaths(
+            AudioRegistrationPlan plan,
+            string destinationBase)
+        {
+            string destinationDirectory = Path.GetDirectoryName(destinationBase);
+            string destinationName = Path.GetFileName(destinationBase);
+            if (!Directory.Exists(destinationDirectory)) return;
+            foreach (string existingPath in Directory.EnumerateFiles(
+                destinationDirectory,
+                destinationName + ".*",
+                SearchOption.TopDirectoryOnly))
+            {
+                if (SupportedExtensions.Contains(
+                    Path.GetExtension(existingPath),
+                    StringComparer.OrdinalIgnoreCase))
+                {
+                    plan.ExistingPaths.Add(Path.GetFullPath(existingPath));
+                }
             }
         }
 

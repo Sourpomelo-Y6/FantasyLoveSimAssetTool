@@ -204,6 +204,74 @@ namespace FantasyLoveSimAssetTool.Tests
                     sourcePath));
         }
 
+        [TestMethod]
+        public void CreateVoiceRegistrationPlan_BuildsHeroineUsagePath()
+        {
+            string sourcePath = Path.Combine(tempRoot, "line01.ogg");
+            File.WriteAllBytes(sourcePath, new byte[] { 4 });
+
+            AudioRegistrationPlan plan = new AudioLibraryService()
+                .CreateVoiceRegistrationPlan(
+                    tempRoot,
+                    "TestHeroine",
+                    "Training",
+                    "Line01",
+                    sourcePath);
+
+            Assert.AreEqual("TestHeroine/Training/Line01", plan.LogicalId);
+            Assert.AreEqual(
+                Path.Combine(
+                    tempRoot,
+                    "Assets",
+                    "Resources",
+                    "Audio",
+                    "Voice",
+                    "TestHeroine",
+                    "Training",
+                    "Line01.ogg"),
+                plan.DestinationPath);
+        }
+
+        [TestMethod]
+        public void CreateVoiceRegistrationPlan_DoesNotDuplicateUsagePrefix()
+        {
+            string sourcePath = Path.Combine(tempRoot, "victory.wav");
+            File.WriteAllBytes(sourcePath, new byte[] { 5 });
+
+            AudioRegistrationPlan plan = new AudioLibraryService()
+                .CreateVoiceRegistrationPlan(
+                    tempRoot,
+                    "TestHeroine",
+                    "Battle",
+                    "Battle/Victory01",
+                    sourcePath);
+
+            Assert.AreEqual("TestHeroine/Battle/Victory01", plan.LogicalId);
+        }
+
+        [TestMethod]
+        public void CreateVoiceRegistrationPlan_RejectsUnsafeHeroineOrVoiceId()
+        {
+            string sourcePath = Path.Combine(tempRoot, "line.wav");
+            File.WriteAllBytes(sourcePath, new byte[] { 1 });
+            AudioLibraryService service = new AudioLibraryService();
+
+            Assert.ThrowsException<InvalidOperationException>(() =>
+                service.CreateVoiceRegistrationPlan(
+                    tempRoot,
+                    "../Heroine",
+                    "Training",
+                    "Line01",
+                    sourcePath));
+            Assert.ThrowsException<InvalidOperationException>(() =>
+                service.CreateVoiceRegistrationPlan(
+                    tempRoot,
+                    "TestHeroine",
+                    "Training",
+                    "../Line01",
+                    sourcePath));
+        }
+
         private string WriteAudio(string relativePath)
         {
             string path = Path.Combine(
