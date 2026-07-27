@@ -11,7 +11,7 @@ namespace FantasyLoveSimAssetTool.Models
         public string Message { get; set; } = string.Empty;
         public ProductionStatusTargetKind TargetKind { get; set; }
         public string TargetId { get; set; } = string.Empty;
-        public int TargetTabIndex { get; set; } = 12;
+        public int TargetTabIndex { get; set; } = 15;
         public ConversationDataKind ConversationKind { get; set; }
     }
 

@@ -54,7 +54,7 @@ namespace FantasyLoveSimAssetTool.Services
             IEnumerable<AudioLibraryItem> audioItems,
             bool isAudioProjectConfigured)
         {
-            const int voiceTabIndex = 15;
+            const int voiceTabIndex = 13;
             if (!isAudioProjectConfigured)
             {
                 ProductionStatusCheckItem guide = Check(
@@ -500,7 +500,7 @@ namespace FantasyLoveSimAssetTool.Services
                     validationErrors + voiceErrors == 0 &&
                     validationWarnings == 0
                     ? ProductionStatusKind.Complete : ProductionStatusKind.Partial;
-                return Cell(profile, "Export準備", 12, validationKind,
+                return Cell(profile, "Export準備", 15, validationKind,
                     validationErrors + voiceErrors == 0 &&
                     validationWarnings == 0
                         ? "共通Export検証とVOICE検証にExportを妨げる問題はありません。"
@@ -521,7 +521,7 @@ namespace FantasyLoveSimAssetTool.Services
             checks.Add(Check("Export対象件数", true,
                 $"画像 {accepted.Count} 件、会話・イベント {entryCount} 件、戦闘スキル {profile.BattleSkills?.Count ?? 0} 件が対象です。"));
             int errors = checks.Count(x => !x.IsComplete);
-            return Cell(profile, "Export準備", 12, errors == 0 ? ProductionStatusKind.Complete : ProductionStatusKind.Partial,
+            return Cell(profile, "Export準備", 15, errors == 0 ? ProductionStatusKind.Complete : ProductionStatusKind.Partial,
                 errors == 0 ? "読み取り専用検査でエラーはありません。Exportを実行できます。" : $"エラー {errors} 件。詳細を修正してからExportしてください。", checks);
         }
 

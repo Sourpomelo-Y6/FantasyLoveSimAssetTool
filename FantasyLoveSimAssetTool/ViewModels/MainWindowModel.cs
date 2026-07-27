@@ -7658,7 +7658,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     if (result != MessageBoxResult.Yes)
                     {
                         RefreshProductionStatus();
-                        SelectedMainTabIndex = 13;
+                        SelectedMainTabIndex = 14;
                         StatusMessage = "Exportを中止しました。制作状況のExport準備から修正対象を確認してください。";
                         return;
                     }
