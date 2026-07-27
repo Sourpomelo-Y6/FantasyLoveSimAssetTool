@@ -3011,6 +3011,11 @@
                                           Content="選択中のキャラクターだけ"
                                           IsChecked="{Binding ShowOnlySelectedHeroineAudio}"
                                           VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                <CheckBox DockPanel.Dock="Right"
+                                          Content="未使用のみ"
+                                          IsChecked="{Binding ShowOnlyUnusedVoice}"
+                                          VerticalAlignment="Center" Margin="12,0,0,0"
+                                          ToolTip="ファイルが存在し、Toolデータ内の参照数が0のVOICEだけを表示します"/>
                                 <TextBox Text="{Binding VoiceAudioSearchText, UpdateSourceTrigger=PropertyChanged}"
                                          MinWidth="240"
                                          ToolTip="VOICE IDまたはファイルパスを検索"/>
@@ -3056,6 +3061,9 @@
                             </Border>
                             <StackPanel Grid.Row="3" Orientation="Horizontal"
                                         HorizontalAlignment="Right" Margin="0,0,0,8">
+                                <Button Content="選択VOICEの保存先"
+                                        Command="{Binding OpenSelectedVoiceFolderCommand}"
+                                        MinWidth="130" Height="28" Margin="0,0,8,0"/>
                                 <Button Content="選択音声を再生"
                                         Command="{Binding PlaySelectedAudioCommand}"
                                         MinWidth="120" Height="28" Margin="0,0,8,0"/>
@@ -3072,10 +3080,18 @@
                                       SelectionMode="Single"
                                       GridLinesVisibility="Horizontal">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="状態" Binding="{Binding StatusSymbol}" Width="55"/>
+                                    <DataGridTextColumn Header="状態" Binding="{Binding VoiceStatusSymbol}" Width="55">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="ToolTip" Value="{Binding VoiceStatusToolTip}"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="判定" Binding="{Binding VoiceStatusText}" Width="70"/>
                                     <DataGridTextColumn Header="Voice ID" Binding="{Binding LogicalId}" Width="260"/>
                                     <DataGridTextColumn Header="キャラクター" Binding="{Binding HeroineId}" Width="130"/>
                                     <DataGridTextColumn Header="参照数" Binding="{Binding ReferenceText}" Width="70"/>
+                                    <DataGridTextColumn Header="参照元" Binding="{Binding ReferenceDetails}" Width="220"/>
                                     <DataGridTextColumn Header="ファイル" Binding="{Binding FilePath}" Width="*"/>
                                     <DataGridTextColumn Header="期待パス" Binding="{Binding ExpectedPath}" Width="*"/>
                                 </DataGrid.Columns>

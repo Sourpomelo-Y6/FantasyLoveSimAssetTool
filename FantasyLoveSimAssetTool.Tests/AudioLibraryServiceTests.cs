@@ -76,12 +76,14 @@ namespace FantasyLoveSimAssetTool.Tests
                     item.LogicalId == "TestHeroine/Training/Line01");
             Assert.IsTrue(existingVoice.IsAvailable);
             Assert.AreEqual(1, existingVoice.ReferenceCount);
+            StringAssert.Contains(existingVoice.ReferenceDetails, "訓練:");
 
             AudioLibraryItem missingVoice = result.Items.Single(
                 item => item.Category == "VOICE" &&
                     item.LogicalId == "TestHeroine/Training/Missing01");
             Assert.IsFalse(missingVoice.IsAvailable);
             Assert.AreEqual(1, missingVoice.ReferenceCount);
+            StringAssert.Contains(missingVoice.ReferenceDetails, "訓練:");
             Assert.IsTrue(missingVoice.ExpectedPath.EndsWith(
                 Path.Combine("Voice", "TestHeroine", "Training", "Missing01") + ".*"));
         }
@@ -103,6 +105,62 @@ namespace FantasyLoveSimAssetTool.Tests
 
             Assert.AreEqual(1, references.Count);
             Assert.AreEqual(2, references["Voice/TestHeroine/Battle/Victory01"]);
+        }
+
+        [TestMethod]
+        public void CollectVoiceReferenceDetails_ListsTrainingAndBattleSources()
+        {
+            HeroineProfile profile = new HeroineProfile { HeroineId = "TestHeroine" };
+            profile.TrainingDialogues.Items.Add(new TrainingDialogueEntry
+            {
+                TrainingId = "Tea",
+                VisualState = "BeforeAction",
+                Messages =
+                {
+                    new TrainingDialogueMessage { VoiceId = "Shared/Line01" }
+                }
+            });
+            profile.BattleMessages.ResultEvents.Add(new BattleResultEventEntry
+            {
+                EventId = "Victory01",
+                VoiceId = "Shared/Line01"
+            });
+
+            var details = AudioLibraryService.CollectVoiceReferenceDetails(
+                new[] { profile });
+
+            string value = details["Voice/TestHeroine/Shared/Line01"];
+            StringAssert.Contains(value, "訓練: Tea/BeforeAction");
+            StringAssert.Contains(value, "戦闘後イベント: Victory01");
+        }
+
+        [TestMethod]
+        public void VoiceStatus_DistinguishesUsedUnusedAndMissingFiles()
+        {
+            AudioLibraryItem used = new AudioLibraryItem
+            {
+                Category = "VOICE",
+                IsAvailable = true,
+                ReferenceCount = 1
+            };
+            AudioLibraryItem unused = new AudioLibraryItem
+            {
+                Category = "VOICE",
+                IsAvailable = true,
+                ReferenceCount = 0
+            };
+            AudioLibraryItem missing = new AudioLibraryItem
+            {
+                Category = "VOICE",
+                IsAvailable = false,
+                ReferenceCount = 1
+            };
+
+            Assert.AreEqual("○", used.VoiceStatusSymbol);
+            Assert.AreEqual("使用中", used.VoiceStatusText);
+            Assert.AreEqual("△", unused.VoiceStatusSymbol);
+            Assert.IsTrue(unused.IsUnusedVoice);
+            Assert.AreEqual("×", missing.VoiceStatusSymbol);
         }
 
         [TestMethod]

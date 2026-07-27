@@ -152,6 +152,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string voiceAudioSearchText;
         private string selectedAudioCategory;
         private bool showOnlySelectedHeroineAudio;
+        private bool showOnlyUnusedVoice;
         private string audioLibrarySummary;
         private string bgmSeAudioSummary;
         private string voiceAudioSummary;
@@ -1758,6 +1759,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public bool ShowOnlyUnusedVoice
+        {
+            get { return showOnlyUnusedVoice; }
+            set
+            {
+                if (showOnlyUnusedVoice == value) { return; }
+                showOnlyUnusedVoice = value;
+                OnPropertyChanged(nameof(ShowOnlyUnusedVoice));
+                RefreshFilteredAudioLibrary();
+            }
+        }
+
         public string AudioLibrarySummary
         {
             get { return audioLibrarySummary; }
@@ -1890,6 +1903,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ICommand RegisterVoiceCommand { get; }
 
         public ICommand OpenVoiceFolderCommand { get; }
+
+        public ICommand OpenSelectedVoiceFolderCommand { get; }
 
         public ICommand AddOutfitMessageOverrideCommand { get; }
 
@@ -2305,6 +2320,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             voiceAudioSearchText = string.Empty;
             selectedAudioCategory = "すべて";
             showOnlySelectedHeroineAudio = true;
+            showOnlyUnusedVoice = false;
             selectedVoiceUsage = "Training";
             voiceRegistrationId = string.Empty;
             selectedVoiceAssignmentTarget = "登録のみ";
@@ -2342,6 +2358,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 OpenVoiceFolder,
                 () => SelectedProfile != null &&
                     !string.IsNullOrWhiteSpace(SelectedVoiceUsage));
+            OpenSelectedVoiceFolderCommand = new RelayCommand(
+                OpenSelectedVoiceFolder,
+                () => SelectedAudioLibraryItem?.Category == "VOICE");
             AddOutfitMessageOverrideCommand = new RelayCommand(
                 AddOutfitMessageOverride,
                 () => SelectedProfile != null);
@@ -2668,6 +2687,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 }
                 if (item.Category == "VOICE" &&
                     MatchesAudioSearch(item, voiceSearch) &&
+                    (!ShowOnlyUnusedVoice || item.IsUnusedVoice) &&
                     (!ShowOnlySelectedHeroineAudio ||
                      string.Equals(item.HeroineId, heroineId, StringComparison.OrdinalIgnoreCase)))
                 {
@@ -2986,6 +3006,35 @@ namespace FantasyLoveSimAssetTool.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = "VOICEの保存先を開けません: " + ex.Message;
+            }
+        }
+
+        private void OpenSelectedVoiceFolder()
+        {
+            try
+            {
+                AudioLibraryItem item = SelectedAudioLibraryItem;
+                string path = item.IsAvailable ? item.FilePath : item.ExpectedPath;
+                if (path.EndsWith(".*", StringComparison.Ordinal))
+                {
+                    path = path.Substring(0, path.Length - 2);
+                }
+                string folder = Path.GetDirectoryName(path);
+                if (string.IsNullOrWhiteSpace(folder))
+                {
+                    throw new InvalidOperationException("選択したVOICEの保存先を確認できません。");
+                }
+                Directory.CreateDirectory(folder);
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = folder,
+                    UseShellExecute = true
+                });
+                StatusMessage = "選択したVOICEの保存先を開きました: " + folder;
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = "選択したVOICEの保存先を開けません: " + ex.Message;
             }
         }
 

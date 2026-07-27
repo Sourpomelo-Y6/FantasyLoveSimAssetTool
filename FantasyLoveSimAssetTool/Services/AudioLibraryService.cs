@@ -76,6 +76,8 @@ namespace FantasyLoveSimAssetTool.Services
             string audioRoot = Path.Combine(projectRoot, "Assets", "Resources", "Audio");
             Dictionary<string, string> files = FindAudioFiles(audioRoot);
             Dictionary<string, int> voiceReferences = CollectVoiceReferences(profiles);
+            Dictionary<string, string> voiceReferenceDetails =
+                CollectVoiceReferenceDetails(profiles);
             AudioLibraryScanResult result = new AudioLibraryScanResult();
 
             AddExpected(result.Items, files, projectRoot, "BGM", "Bgm", BgmIds);
@@ -92,6 +94,8 @@ namespace FantasyLoveSimAssetTool.Services
                 if (item == null) continue;
                 voiceReferences.TryGetValue(file.Key, out int referenceCount);
                 item.ReferenceCount = referenceCount;
+                voiceReferenceDetails.TryGetValue(file.Key, out string referenceDetails);
+                item.ReferenceDetails = referenceDetails ?? string.Empty;
                 result.Items.Add(item);
                 registeredKeys.Add(file.Key);
             }
@@ -102,7 +106,10 @@ namespace FantasyLoveSimAssetTool.Services
                 AudioLibraryItem item = CreateMissingVoiceItem(
                     projectRoot,
                     reference.Key,
-                    reference.Value);
+                    reference.Value,
+                    voiceReferenceDetails.TryGetValue(reference.Key, out string details)
+                        ? details
+                        : string.Empty);
                 if (item != null)
                 {
                     result.Items.Add(item);
@@ -389,6 +396,55 @@ namespace FantasyLoveSimAssetTool.Services
             return references;
         }
 
+        public static Dictionary<string, string> CollectVoiceReferenceDetails(
+            IEnumerable<HeroineProfile> profiles)
+        {
+            Dictionary<string, HashSet<string>> details =
+                new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            foreach (HeroineProfile profile in profiles ?? Enumerable.Empty<HeroineProfile>())
+            {
+                if (profile == null || string.IsNullOrWhiteSpace(profile.HeroineId)) continue;
+                string heroineId = profile.HeroineId.Trim();
+                foreach (TrainingDialogueEntry entry in
+                    profile.TrainingDialogues?.Items ?? Enumerable.Empty<TrainingDialogueEntry>())
+                {
+                    if (entry?.Messages == null) continue;
+                    foreach (TrainingDialogueMessage message in entry.Messages)
+                    {
+                        AddVoiceReferenceDetail(
+                            details,
+                            heroineId,
+                            message?.VoiceId,
+                            $"訓練: {entry.TrainingId}/{entry.VisualState}");
+                    }
+                }
+                foreach (BattleResultEventEntry item in
+                    profile.BattleMessages?.ResultEvents ??
+                    Enumerable.Empty<BattleResultEventEntry>())
+                {
+                    AddVoiceReferenceDetail(
+                        details,
+                        heroineId,
+                        item?.VoiceId,
+                        $"戦闘後イベント: {item?.EventId}");
+                }
+                foreach (BattlePanelResultMessageEntry item in
+                    profile.BattleMessages?.PanelMessages ??
+                    Enumerable.Empty<BattlePanelResultMessageEntry>())
+                {
+                    AddVoiceReferenceDetail(
+                        details,
+                        heroineId,
+                        item?.VoiceId,
+                        $"戦闘パネル: {item?.MessageId}");
+                }
+            }
+            return details.ToDictionary(
+                pair => pair.Key,
+                pair => string.Join(Environment.NewLine, pair.Value.OrderBy(value => value)),
+                StringComparer.OrdinalIgnoreCase);
+        }
+
         private static void ValidateUnityProjectPath(string path)
         {
             if (!IsUnityProjectPath(path))
@@ -473,7 +529,8 @@ namespace FantasyLoveSimAssetTool.Services
         private static AudioLibraryItem CreateMissingVoiceItem(
             string projectRoot,
             string key,
-            int referenceCount)
+            int referenceCount,
+            string referenceDetails)
         {
             string[] parts = Normalize(key).Split('/');
             if (parts.Length < 3 || !parts[0].Equals("Voice", StringComparison.OrdinalIgnoreCase))
@@ -490,6 +547,7 @@ namespace FantasyLoveSimAssetTool.Services
                     "Audio",
                     key.Replace('/', Path.DirectorySeparatorChar)) + ".*",
                 ReferenceCount = referenceCount,
+                ReferenceDetails = referenceDetails ?? string.Empty,
                 IsAvailable = false,
                 IsExpected = true
             };
@@ -501,12 +559,33 @@ namespace FantasyLoveSimAssetTool.Services
             string voiceId)
         {
             if (string.IsNullOrWhiteSpace(voiceId)) return;
-            string normalized = Normalize(voiceId.Trim().Trim('/'));
-            string key = normalized.StartsWith("Audio/Voice/", StringComparison.OrdinalIgnoreCase)
-                ? normalized.Substring("Audio/".Length)
-                : "Voice/" + heroineId + "/" + normalized;
+            string key = BuildVoiceReferenceKey(heroineId, voiceId);
             references.TryGetValue(key, out int count);
             references[key] = count + 1;
+        }
+
+        private static void AddVoiceReferenceDetail(
+            Dictionary<string, HashSet<string>> details,
+            string heroineId,
+            string voiceId,
+            string description)
+        {
+            if (string.IsNullOrWhiteSpace(voiceId)) return;
+            string key = BuildVoiceReferenceKey(heroineId, voiceId);
+            if (!details.TryGetValue(key, out HashSet<string> descriptions))
+            {
+                descriptions = new HashSet<string>(StringComparer.Ordinal);
+                details.Add(key, descriptions);
+            }
+            descriptions.Add(description);
+        }
+
+        private static string BuildVoiceReferenceKey(string heroineId, string voiceId)
+        {
+            string normalized = Normalize(voiceId.Trim().Trim('/'));
+            return normalized.StartsWith("Audio/Voice/", StringComparison.OrdinalIgnoreCase)
+                ? normalized.Substring("Audio/".Length)
+                : "Voice/" + heroineId + "/" + normalized;
         }
 
         private static string BuildKey(AudioLibraryItem item)
