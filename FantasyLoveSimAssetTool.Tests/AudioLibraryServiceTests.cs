@@ -115,7 +115,96 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.IsFalse(AudioLibraryService.IsUnityProjectPath(tempRoot));
         }
 
-        private void WriteAudio(string relativePath)
+        [TestMethod]
+        public void CreateRegistrationPlan_BuildsCanonicalBgmDestination()
+        {
+            string sourcePath = Path.Combine(tempRoot, "source.OGG");
+            File.WriteAllBytes(sourcePath, new byte[] { 1 });
+            AudioLibraryItem item = new AudioLibraryItem
+            {
+                Category = "BGM",
+                LogicalId = "Battle"
+            };
+
+            AudioRegistrationPlan plan = new AudioLibraryService()
+                .CreateRegistrationPlan(tempRoot, item, sourcePath);
+
+            Assert.AreEqual(
+                Path.Combine(
+                    tempRoot,
+                    "Assets",
+                    "Resources",
+                    "Audio",
+                    "Bgm",
+                    "Battle.ogg"),
+                plan.DestinationPath);
+            Assert.IsFalse(plan.HasConflicts);
+        }
+
+        [TestMethod]
+        public void CreateRegistrationPlan_DetectsExistingFileWithDifferentExtension()
+        {
+            WriteAudio("SE/UI/Confirm.wav");
+            string sourcePath = Path.Combine(tempRoot, "confirm.ogg");
+            File.WriteAllBytes(sourcePath, new byte[] { 2 });
+            AudioLibraryItem item = new AudioLibraryItem
+            {
+                Category = "SE",
+                LogicalId = "UI/Confirm"
+            };
+
+            AudioRegistrationPlan plan = new AudioLibraryService()
+                .CreateRegistrationPlan(tempRoot, item, sourcePath);
+
+            Assert.IsTrue(plan.HasConflicts);
+            Assert.AreEqual(1, plan.ExistingPaths.Count);
+            Assert.IsTrue(plan.DestinationPath.EndsWith(
+                Path.Combine("SE", "UI", "Confirm.ogg")));
+        }
+
+        [TestMethod]
+        public void RegisterAudio_ReplacesApprovedConflictAndCopiesSource()
+        {
+            string oldPath = WriteAudio("SE/UI/Confirm.wav");
+            File.WriteAllText(oldPath + ".meta", "test meta");
+            string sourcePath = Path.Combine(tempRoot, "confirm.ogg");
+            File.WriteAllBytes(sourcePath, new byte[] { 7, 8, 9 });
+            AudioLibraryItem item = new AudioLibraryItem
+            {
+                Category = "SE",
+                LogicalId = "UI/Confirm"
+            };
+            AudioLibraryService service = new AudioLibraryService();
+            AudioRegistrationPlan plan =
+                service.CreateRegistrationPlan(tempRoot, item, sourcePath);
+
+            string destination = service.RegisterAudio(plan, true);
+
+            CollectionAssert.AreEqual(new byte[] { 7, 8, 9 }, File.ReadAllBytes(destination));
+            Assert.IsFalse(File.Exists(oldPath));
+            Assert.IsFalse(File.Exists(oldPath + ".meta"));
+        }
+
+        [TestMethod]
+        public void CreateRegistrationPlan_RejectsVoiceAndUnsafeId()
+        {
+            string sourcePath = Path.Combine(tempRoot, "source.wav");
+            File.WriteAllBytes(sourcePath, new byte[] { 1 });
+            AudioLibraryService service = new AudioLibraryService();
+
+            Assert.ThrowsException<InvalidOperationException>(() =>
+                service.CreateRegistrationPlan(
+                    tempRoot,
+                    new AudioLibraryItem { Category = "VOICE", LogicalId = "Line01" },
+                    sourcePath));
+            Assert.ThrowsException<InvalidOperationException>(() =>
+                service.CreateRegistrationPlan(
+                    tempRoot,
+                    new AudioLibraryItem { Category = "SE", LogicalId = "../Outside" },
+                    sourcePath));
+        }
+
+        private string WriteAudio(string relativePath)
         {
             string path = Path.Combine(
                 tempRoot,
@@ -125,6 +214,7 @@ namespace FantasyLoveSimAssetTool.Tests
                 relativePath.Replace('/', Path.DirectorySeparatorChar));
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllBytes(path, new byte[] { 0 });
+            return path;
         }
     }
 }

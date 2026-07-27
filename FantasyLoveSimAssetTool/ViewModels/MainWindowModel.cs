@@ -1758,6 +1758,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand StopAudioPreviewCommand { get; }
 
+        public ICommand RegisterSelectedAudioCommand { get; }
+
+        public ICommand OpenSelectedAudioFolderCommand { get; }
+
         public ICommand AddOutfitMessageOverrideCommand { get; }
 
         public ICommand RemoveOutfitMessageOverrideCommand { get; }
@@ -2175,6 +2179,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedAudioLibraryItem != null &&
                     SelectedAudioLibraryItem.IsAvailable);
             StopAudioPreviewCommand = new RelayCommand(StopAudioPreview);
+            RegisterSelectedAudioCommand = new RelayCommand(
+                RegisterSelectedAudio,
+                CanRegisterSelectedAudio);
+            OpenSelectedAudioFolderCommand = new RelayCommand(
+                OpenSelectedAudioFolder,
+                CanRegisterSelectedAudio);
             AddOutfitMessageOverrideCommand = new RelayCommand(
                 AddOutfitMessageOverride,
                 () => SelectedProfile != null);
@@ -2538,6 +2548,102 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             audioPreviewService.Stop();
             StatusMessage = "音声プレビューを停止しました。";
+        }
+
+        private bool CanRegisterSelectedAudio()
+        {
+            return SelectedAudioLibraryItem != null &&
+                (string.Equals(
+                    SelectedAudioLibraryItem.Category,
+                    "BGM",
+                    StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(
+                    SelectedAudioLibraryItem.Category,
+                    "SE",
+                    StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void RegisterSelectedAudio()
+        {
+            AudioLibraryItem selected = SelectedAudioLibraryItem;
+            OpenFileDialog dialog = new OpenFileDialog
+            {
+                Title = $"{selected.Category}「{selected.LogicalId}」へ登録する音声を選択",
+                Filter = "音声ファイル|*.wav;*.mp3;*.ogg;*.aif;*.aiff|" +
+                    "WAV|*.wav|MP3|*.mp3|Ogg Vorbis|*.ogg|AIFF|*.aif;*.aiff",
+                CheckFileExists = true,
+                Multiselect = false
+            };
+            if (dialog.ShowDialog() != true) return;
+
+            try
+            {
+                AudioRegistrationPlan plan = audioLibraryService.CreateRegistrationPlan(
+                    UnityProjectPath,
+                    selected,
+                    dialog.FileName);
+                bool replaceExisting = false;
+                if (plan.HasConflicts)
+                {
+                    string existingFiles = string.Join(
+                        Environment.NewLine,
+                        plan.ExistingPaths.Select(path => "・" + path));
+                    MessageBoxResult result = MessageBox.Show(
+                        $"同じIDの音声がすでに存在します。{Environment.NewLine}{Environment.NewLine}" +
+                        existingFiles + Environment.NewLine + Environment.NewLine +
+                        $"次のファイルへ置き換えますか？{Environment.NewLine}{plan.DestinationPath}" +
+                        Environment.NewLine + Environment.NewLine +
+                        "別拡張子の既存ファイルと、その.metaも削除されます。",
+                        "音声ファイルの置き換え確認",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+                    if (result != MessageBoxResult.Yes)
+                    {
+                        StatusMessage = "音声ファイルの登録をキャンセルしました。";
+                        return;
+                    }
+                    replaceExisting = true;
+                }
+
+                string destination = audioLibraryService.RegisterAudio(plan, replaceExisting);
+                string category = selected.Category;
+                string logicalId = selected.LogicalId;
+                RefreshAudioLibrary();
+                SelectedAudioLibraryItem = AudioLibraryItems.FirstOrDefault(item =>
+                    string.Equals(item.Category, category, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(item.LogicalId, logicalId, StringComparison.OrdinalIgnoreCase));
+                StatusMessage = $"音声を登録しました: {destination}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.Message,
+                    "音声ファイルを登録できません",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                StatusMessage = "音声ファイルを登録できません: " + ex.Message;
+            }
+        }
+
+        private void OpenSelectedAudioFolder()
+        {
+            try
+            {
+                string folder = audioLibraryService.GetRegistrationDirectory(
+                    UnityProjectPath,
+                    SelectedAudioLibraryItem);
+                Directory.CreateDirectory(folder);
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = folder,
+                    UseShellExecute = true
+                });
+                StatusMessage = "音声の保存先を開きました: " + folder;
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = "音声の保存先を開けません: " + ex.Message;
+            }
         }
 
         private static bool MatchesAudioCategory(

@@ -23,6 +23,26 @@ namespace FantasyLoveSimAssetTool.Services
         }
     }
 
+    public sealed class AudioRegistrationPlan
+    {
+        public string Category { get; set; } = string.Empty;
+        public string LogicalId { get; set; } = string.Empty;
+        public string SourcePath { get; set; } = string.Empty;
+        public string DestinationPath { get; set; } = string.Empty;
+        public List<string> ExistingPaths { get; } = new List<string>();
+        public bool HasConflicts => ExistingPaths.Any(path =>
+            !PathsEqual(path, SourcePath) || !PathsEqual(path, DestinationPath));
+
+        private static bool PathsEqual(string left, string right)
+        {
+            if (string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right)) return false;
+            return string.Equals(
+                Path.GetFullPath(left),
+                Path.GetFullPath(right),
+                StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
     public sealed class AudioLibraryService
     {
         private static readonly string[] SupportedExtensions =
@@ -98,6 +118,132 @@ namespace FantasyLoveSimAssetTool.Services
             return !string.IsNullOrWhiteSpace(path) &&
                 Directory.Exists(Path.Combine(path, "Assets")) &&
                 File.Exists(Path.Combine(path, "ProjectSettings", "ProjectVersion.txt"));
+        }
+
+        public AudioRegistrationPlan CreateRegistrationPlan(
+            string unityProjectPath,
+            AudioLibraryItem item,
+            string sourcePath)
+        {
+            ValidateUnityProjectPath(unityProjectPath);
+            if (item == null ||
+                (!string.Equals(item.Category, "BGM", StringComparison.OrdinalIgnoreCase) &&
+                 !string.Equals(item.Category, "SE", StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new InvalidOperationException("ファイル登録はBGMまたはSEの行で利用してください。");
+            }
+            if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
+            {
+                throw new FileNotFoundException("登録する音声ファイルが見つかりません。", sourcePath);
+            }
+
+            string extension = Path.GetExtension(sourcePath);
+            if (!SupportedExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "対応する音声形式は .wav / .mp3 / .ogg / .aif / .aiff です。");
+            }
+
+            string logicalId = ValidateLogicalId(item.LogicalId);
+            string folder = string.Equals(item.Category, "BGM", StringComparison.OrdinalIgnoreCase)
+                ? "Bgm"
+                : "SE";
+            string audioRoot = Path.GetFullPath(Path.Combine(
+                unityProjectPath,
+                "Assets",
+                "Resources",
+                "Audio"));
+            string destinationBase = Path.GetFullPath(Path.Combine(
+                audioRoot,
+                folder,
+                logicalId.Replace('/', Path.DirectorySeparatorChar)));
+            EnsurePathIsUnder(destinationBase, audioRoot);
+
+            AudioRegistrationPlan plan = new AudioRegistrationPlan
+            {
+                Category = item.Category.ToUpperInvariant(),
+                LogicalId = logicalId,
+                SourcePath = Path.GetFullPath(sourcePath),
+                DestinationPath = destinationBase + extension.ToLowerInvariant()
+            };
+
+            string destinationDirectory = Path.GetDirectoryName(destinationBase);
+            string destinationName = Path.GetFileName(destinationBase);
+            if (Directory.Exists(destinationDirectory))
+            {
+                foreach (string existingPath in Directory.EnumerateFiles(
+                    destinationDirectory,
+                    destinationName + ".*",
+                    SearchOption.TopDirectoryOnly))
+                {
+                    if (SupportedExtensions.Contains(
+                        Path.GetExtension(existingPath),
+                        StringComparer.OrdinalIgnoreCase))
+                    {
+                        plan.ExistingPaths.Add(Path.GetFullPath(existingPath));
+                    }
+                }
+            }
+
+            return plan;
+        }
+
+        public string RegisterAudio(AudioRegistrationPlan plan, bool replaceExisting)
+        {
+            if (plan == null) throw new ArgumentNullException(nameof(plan));
+            if (plan.HasConflicts && !replaceExisting)
+            {
+                throw new InvalidOperationException(
+                    "同じIDの音声ファイルが存在します。置き換えを確認してから登録してください。");
+            }
+
+            string sourcePath = Path.GetFullPath(plan.SourcePath);
+            string destinationPath = Path.GetFullPath(plan.DestinationPath);
+            Directory.CreateDirectory(Path.GetDirectoryName(destinationPath));
+
+            // コピー成功前に既存ファイルを失わないよう、先に登録先を確保する。
+            if (!PathsEqual(sourcePath, destinationPath))
+            {
+                File.Copy(sourcePath, destinationPath, replaceExisting);
+            }
+
+            if (replaceExisting)
+            {
+                foreach (string existingPath in plan.ExistingPaths)
+                {
+                    string fullExistingPath = Path.GetFullPath(existingPath);
+                    if (PathsEqual(fullExistingPath, sourcePath) ||
+                        PathsEqual(fullExistingPath, destinationPath))
+                    {
+                        continue;
+                    }
+                    File.Delete(fullExistingPath);
+                    string metaPath = fullExistingPath + ".meta";
+                    if (File.Exists(metaPath)) File.Delete(metaPath);
+                }
+            }
+            return destinationPath;
+        }
+
+        public string GetRegistrationDirectory(
+            string unityProjectPath,
+            AudioLibraryItem item)
+        {
+            ValidateUnityProjectPath(unityProjectPath);
+            if (item == null) throw new ArgumentNullException(nameof(item));
+            string folder = string.Equals(item.Category, "BGM", StringComparison.OrdinalIgnoreCase)
+                ? "Bgm"
+                : string.Equals(item.Category, "SE", StringComparison.OrdinalIgnoreCase)
+                    ? "SE"
+                    : throw new InvalidOperationException("保存先表示はBGMまたはSEで利用してください。");
+            string logicalId = ValidateLogicalId(item.LogicalId);
+            return Path.GetDirectoryName(Path.Combine(
+                Path.GetFullPath(unityProjectPath),
+                "Assets",
+                "Resources",
+                "Audio",
+                folder,
+                logicalId.Replace('/', Path.DirectorySeparatorChar)));
         }
 
         public static string GetSettingsPath()
@@ -304,6 +450,41 @@ namespace FantasyLoveSimAssetTool.Services
         private static string Normalize(string path)
         {
             return (path ?? string.Empty).Replace('\\', '/').Trim('/');
+        }
+
+        private static string ValidateLogicalId(string logicalId)
+        {
+            string normalized = Normalize(logicalId);
+            if (string.IsNullOrWhiteSpace(normalized) ||
+                Path.IsPathRooted(logicalId) ||
+                normalized.Split('/').Any(part =>
+                    string.IsNullOrWhiteSpace(part) ||
+                    part == "." ||
+                    part == ".." ||
+                    part.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0))
+            {
+                throw new InvalidOperationException("音声IDに使用できないパスが含まれています。");
+            }
+            return normalized;
+        }
+
+        private static void EnsurePathIsUnder(string path, string root)
+        {
+            string rootWithSeparator = root.TrimEnd(
+                Path.DirectorySeparatorChar,
+                Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            if (!path.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("音声の保存先がUnityプロジェクト外です。");
+            }
+        }
+
+        private static bool PathsEqual(string left, string right)
+        {
+            return string.Equals(
+                Path.GetFullPath(left),
+                Path.GetFullPath(right),
+                StringComparison.OrdinalIgnoreCase);
         }
 
         private sealed class AudioLibrarySettings

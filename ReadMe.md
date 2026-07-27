@@ -197,8 +197,19 @@ WPF は Windows Desktop SDK が必要です。WSL や Linux 上の .NET SDK で�
 導入済み音声を選ぶと `選択音声を再生` と `停止` で確認できます。Windows環境で
 再生できない形式でも登録状態の確認には影響しません。
 
+BGMまたはSEの行を選択すると、`BGM・SEを登録` から手元の
+`.wav / .mp3 / .ogg / .aif / .aiff` を用途別の正規パスへコピーできます。
+BGMは `Assets/Resources/Audio/Bgm/<ID>`、SEは
+`Assets/Resources/Audio/SE/<ID>` に配置されます。同じIDの既存ファイルがある場合は
+確認ダイアログが表示され、承認した場合だけ別拡張子のファイルとその`.meta`を
+置き換えます。`保存先を開く` から対象フォルダも確認できます。
+
 訓練セリフと戦闘メッセージのVoice ID欄は、走査した候補から選べる編集可能な
 ドロップダウンです。候補にない将来用IDも直接入力できます。
+
+登録したテスト用音声とUnityが生成する`.meta`は現在の運用ではGitへコミットしません。
+VOICEのファイル登録は未対応のため、従来どおりUnity側の
+`Assets/Resources/Audio/Voice/<HeroineId>/` 以下へ手動配置してください。
 
 ## 保存データの方針
 

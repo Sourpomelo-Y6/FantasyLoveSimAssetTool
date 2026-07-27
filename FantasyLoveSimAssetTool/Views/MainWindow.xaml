@@ -2891,6 +2891,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
@@ -2922,6 +2923,9 @@
 
                             <DockPanel Grid.Row="1" Margin="0,0,0,10">
                                 <TextBlock DockPanel.Dock="Bottom"
+                                           Text="注意: 登録した音声ファイルとUnityが生成する.metaはテスト素材としてGitへコミットしない運用です。"
+                                           Foreground="#A06020" Margin="0,4,0,0"/>
+                                <TextBlock DockPanel.Dock="Bottom"
                                            Text="{Binding AudioLibrarySummary}"
                                            Foreground="#555555" Margin="0,8,0,0"/>
                                 <CheckBox DockPanel.Dock="Right"
@@ -2940,6 +2944,13 @@
 
                             <StackPanel Grid.Row="2" Orientation="Horizontal"
                                         HorizontalAlignment="Right" Margin="0,0,0,8">
+                                <Button Content="BGM・SEを登録"
+                                        Command="{Binding RegisterSelectedAudioCommand}"
+                                        MinWidth="120" Height="28" Margin="0,0,8,0"
+                                        ToolTip="選択したBGM・SEのIDに音声ファイルをコピーします。VOICE登録は今後対応予定です。"/>
+                                <Button Content="保存先を開く"
+                                        Command="{Binding OpenSelectedAudioFolderCommand}"
+                                        MinWidth="110" Height="28" Margin="0,0,8,0"/>
                                 <Button Content="選択音声を再生"
                                         Command="{Binding PlaySelectedAudioCommand}"
                                         MinWidth="120" Height="28" Margin="0,0,8,0"/>
