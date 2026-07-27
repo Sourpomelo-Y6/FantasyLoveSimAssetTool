@@ -2888,16 +2888,14 @@
                             </ScrollViewer>
                         </Grid>
                     </TabItem>
-                    <TabItem Header="音声">
+                    <TabItem Header="BGM・SE">
                         <Grid Margin="0,12,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-
                             <Border Grid.Row="0" BorderBrush="#D5D5D5" BorderThickness="1"
                                     CornerRadius="4" Padding="10" Margin="0,0,0,10">
                                 <Grid>
@@ -2926,71 +2924,17 @@
 
                             <DockPanel Grid.Row="1" Margin="0,0,0,10">
                                 <TextBlock DockPanel.Dock="Bottom"
-                                           Text="注意: 登録した音声ファイルとUnityが生成する.metaはテスト素材としてGitへコミットしない運用です。"
+                                           Text="注意: 登録したBGM・SEとUnityが生成する.metaはテスト素材としてGitへコミットしない運用です。"
                                            Foreground="#A06020" Margin="0,4,0,0"/>
                                 <TextBlock DockPanel.Dock="Bottom"
-                                           Text="{Binding AudioLibrarySummary}"
+                                           Text="{Binding BgmSeAudioSummary}"
                                            Foreground="#555555" Margin="0,8,0,0"/>
-                                <CheckBox DockPanel.Dock="Right"
-                                          Content="選択中のキャラクターのVOICEだけ"
-                                          IsChecked="{Binding ShowOnlySelectedHeroineAudio}"
-                                          VerticalAlignment="Center"
-                                          Margin="12,0,0,0"/>
-                                <ComboBox DockPanel.Dock="Left"
-                                          ItemsSource="{Binding AudioCategoryOptions}"
-                                          SelectedItem="{Binding SelectedAudioCategory}"
-                                          Width="120" Margin="0,0,8,0"/>
-                                <TextBox Text="{Binding AudioLibrarySearchText, UpdateSourceTrigger=PropertyChanged}"
+                                <TextBox Text="{Binding BgmSeAudioSearchText, UpdateSourceTrigger=PropertyChanged}"
                                          MinWidth="240"
-                                         ToolTip="IDまたはファイルパスを検索"/>
+                                         ToolTip="BGM・SEのIDまたはファイルパスを検索"/>
                             </DockPanel>
 
-                            <Border Grid.Row="2" BorderBrush="#D5D5D5" BorderThickness="1"
-                                    CornerRadius="4" Padding="8" Margin="0,0,0,8">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="120"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="120"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="170"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="VOICE登録:"
-                                               FontWeight="SemiBold" VerticalAlignment="Center"
-                                               Margin="0,0,8,0"/>
-                                    <TextBlock Grid.Column="1"
-                                               Text="{Binding SelectedProfile.HeroineId}"
-                                               VerticalAlignment="Center"
-                                               ToolTip="現在選択中のキャラクターID"/>
-                                    <TextBlock Grid.Column="2" Text="用途"
-                                               VerticalAlignment="Center" Margin="8,0,4,0"/>
-                                    <ComboBox Grid.Column="3"
-                                              ItemsSource="{Binding VoiceUsageOptions}"
-                                              SelectedItem="{Binding SelectedVoiceUsage}"/>
-                                    <TextBlock Grid.Column="4" Text="Voice ID"
-                                               VerticalAlignment="Center" Margin="8,0,4,0"/>
-                                    <TextBox Grid.Column="5"
-                                             Text="{Binding VoiceRegistrationId, UpdateSourceTrigger=PropertyChanged}"
-                                             ToolTip="拡張子なし。例: Line01。用途名は自動で先頭に付きます"/>
-                                    <ComboBox Grid.Column="6"
-                                              ItemsSource="{Binding VoiceAssignmentTargetOptions}"
-                                              SelectedItem="{Binding SelectedVoiceAssignmentTarget}"
-                                              Margin="8,0"
-                                              ToolTip="登録後にVoice IDを設定する現在選択中のメッセージ"/>
-                                    <Button Grid.Column="7" Content="VOICEを登録"
-                                            Command="{Binding RegisterVoiceCommand}"
-                                            MinWidth="105" Height="28" Margin="0,0,8,0"/>
-                                    <Button Grid.Column="8" Content="保存先を開く"
-                                            Command="{Binding OpenVoiceFolderCommand}"
-                                            MinWidth="100" Height="28"/>
-                                </Grid>
-                            </Border>
-
-                            <StackPanel Grid.Row="3" Orientation="Horizontal"
+                            <StackPanel Grid.Row="2" Orientation="Horizontal"
                                         HorizontalAlignment="Right" Margin="0,0,0,8">
                                 <Button Content="BGM・SEを登録"
                                         Command="{Binding RegisterSelectedAudioCommand}"
@@ -3007,8 +2951,8 @@
                                         MinWidth="70" Height="28"/>
                             </StackPanel>
 
-                            <DataGrid Grid.Row="4"
-                                      ItemsSource="{Binding AudioLibraryItems}"
+                            <DataGrid Grid.Row="3"
+                                      ItemsSource="{Binding BgmSeAudioItems}"
                                       SelectedItem="{Binding SelectedAudioLibraryItem}"
                                       AutoGenerateColumns="False"
                                       CanUserAddRows="False"
@@ -3019,6 +2963,117 @@
                                     <DataGridTextColumn Header="状態" Binding="{Binding StatusSymbol}" Width="55"/>
                                     <DataGridTextColumn Header="種類" Binding="{Binding Category}" Width="70"/>
                                     <DataGridTextColumn Header="ID" Binding="{Binding LogicalId}" Width="240"/>
+                                    <DataGridTextColumn Header="ファイル" Binding="{Binding FilePath}" Width="*"/>
+                                    <DataGridTextColumn Header="期待パス" Binding="{Binding ExpectedPath}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+                    <TabItem Header="VOICE">
+                        <Grid Margin="0,12,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Border Grid.Row="0" BorderBrush="#D5D5D5" BorderThickness="1"
+                                    CornerRadius="4" Padding="10" Margin="0,0,0,10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Unityプロジェクト"
+                                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <TextBox Grid.Column="1"
+                                             Text="{Binding UnityProjectPath, UpdateSourceTrigger=PropertyChanged}"
+                                             VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                                    <Button Grid.Column="2" Content="選択"
+                                            Command="{Binding BrowseUnityProjectCommand}"
+                                            MinWidth="80" Height="28" Margin="0,0,8,0"/>
+                                    <Button Grid.Column="3" Content="再走査"
+                                            Command="{Binding RefreshAudioLibraryCommand}"
+                                            MinWidth="80" Height="28"/>
+                                </Grid>
+                            </Border>
+                            <DockPanel Grid.Row="1" Margin="0,0,0,10">
+                                <TextBlock DockPanel.Dock="Bottom"
+                                           Text="注意: 登録したVOICEとUnityが生成する.metaはテスト素材としてGitへコミットしない運用です。"
+                                           Foreground="#A06020" Margin="0,4,0,0"/>
+                                <TextBlock DockPanel.Dock="Bottom"
+                                           Text="{Binding VoiceAudioSummary}"
+                                           Foreground="#555555" Margin="0,8,0,0"/>
+                                <CheckBox DockPanel.Dock="Right"
+                                          Content="選択中のキャラクターだけ"
+                                          IsChecked="{Binding ShowOnlySelectedHeroineAudio}"
+                                          VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                <TextBox Text="{Binding VoiceAudioSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                         MinWidth="240"
+                                         ToolTip="VOICE IDまたはファイルパスを検索"/>
+                            </DockPanel>
+                            <Border Grid.Row="2" BorderBrush="#D5D5D5" BorderThickness="1"
+                                    CornerRadius="4" Padding="8" Margin="0,0,0,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="170"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="VOICE登録:"
+                                               FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding SelectedProfile.HeroineId}"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" Text="用途"
+                                               VerticalAlignment="Center" Margin="8,0,4,0"/>
+                                    <ComboBox Grid.Column="3" ItemsSource="{Binding VoiceUsageOptions}"
+                                              SelectedItem="{Binding SelectedVoiceUsage}"/>
+                                    <TextBlock Grid.Column="4" Text="Voice ID"
+                                               VerticalAlignment="Center" Margin="8,0,4,0"/>
+                                    <TextBox Grid.Column="5"
+                                             Text="{Binding VoiceRegistrationId, UpdateSourceTrigger=PropertyChanged}"
+                                             ToolTip="拡張子なし。例: Line01"/>
+                                    <ComboBox Grid.Column="6"
+                                              ItemsSource="{Binding VoiceAssignmentTargetOptions}"
+                                              SelectedItem="{Binding SelectedVoiceAssignmentTarget}"
+                                              Margin="8,0"/>
+                                    <Button Grid.Column="7" Content="VOICEを登録"
+                                            Command="{Binding RegisterVoiceCommand}"
+                                            MinWidth="105" Height="28" Margin="0,0,8,0"/>
+                                    <Button Grid.Column="8" Content="保存先を開く"
+                                            Command="{Binding OpenVoiceFolderCommand}"
+                                            MinWidth="100" Height="28"/>
+                                </Grid>
+                            </Border>
+                            <StackPanel Grid.Row="3" Orientation="Horizontal"
+                                        HorizontalAlignment="Right" Margin="0,0,0,8">
+                                <Button Content="選択音声を再生"
+                                        Command="{Binding PlaySelectedAudioCommand}"
+                                        MinWidth="120" Height="28" Margin="0,0,8,0"/>
+                                <Button Content="停止"
+                                        Command="{Binding StopAudioPreviewCommand}"
+                                        MinWidth="70" Height="28"/>
+                            </StackPanel>
+                            <DataGrid Grid.Row="4"
+                                      ItemsSource="{Binding VoiceAudioItems}"
+                                      SelectedItem="{Binding SelectedAudioLibraryItem}"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      IsReadOnly="True"
+                                      SelectionMode="Single"
+                                      GridLinesVisibility="Horizontal">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="状態" Binding="{Binding StatusSymbol}" Width="55"/>
+                                    <DataGridTextColumn Header="Voice ID" Binding="{Binding LogicalId}" Width="260"/>
                                     <DataGridTextColumn Header="キャラクター" Binding="{Binding HeroineId}" Width="130"/>
                                     <DataGridTextColumn Header="参照数" Binding="{Binding ReferenceText}" Width="70"/>
                                     <DataGridTextColumn Header="ファイル" Binding="{Binding FilePath}" Width="*"/>

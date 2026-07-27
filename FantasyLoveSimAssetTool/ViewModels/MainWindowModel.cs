@@ -148,9 +148,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private bool showOnlyIncompleteProductionStatus;
         private string unityProjectPath;
         private string audioLibrarySearchText;
+        private string bgmSeAudioSearchText;
+        private string voiceAudioSearchText;
         private string selectedAudioCategory;
         private bool showOnlySelectedHeroineAudio;
         private string audioLibrarySummary;
+        private string bgmSeAudioSummary;
+        private string voiceAudioSummary;
         private AudioLibraryItem selectedAudioLibraryItem;
         private string selectedVoiceUsage;
         private string voiceRegistrationId;
@@ -166,6 +170,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<HeroineProfile> Profiles { get; }
 
         public ObservableCollection<AudioLibraryItem> AudioLibraryItems { get; }
+
+        public ObservableCollection<AudioLibraryItem> BgmSeAudioItems { get; }
+
+        public ObservableCollection<AudioLibraryItem> VoiceAudioItems { get; }
 
         public ObservableCollection<string> AudioCategoryOptions { get; }
 
@@ -1702,6 +1710,30 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public string BgmSeAudioSearchText
+        {
+            get { return bgmSeAudioSearchText; }
+            set
+            {
+                if (bgmSeAudioSearchText == value) { return; }
+                bgmSeAudioSearchText = value;
+                OnPropertyChanged(nameof(BgmSeAudioSearchText));
+                RefreshFilteredAudioLibrary();
+            }
+        }
+
+        public string VoiceAudioSearchText
+        {
+            get { return voiceAudioSearchText; }
+            set
+            {
+                if (voiceAudioSearchText == value) { return; }
+                voiceAudioSearchText = value;
+                OnPropertyChanged(nameof(VoiceAudioSearchText));
+                RefreshFilteredAudioLibrary();
+            }
+        }
+
         public string SelectedAudioCategory
         {
             get { return selectedAudioCategory; }
@@ -1734,6 +1766,28 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (audioLibrarySummary == value) { return; }
                 audioLibrarySummary = value;
                 OnPropertyChanged(nameof(AudioLibrarySummary));
+            }
+        }
+
+        public string BgmSeAudioSummary
+        {
+            get { return bgmSeAudioSummary; }
+            set
+            {
+                if (bgmSeAudioSummary == value) { return; }
+                bgmSeAudioSummary = value;
+                OnPropertyChanged(nameof(BgmSeAudioSummary));
+            }
+        }
+
+        public string VoiceAudioSummary
+        {
+            get { return voiceAudioSummary; }
+            set
+            {
+                if (voiceAudioSummary == value) { return; }
+                voiceAudioSummary = value;
+                OnPropertyChanged(nameof(VoiceAudioSummary));
             }
         }
 
@@ -2029,6 +2083,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             Profiles = new ObservableCollection<HeroineProfile>();
             ProductionStatusCategories = new ObservableCollection<ProductionStatusCell>();
             AudioLibraryItems = new ObservableCollection<AudioLibraryItem>();
+            BgmSeAudioItems = new ObservableCollection<AudioLibraryItem>();
+            VoiceAudioItems = new ObservableCollection<AudioLibraryItem>();
             AudioCategoryOptions = new ObservableCollection<string>
             {
                 "すべて", "BGM", "SE", "VOICE", "未配置"
@@ -2245,6 +2301,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             showOnlyIncompleteProductionStatus = false;
             unityProjectPath = AudioLibraryService.LoadUnityProjectPath();
             audioLibrarySearchText = string.Empty;
+            bgmSeAudioSearchText = string.Empty;
+            voiceAudioSearchText = string.Empty;
             selectedAudioCategory = "すべて";
             showOnlySelectedHeroineAudio = true;
             selectedVoiceUsage = "Training";
@@ -2253,6 +2311,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             audioLibrarySummary = string.IsNullOrWhiteSpace(unityProjectPath)
                 ? "Unityプロジェクトを選択してください。"
                 : "「再走査」で音声導入状況を確認できます。";
+            bgmSeAudioSummary = audioLibrarySummary;
+            voiceAudioSummary = audioLibrarySummary;
 
             CreateCharacterCommand = new RelayCommand(CreateCharacter);
             SaveSelectedProfileCommand = new RelayCommand(SaveSelectedProfile, () => SelectedProfile != null);
@@ -2576,8 +2636,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 allAudioLibraryItems.Clear();
                 AudioLibraryItems.Clear();
+                BgmSeAudioItems.Clear();
+                VoiceAudioItems.Clear();
                 AvailableVoiceIds.Clear();
                 AudioLibrarySummary = "走査できません: " + ex.Message;
+                BgmSeAudioSummary = AudioLibrarySummary;
+                VoiceAudioSummary = AudioLibrarySummary;
                 StatusMessage = AudioLibrarySummary;
             }
         }
@@ -2586,23 +2650,58 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             if (AudioLibraryItems == null) return;
             AudioLibraryItems.Clear();
+            BgmSeAudioItems.Clear();
+            VoiceAudioItems.Clear();
             string search = (AudioLibrarySearchText ?? string.Empty).Trim();
+            string bgmSeSearch = (BgmSeAudioSearchText ?? string.Empty).Trim();
+            string voiceSearch = (VoiceAudioSearchText ?? string.Empty).Trim();
             string heroineId = SelectedProfile?.HeroineId ?? string.Empty;
-            foreach (AudioLibraryItem item in allAudioLibraryItems
-                .Where(item => MatchesAudioCategory(item, SelectedAudioCategory))
-                .Where(item =>
-                    !ShowOnlySelectedHeroineAudio ||
-                    item.Category != "VOICE" ||
-                    string.Equals(item.HeroineId, heroineId, StringComparison.OrdinalIgnoreCase))
-                .Where(item =>
-                    string.IsNullOrEmpty(search) ||
-                    (item.LogicalId ?? string.Empty).IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    (item.FilePath ?? string.Empty).IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0)
+            IEnumerable<AudioLibraryItem> searchedItems = allAudioLibraryItems
                 .OrderBy(item => item.Category)
-                .ThenBy(item => item.LogicalId))
+                .ThenBy(item => item.LogicalId);
+            foreach (AudioLibraryItem item in searchedItems)
             {
-                AudioLibraryItems.Add(item);
+                if ((item.Category == "BGM" || item.Category == "SE") &&
+                    MatchesAudioSearch(item, bgmSeSearch))
+                {
+                    BgmSeAudioItems.Add(item);
+                }
+                if (item.Category == "VOICE" &&
+                    MatchesAudioSearch(item, voiceSearch) &&
+                    (!ShowOnlySelectedHeroineAudio ||
+                     string.Equals(item.HeroineId, heroineId, StringComparison.OrdinalIgnoreCase)))
+                {
+                    VoiceAudioItems.Add(item);
+                }
+                if (MatchesAudioSearch(item, search) &&
+                    MatchesAudioCategory(item, SelectedAudioCategory) &&
+                    (!ShowOnlySelectedHeroineAudio ||
+                     item.Category != "VOICE" ||
+                     string.Equals(item.HeroineId, heroineId, StringComparison.OrdinalIgnoreCase)))
+                {
+                    AudioLibraryItems.Add(item);
+                }
             }
+            BgmSeAudioSummary =
+                $"BGM・SE {BgmSeAudioItems.Count} 件 / 導入済み " +
+                $"{BgmSeAudioItems.Count(item => item.IsAvailable)} / 未配置 " +
+                $"{BgmSeAudioItems.Count(item => !item.IsAvailable)}";
+            VoiceAudioSummary =
+                $"VOICE {VoiceAudioItems.Count} 件 / 導入済み " +
+                $"{VoiceAudioItems.Count(item => item.IsAvailable)} / 未配置 " +
+                $"{VoiceAudioItems.Count(item => !item.IsAvailable)} / 参照数合計 " +
+                $"{VoiceAudioItems.Sum(item => item.ReferenceCount)}";
+        }
+
+        private static bool MatchesAudioSearch(AudioLibraryItem item, string search)
+        {
+            return string.IsNullOrEmpty(search) ||
+                (item.LogicalId ?? string.Empty).IndexOf(
+                    search,
+                    StringComparison.OrdinalIgnoreCase) >= 0 ||
+                (item.FilePath ?? string.Empty).IndexOf(
+                    search,
+                    StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private void RefreshAvailableVoiceIds()
