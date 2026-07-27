@@ -26,7 +26,11 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual("Formal, Casual", result.UnlockedOutfitIdsText);
             Assert.AreEqual(3, result.AffectionChange);
             Assert.AreEqual("StillWithPortrait", result.VisualMode);
+            Assert.AreEqual("Battle/DuoVictoryForest01", result.VoiceId);
             Assert.AreEqual("勝利しました", target.BattleMessages.PanelMessages.Single().Message);
+            Assert.AreEqual(
+                "Battle/Victory01",
+                target.BattleMessages.PanelMessages.Single().VoiceId);
         }
 
         [TestMethod]
@@ -53,6 +57,46 @@ namespace FantasyLoveSimAssetTool.Tests
 
             Assert.AreEqual(0, profile.BattleMessages.ResultEvents.Count);
             Assert.AreEqual(0, profile.BattleMessages.PanelMessages.Count);
+        }
+
+        [TestMethod]
+        public void Apply_OldJsonPreservesVoiceIdsAndExplicitEmptyClearsThem()
+        {
+            HeroineProfile profile = Profile();
+            BattleMessageSyncService.ApplyResultEvents(
+                profile,
+                BattleMessageSyncService.DeserializeResultEvents(
+                    "{\"schemaVersion\":1,\"heroineId\":\"TestHeroine\",\"items\":[{" +
+                    "\"eventId\":\"DuoVictory_Forest\",\"resultType\":\"DuoVictory\"," +
+                    "\"battleContextId\":\"Forest\",\"message\":\"更新\"}]}"));
+            BattleMessageSyncService.ApplyPanelMessages(
+                profile,
+                BattleMessageSyncService.DeserializePanelMessages(
+                    "{\"schemaVersion\":1,\"heroineId\":\"TestHeroine\",\"items\":[{" +
+                    "\"messageId\":\"Victory\",\"resultType\":\"Victory\",\"message\":\"更新\"}]}"));
+
+            Assert.AreEqual(
+                "Battle/DuoVictoryForest01",
+                profile.BattleMessages.ResultEvents.Single().VoiceId);
+            Assert.AreEqual(
+                "Battle/Victory01",
+                profile.BattleMessages.PanelMessages.Single().VoiceId);
+
+            BattleMessageSyncService.ApplyResultEvents(
+                profile,
+                BattleMessageSyncService.DeserializeResultEvents(
+                    "{\"schemaVersion\":1,\"heroineId\":\"TestHeroine\",\"items\":[{" +
+                    "\"eventId\":\"DuoVictory_Forest\",\"resultType\":\"DuoVictory\"," +
+                    "\"battleContextId\":\"Forest\",\"message\":\"更新\",\"voiceId\":\"\"}]}"));
+            BattleMessageSyncService.ApplyPanelMessages(
+                profile,
+                BattleMessageSyncService.DeserializePanelMessages(
+                    "{\"schemaVersion\":1,\"heroineId\":\"TestHeroine\",\"items\":[{" +
+                    "\"messageId\":\"Victory\",\"resultType\":\"Victory\",\"message\":\"更新\"," +
+                    "\"voiceId\":\"\"}]}"));
+
+            Assert.AreEqual(string.Empty, profile.BattleMessages.ResultEvents.Single().VoiceId);
+            Assert.AreEqual(string.Empty, profile.BattleMessages.PanelMessages.Single().VoiceId);
         }
 
         [TestMethod]
@@ -172,6 +216,7 @@ namespace FantasyLoveSimAssetTool.Tests
                             SpeakerName = "テストヒロイン",
                             VisualMode = "StillWithPortrait",
                             Message = "二人で勝てましたね",
+                            VoiceId = "Battle/DuoVictoryForest01",
                             StillId = "VictoryStill",
                             ExpressionId = "Smile",
                             AffectionChange = 3,
@@ -184,7 +229,8 @@ namespace FantasyLoveSimAssetTool.Tests
                         {
                             MessageId = "Victory",
                             ResultType = "Victory",
-                            Message = "勝利しました"
+                            Message = "勝利しました",
+                            VoiceId = "Battle/Victory01"
                         }
                     }
                 }

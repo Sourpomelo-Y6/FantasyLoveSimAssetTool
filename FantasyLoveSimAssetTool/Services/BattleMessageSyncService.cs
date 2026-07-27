@@ -47,14 +47,26 @@ namespace FantasyLoveSimAssetTool.Services
         {
             ValidateHeroine(profile, data?.HeroineId);
             profile.BattleMessages ??= new BattleMessageSettings();
-            if (data.Items != null) profile.BattleMessages.ResultEvents = NormalizeEvents(data.Items);
+            if (data.Items != null)
+            {
+                PreserveMissingResultVoiceIds(
+                    profile.BattleMessages.ResultEvents,
+                    data.Items);
+                profile.BattleMessages.ResultEvents = NormalizeEvents(data.Items);
+            }
         }
 
         public static void ApplyPanelMessages(HeroineProfile profile, BattlePanelResultMessagesDataFile data)
         {
             ValidateHeroine(profile, data?.HeroineId);
             profile.BattleMessages ??= new BattleMessageSettings();
-            if (data.Items != null) profile.BattleMessages.PanelMessages = NormalizePanelMessages(data.Items);
+            if (data.Items != null)
+            {
+                PreserveMissingPanelVoiceIds(
+                    profile.BattleMessages.PanelMessages,
+                    data.Items);
+                profile.BattleMessages.PanelMessages = NormalizePanelMessages(data.Items);
+            }
         }
 
         public static void Normalize(HeroineProfile profile)
@@ -94,7 +106,9 @@ namespace FantasyLoveSimAssetTool.Services
             {
                 BattlePanelResultMessageEntry before = beforePanelMap[id];
                 BattlePanelResultMessageEntry after = afterPanelMap[id];
-                if (Same(before.ResultType, after.ResultType) && Same(before.Message, after.Message)) summary.PanelUnchanged++;
+                if (Same(before.ResultType, after.ResultType) &&
+                    Same(before.Message, after.Message) &&
+                    Same(before.VoiceId, after.VoiceId)) summary.PanelUnchanged++;
                 else summary.PanelUpdated++;
             }
 
@@ -164,6 +178,7 @@ namespace FantasyLoveSimAssetTool.Services
                     : item.EventId.Trim();
                 if (!ids.Add(item.EventId)) continue;
                 item.Message ??= string.Empty;
+                item.VoiceId = item.VoiceId?.Trim() ?? string.Empty;
                 item.StillId = item.StillId?.Trim() ?? string.Empty;
                 item.VisualMode = string.IsNullOrWhiteSpace(item.VisualMode) ? "Auto" : item.VisualMode.Trim();
                 item.ExpressionId = item.ExpressionId?.Trim() ?? string.Empty;
@@ -184,6 +199,7 @@ namespace FantasyLoveSimAssetTool.Services
                 item.MessageId = string.IsNullOrWhiteSpace(item.MessageId) ? item.ResultType : item.MessageId.Trim();
                 if (!ids.Add(item.MessageId)) continue;
                 item.Message ??= string.Empty;
+                item.VoiceId = item.VoiceId?.Trim() ?? string.Empty;
                 result.Add(item);
             }
             return new ObservableCollection<BattlePanelResultMessageEntry>(result);
@@ -200,10 +216,53 @@ namespace FantasyLoveSimAssetTool.Services
         private static bool ResultEventEquals(BattleResultEventEntry left, BattleResultEventEntry right) =>
             Same(left.ResultType, right.ResultType) && Same(left.BattleContextId, right.BattleContextId) &&
             Same(left.SpeakerType, right.SpeakerType) && Same(left.SpeakerName, right.SpeakerName) &&
-            Same(left.Message, right.Message) && Same(left.StillId, right.StillId) &&
+            Same(left.Message, right.Message) && Same(left.VoiceId, right.VoiceId) &&
+            Same(left.StillId, right.StillId) &&
             Same(left.VisualMode, right.VisualMode) && Same(left.ExpressionId, right.ExpressionId) &&
             left.AffectionChange == right.AffectionChange &&
             (left.UnlockedOutfitIds ?? Array.Empty<string>()).SequenceEqual(right.UnlockedOutfitIds ?? Array.Empty<string>(), StringComparer.Ordinal);
+
+        private static void PreserveMissingResultVoiceIds(
+            IEnumerable<BattleResultEventEntry> existing,
+            IEnumerable<BattleResultEventEntry> incoming)
+        {
+            Dictionary<string, BattleResultEventEntry> existingById =
+                ToMap(existing, item => item.EventId);
+            foreach (BattleResultEventEntry item in incoming ??
+                Enumerable.Empty<BattleResultEventEntry>())
+            {
+                if (item != null &&
+                    item.VoiceId == null &&
+                    !string.IsNullOrWhiteSpace(item.EventId) &&
+                    existingById.TryGetValue(
+                        item.EventId.Trim(),
+                        out BattleResultEventEntry previous))
+                {
+                    item.VoiceId = previous.VoiceId ?? string.Empty;
+                }
+            }
+        }
+
+        private static void PreserveMissingPanelVoiceIds(
+            IEnumerable<BattlePanelResultMessageEntry> existing,
+            IEnumerable<BattlePanelResultMessageEntry> incoming)
+        {
+            Dictionary<string, BattlePanelResultMessageEntry> existingById =
+                ToMap(existing, item => item.MessageId);
+            foreach (BattlePanelResultMessageEntry item in incoming ??
+                Enumerable.Empty<BattlePanelResultMessageEntry>())
+            {
+                if (item != null &&
+                    item.VoiceId == null &&
+                    !string.IsNullOrWhiteSpace(item.MessageId) &&
+                    existingById.TryGetValue(
+                        item.MessageId.Trim(),
+                        out BattlePanelResultMessageEntry previous))
+                {
+                    item.VoiceId = previous.VoiceId ?? string.Empty;
+                }
+            }
+        }
         private static void ValidateHeroine(HeroineProfile profile, string heroineId)
         {
             if (profile == null) throw new ArgumentNullException(nameof(profile));

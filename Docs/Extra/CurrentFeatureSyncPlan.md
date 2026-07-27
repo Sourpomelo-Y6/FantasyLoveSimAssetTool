@@ -104,6 +104,13 @@ Tool側へ必要なのは、これらのIDを参照候補として読み込む�
 - FromUnity importは既存Toolデータを無条件上書きせず、新規追加または選択反映にする。
 - `schemaVersion` を更新し、読み込み可能な最小・最大versionを明示する。
 
+戦闘後イベントと戦闘パネル結果メッセージのVoice ID同期は実装済み。
+「戦闘メッセージ」タブの各表にある `Voice ID` 列へ、
+`Battle/DuoVictoryForest01` のように拡張子なしで入力する。
+`battle_result_events_*.json` と `battle_panel_result_messages_*.json` の
+各項目に `voiceId` を含めて往復する。旧JSONでフィールドが省略されている場合は
+既存値を維持し、空文字が明示された場合だけ解除する。実音声ファイルは同期しない。
+
 ## 推奨実装順
 
 1. `requiredSkillIds` とHeroineProfile共通セリフを既存export/importへ追加し、欠落による上書きを防ぐ。

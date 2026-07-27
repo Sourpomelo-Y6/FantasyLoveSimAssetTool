@@ -853,6 +853,7 @@
                                     </DataGridTemplateColumn>
                                     <DataGridTextColumn Header="話者名" Binding="{Binding SpeakerName}" Width="120"/>
                                     <DataGridTextColumn Header="メッセージ" Binding="{Binding Message}" Width="*"/>
+                                    <DataGridTextColumn Header="Voice ID" Binding="{Binding VoiceId}" Width="150"/>
                                     <DataGridTemplateColumn Header="StillId" Width="140">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
@@ -906,6 +907,7 @@
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
                                     <DataGridTextColumn Header="メッセージ" Binding="{Binding Message}" Width="*"/>
+                                    <DataGridTextColumn Header="Voice ID" Binding="{Binding VoiceId}" Width="150"/>
                                 </DataGrid.Columns>
                             </DataGrid>
                             <Grid Grid.Row="4" Margin="0,12,0,0">

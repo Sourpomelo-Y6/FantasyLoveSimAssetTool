@@ -12,6 +12,7 @@ namespace FantasyLoveSimAssetTool.Models
         public string SpeakerType { get; set; } = "Heroine";
         public string SpeakerName { get; set; } = string.Empty;
         public string Message { get; set; } = string.Empty;
+        public string VoiceId { get; set; }
         public string StillId { get; set; } = string.Empty;
         public string VisualMode { get; set; } = "Auto";
         public string ExpressionId { get; set; } = string.Empty;
@@ -35,6 +36,7 @@ namespace FantasyLoveSimAssetTool.Models
         public string MessageId { get; set; } = string.Empty;
         public string ResultType { get; set; } = "Default";
         public string Message { get; set; } = string.Empty;
+        public string VoiceId { get; set; }
     }
 
     public class BattleMessageSettings
