@@ -7,6 +7,14 @@ namespace FantasyLoveSimAssetTool.Services
     public sealed class AudioPreviewService
     {
         private readonly MediaPlayer player = new MediaPlayer();
+        private string currentFilePath = string.Empty;
+
+        public event Action<string> PlaybackFailed;
+
+        public AudioPreviewService()
+        {
+            player.MediaFailed += OnMediaFailed;
+        }
 
         public void Play(string filePath)
         {
@@ -16,7 +24,8 @@ namespace FantasyLoveSimAssetTool.Services
             }
 
             player.Stop();
-            player.Open(new Uri(Path.GetFullPath(filePath), UriKind.Absolute));
+            currentFilePath = Path.GetFullPath(filePath);
+            player.Open(new Uri(currentFilePath, UriKind.Absolute));
             player.Play();
         }
 
@@ -24,6 +33,17 @@ namespace FantasyLoveSimAssetTool.Services
         {
             player.Stop();
             player.Close();
+            currentFilePath = string.Empty;
+        }
+
+        private void OnMediaFailed(object sender, ExceptionEventArgs e)
+        {
+            string fileName = string.IsNullOrWhiteSpace(currentFilePath)
+                ? "選択した音声"
+                : Path.GetFileName(currentFilePath);
+            PlaybackFailed?.Invoke(
+                $"{fileName} はAssetToolの再生環境で再生できません。" +
+                "Unityへの登録と利用には影響しません。");
         }
     }
 }

@@ -1950,6 +1950,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             playerExportService = new PlayerExportService(playerProjectService, imageInspectionService);
             audioLibraryService = new AudioLibraryService();
             audioPreviewService = new AudioPreviewService();
+            audioPreviewService.PlaybackFailed += OnAudioPreviewFailed;
             Profiles = new ObservableCollection<HeroineProfile>();
             ProductionStatusCategories = new ObservableCollection<ProductionStatusCell>();
             AudioLibraryItems = new ObservableCollection<AudioLibraryItem>();
@@ -2548,6 +2549,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             audioPreviewService.Stop();
             StatusMessage = "音声プレビューを停止しました。";
+        }
+
+        private void OnAudioPreviewFailed(string message)
+        {
+            if (Application.Current?.Dispatcher == null ||
+                Application.Current.Dispatcher.CheckAccess())
+            {
+                StatusMessage = message;
+                return;
+            }
+            Application.Current.Dispatcher.Invoke(() => StatusMessage = message);
         }
 
         private bool CanRegisterSelectedAudio()
