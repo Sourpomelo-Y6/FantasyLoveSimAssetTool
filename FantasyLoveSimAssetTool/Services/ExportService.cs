@@ -922,7 +922,8 @@ namespace FantasyLoveSimAssetTool.Services
                         {
                             speaker = line.Speaker,
                             text = line.Text,
-                            expression = line.Expression
+                            expression = line.Expression,
+                            voiceId = line.VoiceId
                         }).ToList(),
                     choices = (entry.Choices ?? new System.Collections.ObjectModel.ObservableCollection<ConversationChoice>())
                         .Select(choice => new

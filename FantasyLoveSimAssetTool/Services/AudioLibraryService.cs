@@ -392,6 +392,15 @@ namespace FantasyLoveSimAssetTool.Services
                         AddVoiceReference(references, heroineId, item?.VoiceId);
                     }
                 }
+                foreach (ConversationEntry entry in
+                    profile.ConversationEntries ?? Enumerable.Empty<ConversationEntry>())
+                {
+                    foreach (ConversationLine line in
+                        entry?.Lines ?? Enumerable.Empty<ConversationLine>())
+                    {
+                        AddVoiceReference(references, heroineId, line?.VoiceId);
+                    }
+                }
             }
             return references;
         }
@@ -438,11 +447,36 @@ namespace FantasyLoveSimAssetTool.Services
                         item?.VoiceId,
                         $"戦闘パネル: {item?.MessageId}");
                 }
+                foreach (ConversationEntry entry in
+                    profile.ConversationEntries ?? Enumerable.Empty<ConversationEntry>())
+                {
+                    foreach (ConversationLine line in
+                        entry?.Lines ?? Enumerable.Empty<ConversationLine>())
+                    {
+                        AddVoiceReferenceDetail(
+                            details,
+                            heroineId,
+                            line?.VoiceId,
+                            $"{GetConversationKindLabel(entry.Kind)}: {entry.Id}");
+                    }
+                }
             }
             return details.ToDictionary(
                 pair => pair.Key,
                 pair => string.Join(Environment.NewLine, pair.Value.OrderBy(value => value)),
                 StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static string GetConversationKindLabel(ConversationDataKind kind)
+        {
+            switch (kind)
+            {
+                case ConversationDataKind.GameEvents: return "ゲームイベント";
+                case ConversationDataKind.ScheduledEvents: return "予定イベント";
+                case ConversationDataKind.ActionReactions: return "行動反応";
+                case ConversationDataKind.Endings: return "エンディング";
+                default: return "会話";
+            }
         }
 
         private static void ValidateUnityProjectPath(string path)

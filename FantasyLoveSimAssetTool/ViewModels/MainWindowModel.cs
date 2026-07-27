@@ -777,6 +777,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedConversationDataKind == value) { return; }
                 selectedConversationDataKind = value;
                 OnPropertyChanged(nameof(SelectedConversationDataKind));
+                if (SelectedVoiceAssignmentTarget == "選択中の会話・イベント行")
+                {
+                    ApplyConversationVoiceUsageSuggestion();
+                }
                 RefreshConversationCategorySuggestions();
                 RefreshConversationActionSuggestions();
                 RefreshFilteredConversationEntries();
@@ -1848,6 +1852,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedVoiceAssignmentTarget == value) { return; }
                 selectedVoiceAssignmentTarget = value;
                 OnPropertyChanged(nameof(SelectedVoiceAssignmentTarget));
+                if (value == "選択中の会話・イベント行")
+                {
+                    ApplyConversationVoiceUsageSuggestion();
+                }
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -2114,7 +2122,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 "登録のみ",
                 "選択中の訓練セリフ",
                 "選択中の戦闘後イベント",
-                "選択中の戦闘パネルメッセージ"
+                "選択中の戦闘パネルメッセージ",
+                "選択中の会話・イベント行"
             };
             EnemyProfiles = new ObservableCollection<EnemyProfile>();
             FilteredAssets = new ObservableCollection<HeroineAsset>();
@@ -2888,6 +2897,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 return SelectedBattleResultEvent != null;
             if (SelectedVoiceAssignmentTarget == "選択中の戦闘パネルメッセージ")
                 return SelectedBattlePanelMessage != null;
+            if (SelectedVoiceAssignmentTarget == "選択中の会話・イベント行")
+                return SelectedConversationEntry != null && SelectedConversationLine != null;
             return true;
         }
 
@@ -2980,11 +2991,24 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 SelectedBattlePanelMessage.VoiceId = voiceId;
                 OnPropertyChanged(nameof(SelectedBattlePanelMessage));
             }
+            else if (SelectedVoiceAssignmentTarget == "選択中の会話・イベント行")
+            {
+                SelectedConversationLine.VoiceId = voiceId;
+            }
             else
             {
                 return;
             }
             characterProjectService.SaveProfile(SelectedProfile);
+        }
+
+        private void ApplyConversationVoiceUsageSuggestion()
+        {
+            SelectedVoiceUsage =
+                SelectedConversationDataKind == ConversationDataKind.Conversations ||
+                SelectedConversationDataKind == ConversationDataKind.ActionReactions
+                    ? "Conversation"
+                    : "Event";
         }
 
         private void OpenVoiceFolder()
@@ -7921,7 +7945,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     {
                         Speaker = string.IsNullOrWhiteSpace(line.Speaker) ? "Heroine" : line.Speaker.Trim(),
                         Text = line.Text ?? string.Empty,
-                        Expression = line.Expression ?? string.Empty
+                        Expression = line.Expression ?? string.Empty,
+                        VoiceId = line.VoiceId ?? string.Empty
                     });
             }
             if (entry.Lines.Count == 0) entry.Lines.Add(new ConversationLine());
@@ -7963,7 +7988,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 {
                     Speaker = string.IsNullOrWhiteSpace(line.Speaker) ? "Heroine" : line.Speaker.Trim(),
                     Text = line.Text ?? string.Empty,
-                    Expression = line.Expression ?? string.Empty
+                    Expression = line.Expression ?? string.Empty,
+                    VoiceId = line.VoiceId ?? string.Empty
                 });
             }
 
@@ -8151,7 +8177,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 {
                     Speaker = string.IsNullOrWhiteSpace(line.Speaker) ? "Heroine" : line.Speaker.Trim(),
                     Text = line.Text ?? string.Empty,
-                    Expression = line.Expression ?? string.Empty
+                    Expression = line.Expression ?? string.Empty,
+                    VoiceId = line.VoiceId ?? string.Empty
                 });
             }
 
@@ -8351,7 +8378,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 {
                     Speaker = string.IsNullOrWhiteSpace(line.Speaker) ? "Heroine" : line.Speaker.Trim(),
                     Text = line.Text ?? string.Empty,
-                    Expression = line.Expression ?? string.Empty
+                    Expression = line.Expression ?? string.Empty,
+                    VoiceId = line.VoiceId ?? string.Empty
                 });
             }
 
@@ -8603,7 +8631,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     {
                         Speaker = string.IsNullOrWhiteSpace(line.Speaker) ? "Heroine" : line.Speaker.Trim(),
                         Text = line.Text ?? string.Empty,
-                        Expression = line.Expression ?? string.Empty
+                        Expression = line.Expression ?? string.Empty,
+                        VoiceId = line.VoiceId ?? string.Empty
                     });
                 }
             }
@@ -8847,7 +8876,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 {
                     Speaker = string.IsNullOrWhiteSpace(line.Speaker) ? "Heroine" : line.Speaker.Trim(),
                     Text = string.IsNullOrWhiteSpace(line.Text) ? line.Message ?? string.Empty : line.Text,
-                    Expression = line.Expression ?? string.Empty
+                    Expression = line.Expression ?? string.Empty,
+                    VoiceId = line.VoiceId ?? string.Empty
                 });
             }
 

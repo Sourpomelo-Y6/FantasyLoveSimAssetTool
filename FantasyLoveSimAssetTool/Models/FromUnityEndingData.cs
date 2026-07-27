@@ -97,6 +97,8 @@ namespace FantasyLoveSimAssetTool.Models
         public string Message { get; set; }
 
         public string Expression { get; set; }
+
+        public string VoiceId { get; set; }
     }
 
     public class FromUnityEndingSourceMetadata

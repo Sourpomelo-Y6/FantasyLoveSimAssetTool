@@ -125,6 +125,15 @@ namespace FantasyLoveSimAssetTool.Tests
                 EventId = "Victory01",
                 VoiceId = "Shared/Line01"
             });
+            profile.ConversationEntries.Add(new ConversationEntry
+            {
+                Kind = ConversationDataKind.GameEvents,
+                Id = "TeaEvent01",
+                Lines =
+                {
+                    new ConversationLine { VoiceId = "Shared/Line01" }
+                }
+            });
 
             var details = AudioLibraryService.CollectVoiceReferenceDetails(
                 new[] { profile });
@@ -132,6 +141,7 @@ namespace FantasyLoveSimAssetTool.Tests
             string value = details["Voice/TestHeroine/Shared/Line01"];
             StringAssert.Contains(value, "訓練: Tea/BeforeAction");
             StringAssert.Contains(value, "戦闘後イベント: Victory01");
+            StringAssert.Contains(value, "ゲームイベント: TeaEvent01");
         }
 
         [TestMethod]

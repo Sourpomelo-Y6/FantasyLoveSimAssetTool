@@ -765,6 +765,16 @@
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="話者" Binding="{Binding Speaker}" Width="100"/>
                                                 <DataGridTextColumn Header="表情" Binding="{Binding Expression}" Width="100"/>
+                                                <DataGridTemplateColumn Header="Voice ID" Width="190">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <ComboBox ItemsSource="{Binding Data.AvailableVoiceIds, Source={StaticResource ViewModelProxy}}"
+                                                                      Text="{Binding VoiceId, UpdateSourceTrigger=PropertyChanged}"
+                                                                      IsEditable="True"
+                                                                      ToolTip="VOICEタブで検出したIDから選択。直接入力も可能です"/>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
                                                 <DataGridTextColumn Header="本文" Binding="{Binding Text}" Width="*"/>
                                             </DataGrid.Columns>
                                         </DataGrid>

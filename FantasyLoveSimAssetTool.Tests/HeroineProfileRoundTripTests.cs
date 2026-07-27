@@ -56,6 +56,9 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(
                 "Forest",
                 loaded.ConversationEntries[0].Conditions.TriggerContextId);
+            Assert.AreEqual(
+                "Event/CompletionReward01",
+                loaded.ConversationEntries[0].Lines[0].VoiceId);
         }
 
         [TestMethod]
@@ -98,6 +101,12 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(
                 "ScheduledEventCompleted",
                 conditions.GetProperty("triggerType").GetString());
+            Assert.AreEqual(
+                "Event/CompletionReward01",
+                gameEvents.RootElement.GetProperty("items")[0]
+                    .GetProperty("lines")[0]
+                    .GetProperty("voiceId")
+                    .GetString());
             Assert.AreEqual("Forest", conditions.GetProperty("triggerContextId").GetString());
         }
 
@@ -177,7 +186,12 @@ namespace FantasyLoveSimAssetTool.Tests
                         },
                         Lines = new ObservableCollection<ConversationLine>
                         {
-                            new ConversationLine { Speaker = "Heroine", Text = "完了です。" }
+                            new ConversationLine
+                            {
+                                Speaker = "Heroine",
+                                Text = "完了です。",
+                                VoiceId = "Event/CompletionReward01"
+                            }
                         }
                     }
                 },
