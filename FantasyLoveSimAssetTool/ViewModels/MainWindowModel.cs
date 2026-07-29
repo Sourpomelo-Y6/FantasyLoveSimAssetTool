@@ -3077,10 +3077,34 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             try
             {
-                HeroineProfile profile = characterProjectService.CreateCharacter(HeroineIdInput, DisplayNameInput);
+                bool overwriteExisting = characterProjectService.HasExistingCharacterData(HeroineIdInput);
+                if (overwriteExisting)
+                {
+                    MessageBoxResult result = MessageBox.Show(
+                        $"HeroineId「{HeroineIdInput?.Trim()}」のキャラクターデータは既に存在します。\n\n" +
+                        "新規作成を続けると、既存の基本データが新しい内容で上書きされます。\n" +
+                        "この操作は元に戻せません。上書きしますか？",
+                        "既存キャラクターの上書き確認",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning,
+                        MessageBoxResult.No);
+
+                    if (result != MessageBoxResult.Yes)
+                    {
+                        StatusMessage = "新規作成をキャンセルしました。既存データは変更されていません。";
+                        return;
+                    }
+                }
+
+                HeroineProfile profile = characterProjectService.CreateCharacter(
+                    HeroineIdInput,
+                    DisplayNameInput,
+                    overwriteExisting);
                 LoadProfiles();
                 SelectProfile(profile.HeroineId);
-                StatusMessage = $"{profile.HeroineId} を作成しました。";
+                StatusMessage = overwriteExisting
+                    ? $"{profile.HeroineId} を上書きして作成しました。"
+                    : $"{profile.HeroineId} を作成しました。";
             }
             catch (Exception ex)
             {

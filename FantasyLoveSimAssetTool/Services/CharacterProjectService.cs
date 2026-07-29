@@ -39,14 +39,24 @@ namespace FantasyLoveSimAssetTool.Services
             };
         }
 
-        public HeroineProfile CreateCharacter(string heroineId, string displayName)
+        public HeroineProfile CreateCharacter(
+            string heroineId,
+            string displayName,
+            bool overwriteExisting = false)
         {
             ValidateHeroineId(heroineId);
 
+            string normalizedHeroineId = heroineId.Trim();
+            if (HasExistingCharacterData(normalizedHeroineId) && !overwriteExisting)
+            {
+                throw new InvalidOperationException(
+                    "同じ HeroineId のキャラクターデータが既に存在します。");
+            }
+
             HeroineProfile profile = new HeroineProfile
             {
-                HeroineId = heroineId.Trim(),
-                DisplayName = string.IsNullOrWhiteSpace(displayName) ? heroineId.Trim() : displayName.Trim(),
+                HeroineId = normalizedHeroineId,
+                DisplayName = string.IsNullOrWhiteSpace(displayName) ? normalizedHeroineId : displayName.Trim(),
                 StillCommonPositivePrompt = "clean lines,highly detailed,masterpiece,8k,best quality,very aesthetic,absurdres,newest"
             };
             profile.BattleSkillsSpecified = true;
@@ -55,6 +65,12 @@ namespace FantasyLoveSimAssetTool.Services
             EnsureCharacterDirectories(profile.HeroineId);
             SaveProfile(profile);
             return profile;
+        }
+
+        public bool HasExistingCharacterData(string heroineId)
+        {
+            ValidateHeroineId(heroineId);
+            return Directory.Exists(GetCharacterDirectory(heroineId.Trim()));
         }
 
         public void SaveProfile(HeroineProfile profile)
