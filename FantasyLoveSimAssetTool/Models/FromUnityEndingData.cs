@@ -60,6 +60,10 @@ namespace FantasyLoveSimAssetTool.Models
 
         public int Priority { get; set; }
 
+        public string VisualMode { get; set; }
+
+        public bool KeepStillAcrossPages { get; set; }
+
         public string Memo { get; set; }
     }
 

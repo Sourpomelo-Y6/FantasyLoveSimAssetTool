@@ -933,6 +933,10 @@ namespace FantasyLoveSimAssetTool.Services
                             affectionChange = choice.AffectionChange ?? 0
                         }).ToList(),
                     imageAssetIds = SplitList(entry.ImageAssetIdsText),
+                    visualMode = string.IsNullOrWhiteSpace(entry.EndingVisualMode)
+                        ? "Auto"
+                        : entry.EndingVisualMode,
+                    keepStillAcrossPages = entry.KeepEndingStillAcrossPages,
                     priority = entry.Priority,
                     affectionChange = entry.AffectionChange,
                     memo = entry.Memo

@@ -335,6 +335,9 @@ namespace FantasyLoveSimAssetTool.Services
                 entry.Lines ??= new ObservableCollection<ConversationLine>();
                 entry.Choices ??= new ObservableCollection<ConversationChoice>();
                 entry.ImageAssetIdsText ??= string.Empty;
+                entry.EndingVisualMode = string.IsNullOrWhiteSpace(entry.EndingVisualMode)
+                    ? "Auto"
+                    : entry.EndingVisualMode;
                 entry.Memo ??= string.Empty;
                 entry.Conditions.LocationId ??= string.Empty;
                 entry.Conditions.Weather ??= string.Empty;

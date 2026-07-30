@@ -283,6 +283,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<string> BattleSpeakerTypeOptions { get; }
 
         public ObservableCollection<string> BattleVisualModeOptions { get; }
+        public ObservableCollection<string> EndingVisualModeOptions { get; }
 
         public ObservableCollection<string> BattleStillIdOptions { get; }
 
@@ -2173,6 +2174,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 "Heroine", "System", "Schedule", "Outfit", "Player"
             });
             BattleVisualModeOptions = new ObservableCollection<string>(new[]
+            {
+                "Auto", "StillOnly", "StillWithPortrait", "PortraitOnly"
+            });
+            EndingVisualModeOptions = new ObservableCollection<string>(new[]
             {
                 "Auto", "StillOnly", "StillWithPortrait", "PortraitOnly"
             });
@@ -8884,6 +8889,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 Category = GetFromUnityEndingCategory(item),
                 ImageAssetIdsText = JoinImportList(GetFromUnityEndingImageAssetIds(item)),
                 Priority = item.Priority,
+                EndingVisualMode = string.IsNullOrWhiteSpace(item.VisualMode)
+                    ? "Auto"
+                    : item.VisualMode.Trim(),
+                KeepEndingStillAcrossPages = item.KeepStillAcrossPages,
                 Memo = BuildFromUnityEndingMemo(item)
             };
 

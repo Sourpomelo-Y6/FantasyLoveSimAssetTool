@@ -11,6 +11,7 @@
         <local:BindingProxy x:Key="ViewModelProxy" Data="{Binding}"/>
         <local:StringToImageSourceConverter x:Key="StringToImageSourceConverter"/>
         <local:EmptyStringToIntConverter x:Key="EmptyStringToIntConverter"/>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <Style TargetType="{x:Type ComboBoxItem}">
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -746,7 +747,22 @@
                                         </Grid>
 
                                         <TextBlock Grid.Row="10" Grid.Column="0" Text="優先度" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                        <TextBox Grid.Row="10" Grid.Column="1" Text="{Binding SelectedConversationEntry.Priority, UpdateSourceTrigger=PropertyChanged}" Width="100" HorizontalAlignment="Left" Margin="0,0,0,8"/>
+                                        <StackPanel Grid.Row="10" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                                            <TextBox Text="{Binding SelectedConversationEntry.Priority, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+                                            <StackPanel Orientation="Horizontal"
+                                                        Margin="24,0,0,0"
+                                                        Visibility="{Binding SelectedConversationEntry.IsEnding, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <TextBlock Text="Ending表示" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <ComboBox ItemsSource="{Binding EndingVisualModeOptions}"
+                                                          SelectedItem="{Binding SelectedConversationEntry.EndingVisualMode, UpdateSourceTrigger=PropertyChanged}"
+                                                          Width="150"
+                                                          ToolTip="Auto: 従来表示、StillOnly: スチルのみ、StillWithPortrait: スチルと立ち絵、PortraitOnly: 立ち絵のみ"/>
+                                                <CheckBox Content="代表スチルを全ページで維持"
+                                                          IsChecked="{Binding SelectedConversationEntry.KeepEndingStillAcrossPages, UpdateSourceTrigger=PropertyChanged}"
+                                                          VerticalAlignment="Center"
+                                                          Margin="16,0,0,0"/>
+                                            </StackPanel>
+                                        </StackPanel>
 
                                         <Grid Grid.Row="11" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,8">
                                             <Grid.ColumnDefinitions>

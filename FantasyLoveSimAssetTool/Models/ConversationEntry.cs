@@ -26,6 +26,10 @@ namespace FantasyLoveSimAssetTool.Models
 
         public int AffectionChange { get; set; }
 
+        public string EndingVisualMode { get; set; }
+
+        public bool KeepEndingStillAcrossPages { get; set; }
+
         public string Memo { get; set; }
 
         [JsonIgnore]
@@ -44,6 +48,12 @@ namespace FantasyLoveSimAssetTool.Models
         [JsonIgnore]
         public string TriggerCandidateText { get; set; }
 
+        [JsonIgnore]
+        public bool IsEnding
+        {
+            get { return Kind == ConversationDataKind.Endings; }
+        }
+
         public ConversationEntry()
         {
             Id = string.Empty;
@@ -55,6 +65,8 @@ namespace FantasyLoveSimAssetTool.Models
             ImageAssetIdsText = string.Empty;
             Priority = 100;
             AffectionChange = 0;
+            EndingVisualMode = "Auto";
+            KeepEndingStillAcrossPages = false;
             Memo = string.Empty;
             ValidationWarningText = string.Empty;
             TriggerCandidateText = string.Empty;
