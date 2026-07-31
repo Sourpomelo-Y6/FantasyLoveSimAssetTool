@@ -6032,6 +6032,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RefreshFilteredAssets();
             RefreshAcceptedAssets();
             SelectedAsset = asset;
+            // 同じAssetIdへの上書きでは選択参照が変わらず setter が通知しないため、
+            // 登録直後に保存済み画像を明示的に読み直してプレビューを更新する。
+            RefreshSelectedAssetImagePath();
             RefreshSelectedStillStatus();
             string registrationMessage = overwriteExisting
                 ? $"{asset.AssetId} を {asset.Usage} に上書き登録しました。"
