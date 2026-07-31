@@ -44,6 +44,7 @@ Unity 取り込み方針は [Docs/Extra/UnityImportPlan.md](Docs/Extra/UnityImpo
 - ComfyUI 生成画像のスチル採用登録
 - ComfyUI 生成条件の prompt JSON への記録
 - Unity 向け Export
+- Unityから取り込んだ訓練カタログの解放条件、一回限定、調子条件、前提訓練の確認
 - Export 件数と警告の表示
 - 会話、イベント、行動反応、エンディング本文の最小編集と `profile.json` 保存
 - 会話データの `conversations_export.json`、`game_events_export.json`、`action_reactions_export.json`、`endings_export.json` 出力
@@ -178,6 +179,16 @@ WPF は Windows Desktop SDK が必要です。WSL や Linux 上の .NET SDK で�
 - 画像タブ: 画像登録、登録解除、ステータス編集、プレビュー
 - Prompt タブ: prompt 記録編集、テンプレート適用
 - Export タブ: Export 実行、件数、警告確認
+
+### Unity訓練一覧の条件確認
+
+訓練タブの `Unity訓練一覧読込` から、Unityが出力した
+`training_catalog_from_unity.json` を選択します。一覧には解放方法、条件バッジ、
+前提訓練、参照警告が表示されます。行を選択すると、表示可能な調子、実行可能な調子、
+一回限定、前提のAND／OR、前提未達時・完了後の表示規則を確認できます。
+
+旧形式のJSONに含まれない条件項目は、Toolに保存済みの値を消さずに維持します。
+前提訓練IDが同じカタログ内に存在しない場合は警告しますが、他の訓練の読込は継続します。
 - BGM・SEタブ: 固定用途音声の導入状況、登録、保存先、プレビューを確認
 - VOICEタブ: キャラクター別音声の登録、参照数、期待パス、プレビューを確認
 

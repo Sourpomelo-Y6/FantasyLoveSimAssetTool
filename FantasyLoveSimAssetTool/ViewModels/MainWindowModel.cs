@@ -5551,79 +5551,21 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private void ImportTrainingCatalogFromUnityFile(string filePath)
         {
-            JsonSerializerOptions options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
             FromUnityTrainingCatalogDataFile data =
-                JsonSerializer.Deserialize<FromUnityTrainingCatalogDataFile>(
-                    File.ReadAllText(filePath),
-                    options);
-            if (data == null)
-            {
-                throw new InvalidOperationException("training_catalog_from_unity.json を読み込めませんでした。");
-            }
-            if (data.SchemaVersion != 1)
-            {
-                throw new InvalidOperationException($"未対応の schemaVersion です: {data.SchemaVersion}");
-            }
-            if (!string.IsNullOrWhiteSpace(data.HeroineId) &&
-                !string.Equals(data.HeroineId, SelectedProfile.HeroineId, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException(
-                    $"HeroineId が選択中のキャラクターと一致しません。JSON: {data.HeroineId} / Selected: {SelectedProfile.HeroineId}");
-            }
+                TrainingCatalogSyncService.DeserializeFromUnity(File.ReadAllText(filePath));
 
             SelectedProfile.TrainingCatalog ??= new TrainingCatalogSettings();
-            SelectedProfile.TrainingCatalog.Items ??= new ObservableCollection<TrainingCatalogItem>();
-            int addedCount = 0;
-            int updatedCount = 0;
-            int skippedCount = 0;
-            HashSet<string> importedIds = new HashSet<string>(StringComparer.Ordinal);
-            foreach (FromUnityTrainingCatalogItem source in
-                data.Items ?? new List<FromUnityTrainingCatalogItem>())
-            {
-                string trainingId = (source?.TrainingId ?? string.Empty).Trim();
-                if (trainingId.Length == 0 || !importedIds.Add(trainingId))
-                {
-                    skippedCount++;
-                    continue;
-                }
-
-                TrainingCatalogItem target = SelectedProfile.TrainingCatalog.Items.FirstOrDefault(item =>
-                    item != null && string.Equals(item.TrainingId, trainingId, StringComparison.Ordinal));
-                if (target == null)
-                {
-                    target = new TrainingCatalogItem { TrainingId = trainingId };
-                    SelectedProfile.TrainingCatalog.Items.Add(target);
-                    addedCount++;
-                }
-                else
-                {
-                    updatedCount++;
-                }
-
-                target.DisplayName = string.IsNullOrWhiteSpace(source.DisplayName)
-                    ? trainingId
-                    : source.DisplayName.Trim();
-                target.TrainingCategoryId = (source.TrainingCategoryId ?? string.Empty).Trim();
-                target.UnlockedByDefault = source.UnlockedByDefault;
-                target.UnlockNodeIds = (source.UnlockNodeIds ?? new List<string>())
-                    .Where(value => !string.IsNullOrWhiteSpace(value))
-                    .Select(value => value.Trim())
-                    .Distinct(StringComparer.Ordinal)
-                    .ToList();
-                target.UnlockNodeNames = (source.UnlockNodeNames ?? new List<string>())
-                    .Where(value => !string.IsNullOrWhiteSpace(value))
-                    .Select(value => value.Trim())
-                    .Distinct(StringComparer.Ordinal)
-                    .ToList();
-            }
+            TrainingCatalogMergeResult result = TrainingCatalogSyncService.MergeFromUnity(
+                SelectedProfile.TrainingCatalog,
+                SelectedProfile.HeroineId,
+                data);
 
             characterProjectService.SaveProfile(SelectedProfile);
             OnPropertyChanged(nameof(SelectedProfile));
             StatusMessage =
-                $"FromUnity 訓練一覧を取り込みました。追加 {addedCount} 件、更新 {updatedCount} 件、重複・不正値スキップ {skippedCount} 件。既存のTool専用項目は削除していません。";
+                $"FromUnity 訓練一覧を取り込みました。追加 {result.AddedCount} 件、更新 {result.UpdatedCount} 件、" +
+                $"重複・不正値スキップ {result.SkippedCount} 件、条件警告 {result.WarningCount} 件。" +
+                "旧JSONにない条件とTool専用項目は維持しています。";
         }
 
         private void ImportTrainingDialoguesFromUnityFile(string filePath)

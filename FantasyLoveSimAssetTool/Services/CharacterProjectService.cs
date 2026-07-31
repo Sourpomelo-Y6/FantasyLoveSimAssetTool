@@ -440,9 +440,14 @@ namespace FantasyLoveSimAssetTool.Services
                 item.TrainingId ??= string.Empty;
                 item.DisplayName ??= string.Empty;
                 item.TrainingCategoryId ??= string.Empty;
+                item.OccurrenceType ??= "Repeatable";
+                item.VisibleConditionRanks ??= new List<string>();
+                item.ExecutableConditionRanks ??= new List<string>();
+                item.RequiredCompletedTrainingIds ??= new List<string>();
                 item.UnlockNodeIds ??= new List<string>();
                 item.UnlockNodeNames ??= new List<string>();
             }
+            TrainingCatalogSyncService.RefreshReferenceWarnings(profile.TrainingCatalog);
         }
 
         private static void ApplyDefaultResourcePaths(HeroineProfile profile)

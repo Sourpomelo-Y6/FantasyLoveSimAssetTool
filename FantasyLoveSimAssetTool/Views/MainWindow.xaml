@@ -1156,13 +1156,32 @@
                                                   AutoGenerateColumns="False"
                                                   CanUserAddRows="False"
                                                   IsReadOnly="True"
-                                                  Height="130"
+                                                  RowDetailsVisibilityMode="VisibleWhenSelected"
+                                                  Height="220"
                                                   Margin="8">
+                                            <DataGrid.RowDetailsTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#FFF6F6F6" Padding="8" Margin="4">
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding ConditionDetails}"
+                                                                       TextWrapping="Wrap"/>
+                                                            <TextBlock Text="{Binding ReferenceWarning}"
+                                                                       Foreground="DarkOrange"
+                                                                       FontWeight="Bold"
+                                                                       Margin="0,4,0,0"
+                                                                       TextWrapping="Wrap"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </DataGrid.RowDetailsTemplate>
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="TrainingId" Binding="{Binding TrainingId}" Width="180"/>
                                                 <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName}" Width="140"/>
                                                 <DataGridTextColumn Header="カテゴリー" Binding="{Binding TrainingCategoryId}" Width="130"/>
-                                                <DataGridTextColumn Header="解放" Binding="{Binding UnlockSummary}" Width="*"/>
+                                                <DataGridTextColumn Header="解放" Binding="{Binding UnlockSummary}" Width="150"/>
+                                                <DataGridTextColumn Header="条件" Binding="{Binding ConditionBadgeSummary}" Width="220"/>
+                                                <DataGridTextColumn Header="前提" Binding="{Binding PrerequisiteSummary}" Width="180"/>
+                                                <DataGridTextColumn Header="警告" Binding="{Binding ReferenceWarning}" Width="180"/>
                                             </DataGrid.Columns>
                                         </DataGrid>
                                     </GroupBox>
