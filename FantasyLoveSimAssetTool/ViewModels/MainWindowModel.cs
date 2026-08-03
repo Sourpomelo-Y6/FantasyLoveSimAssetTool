@@ -2147,6 +2147,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ApplyOutfitCompositionCommand { get; }
 
+        public ICommand AddOutfitAccessoryAssetTemplatesCommand { get; }
+
         public MainWindowModel()
         {
             characterProjectService = new CharacterProjectService();
@@ -2692,6 +2694,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedProfile != null);
             ApplyOutfitCompositionCommand = new RelayCommand(
                 ApplyOutfitComposition,
+                () => SelectedProfile != null && SelectedCostumeDefinition != null);
+            AddOutfitAccessoryAssetTemplatesCommand = new RelayCommand(
+                AddOutfitAccessoryAssetTemplates,
                 () => SelectedProfile != null && SelectedCostumeDefinition != null);
 
             ReloadComfySettings();
@@ -6656,6 +6661,85 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RefreshOutfitCompositionEditor();
             RefreshProductionStatus();
             OutfitCompositionMessage = $"{SelectedCostumeDefinition.DisplayName} の服装セットを保存しました。";
+        }
+
+        private void AddOutfitAccessoryAssetTemplates()
+        {
+            if (SelectedProfile == null || SelectedCostumeDefinition == null)
+            {
+                return;
+            }
+
+            try
+            {
+                SelectedProfile.Assets ??= new ObservableCollection<HeroineAsset>();
+                IReadOnlyList<OutfitAccessoryAssetTemplate> templates =
+                    OutfitCompositionService.CreateAccessoryTemplates(SelectedCostumeDefinition.CostumeId);
+                int addedCount = 0;
+                HeroineAsset firstAsset = null;
+                foreach (OutfitAccessoryAssetTemplate template in templates)
+                {
+                    HeroineAsset asset = SelectedProfile.Assets.FirstOrDefault(item => item != null &&
+                        string.Equals(item.AssetId, template.AssetId, StringComparison.OrdinalIgnoreCase));
+                    if (asset == null)
+                    {
+                        asset = new HeroineAsset
+                        {
+                            AssetId = template.AssetId,
+                            Usage = AssetUsage.Sprites,
+                            Status = AssetStatus.Pending,
+                            FileName = template.AssetId + ".png",
+                            PromptRecordPath = Path.Combine("Prompts", template.AssetId + ".prompt.json"),
+                            Memo = template.Memo
+                        };
+                        SelectedProfile.Assets.Add(asset);
+                        addedCount++;
+                    }
+                    else
+                    {
+                        asset.Usage = AssetUsage.Sprites;
+                        if (string.IsNullOrWhiteSpace(asset.FileName)) asset.FileName = template.AssetId + ".png";
+                        if (string.IsNullOrWhiteSpace(asset.PromptRecordPath))
+                            asset.PromptRecordPath = Path.Combine("Prompts", template.AssetId + ".prompt.json");
+                        if (string.IsNullOrWhiteSpace(asset.Memo)) asset.Memo = template.Memo;
+                    }
+
+                    PromptRecord prompt = promptRecordService.LoadOrCreatePromptRecord(SelectedProfile, asset);
+                    if (string.IsNullOrWhiteSpace(prompt.PositivePrompt))
+                    {
+                        prompt.PositivePrompt = MergePromptParts(
+                            SelectedProfile.AppearancePrompt,
+                            SelectedProfile.StillCommonPositivePrompt,
+                            template.Prompt);
+                        prompt.RevisionMemo = template.Memo;
+                        promptRecordService.SavePromptRecord(SelectedProfile, asset, prompt);
+                    }
+                    firstAsset ??= asset;
+                }
+
+                SelectedOutfitBackAccessoryAssetId = templates.First(item =>
+                    item.LayerKind == "BackAccessory").AssetId;
+                SelectedOutfitFrontAccessoryAssetId = templates.First(item =>
+                    item.LayerKind == "FrontAccessory").AssetId;
+                ApplyOutfitComposition();
+                characterProjectService.SaveProfile(SelectedProfile);
+                SelectedAssetStatusFilter = "All";
+                RefreshFilteredAssets();
+                RefreshAcceptedAssets();
+                SelectedAsset = firstAsset;
+                if (SelectedAsset != null)
+                {
+                    AssetIdInput = SelectedAsset.AssetId;
+                    SelectedAssetUsage = SelectedAsset.Usage;
+                    SelectedAssetStatus = SelectedAsset.Status;
+                }
+                OutfitCompositionMessage =
+                    $"{SelectedCostumeDefinition.DisplayName} の前後アクセサリー画像枠を準備しました。追加 {addedCount} 件。";
+            }
+            catch (Exception ex)
+            {
+                OutfitCompositionMessage = $"アクセサリー画像枠の準備に失敗しました: {ex.Message}";
+            }
         }
 
         private void RefreshOutfitCompositionPreview()

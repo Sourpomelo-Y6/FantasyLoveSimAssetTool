@@ -2464,6 +2464,9 @@
                                               SelectedItem="{Binding SelectedOutfitFrontAccessoryAssetId}"
                                               Height="28" Margin="0,4,0,14"/>
 
+                                    <Button Content="前後アクセサリー画像枠を準備"
+                                            Command="{Binding AddOutfitAccessoryAssetTemplatesCommand}"
+                                            Height="32" Margin="0,4,0,8"/>
                                     <Button Content="服装セットを保存"
                                             Command="{Binding ApplyOutfitCompositionCommand}"
                                             Height="32" Margin="0,4,0,12"/>

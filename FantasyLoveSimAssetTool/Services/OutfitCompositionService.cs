@@ -7,6 +7,30 @@ namespace FantasyLoveSimAssetTool.Services
 {
     public static class OutfitCompositionService
     {
+        public static IReadOnlyList<OutfitAccessoryAssetTemplate> CreateAccessoryTemplates(string costumeId)
+        {
+            if (string.IsNullOrWhiteSpace(costumeId))
+                throw new ArgumentException("CostumeId is required.", nameof(costumeId));
+            string id = costumeId.Trim();
+            return new[]
+            {
+                new OutfitAccessoryAssetTemplate
+                {
+                    AssetId = $"Accessory_{id}_Back",
+                    LayerKind = "BackAccessory",
+                    Memo = $"{id}用の後ろアクセサリー画像",
+                    Prompt = "back accessory layer only, behind character, transparent background, isolated accessory, aligned to character canvas"
+                },
+                new OutfitAccessoryAssetTemplate
+                {
+                    AssetId = $"Accessory_{id}_Front",
+                    LayerKind = "FrontAccessory",
+                    Memo = $"{id}用の前アクセサリー画像",
+                    Prompt = "front accessory layer only, in front of character, transparent background, isolated accessory, aligned to character canvas"
+                }
+            };
+        }
+
         public static OutfitCompositionSelection Read(
             IEnumerable<LayerAssetDefinition> layers,
             string costumeId)
@@ -95,5 +119,13 @@ namespace FantasyLoveSimAssetTool.Services
         public string CostumeBodyAssetId { get; set; } = string.Empty;
         public string BackAccessoryAssetId { get; set; } = string.Empty;
         public string FrontAccessoryAssetId { get; set; } = string.Empty;
+    }
+
+    public class OutfitAccessoryAssetTemplate
+    {
+        public string AssetId { get; set; } = string.Empty;
+        public string LayerKind { get; set; } = string.Empty;
+        public string Memo { get; set; } = string.Empty;
+        public string Prompt { get; set; } = string.Empty;
     }
 }

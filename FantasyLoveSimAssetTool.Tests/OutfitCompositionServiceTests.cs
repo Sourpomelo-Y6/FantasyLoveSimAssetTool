@@ -10,6 +10,20 @@ namespace FantasyLoveSimAssetTool.Tests
     public class OutfitCompositionServiceTests
     {
         [TestMethod]
+        public void CreateAccessoryTemplates_CreatesFrontAndBackSlotsForCostume()
+        {
+            IReadOnlyList<OutfitAccessoryAssetTemplate> templates =
+                OutfitCompositionService.CreateAccessoryTemplates("Dress");
+
+            Assert.AreEqual(2, templates.Count);
+            Assert.AreEqual("Accessory_Dress_Back", templates[0].AssetId);
+            Assert.AreEqual("BackAccessory", templates[0].LayerKind);
+            Assert.AreEqual("Accessory_Dress_Front", templates[1].AssetId);
+            Assert.AreEqual("FrontAccessory", templates[1].LayerKind);
+            StringAssert.Contains(templates[0].Prompt, "transparent background");
+        }
+
+        [TestMethod]
         public void Apply_CreatesBodyAndFrontBackAccessorySlots()
         {
             List<LayerAssetDefinition> layers = new List<LayerAssetDefinition>();

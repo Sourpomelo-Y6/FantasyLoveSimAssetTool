@@ -66,6 +66,7 @@
 - スチル作業タブからのスチル保存
 - 差分定義タブで `Definitions/expressions.json`、`costumes.json`、`layer_assets.json` の表情、衣装、透過レイヤー素材定義を編集、候補選択、保存前検証、保存、再読み込みする操作
 - 服装設定タブで、衣装IDごとに `CostumeBody`、`BackAccessory`、`FrontAccessory` のAccepted画像を一括選択し、重ね合わせプレビューと保存を行う操作
+- 服装設定タブの「前後アクセサリー画像枠を準備」で、選択衣装用の `Accessory_<CostumeId>_Back / Front` をSprites・Pending画像候補として追加し、透過レイヤー生成Promptと服装セットへの割り当てを準備する操作
 - レイヤープレビュータブで Accepted 済みの BaseBody、Costume、Expression、Accessory レイヤー画像を `DrawOrder` 順に重ねて確認する操作
 - Export 時の透過レイヤー素材検証。BaseBody、Default 衣装、Neutral 表情、重複定義、透過 PNG、BaseBody とのキャンバスサイズ、縦横比を warning に出す
 - Unity 向け export
