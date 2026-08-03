@@ -404,7 +404,10 @@ namespace FantasyLoveSimAssetTool.Services
 
         private string BuildSpriteLayersExportJson(HeroineProfile profile, IReadOnlyList<HeroineAsset> acceptedAssets, ExportReport report)
         {
-            IReadOnlyList<LayerAssetDefinition> layerDefinitions = stillDefinitionService.GetLayerAssetDefinitions();
+            // 服装設定タブで保存した直後の内容を反映するため、起動時のキャッシュではなく
+            // Exportのたびに定義ファイルを読み直す。
+            IReadOnlyList<LayerAssetDefinition> layerDefinitions =
+                definitionCatalogService.LoadLayerAssetDefinitionFile().Layers;
             Dictionary<string, HeroineAsset> acceptedAssetById = acceptedAssets
                 .Where(asset => !string.IsNullOrWhiteSpace(asset.AssetId))
                 .GroupBy(asset => asset.AssetId.Trim(), StringComparer.OrdinalIgnoreCase)
