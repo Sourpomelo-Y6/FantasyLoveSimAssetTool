@@ -509,16 +509,18 @@ namespace FantasyLoveSimAssetTool.Services
                     report.Warnings.Add($"{label}: layerKind `{layerKind}` は候補外です。");
                 }
 
-                if (string.Equals(layerKind, "Costume", StringComparison.OrdinalIgnoreCase)
+                if ((string.Equals(layerKind, "Costume", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(layerKind, "CostumeBody", StringComparison.OrdinalIgnoreCase))
                     && string.IsNullOrWhiteSpace(layer.CostumeId))
                 {
-                    report.Warnings.Add($"{label}: layerKind が Costume なのに costumeId が空です。");
+                    report.Warnings.Add($"{label}: CostumeBody / CostumeなのにcostumeIdが空です。");
                 }
 
-                if (string.Equals(layerKind, "Expression", StringComparison.OrdinalIgnoreCase)
+                if ((string.Equals(layerKind, "Expression", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(layerKind, "HeadExpression", StringComparison.OrdinalIgnoreCase))
                     && string.IsNullOrWhiteSpace(layer.ExpressionId))
                 {
-                    report.Warnings.Add($"{label}: layerKind が Expression なのに expressionId が空です。");
+                    report.Warnings.Add($"{label}: HeadExpression / ExpressionなのにexpressionIdが空です。");
                 }
             }
         }
@@ -528,6 +530,26 @@ namespace FantasyLoveSimAssetTool.Services
             Dictionary<string, HeroineAsset> acceptedAssetById,
             ExportReport report)
         {
+            bool usesEightLayers = layerDefinitions.Any(layer =>
+                IsLayerKind(layer, "BackHair") || IsLayerKind(layer, "CostumeBody") ||
+                IsLayerKind(layer, "HeadExpression"));
+            if (usesEightLayers)
+            {
+                if (!HasAcceptedLayer(layerDefinitions, acceptedAssetById, layer =>
+                        IsLayerKind(layer, "BackHair") || IsLayerKind(layer, "CostumeBody") ||
+                        IsLayerKind(layer, "HeadExpression")))
+                    report.Warnings.Add("sprite_layers_export: Accepted済みの中心レイヤーがありません。");
+                if (!HasAcceptedLayer(layerDefinitions, acceptedAssetById, layer =>
+                        IsLayerKind(layer, "CostumeBody") &&
+                        string.Equals(layer.CostumeId?.Trim(), "Default", StringComparison.OrdinalIgnoreCase)))
+                    report.Warnings.Add("sprite_layers_export: Accepted済みのDefault CostumeBodyがありません。");
+                if (!HasAcceptedLayer(layerDefinitions, acceptedAssetById, layer =>
+                        IsLayerKind(layer, "HeadExpression") &&
+                        string.Equals(layer.ExpressionId?.Trim(), "Neutral", StringComparison.OrdinalIgnoreCase)))
+                    report.Warnings.Add("sprite_layers_export: Accepted済みのNeutral HeadExpressionがありません。");
+                return;
+            }
+
             if (!HasAcceptedLayer(layerDefinitions, acceptedAssetById, layer => IsLayerKind(layer, "BaseBody")))
             {
                 report.Warnings.Add("sprite_layers_export: Accepted 済みの BaseBody レイヤーがありません。");
@@ -588,8 +610,8 @@ namespace FantasyLoveSimAssetTool.Services
                 }
             }
 
-            ImageInspectionResult baseBodyResult = FindBaseBodyInspection(layerDefinitions, inspectionByAssetId);
-            if (baseBodyResult == null)
+            ImageInspectionResult referenceResult = FindLayerReferenceInspection(layerDefinitions, inspectionByAssetId);
+            if (referenceResult == null)
             {
                 return;
             }
@@ -602,14 +624,14 @@ namespace FantasyLoveSimAssetTool.Services
                     continue;
                 }
 
-                if (result.PixelWidth != baseBodyResult.PixelWidth || result.PixelHeight != baseBodyResult.PixelHeight)
+                if (result.PixelWidth != referenceResult.PixelWidth || result.PixelHeight != referenceResult.PixelHeight)
                 {
-                    report.Warnings.Add($"{layer.AssetId}: レイヤー画像のキャンバスサイズが BaseBody と一致しません。BaseBody {baseBodyResult.PixelWidth}x{baseBodyResult.PixelHeight} / 現在 {result.PixelWidth}x{result.PixelHeight}");
+                    report.Warnings.Add($"{layer.AssetId}: レイヤー画像のキャンバスサイズが基準レイヤーと一致しません。基準 {referenceResult.PixelWidth}x{referenceResult.PixelHeight} / 現在 {result.PixelWidth}x{result.PixelHeight}");
                 }
 
-                if (!HasSameAspectRatio(result, baseBodyResult))
+                if (!HasSameAspectRatio(result, referenceResult))
                 {
-                    report.Warnings.Add($"{layer.AssetId}: レイヤー画像の縦横比が BaseBody と一致しません。");
+                    report.Warnings.Add($"{layer.AssetId}: レイヤー画像の縦横比が基準レイヤーと一致しません。");
                 }
             }
         }
@@ -624,12 +646,15 @@ namespace FantasyLoveSimAssetTool.Services
             return Path.Combine(characterProjectService.GetCharacterDirectory(profile.HeroineId), asset.StoredPath);
         }
 
-        private static ImageInspectionResult FindBaseBodyInspection(
+        private static ImageInspectionResult FindLayerReferenceInspection(
             IReadOnlyList<LayerAssetDefinition> layerDefinitions,
             Dictionary<string, ImageInspectionResult> inspectionByAssetId)
         {
             LayerAssetDefinition baseBodyLayer = layerDefinitions
-                .Where(layer => layer != null && IsLayerKind(layer, "BaseBody") && !string.IsNullOrWhiteSpace(layer.AssetId))
+                .Where(layer => layer != null &&
+                    (IsLayerKind(layer, "BaseBody") || IsLayerKind(layer, "BackHair") ||
+                     IsLayerKind(layer, "CostumeBody") || IsLayerKind(layer, "HeadExpression")) &&
+                    !string.IsNullOrWhiteSpace(layer.AssetId))
                 .OrderBy(layer => layer.DrawOrder)
                 .FirstOrDefault(layer => inspectionByAssetId.ContainsKey(layer.AssetId));
 
@@ -674,7 +699,15 @@ namespace FantasyLoveSimAssetTool.Services
 
         private static bool IsKnownLayerKind(string layerKind)
         {
-            return string.Equals(layerKind, "BaseBody", StringComparison.OrdinalIgnoreCase)
+            return string.Equals(layerKind, "Background", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(layerKind, "BackAccessory", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(layerKind, "BackHair", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(layerKind, "CostumeBody", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(layerKind, "HeadExpression", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(layerKind, "FrontAccessory", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(layerKind, "FrontArm", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(layerKind, "Effect", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(layerKind, "BaseBody", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(layerKind, "Costume", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(layerKind, "Expression", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(layerKind, "Accessory", StringComparison.OrdinalIgnoreCase);

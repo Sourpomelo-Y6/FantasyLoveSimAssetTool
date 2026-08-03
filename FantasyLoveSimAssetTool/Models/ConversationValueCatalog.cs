@@ -43,12 +43,12 @@ namespace FantasyLoveSimAssetTool.Models
             "AutoWalkForest",
             "AutoWalkCave",
             "AutoWalkLake",
-            "AutoShopping",
-            "DuoWalkForest",
-            "DuoWalkCave",
-            "DuoWalkLake",
-            "DuoShopping",
-            "StayHome"
+            "AutoWalkShopping",
+            "AutoDuoForest",
+            "AutoDuoCave",
+            "AutoDuoLake",
+            "AutoDuoShopping",
+            "AutoStayHome"
         };
 
         public static readonly string[] ScheduledTimeSlots =

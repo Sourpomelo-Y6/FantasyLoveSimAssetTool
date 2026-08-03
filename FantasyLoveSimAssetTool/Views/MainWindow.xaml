@@ -2432,7 +2432,7 @@
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0"
-                                       Text="Accepted 済みの透過レイヤー素材を DrawOrder 順に重ねて確認します。BaseBody、Costume、Expression を選び、Unity に渡す前に位置ずれと描画順を確認します。"
+                                       Text="Accepted済み素材をDrawOrder順に重ねます。新8階層では頭・顔・前髪・表情をHeadExpression一枚として扱えます。旧4階層も互換表示します。"
                                        Foreground="Gray"
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,12"/>
@@ -2450,19 +2450,19 @@
                                     <StackPanel>
                                         <TextBlock Text="組み合わせ" FontWeight="SemiBold" Margin="0,0,0,12"/>
 
-                                        <TextBlock Text="BaseBody"/>
+                                        <TextBlock Text="BackHair / BaseBody"/>
                                         <ComboBox ItemsSource="{Binding LayerPreviewBaseBodyOptions}"
                                                   SelectedItem="{Binding SelectedLayerPreviewBaseBodyId}"
                                                   Height="26"
                                                   Margin="0,4,0,12"/>
 
-                                        <TextBlock Text="Costume"/>
+                                        <TextBlock Text="CostumeBody / Costume"/>
                                         <ComboBox ItemsSource="{Binding LayerPreviewCostumeOptions}"
                                                   SelectedItem="{Binding SelectedLayerPreviewCostumeId}"
                                                   Height="26"
                                                   Margin="0,4,0,12"/>
 
-                                        <TextBlock Text="Expression"/>
+                                        <TextBlock Text="HeadExpression / Expression"/>
                                         <ComboBox ItemsSource="{Binding LayerPreviewExpressionOptions}"
                                                   SelectedItem="{Binding SelectedLayerPreviewExpressionId}"
                                                   Height="26"

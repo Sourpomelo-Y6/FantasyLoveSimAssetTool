@@ -220,6 +220,26 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void Evaluate_EightLayerHeadAndCostumeSatisfyProductionStatus()
+        {
+            HeroineProfile profile = CompleteProfile();
+
+            CharacterProductionStatusRow row = CharacterProductionStatusService.Evaluate(
+                profile,
+                new[] { new ExpressionDefinition { ExpressionId = "Neutral" } },
+                new[] { new CostumeDefinition { CostumeId = "Default" } },
+                new[]
+                {
+                    new LayerAssetDefinition { AssetId = "Expression_Neutral", LayerKind = "HeadExpression", ExpressionId = "Neutral" },
+                    new LayerAssetDefinition { AssetId = "Costume_Default", LayerKind = "CostumeBody", CostumeId = "Default" }
+                },
+                asset => true);
+
+            Assert.AreEqual(ProductionStatusKind.Complete, row.Expressions.Kind);
+            Assert.AreEqual(ProductionStatusKind.Complete, row.Costumes.Kind);
+        }
+
+        [TestMethod]
         public void Evaluate_DetailChecksContainNavigationTargets()
         {
             HeroineProfile profile = CompleteProfile();

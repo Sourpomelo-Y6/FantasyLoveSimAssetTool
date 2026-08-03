@@ -732,7 +732,8 @@ namespace FantasyLoveSimAssetTool.Services
             };
             foreach (string expressionId in definitionIds.OrderBy(x => x))
             {
-                LayerAssetDefinition layer = layers.FirstOrDefault(x => IsLayerKind(x, "Expression") &&
+                LayerAssetDefinition layer = layers.FirstOrDefault(x =>
+                    (IsLayerKind(x, "HeadExpression") || IsLayerKind(x, "Expression")) &&
                     string.Equals(x.ExpressionId, expressionId, StringComparison.OrdinalIgnoreCase));
                 checks.Add(Check($"表情レイヤー {expressionId}", HasAcceptedLayer(profile, layer),
                     BuildLayerDetails(profile, layer), layer == null ? ProductionStatusTargetKind.Expression : ProductionStatusTargetKind.LayerAsset,
@@ -767,7 +768,8 @@ namespace FantasyLoveSimAssetTool.Services
             };
             foreach (string costumeId in definitionIds.OrderBy(x => x))
             {
-                LayerAssetDefinition layer = layers.FirstOrDefault(x => IsLayerKind(x, "Costume") &&
+                LayerAssetDefinition layer = layers.FirstOrDefault(x =>
+                    (IsLayerKind(x, "CostumeBody") || IsLayerKind(x, "Costume")) &&
                     string.Equals(x.CostumeId, costumeId, StringComparison.OrdinalIgnoreCase));
                 checks.Add(Check($"衣装レイヤー {costumeId}", HasAcceptedLayer(profile, layer), BuildLayerDetails(profile, layer),
                     layer == null ? ProductionStatusTargetKind.Costume : ProductionStatusTargetKind.LayerAsset,

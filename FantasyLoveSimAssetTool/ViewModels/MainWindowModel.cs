@@ -2154,6 +2154,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
             LayerAssetDefinitions = new ObservableCollection<LayerAssetDefinition>();
             LayerKindOptions = new ObservableCollection<string>
             {
+                "Background",
+                "BackAccessory",
+                "BackHair",
+                "CostumeBody",
+                "HeadExpression",
+                "FrontAccessory",
+                "FrontArm",
+                "Effect",
                 "BaseBody",
                 "Costume",
                 "Expression",
@@ -6309,8 +6317,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             string expressionId = SelectedExpressionDefinition?.ExpressionId ?? string.Empty;
             string costumeId = SelectedCostumeDefinition?.CostumeId ?? string.Empty;
-            string layerKind = string.IsNullOrWhiteSpace(expressionId) ? "Costume" : "Expression";
-            string baseId = layerKind == "Expression"
+            string layerKind = string.IsNullOrWhiteSpace(expressionId) ? "CostumeBody" : "HeadExpression";
+            string baseId = layerKind == "HeadExpression"
                 ? "Expression_" + (string.IsNullOrWhiteSpace(expressionId) ? "New" : expressionId)
                 : "Costume_" + (string.IsNullOrWhiteSpace(costumeId) ? "New" : costumeId);
             LayerAssetDefinition layer = new LayerAssetDefinition
@@ -6319,11 +6327,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     baseId,
                     LayerAssetDefinitions.Where(item => item != null).Select(item => item.AssetId)),
                 LayerKind = layerKind,
-                CostumeId = layerKind == "Costume" ? costumeId : string.Empty,
-                ExpressionId = layerKind == "Expression" ? expressionId : string.Empty,
-                DisplayName = layerKind == "Expression" ? "レイヤー: 表情" : "レイヤー: 衣装",
+                CostumeId = layerKind == "CostumeBody" ? costumeId : string.Empty,
+                ExpressionId = layerKind == "HeadExpression" ? expressionId : string.Empty,
+                DisplayName = layerKind == "HeadExpression" ? "レイヤー: 頭・表情" : "レイヤー: 衣装・身体",
                 FileName = baseId + ".png",
-                DrawOrder = layerKind == "Expression" ? 200 : 100,
+                DrawOrder = layerKind == "HeadExpression" ? 50 : 40,
                 Prompt = "transparent background, isolated sprite layer"
             };
             LayerAssetDefinitions.Add(layer);
@@ -6517,7 +6525,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             foreach (LayerAssetDefinition accessory in LayerAssetDefinitions
-                .Where(layer => layer != null && IsLayerKind(layer, "Accessory"))
+                .Where(layer => layer != null && IsOptionalEightLayerKind(layer) &&
+                    MatchesLayerPreviewCondition(layer, "Default", "Neutral"))
                 .OrderBy(layer => layer.DrawOrder))
             {
                 TryAddProfilePreviewItem(items, accessory, profileAssets);
@@ -6628,7 +6637,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 && string.Equals(layer.ExpressionId, SelectedLayerPreviewExpressionId, StringComparison.OrdinalIgnoreCase));
 
             foreach (LayerAssetDefinition accessory in LayerAssetDefinitions
-                .Where(layer => layer != null && IsLayerKind(layer, "Accessory"))
+                .Where(layer => layer != null && IsOptionalEightLayerKind(layer) &&
+                    MatchesLayerPreviewCondition(
+                        layer,
+                        SelectedLayerPreviewCostumeId,
+                        SelectedLayerPreviewExpressionId))
                 .OrderBy(layer => layer.DrawOrder))
             {
                 layers.Add(accessory);
@@ -6640,6 +6653,24 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 .Select(group => group.First())
                 .OrderBy(layer => layer.DrawOrder)
                 .ToList();
+        }
+
+        private static bool IsOptionalEightLayerKind(LayerAssetDefinition layer)
+        {
+            return IsLayerKind(layer, "Accessory") || IsLayerKind(layer, "Background") ||
+                IsLayerKind(layer, "FrontArm") || IsLayerKind(layer, "Effect");
+        }
+
+        private static bool MatchesLayerPreviewCondition(
+            LayerAssetDefinition layer,
+            string costumeId,
+            string expressionId)
+        {
+            return layer != null &&
+                (string.IsNullOrWhiteSpace(layer.CostumeId) ||
+                    string.Equals(layer.CostumeId, costumeId, StringComparison.OrdinalIgnoreCase)) &&
+                (string.IsNullOrWhiteSpace(layer.ExpressionId) ||
+                    string.Equals(layer.ExpressionId, expressionId, StringComparison.OrdinalIgnoreCase));
         }
 
         private void AddSelectedLayer(List<LayerAssetDefinition> layers, Func<LayerAssetDefinition, bool> predicate)
@@ -6683,8 +6714,27 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private static bool IsLayerKind(LayerAssetDefinition layer, string layerKind)
         {
-            return layer != null
-                && string.Equals(layer.LayerKind?.Trim(), layerKind, StringComparison.OrdinalIgnoreCase);
+            if (layer == null)
+            {
+                return false;
+            }
+
+            string actual = layer.LayerKind?.Trim() ?? string.Empty;
+            if (string.Equals(actual, layerKind, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (string.Equals(layerKind, "BaseBody", StringComparison.OrdinalIgnoreCase))
+                return string.Equals(actual, "BackHair", StringComparison.OrdinalIgnoreCase);
+            if (string.Equals(layerKind, "Costume", StringComparison.OrdinalIgnoreCase))
+                return string.Equals(actual, "CostumeBody", StringComparison.OrdinalIgnoreCase);
+            if (string.Equals(layerKind, "Expression", StringComparison.OrdinalIgnoreCase))
+                return string.Equals(actual, "HeadExpression", StringComparison.OrdinalIgnoreCase);
+            if (string.Equals(layerKind, "Accessory", StringComparison.OrdinalIgnoreCase))
+                return string.Equals(actual, "BackAccessory", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(actual, "FrontAccessory", StringComparison.OrdinalIgnoreCase);
+            return false;
         }
 
         private static string SelectExistingOrFirst(string previousValue, ObservableCollection<string> options)
@@ -6883,16 +6933,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     warnings.Add($"レイヤー素材定義 {label}: 衣装ID '{costumeId}' が衣装定義にありません。");
                 }
 
-                if (string.Equals(layerKind, "Expression", StringComparison.OrdinalIgnoreCase)
+                if ((string.Equals(layerKind, "Expression", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(layerKind, "HeadExpression", StringComparison.OrdinalIgnoreCase))
                     && string.IsNullOrWhiteSpace(expressionId))
                 {
-                    warnings.Add($"レイヤー素材定義 {label}: 種類が Expression の場合は表情IDを指定してください。");
+                    warnings.Add($"レイヤー素材定義 {label}: HeadExpression / Expressionには表情IDが必要です。");
                 }
 
-                if (string.Equals(layerKind, "Costume", StringComparison.OrdinalIgnoreCase)
+                if ((string.Equals(layerKind, "Costume", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(layerKind, "CostumeBody", StringComparison.OrdinalIgnoreCase))
                     && string.IsNullOrWhiteSpace(costumeId))
                 {
-                    warnings.Add($"レイヤー素材定義 {label}: 種類が Costume の場合は衣装IDを指定してください。");
+                    warnings.Add($"レイヤー素材定義 {label}: CostumeBody / Costumeには衣装IDが必要です。");
                 }
             }
 
@@ -9277,17 +9329,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 case "SoloLake":
                     return new ScheduledEventTemplate("SoloLake", "湖への外出", "AutoWalkLake", "Noon", "Lake", "今日は昼に湖へ出かける予定です。", "湖のほとりで、静かな時間を過ごしました。");
                 case "SoloShopping":
-                    return new ScheduledEventTemplate("SoloShopping", "街への買い物", "AutoShopping", "Noon", "Town", "今日は昼に街へ買い物に出かける予定です。", "街を歩きながら、気になる店をいくつか見て回りました。");
+                    return new ScheduledEventTemplate("SoloShopping", "街への買い物", "AutoWalkShopping", "Noon", "Town", "今日は昼に街へ買い物に出かける予定です。", "街を歩きながら、気になる店をいくつか見て回りました。");
                 case "DuoForest":
-                    return new ScheduledEventTemplate("DuoForest", "森への同行外出", "DuoWalkForest", "Noon", "Forest", "今日は昼に二人で森へ出かける予定です。", "二人で森を歩きながら、少しだけ距離が近づいた気がしました。");
+                    return new ScheduledEventTemplate("DuoForest", "森への同行外出", "AutoDuoForest", "Noon", "Forest", "今日は昼に二人で森へ出かける予定です。", "二人で森を歩きながら、少しだけ距離が近づいた気がしました。");
                 case "DuoCave":
-                    return new ScheduledEventTemplate("DuoCave", "洞窟への同行外出", "DuoWalkCave", "Noon", "Cave", "今日は昼に二人で洞窟へ出かける予定です。", "二人で洞窟を進み、危ない場所では自然と声を掛け合いました。");
+                    return new ScheduledEventTemplate("DuoCave", "洞窟への同行外出", "AutoDuoCave", "Noon", "Cave", "今日は昼に二人で洞窟へ出かける予定です。", "二人で洞窟を進み、危ない場所では自然と声を掛け合いました。");
                 case "DuoLake":
-                    return new ScheduledEventTemplate("DuoLake", "湖への同行外出", "DuoWalkLake", "Noon", "Lake", "今日は昼に二人で湖へ出かける予定です。", "湖のほとりで、二人だけの落ち着いた時間を過ごしました。");
+                    return new ScheduledEventTemplate("DuoLake", "湖への同行外出", "AutoDuoLake", "Noon", "Lake", "今日は昼に二人で湖へ出かける予定です。", "湖のほとりで、二人だけの落ち着いた時間を過ごしました。");
                 case "DuoShopping":
-                    return new ScheduledEventTemplate("DuoShopping", "街への同行買い物", "DuoShopping", "Noon", "Town", "今日は昼に二人で街へ買い物に出かける予定です。", "街で買い物をしながら、相手の好みを少し知ることができました。");
+                    return new ScheduledEventTemplate("DuoShopping", "街への同行買い物", "AutoDuoShopping", "Noon", "Town", "今日は昼に二人で街へ買い物に出かける予定です。", "街で買い物をしながら、相手の好みを少し知ることができました。");
                 case "StayHome":
-                    return new ScheduledEventTemplate("StayHome", "家で過ごす予定", "StayHome", "Noon", "Room", "今日は昼を家で過ごす予定です。", "部屋でゆっくり過ごし、穏やかな時間になりました。");
+                    return new ScheduledEventTemplate("StayHome", "家で過ごす予定", "AutoStayHome", "Noon", "Room", "今日は昼を家で過ごす予定です。", "部屋でゆっくり過ごし、穏やかな時間になりました。");
                 default:
                     return new ScheduledEventTemplate("SoloForest", "森への外出", "AutoWalkForest", "Noon", "Forest", "今日は昼に森へ出かける予定です。", "森を歩きながら、静かな時間を過ごしました。");
             }
