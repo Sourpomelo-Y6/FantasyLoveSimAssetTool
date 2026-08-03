@@ -10622,6 +10622,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 case ProductionStatusTargetKind.LayerAsset:
                     SelectedLayerAssetDefinition = LayerAssetDefinitions.FirstOrDefault(x =>
                         string.Equals(x.AssetId, check.TargetId, StringComparison.OrdinalIgnoreCase));
+                    if (SelectedLayerAssetDefinition != null &&
+                        !string.IsNullOrWhiteSpace(SelectedLayerAssetDefinition.CostumeId))
+                    {
+                        SelectedCostumeDefinition = CostumeDefinitions.FirstOrDefault(x =>
+                            string.Equals(
+                                x.CostumeId,
+                                SelectedLayerAssetDefinition.CostumeId,
+                                StringComparison.OrdinalIgnoreCase));
+                    }
                     break;
                 case ProductionStatusTargetKind.StillDefinition:
                     StillDefinition still = StillDefinitions.FirstOrDefault(x =>

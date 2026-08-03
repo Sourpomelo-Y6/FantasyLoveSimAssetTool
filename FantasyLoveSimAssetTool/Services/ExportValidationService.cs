@@ -52,6 +52,7 @@ namespace FantasyLoveSimAssetTool.Services
 
             if (string.IsNullOrWhiteSpace(profile.HeroineId)) Add(issues, ExportValidationSeverity.Error, "HeroineId が空です。");
             ValidateHeroineSkillTreeNamespaces(issues, profile);
+            ValidateCostumeLayers(issues, acceptedIds);
             foreach (HeroineAsset asset in accepted)
             {
                 string directory = projectService.GetCharacterDirectory(profile.HeroineId);
@@ -151,6 +152,56 @@ namespace FantasyLoveSimAssetTool.Services
                 string.Equals(triggerType, "ActionCompleted", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(triggerType, "LocationEntered", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(triggerType, "QuestCompleted", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void ValidateCostumeLayers(
+            List<ExportValidationIssue> issues,
+            HashSet<string> acceptedAssetIds)
+        {
+            IReadOnlyList<CostumeDefinition> costumes = catalogService
+                .LoadCostumeDefinitionFile().Costumes
+                .Where(item => item != null && !string.IsNullOrWhiteSpace(item.CostumeId))
+                .ToList();
+            IReadOnlyList<LayerAssetDefinition> layers = catalogService
+                .LoadLayerAssetDefinitionFile().Layers;
+
+            foreach (CostumeDefinition costume in costumes)
+            {
+                string costumeId = costume.CostumeId.Trim();
+                bool isDefault = string.Equals(
+                    costumeId, "Default", StringComparison.OrdinalIgnoreCase);
+                LayerAssetDefinition body = layers.FirstOrDefault(layer =>
+                    layer != null &&
+                    (string.Equals(layer.LayerKind?.Trim(), "CostumeBody", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(layer.LayerKind?.Trim(), "Costume", StringComparison.OrdinalIgnoreCase)) &&
+                    string.Equals(layer.CostumeId?.Trim(), costumeId, StringComparison.OrdinalIgnoreCase));
+                ExportValidationSeverity severity = isDefault
+                    ? ExportValidationSeverity.Error
+                    : ExportValidationSeverity.Warning;
+
+                if (body == null || string.IsNullOrWhiteSpace(body.AssetId))
+                {
+                    Add(
+                        issues,
+                        severity,
+                        $"衣装 {costumeId}: 衣装本体（CostumeBody）が未設定です。",
+                        ProductionStatusTargetKind.Costume,
+                        costumeId,
+                        9);
+                    continue;
+                }
+
+                if (!acceptedAssetIds.Contains(body.AssetId.Trim()))
+                {
+                    Add(
+                        issues,
+                        severity,
+                        $"衣装 {costumeId}: 衣装本体 {body.AssetId} がAccepted画像ではありません。",
+                        ProductionStatusTargetKind.LayerAsset,
+                        body.AssetId,
+                        9);
+                }
+            }
         }
 
         private static void ValidateHeroineSkillTreeNamespaces(List<ExportValidationIssue> issues, HeroineProfile profile)

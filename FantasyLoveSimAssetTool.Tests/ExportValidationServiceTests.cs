@@ -164,6 +164,43 @@ namespace FantasyLoveSimAssetTool.Tests
             }
         }
 
+        [TestMethod]
+        public void Validate_MissingDefaultCostumeBodyReturnsNavigableError()
+        {
+            string workspace = CreateWorkspace();
+            try
+            {
+                CharacterProjectService project = new CharacterProjectService(workspace);
+                HeroineProfile profile = project.CreateCharacter("TestHeroine", "Test");
+                DefinitionCatalogService catalogs = new DefinitionCatalogService(workspace);
+                catalogs.SaveCostumeDefinitionFile(new[]
+                {
+                    new CostumeDefinition { CostumeId = "Default", DisplayName = "Default" },
+                    new CostumeDefinition { CostumeId = "Town", DisplayName = "Town" }
+                });
+                catalogs.SaveLayerAssetDefinitionFile(Array.Empty<LayerAssetDefinition>());
+
+                ExportValidationResult result =
+                    new ExportValidationService(project).Validate(profile);
+
+                ExportValidationIssue defaultIssue = result.Issues.First(issue =>
+                    issue.Message.Contains("衣装 Default") &&
+                    issue.Message.Contains("CostumeBody"));
+                ExportValidationIssue townIssue = result.Issues.First(issue =>
+                    issue.Message.Contains("衣装 Town") &&
+                    issue.Message.Contains("CostumeBody"));
+                Assert.AreEqual(ExportValidationSeverity.Error, defaultIssue.Severity);
+                Assert.AreEqual(ProductionStatusTargetKind.Costume, defaultIssue.TargetKind);
+                Assert.AreEqual("Default", defaultIssue.TargetId);
+                Assert.AreEqual(9, defaultIssue.TargetTabIndex);
+                Assert.AreEqual(ExportValidationSeverity.Warning, townIssue.Severity);
+            }
+            finally
+            {
+                Directory.Delete(workspace, true);
+            }
+        }
+
         private static string CreateWorkspace()
         {
             string path = Path.Combine(Path.GetTempPath(), "FantasyLoveSimAssetToolTests", Guid.NewGuid().ToString("N"));

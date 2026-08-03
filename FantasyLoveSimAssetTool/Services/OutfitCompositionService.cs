@@ -59,9 +59,10 @@ namespace FantasyLoveSimAssetTool.Services
                 throw new ArgumentException("CostumeId is required.", nameof(costumeId));
             selection ??= new OutfitCompositionSelection();
 
-            SetSlot(layers, costumeId, "CostumeBody", selection.CostumeBodyAssetId, 40, "衣装本体");
-            SetSlot(layers, costumeId, "BackAccessory", selection.BackAccessoryAssetId, 10, "後ろアクセサリー");
-            SetSlot(layers, costumeId, "FrontAccessory", selection.FrontAccessoryAssetId, 60, "前アクセサリー");
+            // 衣装本体は必須枠。UIの再読込途中などで選択値が空でも、既存設定を削除しない。
+            SetSlot(layers, costumeId, "CostumeBody", selection.CostumeBodyAssetId, 40, "衣装本体", false);
+            SetSlot(layers, costumeId, "BackAccessory", selection.BackAccessoryAssetId, 10, "後ろアクセサリー", true);
+            SetSlot(layers, costumeId, "FrontAccessory", selection.FrontAccessoryAssetId, 60, "前アクセサリー", true);
         }
 
         private static string FindAssetId(IEnumerable<LayerAssetDefinition> layers, params string[] kinds)
@@ -77,7 +78,8 @@ namespace FantasyLoveSimAssetTool.Services
             string layerKind,
             string assetId,
             int drawOrder,
-            string displayName)
+            string displayName,
+            bool removeWhenEmpty)
         {
             List<LayerAssetDefinition> matches = layers.Where(layer => layer != null &&
                 string.Equals(layer.CostumeId?.Trim(), costumeId.Trim(), StringComparison.OrdinalIgnoreCase) &&
@@ -85,7 +87,10 @@ namespace FantasyLoveSimAssetTool.Services
             string normalizedAssetId = assetId?.Trim() ?? string.Empty;
             if (string.IsNullOrEmpty(normalizedAssetId))
             {
-                foreach (LayerAssetDefinition match in matches) layers.Remove(match);
+                if (removeWhenEmpty)
+                {
+                    foreach (LayerAssetDefinition match in matches) layers.Remove(match);
+                }
                 return;
             }
 

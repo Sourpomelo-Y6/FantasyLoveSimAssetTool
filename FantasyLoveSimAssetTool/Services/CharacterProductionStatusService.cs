@@ -785,7 +785,7 @@ namespace FantasyLoveSimAssetTool.Services
                     definitionIds.Contains(reference) ? "登録済み衣装を参照しています。" : "参照先の衣装定義がありません。",
                     ProductionStatusTargetKind.Costume, reference));
             int complete = checks.Count(x => x.IsComplete);
-            return Cell(profile, "衣装", 8, Kind(complete, checks.Count),
+            return Cell(profile, "衣装", 9, Kind(complete, checks.Count),
                 $"完成条件 {complete}/{checks.Count}。Default、衣装レイヤー、会話・戦闘からの参照を確認します。", checks);
         }
 

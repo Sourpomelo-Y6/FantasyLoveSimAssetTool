@@ -73,5 +73,33 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(1, layers.Count);
             Assert.AreEqual("DefaultBack", layers[0].AssetId);
         }
+
+        [TestMethod]
+        public void Apply_EmptyBodySelectionPreservesExistingCostumeBody()
+        {
+            List<LayerAssetDefinition> layers = new List<LayerAssetDefinition>
+            {
+                new LayerAssetDefinition
+                {
+                    AssetId = "Costume_Default",
+                    LayerKind = "Costume",
+                    CostumeId = "Default"
+                }
+            };
+
+            OutfitCompositionService.Apply(
+                layers,
+                "Default",
+                new OutfitCompositionSelection
+                {
+                    BackAccessoryAssetId = "Accessory_Default_Back",
+                    FrontAccessoryAssetId = "Accessory_Default_Front"
+                });
+
+            Assert.AreEqual(3, layers.Count);
+            Assert.AreEqual(
+                "Costume_Default",
+                layers.Single(layer => layer.LayerKind == "Costume").AssetId);
+        }
     }
 }
