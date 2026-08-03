@@ -2085,6 +2085,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand RefreshLayerPreviewCommand { get; }
 
+        public ICommand ImportLayeredSpritesFromUnityCommand { get; }
+
         public MainWindowModel()
         {
             characterProjectService = new CharacterProjectService();
@@ -2623,6 +2625,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SaveDefinitionCatalogCommand = new RelayCommand(SaveDefinitionCatalog);
             ReloadDefinitionCatalogCommand = new RelayCommand(ReloadDefinitionCatalog);
             RefreshLayerPreviewCommand = new RelayCommand(RefreshLayerPreview);
+            ImportLayeredSpritesFromUnityCommand = new RelayCommand(
+                ImportLayeredSpritesFromUnity,
+                () => SelectedProfile != null);
 
             ReloadComfySettings();
             LoadDefinitionCatalog();
@@ -6169,6 +6174,124 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 SelectedPromptTemplate = AvailablePromptTemplates[0];
             }
+        }
+
+        private void ImportLayeredSpritesFromUnity()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            OpenFileDialog dialog = new OpenFileDialog
+            {
+                Title = "heroine_layered_sprites_from_unity.json を選択",
+                Filter = "heroine_layered_sprites_from_unity.json|heroine_layered_sprites_from_unity.json|JSON files (*.json)|*.json|All files (*.*)|*.*"
+            };
+            if (dialog.ShowDialog() != true)
+            {
+                StatusMessage = "FromUnity レイヤー import をキャンセルしました。";
+                return;
+            }
+
+            try
+            {
+                ImportLayeredSpritesFromUnityFile(dialog.FileName);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"FromUnity レイヤー import に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void ImportLayeredSpritesFromUnityFile(string filePath)
+        {
+            FromUnityLayeredSpriteDataFile data = LayeredSpriteSyncService.DeserializeFromUnity(
+                File.ReadAllText(filePath));
+            if (!string.IsNullOrWhiteSpace(data.HeroineId) &&
+                !string.Equals(data.HeroineId, SelectedProfile.HeroineId, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    $"HeroineId が選択中のキャラクターと一致しません。JSON: {data.HeroineId} / Selected: {SelectedProfile.HeroineId}");
+            }
+
+            LayeredSpriteMergeResult result = LayeredSpriteSyncService.MergeFromUnity(
+                LayerAssetDefinitions,
+                CostumeDefinitions,
+                ExpressionDefinitions,
+                data);
+            int registeredImages = 0;
+            int missingImages = 0;
+            foreach (FromUnityLayeredSpriteItem item in result.ImportedItems)
+            {
+                HeroineAsset existing = SelectedProfile.Assets?.FirstOrDefault(asset =>
+                    asset != null && string.Equals(asset.AssetId, item.AssetId, StringComparison.OrdinalIgnoreCase));
+                string existingPath = existing == null ? string.Empty : BuildStoredImagePath(existing);
+                if (!string.IsNullOrWhiteSpace(existingPath) && File.Exists(existingPath))
+                {
+                    continue;
+                }
+
+                string sourcePath = ResolveUnityLayerImagePath(item.UnityImagePath, filePath);
+                if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
+                {
+                    missingImages++;
+                    continue;
+                }
+
+                characterProjectService.AddImageAsset(
+                    SelectedProfile,
+                    sourcePath,
+                    AssetUsage.Sprites,
+                    item.AssetId,
+                    AssetStatus.Accepted,
+                    overwriteExisting: existing != null);
+                registeredImages++;
+            }
+
+            definitionCatalogService.SaveExpressionDefinitionFile(ExpressionDefinitions);
+            definitionCatalogService.SaveCostumeDefinitionFile(CostumeDefinitions);
+            definitionCatalogService.SaveLayerAssetDefinitionFile(LayerAssetDefinitions);
+            characterProjectService.SaveProfile(SelectedProfile);
+            RefreshDefinitionCatalogOptions();
+            DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
+            RefreshLayerPreviewOptions();
+            RefreshLayerPreview();
+            RefreshProfilePreview();
+            RefreshAcceptedAssets();
+            RefreshProductionStatus();
+            SelectedLayerAssetDefinition = LayerAssetDefinitions.FirstOrDefault();
+            StatusMessage =
+                $"FromUnity レイヤーを取り込みました。追加 {result.AddedCount}、更新 {result.UpdatedCount}、" +
+                $"画像登録 {registeredImages}、画像未検出 {missingImages}、スキップ {result.SkippedCount}。";
+        }
+
+        private string ResolveUnityLayerImagePath(string unityImagePath, string jsonPath)
+        {
+            if (string.IsNullOrWhiteSpace(unityImagePath))
+            {
+                return string.Empty;
+            }
+            if (Path.IsPathRooted(unityImagePath))
+            {
+                return Path.GetFullPath(unityImagePath);
+            }
+            if (AudioLibraryService.IsUnityProjectPath(UnityProjectPath))
+            {
+                return Path.GetFullPath(Path.Combine(UnityProjectPath, unityImagePath));
+            }
+
+            DirectoryInfo directory = new DirectoryInfo(Path.GetDirectoryName(jsonPath) ?? string.Empty);
+            while (directory != null)
+            {
+                if (Directory.Exists(Path.Combine(directory.FullName, "Assets")) &&
+                    Directory.Exists(Path.Combine(directory.FullName, "ProjectSettings")))
+                {
+                    return Path.GetFullPath(Path.Combine(directory.FullName, unityImagePath));
+                }
+                directory = directory.Parent;
+            }
+            return string.Empty;
         }
 
         private void LoadDefinitionCatalog()

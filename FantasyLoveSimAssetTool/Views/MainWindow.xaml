@@ -2396,7 +2396,7 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="12"/>
-                                    <ColumnDefinition Width="252"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
 
                                 <TextBox Grid.Column="0"
@@ -2410,6 +2410,11 @@
                                          BorderBrush="#E0B4B4"/>
 
                                 <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                                    <Button Content="Unityレイヤー読込"
+                                            Command="{Binding ImportLayeredSpritesFromUnityCommand}"
+                                            Width="140"
+                                            Height="30"
+                                            Margin="0,0,8,0"/>
                                     <Button Content="再読み込み"
                                             Command="{Binding ReloadDefinitionCatalogCommand}"
                                             Width="120"
