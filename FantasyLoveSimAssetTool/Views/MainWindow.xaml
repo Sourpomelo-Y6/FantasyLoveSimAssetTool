@@ -2429,6 +2429,85 @@
                         </Grid>
                     </TabItem>
 
+                    <TabItem Header="服装設定">
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="340"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="12">
+                                <StackPanel>
+                                    <TextBlock Text="服装セット" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8"/>
+                                    <TextBlock Text="衣装本体と前後アクセサリーを同じ衣装IDへまとめて設定します。空欄のアクセサリーは使用しません。"
+                                               Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,14"/>
+
+                                    <TextBlock Text="衣装"/>
+                                    <ComboBox ItemsSource="{Binding CostumeDefinitions}"
+                                              SelectedItem="{Binding SelectedCostumeDefinition}"
+                                              DisplayMemberPath="DisplayName"
+                                              Height="28" Margin="0,4,0,14"/>
+
+                                    <TextBlock Text="衣装本体画像（CostumeBody）"/>
+                                    <ComboBox ItemsSource="{Binding OutfitLayerAssetOptions}"
+                                              SelectedItem="{Binding SelectedOutfitCostumeBodyAssetId}"
+                                              Height="28" Margin="0,4,0,14"/>
+
+                                    <TextBlock Text="後ろアクセサリー画像（BackAccessory）"/>
+                                    <ComboBox ItemsSource="{Binding OutfitLayerAssetOptions}"
+                                              SelectedItem="{Binding SelectedOutfitBackAccessoryAssetId}"
+                                              Height="28" Margin="0,4,0,14"/>
+
+                                    <TextBlock Text="前アクセサリー画像（FrontAccessory）"/>
+                                    <ComboBox ItemsSource="{Binding OutfitLayerAssetOptions}"
+                                              SelectedItem="{Binding SelectedOutfitFrontAccessoryAssetId}"
+                                              Height="28" Margin="0,4,0,14"/>
+
+                                    <Button Content="服装セットを保存"
+                                            Command="{Binding ApplyOutfitCompositionCommand}"
+                                            Height="32" Margin="0,4,0,12"/>
+                                    <TextBlock Text="{Binding OutfitCompositionMessage}"
+                                               Foreground="Gray" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="2" BorderBrush="#DDDDDD" BorderThickness="1" Padding="12">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="150"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="服装プレビュー" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8"/>
+                                    <Grid Grid.Row="1" Background="#F7F7F7">
+                                        <ItemsControl ItemsSource="{Binding OutfitCompositionPreviewItems}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate><Grid/></ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Image Source="{Binding ImagePath, Converter={StaticResource StringToImageSourceConverter}}"
+                                                           Stretch="Uniform"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Grid>
+                                    <DataGrid Grid.Row="2"
+                                              ItemsSource="{Binding OutfitCompositionPreviewItems}"
+                                              AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False"
+                                              Margin="0,8,0,0">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="順" Binding="{Binding DrawOrder}" Width="50"/>
+                                            <DataGridTextColumn Header="種類" Binding="{Binding LayerKind}" Width="130"/>
+                                            <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId}" Width="*"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </TabItem>
+
                     <TabItem Header="レイヤープレビュー">
                         <Grid Margin="0,12,0,0">
                             <Grid.RowDefinitions>

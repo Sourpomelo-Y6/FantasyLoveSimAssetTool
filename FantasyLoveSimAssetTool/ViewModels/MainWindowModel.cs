@@ -109,6 +109,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string selectedLayerPreviewCostumeId;
         private string selectedLayerPreviewExpressionId;
         private string layerPreviewMessage;
+        private string selectedOutfitCostumeBodyAssetId;
+        private string selectedOutfitBackAccessoryAssetId;
+        private string selectedOutfitFrontAccessoryAssetId;
+        private string outfitCompositionMessage;
         private string profilePreviewImagePath;
         private string profilePreviewMessage;
         private PromptRecord currentPromptRecord;
@@ -296,6 +300,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<LayerPreviewItem> LayerPreviewItems { get; }
 
         public ObservableCollection<LayerPreviewItem> ProfilePreviewItems { get; }
+
+        public ObservableCollection<string> OutfitLayerAssetOptions { get; }
+
+        public ObservableCollection<LayerPreviewItem> OutfitCompositionPreviewItems { get; }
 
         public string StillPromptPreview
         {
@@ -1119,6 +1127,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedCostumeDefinition == value) { return; }
                 selectedCostumeDefinition = value;
                 OnPropertyChanged(nameof(SelectedCostumeDefinition));
+                RefreshOutfitCompositionEditor();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -1193,6 +1202,53 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public string SelectedOutfitCostumeBodyAssetId
+        {
+            get { return selectedOutfitCostumeBodyAssetId; }
+            set
+            {
+                if (selectedOutfitCostumeBodyAssetId == value) return;
+                selectedOutfitCostumeBodyAssetId = value;
+                OnPropertyChanged(nameof(SelectedOutfitCostumeBodyAssetId));
+                RefreshOutfitCompositionPreview();
+            }
+        }
+
+        public string SelectedOutfitBackAccessoryAssetId
+        {
+            get { return selectedOutfitBackAccessoryAssetId; }
+            set
+            {
+                if (selectedOutfitBackAccessoryAssetId == value) return;
+                selectedOutfitBackAccessoryAssetId = value;
+                OnPropertyChanged(nameof(SelectedOutfitBackAccessoryAssetId));
+                RefreshOutfitCompositionPreview();
+            }
+        }
+
+        public string SelectedOutfitFrontAccessoryAssetId
+        {
+            get { return selectedOutfitFrontAccessoryAssetId; }
+            set
+            {
+                if (selectedOutfitFrontAccessoryAssetId == value) return;
+                selectedOutfitFrontAccessoryAssetId = value;
+                OnPropertyChanged(nameof(SelectedOutfitFrontAccessoryAssetId));
+                RefreshOutfitCompositionPreview();
+            }
+        }
+
+        public string OutfitCompositionMessage
+        {
+            get { return outfitCompositionMessage; }
+            set
+            {
+                if (outfitCompositionMessage == value) return;
+                outfitCompositionMessage = value;
+                OnPropertyChanged(nameof(OutfitCompositionMessage));
+            }
+        }
+
         public string ProfilePreviewImagePath
         {
             get { return profilePreviewImagePath; }
@@ -1257,6 +1313,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 RefreshLayerPreviewOptions();
                 RefreshLayerPreview();
                 RefreshProfilePreview();
+                RefreshOutfitLayerAssetOptions();
+                RefreshOutfitCompositionEditor();
                 RefreshConversationCategorySuggestions();
                 RefreshFilteredConversationEntries();
                 RefreshSelectedStillStatus();
@@ -2087,6 +2145,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ImportLayeredSpritesFromUnityCommand { get; }
 
+        public ICommand ApplyOutfitCompositionCommand { get; }
+
         public MainWindowModel()
         {
             characterProjectService = new CharacterProjectService();
@@ -2197,6 +2257,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             LayerPreviewExpressionOptions = new ObservableCollection<string>();
             LayerPreviewItems = new ObservableCollection<LayerPreviewItem>();
             ProfilePreviewItems = new ObservableCollection<LayerPreviewItem>();
+            OutfitLayerAssetOptions = new ObservableCollection<string>();
+            OutfitCompositionPreviewItems = new ObservableCollection<LayerPreviewItem>();
             AssetStatusFilters = new ObservableCollection<string>
             {
                 "All",
@@ -2628,6 +2690,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ImportLayeredSpritesFromUnityCommand = new RelayCommand(
                 ImportLayeredSpritesFromUnity,
                 () => SelectedProfile != null);
+            ApplyOutfitCompositionCommand = new RelayCommand(
+                ApplyOutfitComposition,
+                () => SelectedProfile != null && SelectedCostumeDefinition != null);
 
             ReloadComfySettings();
             LoadDefinitionCatalog();
@@ -6261,6 +6326,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RefreshAcceptedAssets();
             RefreshProductionStatus();
             SelectedLayerAssetDefinition = LayerAssetDefinitions.FirstOrDefault();
+            RefreshOutfitCompositionEditor();
             StatusMessage =
                 $"FromUnity レイヤーを取り込みました。追加 {result.AddedCount}、更新 {result.UpdatedCount}、" +
                 $"画像登録 {registeredImages}、画像未検出 {missingImages}、スキップ {result.SkippedCount}。";
@@ -6522,6 +6588,126 @@ namespace FantasyLoveSimAssetTool.ViewModels
             OnPropertyChanged(nameof(SelectedLayerPreviewBaseBodyId));
             OnPropertyChanged(nameof(SelectedLayerPreviewCostumeId));
             OnPropertyChanged(nameof(SelectedLayerPreviewExpressionId));
+        }
+
+        private void RefreshOutfitLayerAssetOptions()
+        {
+            string[] previous =
+            {
+                selectedOutfitCostumeBodyAssetId,
+                selectedOutfitBackAccessoryAssetId,
+                selectedOutfitFrontAccessoryAssetId
+            };
+            RefreshStringOptions(
+                OutfitLayerAssetOptions,
+                (SelectedProfile?.Assets ?? new ObservableCollection<HeroineAsset>())
+                    .Where(asset => asset != null && asset.Usage == AssetUsage.Sprites &&
+                        asset.Status == AssetStatus.Accepted)
+                    .Select(asset => asset.AssetId),
+                includeEmpty: true);
+
+            // 現在設定中のIDは、画像が一時的に未登録でも選択表示を維持する。
+            foreach (string id in previous.Where(id => !string.IsNullOrWhiteSpace(id)))
+            {
+                if (!OutfitLayerAssetOptions.Contains(id)) OutfitLayerAssetOptions.Add(id);
+            }
+        }
+
+        private void RefreshOutfitCompositionEditor()
+        {
+            OutfitCompositionSelection selection = SelectedCostumeDefinition == null
+                ? new OutfitCompositionSelection()
+                : OutfitCompositionService.Read(
+                    LayerAssetDefinitions,
+                    SelectedCostumeDefinition.CostumeId);
+            selectedOutfitCostumeBodyAssetId = selection.CostumeBodyAssetId;
+            selectedOutfitBackAccessoryAssetId = selection.BackAccessoryAssetId;
+            selectedOutfitFrontAccessoryAssetId = selection.FrontAccessoryAssetId;
+            OnPropertyChanged(nameof(SelectedOutfitCostumeBodyAssetId));
+            OnPropertyChanged(nameof(SelectedOutfitBackAccessoryAssetId));
+            OnPropertyChanged(nameof(SelectedOutfitFrontAccessoryAssetId));
+            RefreshOutfitLayerAssetOptions();
+            RefreshOutfitCompositionPreview();
+        }
+
+        private void ApplyOutfitComposition()
+        {
+            if (SelectedProfile == null || SelectedCostumeDefinition == null)
+            {
+                return;
+            }
+
+            OutfitCompositionService.Apply(
+                LayerAssetDefinitions,
+                SelectedCostumeDefinition.CostumeId,
+                new OutfitCompositionSelection
+                {
+                    CostumeBodyAssetId = SelectedOutfitCostumeBodyAssetId,
+                    BackAccessoryAssetId = SelectedOutfitBackAccessoryAssetId,
+                    FrontAccessoryAssetId = SelectedOutfitFrontAccessoryAssetId
+                });
+            definitionCatalogService.SaveLayerAssetDefinitionFile(LayerAssetDefinitions);
+            DefinitionCatalogValidationMessage = BuildDefinitionCatalogValidationMessage();
+            RefreshLayerPreviewOptions();
+            selectedLayerPreviewCostumeId = SelectedCostumeDefinition.CostumeId;
+            OnPropertyChanged(nameof(SelectedLayerPreviewCostumeId));
+            RefreshLayerPreview();
+            RefreshProfilePreview();
+            RefreshOutfitCompositionEditor();
+            RefreshProductionStatus();
+            OutfitCompositionMessage = $"{SelectedCostumeDefinition.DisplayName} の服装セットを保存しました。";
+        }
+
+        private void RefreshOutfitCompositionPreview()
+        {
+            OutfitCompositionPreviewItems.Clear();
+            if (SelectedProfile == null || SelectedCostumeDefinition == null)
+            {
+                OutfitCompositionMessage = "キャラクターと衣装を選択してください。";
+                return;
+            }
+
+            Dictionary<string, HeroineAsset> assets = BuildAcceptedAssetDictionary();
+            int missingCount = 0;
+            AddOutfitCompositionPreviewItem(
+                SelectedOutfitBackAccessoryAssetId, "BackAccessory", 10, assets, ref missingCount);
+            AddOutfitCompositionPreviewItem(
+                SelectedOutfitCostumeBodyAssetId, "CostumeBody", 40, assets, ref missingCount);
+            AddOutfitCompositionPreviewItem(
+                SelectedOutfitFrontAccessoryAssetId, "FrontAccessory", 60, assets, ref missingCount);
+            OutfitCompositionMessage = OutfitCompositionPreviewItems.Count == 0
+                ? "表示できる服装画像がありません。"
+                : $"{OutfitCompositionPreviewItems.Count}枚を重ねて表示しています。" +
+                    (missingCount > 0 ? $" 未登録または画像なし: {missingCount}件" : string.Empty);
+        }
+
+        private void AddOutfitCompositionPreviewItem(
+            string assetId,
+            string layerKind,
+            int drawOrder,
+            Dictionary<string, HeroineAsset> assets,
+            ref int missingCount)
+        {
+            if (string.IsNullOrWhiteSpace(assetId)) return;
+            if (!assets.TryGetValue(assetId, out HeroineAsset asset))
+            {
+                missingCount++;
+                return;
+            }
+            string imagePath = BuildStoredImagePath(asset);
+            if (string.IsNullOrWhiteSpace(imagePath) || !File.Exists(imagePath))
+            {
+                missingCount++;
+                return;
+            }
+            OutfitCompositionPreviewItems.Add(new LayerPreviewItem
+            {
+                AssetId = assetId,
+                DisplayName = asset.FileName,
+                LayerKind = layerKind,
+                DrawOrder = drawOrder,
+                ImagePath = imagePath
+            });
         }
 
         private void RefreshLayerPreview()
@@ -7220,6 +7406,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             RefreshLayerPreview();
             RefreshProfilePreview();
+            RefreshOutfitLayerAssetOptions();
+            RefreshOutfitCompositionPreview();
             RefreshFilteredConversationEntries();
         }
 
