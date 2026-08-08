@@ -110,6 +110,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string selectedLayerPreviewBaseBodyId;
         private string selectedLayerPreviewCostumeId;
         private string selectedLayerPreviewExpressionId;
+        private LayerPreviewItem selectedLayerPreviewItem;
         private string layerPreviewMessage;
         private string selectedOutfitCostumeBodyAssetId;
         private string selectedOutfitBackAccessoryAssetId;
@@ -1242,6 +1243,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public LayerPreviewItem SelectedLayerPreviewItem
+        {
+            get => selectedLayerPreviewItem;
+            set
+            {
+                if (selectedLayerPreviewItem == value) return;
+                selectedLayerPreviewItem = value;
+                OnPropertyChanged();
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
         public string SelectedOutfitCostumeBodyAssetId
         {
             get { return selectedOutfitCostumeBodyAssetId; }
@@ -2183,6 +2196,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand RefreshLayerPreviewCommand { get; }
 
+        public ICommand MoveLayerPreviewBackwardCommand { get; }
+
+        public ICommand MoveLayerPreviewForwardCommand { get; }
+
         public ICommand ImportLayeredSpritesFromUnityCommand { get; }
 
         public ICommand ApplyOutfitCompositionCommand { get; }
@@ -2757,6 +2774,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SaveDefinitionCatalogCommand = new RelayCommand(SaveDefinitionCatalog);
             ReloadDefinitionCatalogCommand = new RelayCommand(ReloadDefinitionCatalog);
             RefreshLayerPreviewCommand = new RelayCommand(RefreshLayerPreview);
+            MoveLayerPreviewBackwardCommand = new RelayCommand(
+                () => MoveSelectedLayerPreview(-1),
+                () => CanMoveSelectedLayerPreview(-1));
+            MoveLayerPreviewForwardCommand = new RelayCommand(
+                () => MoveSelectedLayerPreview(1),
+                () => CanMoveSelectedLayerPreview(1));
             ImportLayeredSpritesFromUnityCommand = new RelayCommand(
                 ImportLayeredSpritesFromUnity,
                 () => SelectedProfile != null);
@@ -7146,6 +7169,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private void RefreshLayerPreview()
         {
+            string selectedAssetId = SelectedLayerPreviewItem?.AssetId;
             LayerPreviewItems.Clear();
 
             if (SelectedProfile == null)
@@ -7209,6 +7233,62 @@ namespace FantasyLoveSimAssetTool.ViewModels
             LayerPreviewMessage = warnings.Count == 0
                 ? summary
                 : summary + Environment.NewLine + string.Join(Environment.NewLine, warnings);
+            SelectedLayerPreviewItem = LayerPreviewItems.FirstOrDefault(item =>
+                string.Equals(item.AssetId, selectedAssetId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private bool CanMoveSelectedLayerPreview(int offset)
+        {
+            if (SelectedLayerPreviewItem == null || LayerPreviewItems.Count < 2) return false;
+
+            int index = LayerPreviewItems.IndexOf(SelectedLayerPreviewItem);
+            int targetIndex = index + offset;
+            if (index < 0 || targetIndex < 0 || targetIndex >= LayerPreviewItems.Count) return false;
+
+            return LayerAssetDefinitions.Any(layer => layer != null && string.Equals(
+                layer.AssetId,
+                SelectedLayerPreviewItem.AssetId,
+                StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void MoveSelectedLayerPreview(int offset)
+        {
+            if (!CanMoveSelectedLayerPreview(offset)) return;
+
+            string selectedAssetId = SelectedLayerPreviewItem.AssetId;
+            List<LayerPreviewItem> orderedItems = LayerPreviewItems
+                .OrderBy(item => item.DrawOrder)
+                .ToList();
+            int currentIndex = orderedItems.FindIndex(item => string.Equals(
+                item.AssetId,
+                selectedAssetId,
+                StringComparison.OrdinalIgnoreCase));
+            int targetIndex = currentIndex + offset;
+            LayerPreviewItem movedItem = orderedItems[currentIndex];
+            orderedItems.RemoveAt(currentIndex);
+            orderedItems.Insert(targetIndex, movedItem);
+
+            for (int index = 0; index < orderedItems.Count; index++)
+            {
+                LayerAssetDefinition definition = LayerAssetDefinitions.FirstOrDefault(layer =>
+                    layer != null && string.Equals(
+                        layer.AssetId,
+                        orderedItems[index].AssetId,
+                        StringComparison.OrdinalIgnoreCase));
+                if (definition != null)
+                {
+                    definition.DrawOrder = (index + 1) * 10;
+                }
+            }
+
+            definitionCatalogService.SaveLayerAssetDefinitionFile(LayerAssetDefinitions);
+            RefreshLayerPreview();
+            SelectedLayerPreviewItem = LayerPreviewItems.FirstOrDefault(item => string.Equals(
+                item.AssetId,
+                selectedAssetId,
+                StringComparison.OrdinalIgnoreCase));
+            LayerPreviewMessage =
+                $"{SelectedLayerPreviewItem?.DisplayName ?? selectedAssetId} の描画順を変更し、共通レイヤー定義へ保存しました。";
         }
 
         private bool TryAddUnregisteredLayerPreview(LayerAssetDefinition layer)
