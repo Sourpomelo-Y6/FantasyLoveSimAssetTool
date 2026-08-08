@@ -4,6 +4,8 @@
 
 `FantasyLoveSimAssetTool` は、Unity プロジェクト `FantasyLoveSim` 向けのヒロイン画像素材とキャラクター設定を管理する WPF アプリです。
 
+ヒロイン別メインメニューの不足や誤動作を防ぐためのAction定義・検証・Import方針は `Docs/HeroineMainMenuActionPlan.md` を参照してください。
+
 目的は、Stable Diffusion などで生成した画像をキャラクター単位で整理し、採用画像と prompt 記録を追跡しながら、Unity に取り込みやすいフォルダ構成へ export することです。
 
 仕様の詳細は `Docs/CharacterAssetGenerationToolSpec.md`、リポジトリ概要は `ReadMe.md` を参照してください。
