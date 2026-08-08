@@ -317,7 +317,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
             set
             {
                 if (selectedHeadPartWorkspaceItem == value) return;
+                if (selectedHeadPartWorkspaceItem != null)
+                {
+                    selectedHeadPartWorkspaceItem.PropertyChanged -= SelectedHeadPartWorkspaceItemPropertyChanged;
+                }
                 selectedHeadPartWorkspaceItem = value;
+                if (selectedHeadPartWorkspaceItem != null)
+                {
+                    selectedHeadPartWorkspaceItem.PropertyChanged += SelectedHeadPartWorkspaceItemPropertyChanged;
+                }
                 OnPropertyChanged();
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -2313,14 +2321,6 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     LayerKind = "HeadExpression",
                     ExpressionId = "Neutral",
                     DrawOrder = 50
-                },
-                new HeadPartWorkspaceItem
-                {
-                    DisplayName = "前髪・前面装飾",
-                    Description = "顔より前に重ねる前髪や頭部装飾",
-                    AssetId = "Head_FrontAccessory",
-                    LayerKind = "FrontAccessory",
-                    DrawOrder = 60
                 }
             };
             HeadPartPreviewItems = new ObservableCollection<LayerPreviewItem>();
@@ -5517,6 +5517,25 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             try
             {
+                if (item.IsExpression)
+                {
+                    string expressionId = item.ExpressionId?.Trim() ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(expressionId))
+                    {
+                        HeadPartWorkspaceMessage = "表情の種類を入力してください。例: Neutral、Smile、Angry";
+                        return;
+                    }
+
+                    if (expressionId.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                    {
+                        HeadPartWorkspaceMessage = "表情の種類にファイル名として使用できない文字が含まれています。";
+                        return;
+                    }
+
+                    item.ExpressionId = expressionId;
+                    item.AssetId = "HeadExpression_" + expressionId.Replace(' ', '_');
+                }
+
                 HeroineAsset existingAsset = SelectedProfile.Assets?.FirstOrDefault(asset =>
                     string.Equals(asset.AssetId, item.AssetId, StringComparison.OrdinalIgnoreCase));
                 if (existingAsset != null)
@@ -5540,7 +5559,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 definition.LayerKind = item.LayerKind;
                 definition.ExpressionId = item.ExpressionId;
                 definition.CostumeId = string.Empty;
-                definition.DisplayName = item.DisplayName;
+                definition.DisplayName = item.IsExpression
+                    ? $"表情: {item.ExpressionId}"
+                    : item.DisplayName;
                 definition.FileName = item.AssetId + ".png";
                 definition.DrawOrder = item.DrawOrder;
                 definition.Prompt = item.Description + ", transparent background, aligned to base body";
@@ -5554,10 +5575,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     ExpressionDefinitions.Add(new ExpressionDefinition
                     {
                         ExpressionId = item.ExpressionId,
-                        DisplayName = "通常表情",
+                        DisplayName = item.ExpressionId,
                         UnityExpressionId = item.ExpressionId,
-                        Prompt = "neutral face expression"
+                        Prompt = item.ExpressionId + " face expression"
                     });
+                    if (!ExpressionIdOptions.Contains(item.ExpressionId))
+                    {
+                        ExpressionIdOptions.Add(item.ExpressionId);
+                    }
                     definitionCatalogService.SaveExpressionDefinitionFile(ExpressionDefinitions);
                 }
 
@@ -5618,7 +5643,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     HeadPartPreviewItems.Add(new LayerPreviewItem
                     {
                         AssetId = item.AssetId,
-                        DisplayName = item.DisplayName,
+                        DisplayName = item.IsExpression ? $"表情: {item.ExpressionId}" : item.DisplayName,
                         LayerKind = item.LayerKind,
                         DrawOrder = item.DrawOrder,
                         ImagePath = imagePath
@@ -5629,6 +5654,22 @@ namespace FantasyLoveSimAssetTool.ViewModels
             HeadPartWorkspaceMessage = SelectedProfile == null
                 ? "キャラクターを選択してください。"
                 : $"採用済み頭パーツ {HeadPartPreviewItems.Count}/{HeadPartWorkspaceItems.Count} 件";
+        }
+
+        private void SelectedHeadPartWorkspaceItemPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != nameof(HeadPartWorkspaceItem.ExpressionId) ||
+                sender is not HeadPartWorkspaceItem item ||
+                !item.IsExpression)
+            {
+                return;
+            }
+
+            string expressionId = item.ExpressionId?.Trim() ?? string.Empty;
+            item.AssetId = string.IsNullOrWhiteSpace(expressionId)
+                ? "HeadExpression_"
+                : "HeadExpression_" + expressionId.Replace(' ', '_');
+            RefreshHeadPartWorkspace();
         }
 
         private void AddHeroineBattleStandardAssetData()

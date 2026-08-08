@@ -1004,6 +1004,8 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
 
@@ -1014,7 +1016,7 @@
 
                                     <ListBox Grid.Row="2" ItemsSource="{Binding HeadPartWorkspaceItems}"
                                              SelectedItem="{Binding SelectedHeadPartWorkspaceItem}"
-                                             Height="176" Margin="0,0,0,14">
+                                             Height="126" Margin="0,0,0,14">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
                                                 <Grid Margin="4">
@@ -1032,8 +1034,17 @@
                                         </ListBox.ItemTemplate>
                                     </ListBox>
 
-                                    <TextBlock Grid.Row="3" Text="登録する透過PNG" FontWeight="SemiBold"/>
-                                    <Grid Grid.Row="4" Margin="0,6,0,10">
+                                    <TextBlock Grid.Row="3" Text="表情の種類" FontWeight="SemiBold"/>
+                                    <ComboBox Grid.Row="4"
+                                              ItemsSource="{Binding ExpressionIdOptions}"
+                                              Text="{Binding SelectedHeadPartWorkspaceItem.ExpressionId, UpdateSourceTrigger=PropertyChanged}"
+                                              IsEditable="True"
+                                              IsEnabled="{Binding SelectedHeadPartWorkspaceItem.IsExpression}"
+                                              ToolTip="表情を選択した場合に Neutral、Smile、Angry などを入力します"
+                                              Margin="0,6,0,12"/>
+
+                                    <TextBlock Grid.Row="5" Text="登録する透過PNG" FontWeight="SemiBold"/>
+                                    <Grid Grid.Row="6" Margin="0,6,0,10">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="82"/>
@@ -1047,13 +1058,13 @@
                                         <Button Grid.Column="1" Content="参照" Command="{Binding BrowseHeadPartImageCommand}"/>
                                     </Grid>
 
-                                    <Button Grid.Row="5" Content="登録して採用"
+                                    <Button Grid.Row="7" Content="登録して採用"
                                             Command="{Binding AdoptHeadPartImageCommand}"
                                             Height="36" FontWeight="SemiBold"/>
-                                    <TextBlock Grid.Row="6" Text="{Binding HeadPartWorkspaceMessage}"
+                                    <TextBlock Grid.Row="8" Text="{Binding HeadPartWorkspaceMessage}"
                                                Foreground="Gray" TextWrapping="Wrap" Margin="0,10,0,10"/>
 
-                                    <Expander Grid.Row="7" Header="自動設定される詳細" VerticalAlignment="Top">
+                                    <Expander Grid.Row="9" Header="自動設定される詳細" VerticalAlignment="Top">
                                         <StackPanel Margin="8">
                                             <TextBlock Text="{Binding SelectedHeadPartWorkspaceItem.AssetId, StringFormat=AssetId: {0}}"/>
                                             <TextBlock Text="{Binding SelectedHeadPartWorkspaceItem.LayerKind, StringFormat=LayerKind: {0}}"/>
