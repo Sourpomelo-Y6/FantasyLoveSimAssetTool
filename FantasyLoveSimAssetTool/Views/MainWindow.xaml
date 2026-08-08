@@ -2650,7 +2650,7 @@
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0"
-                                       Text="Accepted済み素材をDrawOrder順に重ねます。後ろ髪の上へ、選択した表情の顔レイヤーを重ねて確認できます。旧4階層も互換表示します。"
+                                       Text="レイヤー画像をDrawOrder順に重ねます。後ろ髪の上へ、選択した表情の顔レイヤーを表示します。保存済みでも未登録の画像は確認用に表示しますが、Export対象にはなりません。"
                                        Foreground="Gray"
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,12"/>

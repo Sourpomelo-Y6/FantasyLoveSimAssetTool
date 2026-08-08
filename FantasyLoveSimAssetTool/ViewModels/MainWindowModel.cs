@@ -5600,11 +5600,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
                 HeroineAsset existingAsset = SelectedProfile.Assets?.FirstOrDefault(asset =>
                     string.Equals(asset.AssetId, item.AssetId, StringComparison.OrdinalIgnoreCase));
-                if (existingAsset != null)
+                string destinationPath = Path.Combine(
+                    characterProjectService.GetImageUsageDirectory(SelectedProfile.HeroineId, AssetUsage.Sprites),
+                    item.AssetId + Path.GetExtension(item.SourceImagePath));
+                bool hasOrphanedImage = existingAsset == null && File.Exists(destinationPath);
+                if (existingAsset != null || hasOrphanedImage)
                 {
+                    string message = existingAsset != null
+                        ? $"{item.DisplayName}（{item.AssetId}）は登録済みです。画像を上書きしますか？"
+                        : $"{item.DisplayName}（{item.AssetId}）の保存済み画像がありますが、登録情報がありません。画像を使って登録を復旧しますか？";
                     MessageBoxResult result = MessageBox.Show(
-                        $"{item.DisplayName}（{item.AssetId}）は登録済みです。画像を上書きしますか？",
-                        "頭パーツ画像の上書き確認",
+                        message,
+                        existingAsset != null ? "頭パーツ画像の上書き確認" : "頭パーツ画像の登録復旧",
                         MessageBoxButton.YesNo,
                         MessageBoxImage.Warning);
                     if (result != MessageBoxResult.Yes) return;
@@ -5654,7 +5661,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     AssetUsage.Sprites,
                     item.AssetId,
                     AssetStatus.Accepted,
-                    existingAsset != null);
+                    existingAsset != null || hasOrphanedImage);
                 definition.FileName = asset.FileName;
                 definitionCatalogService.SaveLayerAssetDefinitionFile(LayerAssetDefinitions);
 
@@ -7160,7 +7167,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 if (!acceptedAssets.TryGetValue(layer.AssetId, out HeroineAsset asset))
                 {
-                    warnings.Add($"{layer.AssetId}: Accepted 画像が登録されていません。");
+                    if (TryAddUnregisteredLayerPreview(layer))
+                    {
+                        warnings.Add(
+                            $"{layer.AssetId}: 保存済み画像を未登録プレビューとして表示しています。" +
+                            "Exportするには画像制作で登録して採用してください。");
+                    }
+                    else
+                    {
+                        warnings.Add($"{layer.AssetId}: Accepted 画像が登録されていません。");
+                    }
                     continue;
                 }
 
@@ -7193,6 +7209,32 @@ namespace FantasyLoveSimAssetTool.ViewModels
             LayerPreviewMessage = warnings.Count == 0
                 ? summary
                 : summary + Environment.NewLine + string.Join(Environment.NewLine, warnings);
+        }
+
+        private bool TryAddUnregisteredLayerPreview(LayerAssetDefinition layer)
+        {
+            if (SelectedProfile == null || layer == null || string.IsNullOrWhiteSpace(layer.FileName))
+            {
+                return false;
+            }
+
+            string imagePath = Path.Combine(
+                characterProjectService.GetImageUsageDirectory(SelectedProfile.HeroineId, AssetUsage.Sprites),
+                layer.FileName);
+            if (!File.Exists(imagePath))
+            {
+                return false;
+            }
+
+            LayerPreviewItems.Add(new LayerPreviewItem
+            {
+                AssetId = layer.AssetId,
+                DisplayName = layer.DisplayName + "（未登録）",
+                LayerKind = layer.LayerKind,
+                DrawOrder = layer.DrawOrder,
+                ImagePath = imagePath
+            });
+            return true;
         }
 
         private void RefreshProfilePreview()
