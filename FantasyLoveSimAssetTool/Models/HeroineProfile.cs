@@ -105,6 +105,8 @@ namespace FantasyLoveSimAssetTool.Models
 
         public ObservableCollection<ConversationEntry> ConversationEntries { get; set; }
 
+        public ObservableCollection<MenuActionDefinition> MenuActions { get; set; }
+
         public HeroineProfile()
         {
             HeroineId = string.Empty;
@@ -145,6 +147,7 @@ namespace FantasyLoveSimAssetTool.Models
             Assets = new ObservableCollection<HeroineAsset>();
             StillWorkItems = new ObservableCollection<StillWorkItem>();
             ConversationEntries = new ObservableCollection<ConversationEntry>();
+            MenuActions = new ObservableCollection<MenuActionDefinition>();
         }
     }
 }

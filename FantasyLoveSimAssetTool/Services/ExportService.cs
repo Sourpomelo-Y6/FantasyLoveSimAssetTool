@@ -183,7 +183,12 @@ namespace FantasyLoveSimAssetTool.Services
             File.WriteAllText(Path.Combine(dataDirectory, "game_events_export.json"), BuildConversationExportJson(profile, ConversationDataKind.GameEvents));
             File.WriteAllText(Path.Combine(dataDirectory, "scheduled_events_export.json"), BuildScheduledEventsExportJson(profile));
             File.WriteAllText(Path.Combine(dataDirectory, "action_reactions_export.json"), BuildConversationExportJson(profile, ConversationDataKind.ActionReactions));
+            File.WriteAllText(Path.Combine(dataDirectory, "actions_export.json"), MenuActionDefinitionService.BuildExportJson(profile));
             File.WriteAllText(Path.Combine(dataDirectory, "endings_export.json"), BuildConversationExportJson(profile, ConversationDataKind.Endings));
+            foreach (string warning in MenuActionDefinitionService.Validate(profile))
+            {
+                report.Warnings.Add(warning);
+            }
             WriteDraftFile(Path.Combine(dataDirectory, "conversations_draft.md"), "会話案");
             WriteDraftFile(Path.Combine(dataDirectory, "game_events_draft.md"), "イベント案");
             WriteDraftFile(Path.Combine(dataDirectory, "scheduled_events_draft.md"), "予定イベント案");

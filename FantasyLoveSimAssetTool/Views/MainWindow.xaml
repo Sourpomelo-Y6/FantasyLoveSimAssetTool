@@ -427,6 +427,11 @@
                                               HorizontalScrollBarVisibility="Auto"
                                               VerticalScrollBarVisibility="Disabled">
                                     <StackPanel Orientation="Horizontal">
+                                        <Button Content="標準メニュー項目を準備"
+                                                Command="{Binding PrepareStandardMenuActionsCommand}"
+                                                Height="26"
+                                                MinWidth="170"
+                                                Margin="0,0,8,0"/>
                                         <Button Content="Unity Action読込"
                                                 Command="{Binding ImportActionsFromUnityCommand}"
                                                 Height="26"

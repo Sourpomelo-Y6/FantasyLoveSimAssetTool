@@ -100,6 +100,7 @@ namespace FantasyLoveSimAssetTool.Services
             profile.StillWorkItems ??= new ObservableCollection<StillWorkItem>();
             profile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
             NormalizeConversationEntries(profile.ConversationEntries);
+            MenuActionDefinitionService.Normalize(profile);
             EnsureCharacterDirectories(profile.HeroineId);
 
             string json = JsonSerializer.Serialize(profile, jsonOptions);
@@ -239,6 +240,7 @@ namespace FantasyLoveSimAssetTool.Services
             profile.Assets ??= new ObservableCollection<HeroineAsset>();
             profile.StillWorkItems ??= new ObservableCollection<StillWorkItem>();
             profile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
+            MenuActionDefinitionService.Normalize(profile);
             profile.OutfitMessageOverrides ??= new ObservableCollection<OutfitMessageOverride>();
             profile.OutfitReactionMessageOverrides ??= new ObservableCollection<OutfitReactionMessageOverride>();
             profile.BattleSkills ??= new ObservableCollection<HeroineBattleSkill>();

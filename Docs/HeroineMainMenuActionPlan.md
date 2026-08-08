@@ -65,6 +65,18 @@ The menu definition and the action reaction text are related but must not be tre
 - Menu definition: ID, display name, display column, execution type, visibility, and ordering.
 - Action reaction: result text, conditions, affection change, expression, voice, and still image.
 
+## Implementation Status
+
+The first Tool-side phase is implemented:
+
+- `MenuActions` is stored in each heroine `profile.json`.
+- The conversation tab provides `標準メニュー項目を準備`.
+- The command adds the 13 missing production actions without overwriting existing definitions.
+- Export writes `Data/actions_export.json` with string execution type names.
+- Export warnings report missing, duplicate, unknown, and incorrectly configured standard actions.
+
+Unity import of `actions_export.json` and a dedicated menu action editing table remain future work. Until those are implemented, use the recovery procedure below after exporting.
+
 ## Required Tool Changes
 
 ### 1. Add A Menu Action Model

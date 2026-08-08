@@ -2156,6 +2156,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand SaveConversationDataCommand { get; }
 
+        public ICommand PrepareStandardMenuActionsCommand { get; }
+
         public ICommand ImportActionsFromUnityCommand { get; }
 
         public ICommand ImportConversationsFromUnityCommand { get; }
@@ -2722,6 +2724,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedConversationEntry != null && SelectedConversationChoice != null);
             SaveConversationDataCommand = new RelayCommand(
                 SaveConversationData,
+                () => SelectedProfile != null);
+            PrepareStandardMenuActionsCommand = new RelayCommand(
+                PrepareStandardMenuActions,
                 () => SelectedProfile != null);
             ImportActionsFromUnityCommand = new RelayCommand(
                 ImportActionsFromUnity,
@@ -8716,6 +8721,28 @@ namespace FantasyLoveSimAssetTool.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = $"会話データ保存に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void PrepareStandardMenuActions()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            try
+            {
+                int added = MenuActionDefinitionService.AddMissingStandardActions(SelectedProfile);
+                characterProjectService.SaveProfile(SelectedProfile);
+                OnPropertyChanged(nameof(SelectedProfile));
+                StatusMessage = added > 0
+                    ? $"標準メニュー項目を {added} 件追加して保存しました。既存項目は維持されています。"
+                    : "標準メニュー項目はすべて登録済みです。既存項目は変更していません。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"標準メニュー項目の準備に失敗しました: {ex.Message}";
             }
         }
 
