@@ -113,6 +113,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string selectedOutfitBackAccessoryAssetId;
         private string selectedOutfitFrontAccessoryAssetId;
         private string outfitCompositionMessage;
+        private HeadPartWorkspaceItem selectedHeadPartWorkspaceItem;
+        private string headPartWorkspaceMessage;
         private string profilePreviewImagePath;
         private string profilePreviewMessage;
         private PromptRecord currentPromptRecord;
@@ -304,6 +306,33 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<string> OutfitLayerAssetOptions { get; }
 
         public ObservableCollection<LayerPreviewItem> OutfitCompositionPreviewItems { get; }
+
+        public ObservableCollection<HeadPartWorkspaceItem> HeadPartWorkspaceItems { get; }
+
+        public ObservableCollection<LayerPreviewItem> HeadPartPreviewItems { get; }
+
+        public HeadPartWorkspaceItem SelectedHeadPartWorkspaceItem
+        {
+            get => selectedHeadPartWorkspaceItem;
+            set
+            {
+                if (selectedHeadPartWorkspaceItem == value) return;
+                selectedHeadPartWorkspaceItem = value;
+                OnPropertyChanged();
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public string HeadPartWorkspaceMessage
+        {
+            get => headPartWorkspaceMessage;
+            set
+            {
+                if (headPartWorkspaceMessage == value) return;
+                headPartWorkspaceMessage = value;
+                OnPropertyChanged();
+            }
+        }
 
         public string StillPromptPreview
         {
@@ -1128,6 +1157,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 selectedCostumeDefinition = value;
                 OnPropertyChanged(nameof(SelectedCostumeDefinition));
                 RefreshOutfitCompositionEditor();
+                RefreshHeadPartWorkspace();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -2149,6 +2179,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand AddOutfitAccessoryAssetTemplatesCommand { get; }
 
+        public ICommand BrowseHeadPartImageCommand { get; }
+
+        public ICommand AdoptHeadPartImageCommand { get; }
+
         public MainWindowModel()
         {
             characterProjectService = new CharacterProjectService();
@@ -2261,6 +2295,36 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ProfilePreviewItems = new ObservableCollection<LayerPreviewItem>();
             OutfitLayerAssetOptions = new ObservableCollection<string>();
             OutfitCompositionPreviewItems = new ObservableCollection<LayerPreviewItem>();
+            HeadPartWorkspaceItems = new ObservableCollection<HeadPartWorkspaceItem>
+            {
+                new HeadPartWorkspaceItem
+                {
+                    DisplayName = "後ろ髪",
+                    Description = "体や顔より後ろに表示する髪パーツ",
+                    AssetId = "Head_BackHair",
+                    LayerKind = "BackHair",
+                    DrawOrder = 30
+                },
+                new HeadPartWorkspaceItem
+                {
+                    DisplayName = "顔・表情",
+                    Description = "顔、表情、頭の中心部分",
+                    AssetId = "HeadExpression_Neutral",
+                    LayerKind = "HeadExpression",
+                    ExpressionId = "Neutral",
+                    DrawOrder = 50
+                },
+                new HeadPartWorkspaceItem
+                {
+                    DisplayName = "前髪・前面装飾",
+                    Description = "顔より前に重ねる前髪や頭部装飾",
+                    AssetId = "Head_FrontAccessory",
+                    LayerKind = "FrontAccessory",
+                    DrawOrder = 60
+                }
+            };
+            HeadPartPreviewItems = new ObservableCollection<LayerPreviewItem>();
+            SelectedHeadPartWorkspaceItem = HeadPartWorkspaceItems.First();
             AssetStatusFilters = new ObservableCollection<string>
             {
                 "All",
@@ -2698,6 +2762,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
             AddOutfitAccessoryAssetTemplatesCommand = new RelayCommand(
                 AddOutfitAccessoryAssetTemplates,
                 () => SelectedProfile != null && SelectedCostumeDefinition != null);
+            BrowseHeadPartImageCommand = new RelayCommand(
+                BrowseHeadPartImage,
+                () => SelectedProfile != null && SelectedHeadPartWorkspaceItem != null);
+            AdoptHeadPartImageCommand = new RelayCommand(
+                AdoptHeadPartImage,
+                () => SelectedProfile != null &&
+                    SelectedHeadPartWorkspaceItem != null &&
+                    !string.IsNullOrWhiteSpace(SelectedHeadPartWorkspaceItem.SourceImagePath) &&
+                    File.Exists(SelectedHeadPartWorkspaceItem.SourceImagePath));
 
             ReloadComfySettings();
             LoadDefinitionCatalog();
@@ -5402,6 +5475,160 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     AssetIdInput = System.IO.Path.GetFileNameWithoutExtension(dialog.FileName);
                 }
             }
+        }
+
+        private void BrowseHeadPartImage()
+        {
+            OpenFileDialog dialog = new OpenFileDialog
+            {
+                Title = $"{SelectedHeadPartWorkspaceItem?.DisplayName ?? "頭パーツ"}の透過PNGを選択",
+                Filter = "PNG image (*.png)|*.png"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                SelectedHeadPartWorkspaceItem.SourceImagePath = dialog.FileName;
+                HeadPartWorkspaceMessage = $"{SelectedHeadPartWorkspaceItem.DisplayName}の画像を選択しました。";
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public void SetHeadPartImageFromDroppedFiles(string[] filePaths)
+        {
+            if (SelectedHeadPartWorkspaceItem == null || filePaths == null) return;
+
+            string imagePath = filePaths.FirstOrDefault(path =>
+                File.Exists(path) && string.Equals(Path.GetExtension(path), ".png", StringComparison.OrdinalIgnoreCase));
+            if (string.IsNullOrWhiteSpace(imagePath))
+            {
+                HeadPartWorkspaceMessage = "透過PNGファイルをドロップしてください。";
+                return;
+            }
+
+            SelectedHeadPartWorkspaceItem.SourceImagePath = imagePath;
+            HeadPartWorkspaceMessage = $"{SelectedHeadPartWorkspaceItem.DisplayName}の画像を選択しました。";
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void AdoptHeadPartImage()
+        {
+            HeadPartWorkspaceItem item = SelectedHeadPartWorkspaceItem;
+            if (SelectedProfile == null || item == null) return;
+
+            try
+            {
+                HeroineAsset existingAsset = SelectedProfile.Assets?.FirstOrDefault(asset =>
+                    string.Equals(asset.AssetId, item.AssetId, StringComparison.OrdinalIgnoreCase));
+                if (existingAsset != null)
+                {
+                    MessageBoxResult result = MessageBox.Show(
+                        $"{item.DisplayName}（{item.AssetId}）は登録済みです。画像を上書きしますか？",
+                        "頭パーツ画像の上書き確認",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+                    if (result != MessageBoxResult.Yes) return;
+                }
+
+                LayerAssetDefinition definition = LayerAssetDefinitions.FirstOrDefault(layer =>
+                    string.Equals(layer.AssetId, item.AssetId, StringComparison.OrdinalIgnoreCase));
+                if (definition == null)
+                {
+                    definition = new LayerAssetDefinition { AssetId = item.AssetId };
+                    LayerAssetDefinitions.Add(definition);
+                }
+
+                definition.LayerKind = item.LayerKind;
+                definition.ExpressionId = item.ExpressionId;
+                definition.CostumeId = string.Empty;
+                definition.DisplayName = item.DisplayName;
+                definition.FileName = item.AssetId + ".png";
+                definition.DrawOrder = item.DrawOrder;
+                definition.Prompt = item.Description + ", transparent background, aligned to base body";
+
+                if (!string.IsNullOrWhiteSpace(item.ExpressionId) &&
+                    !ExpressionDefinitions.Any(expression => string.Equals(
+                        expression.ExpressionId,
+                        item.ExpressionId,
+                        StringComparison.OrdinalIgnoreCase)))
+                {
+                    ExpressionDefinitions.Add(new ExpressionDefinition
+                    {
+                        ExpressionId = item.ExpressionId,
+                        DisplayName = "通常表情",
+                        UnityExpressionId = item.ExpressionId,
+                        Prompt = "neutral face expression"
+                    });
+                    definitionCatalogService.SaveExpressionDefinitionFile(ExpressionDefinitions);
+                }
+
+                HeroineAsset asset = characterProjectService.AddImageAsset(
+                    SelectedProfile,
+                    item.SourceImagePath,
+                    AssetUsage.Sprites,
+                    item.AssetId,
+                    AssetStatus.Accepted,
+                    existingAsset != null);
+                definition.FileName = asset.FileName;
+                definitionCatalogService.SaveLayerAssetDefinitionFile(LayerAssetDefinitions);
+
+                RefreshFilteredAssets();
+                RefreshAcceptedAssets();
+                RefreshLayerPreviewOptions();
+                RefreshLayerPreview();
+                RefreshHeadPartWorkspace();
+                SelectedHeadPartWorkspaceItem = item;
+                HeadPartWorkspaceMessage = AppendImageInspectionMessage(
+                    $"{item.DisplayName}を登録し、採用済みにしました。",
+                    asset);
+            }
+            catch (Exception ex)
+            {
+                HeadPartWorkspaceMessage = $"頭パーツ画像の登録に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void RefreshHeadPartWorkspace()
+        {
+            if (HeadPartWorkspaceItems == null || HeadPartPreviewItems == null) return;
+
+            HeadPartPreviewItems.Clear();
+            foreach (HeadPartWorkspaceItem item in HeadPartWorkspaceItems)
+            {
+                LayerAssetDefinition definition = LayerAssetDefinitions?.FirstOrDefault(layer =>
+                    string.Equals(layer.LayerKind, item.LayerKind, StringComparison.OrdinalIgnoreCase) &&
+                    (item.LayerKind != "HeadExpression" ||
+                        string.Equals(layer.ExpressionId, item.ExpressionId, StringComparison.OrdinalIgnoreCase)));
+                if (definition != null)
+                {
+                    item.AssetId = definition.AssetId;
+                    item.DrawOrder = definition.DrawOrder;
+                }
+
+                HeroineAsset asset = SelectedProfile?.Assets?.FirstOrDefault(candidate =>
+                    string.Equals(candidate.AssetId, item.AssetId, StringComparison.OrdinalIgnoreCase));
+                string imagePath = asset == null ? string.Empty : BuildStoredImagePath(asset);
+                bool hasImage = !string.IsNullOrWhiteSpace(imagePath) && File.Exists(imagePath);
+                item.RegisteredImagePath = hasImage ? imagePath : string.Empty;
+                item.StatusText = asset == null
+                    ? "未登録"
+                    : hasImage ? asset.Status.ToString() : $"{asset.Status} / ファイルなし";
+
+                if (asset?.Status == AssetStatus.Accepted && hasImage)
+                {
+                    HeadPartPreviewItems.Add(new LayerPreviewItem
+                    {
+                        AssetId = item.AssetId,
+                        DisplayName = item.DisplayName,
+                        LayerKind = item.LayerKind,
+                        DrawOrder = item.DrawOrder,
+                        ImagePath = imagePath
+                    });
+                }
+            }
+
+            HeadPartWorkspaceMessage = SelectedProfile == null
+                ? "キャラクターを選択してください。"
+                : $"採用済み頭パーツ {HeadPartPreviewItems.Count}/{HeadPartWorkspaceItems.Count} 件";
         }
 
         private void AddHeroineBattleStandardAssetData()

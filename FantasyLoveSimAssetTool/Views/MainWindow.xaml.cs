@@ -34,5 +34,15 @@ namespace FantasyLoveSimAssetTool.Views
                 model.SetImageSourceFromDroppedFiles((string[])e.Data.GetData(DataFormats.FileDrop));
             }
         }
+
+        private void HeadPartImagePath_Drop(object sender, DragEventArgs e)
+        {
+            if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+
+            if (DataContext is MainWindowModel model)
+            {
+                model.SetHeadPartImageFromDroppedFiles((string[])e.Data.GetData(DataFormats.FileDrop));
+            }
+        }
     }
 }

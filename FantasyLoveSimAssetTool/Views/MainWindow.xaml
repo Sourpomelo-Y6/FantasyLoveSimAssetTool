@@ -986,7 +986,117 @@
                         </Grid>
                     </TabItem>
 
-                    <TabItem Header="画像">
+                    <TabItem Header="画像制作">
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="430"/>
+                                <ColumnDefinition Width="16"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" BorderBrush="#DDDDDD" BorderThickness="1" Padding="14">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="頭パーツ制作" FontSize="18" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Row="1"
+                                               Text="パーツを選び、透過PNGを指定して採用します。内部ID・描画順・Accepted状態は自動設定されます。"
+                                               Foreground="Gray" TextWrapping="Wrap" Margin="0,6,0,14"/>
+
+                                    <ListBox Grid.Row="2" ItemsSource="{Binding HeadPartWorkspaceItems}"
+                                             SelectedItem="{Binding SelectedHeadPartWorkspaceItem}"
+                                             Height="176" Margin="0,0,0,14">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="4">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="{Binding Description}" Foreground="Gray" FontSize="11"/>
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="1" Text="{Binding StatusText}" Margin="12,0,4,0" VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+
+                                    <TextBlock Grid.Row="3" Text="登録する透過PNG" FontWeight="SemiBold"/>
+                                    <Grid Grid.Row="4" Margin="0,6,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="82"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0"
+                                                 Text="{Binding SelectedHeadPartWorkspaceItem.SourceImagePath, UpdateSourceTrigger=PropertyChanged}"
+                                                 AllowDrop="True"
+                                                 PreviewDragOver="ImageSourcePath_PreviewDragOver"
+                                                 Drop="HeadPartImagePath_Drop"
+                                                 Margin="0,0,8,0"/>
+                                        <Button Grid.Column="1" Content="参照" Command="{Binding BrowseHeadPartImageCommand}"/>
+                                    </Grid>
+
+                                    <Button Grid.Row="5" Content="登録して採用"
+                                            Command="{Binding AdoptHeadPartImageCommand}"
+                                            Height="36" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Row="6" Text="{Binding HeadPartWorkspaceMessage}"
+                                               Foreground="Gray" TextWrapping="Wrap" Margin="0,10,0,10"/>
+
+                                    <Expander Grid.Row="7" Header="自動設定される詳細" VerticalAlignment="Top">
+                                        <StackPanel Margin="8">
+                                            <TextBlock Text="{Binding SelectedHeadPartWorkspaceItem.AssetId, StringFormat=AssetId: {0}}"/>
+                                            <TextBlock Text="{Binding SelectedHeadPartWorkspaceItem.LayerKind, StringFormat=LayerKind: {0}}"/>
+                                            <TextBlock Text="{Binding SelectedHeadPartWorkspaceItem.DrawOrder, StringFormat=DrawOrder: {0}}"/>
+                                        </StackPanel>
+                                    </Expander>
+                                </Grid>
+                            </Border>
+
+                            <Border Grid.Column="2" BorderBrush="#DDDDDD" BorderThickness="1" Padding="14">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="150"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="頭パーツ合成プレビュー" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                                    <Grid Grid.Row="1" Background="#F7F7F7">
+                                        <ItemsControl ItemsSource="{Binding HeadPartPreviewItems}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate><Grid/></ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Image Source="{Binding ImagePath, Converter={StaticResource StringToImageSourceConverter}}" Stretch="Uniform"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Grid>
+                                    <DataGrid Grid.Row="2" ItemsSource="{Binding HeadPartPreviewItems}"
+                                              AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" Margin="0,10,0,0">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="順" Binding="{Binding DrawOrder}" Width="55"/>
+                                            <DataGridTextColumn Header="パーツ" Binding="{Binding DisplayName}" Width="150"/>
+                                            <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId}" Width="*"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="画像（詳細）">
                         <Grid Margin="0,12,0,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
