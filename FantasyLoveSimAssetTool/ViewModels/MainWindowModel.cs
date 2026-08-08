@@ -19,6 +19,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 {
     public class MainWindowModel : ObservableObject
     {
+        private const int LayerPreviewTabIndex = 11;
+
         private readonly CharacterProjectService characterProjectService;
         private readonly EnemyProjectService enemyProjectService;
         private readonly PromptRecordService promptRecordService;
@@ -2189,6 +2191,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand BrowseHeadPartImageCommand { get; }
 
+        public ICommand TestHeadPartPreviewCommand { get; }
+
         public ICommand AdoptHeadPartImageCommand { get; }
 
         public MainWindowModel()
@@ -2765,6 +2769,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
             BrowseHeadPartImageCommand = new RelayCommand(
                 BrowseHeadPartImage,
                 () => SelectedProfile != null && SelectedHeadPartWorkspaceItem != null);
+            TestHeadPartPreviewCommand = new RelayCommand(
+                TestHeadPartPreview,
+                () => SelectedProfile != null &&
+                    SelectedHeadPartWorkspaceItem != null &&
+                    !string.IsNullOrWhiteSpace(SelectedHeadPartWorkspaceItem.SourceImagePath) &&
+                    File.Exists(SelectedHeadPartWorkspaceItem.SourceImagePath));
             AdoptHeadPartImageCommand = new RelayCommand(
                 AdoptHeadPartImage,
                 () => SelectedProfile != null &&
@@ -5510,6 +5520,58 @@ namespace FantasyLoveSimAssetTool.ViewModels
             CommandManager.InvalidateRequerySuggested();
         }
 
+        private void TestHeadPartPreview()
+        {
+            HeadPartWorkspaceItem selectedItem = SelectedHeadPartWorkspaceItem;
+            if (SelectedProfile == null || selectedItem == null) return;
+
+            if (!string.Equals(Path.GetExtension(selectedItem.SourceImagePath), ".png", StringComparison.OrdinalIgnoreCase))
+            {
+                HeadPartWorkspaceMessage = "テスト表示にはPNGファイルを選択してください。";
+                return;
+            }
+
+            if (selectedItem.IsExpression && string.IsNullOrWhiteSpace(selectedItem.ExpressionId))
+            {
+                HeadPartWorkspaceMessage = "テスト表示する表情の種類を入力してください。";
+                return;
+            }
+
+            RefreshHeadPartWorkspace();
+            List<LayerPreviewItem> previewItems = new List<LayerPreviewItem>();
+            foreach (HeadPartWorkspaceItem item in HeadPartWorkspaceItems)
+            {
+                string imagePath = ReferenceEquals(item, selectedItem)
+                    ? item.SourceImagePath
+                    : item.RegisteredImagePath;
+                if (string.IsNullOrWhiteSpace(imagePath) || !File.Exists(imagePath)) continue;
+
+                previewItems.Add(new LayerPreviewItem
+                {
+                    AssetId = item.AssetId,
+                    DisplayName = ReferenceEquals(item, selectedItem)
+                        ? $"{item.DisplayName}（テスト）"
+                        : item.IsExpression ? $"表情: {item.ExpressionId}" : item.DisplayName,
+                    LayerKind = item.LayerKind,
+                    DrawOrder = item.DrawOrder,
+                    ImagePath = imagePath
+                });
+            }
+
+            HeadPartPreviewItems.Clear();
+            LayerPreviewItems.Clear();
+            foreach (LayerPreviewItem previewItem in previewItems.OrderBy(item => item.DrawOrder))
+            {
+                HeadPartPreviewItems.Add(previewItem);
+                LayerPreviewItems.Add(previewItem);
+            }
+
+            LayerPreviewMessage =
+                $"{selectedItem.DisplayName}の未登録画像をテスト表示しています。保存や採用は行っていません。";
+            HeadPartWorkspaceMessage = LayerPreviewMessage;
+            SelectedMainTabIndex = LayerPreviewTabIndex;
+        }
+
         private void AdoptHeadPartImage()
         {
             HeadPartWorkspaceItem item = SelectedHeadPartWorkspaceItem;
@@ -5599,6 +5661,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 RefreshFilteredAssets();
                 RefreshAcceptedAssets();
                 RefreshLayerPreviewOptions();
+                if (item.IsExpression)
+                {
+                    selectedLayerPreviewExpressionId = item.ExpressionId;
+                    OnPropertyChanged(nameof(SelectedLayerPreviewExpressionId));
+                }
+                else
+                {
+                    selectedLayerPreviewBaseBodyId = item.AssetId;
+                    OnPropertyChanged(nameof(SelectedLayerPreviewBaseBodyId));
+                }
                 RefreshLayerPreview();
                 RefreshHeadPartWorkspace();
                 SelectedHeadPartWorkspaceItem = item;
@@ -6839,20 +6911,23 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RefreshStringOptions(
                 LayerPreviewBaseBodyOptions,
                 LayerAssetDefinitions
-                    .Where(layer => layer != null && IsLayerKind(layer, "BaseBody"))
+                    .Where(layer => layer != null &&
+                        (IsLayerKind(layer, "BackHair") || IsLayerKind(layer, "BaseBody")))
                     .Select(layer => layer.AssetId),
                 includeEmpty: true);
             RefreshStringOptions(
                 LayerPreviewCostumeOptions,
-                CostumeDefinitions
-                    .Where(costume => costume != null)
-                    .Select(costume => costume.CostumeId),
+                CostumeDefinitions.Where(costume => costume != null).Select(costume => costume.CostumeId)
+                    .Concat(LayerAssetDefinitions
+                        .Where(layer => layer != null && IsLayerKind(layer, "CostumeBody"))
+                        .Select(layer => layer.CostumeId)),
                 includeEmpty: true);
             RefreshStringOptions(
                 LayerPreviewExpressionOptions,
-                ExpressionDefinitions
-                    .Where(expression => expression != null)
-                    .Select(expression => expression.ExpressionId),
+                ExpressionDefinitions.Where(expression => expression != null).Select(expression => expression.ExpressionId)
+                    .Concat(LayerAssetDefinitions
+                        .Where(layer => layer != null && IsLayerKind(layer, "HeadExpression"))
+                        .Select(layer => layer.ExpressionId)),
                 includeEmpty: true);
 
             selectedLayerPreviewBaseBodyId = SelectExistingOrFirst(previousBaseBody, LayerPreviewBaseBodyOptions);
@@ -7290,11 +7365,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private List<LayerAssetDefinition> BuildSelectedLayerPreviewDefinitions()
         {
             List<LayerAssetDefinition> layers = new List<LayerAssetDefinition>();
-            AddSelectedLayer(layers, layer => IsLayerKind(layer, "BaseBody")
+            AddSelectedLayer(layers, layer =>
+                (IsLayerKind(layer, "BackHair") || IsLayerKind(layer, "BaseBody"))
                 && string.Equals(layer.AssetId, SelectedLayerPreviewBaseBodyId, StringComparison.OrdinalIgnoreCase));
-            AddSelectedLayer(layers, layer => IsLayerKind(layer, "Costume")
+            AddSelectedLayer(layers, layer =>
+                (IsLayerKind(layer, "CostumeBody") || IsLayerKind(layer, "Costume"))
                 && string.Equals(layer.CostumeId, SelectedLayerPreviewCostumeId, StringComparison.OrdinalIgnoreCase));
-            AddSelectedLayer(layers, layer => IsLayerKind(layer, "Expression")
+            AddSelectedLayer(layers, layer =>
+                (IsLayerKind(layer, "HeadExpression") || IsLayerKind(layer, "Expression"))
                 && string.Equals(layer.ExpressionId, SelectedLayerPreviewExpressionId, StringComparison.OrdinalIgnoreCase));
 
             foreach (LayerAssetDefinition accessory in LayerAssetDefinitions
@@ -7319,6 +7397,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private static bool IsOptionalEightLayerKind(LayerAssetDefinition layer)
         {
             return IsLayerKind(layer, "Accessory") || IsLayerKind(layer, "Background") ||
+                IsLayerKind(layer, "BackAccessory") || IsLayerKind(layer, "FrontAccessory") ||
                 IsLayerKind(layer, "FrontArm") || IsLayerKind(layer, "Effect");
         }
 

@@ -1058,9 +1058,19 @@
                                         <Button Grid.Column="1" Content="参照" Command="{Binding BrowseHeadPartImageCommand}"/>
                                     </Grid>
 
-                                    <Button Grid.Row="7" Content="登録して採用"
-                                            Command="{Binding AdoptHeadPartImageCommand}"
-                                            Height="36" FontWeight="SemiBold"/>
+                                    <Grid Grid.Row="7">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="10"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Button Grid.Column="0" Content="レイヤープレビューでテスト"
+                                                Command="{Binding TestHeadPartPreviewCommand}"
+                                                Height="36"/>
+                                        <Button Grid.Column="2" Content="登録して採用"
+                                                Command="{Binding AdoptHeadPartImageCommand}"
+                                                Height="36" FontWeight="SemiBold"/>
+                                    </Grid>
                                     <TextBlock Grid.Row="8" Text="{Binding HeadPartWorkspaceMessage}"
                                                Foreground="Gray" TextWrapping="Wrap" Margin="0,10,0,10"/>
 
@@ -2658,19 +2668,19 @@
                                     <StackPanel>
                                         <TextBlock Text="組み合わせ" FontWeight="SemiBold" Margin="0,0,0,12"/>
 
-                                        <TextBlock Text="BackHair / BaseBody"/>
+                                        <TextBlock Text="後ろ髪 / 基本身体"/>
                                         <ComboBox ItemsSource="{Binding LayerPreviewBaseBodyOptions}"
                                                   SelectedItem="{Binding SelectedLayerPreviewBaseBodyId}"
                                                   Height="26"
                                                   Margin="0,4,0,12"/>
 
-                                        <TextBlock Text="CostumeBody / Costume"/>
+                                        <TextBlock Text="衣装"/>
                                         <ComboBox ItemsSource="{Binding LayerPreviewCostumeOptions}"
                                                   SelectedItem="{Binding SelectedLayerPreviewCostumeId}"
                                                   Height="26"
                                                   Margin="0,4,0,12"/>
 
-                                        <TextBlock Text="HeadExpression / Expression"/>
+                                        <TextBlock Text="表情"/>
                                         <ComboBox ItemsSource="{Binding LayerPreviewExpressionOptions}"
                                                   SelectedItem="{Binding SelectedLayerPreviewExpressionId}"
                                                   Height="26"
