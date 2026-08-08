@@ -2650,7 +2650,7 @@
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0"
-                                       Text="Accepted済み素材をDrawOrder順に重ねます。新8階層では頭・顔・前髪・表情をHeadExpression一枚として扱えます。旧4階層も互換表示します。"
+                                       Text="Accepted済み素材をDrawOrder順に重ねます。後ろ髪の上へ、選択した表情の顔レイヤーを重ねて確認できます。旧4階層も互換表示します。"
                                        Foreground="Gray"
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,12"/>
@@ -2680,7 +2680,7 @@
                                                   Height="26"
                                                   Margin="0,4,0,12"/>
 
-                                        <TextBlock Text="表情"/>
+                                        <TextBlock Text="顔レイヤー（表情）"/>
                                         <ComboBox ItemsSource="{Binding LayerPreviewExpressionOptions}"
                                                   SelectedItem="{Binding SelectedLayerPreviewExpressionId}"
                                                   Height="26"

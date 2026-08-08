@@ -6917,22 +6917,22 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 includeEmpty: true);
             RefreshStringOptions(
                 LayerPreviewCostumeOptions,
-                CostumeDefinitions.Where(costume => costume != null).Select(costume => costume.CostumeId)
-                    .Concat(LayerAssetDefinitions
-                        .Where(layer => layer != null && IsLayerKind(layer, "CostumeBody"))
-                        .Select(layer => layer.CostumeId)),
+                LayerAssetDefinitions
+                    .Where(layer => layer != null &&
+                        (IsLayerKind(layer, "CostumeBody") || IsLayerKind(layer, "Costume")))
+                    .Select(layer => layer.CostumeId),
                 includeEmpty: true);
             RefreshStringOptions(
                 LayerPreviewExpressionOptions,
-                ExpressionDefinitions.Where(expression => expression != null).Select(expression => expression.ExpressionId)
-                    .Concat(LayerAssetDefinitions
-                        .Where(layer => layer != null && IsLayerKind(layer, "HeadExpression"))
-                        .Select(layer => layer.ExpressionId)),
+                LayerAssetDefinitions
+                    .Where(layer => layer != null &&
+                        (IsLayerKind(layer, "HeadExpression") || IsLayerKind(layer, "Expression")))
+                    .Select(layer => layer.ExpressionId),
                 includeEmpty: true);
 
             selectedLayerPreviewBaseBodyId = SelectExistingOrFirst(previousBaseBody, LayerPreviewBaseBodyOptions);
-            selectedLayerPreviewCostumeId = SelectExistingOrFirst(previousCostume, LayerPreviewCostumeOptions);
-            selectedLayerPreviewExpressionId = SelectExistingOrFirst(previousExpression, LayerPreviewExpressionOptions);
+            selectedLayerPreviewCostumeId = SelectPreferredOrFirst(previousCostume, "Default", LayerPreviewCostumeOptions);
+            selectedLayerPreviewExpressionId = SelectPreferredOrFirst(previousExpression, "Neutral", LayerPreviewExpressionOptions);
             OnPropertyChanged(nameof(SelectedLayerPreviewBaseBodyId));
             OnPropertyChanged(nameof(SelectedLayerPreviewCostumeId));
             OnPropertyChanged(nameof(SelectedLayerPreviewExpressionId));
@@ -7365,15 +7365,24 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private List<LayerAssetDefinition> BuildSelectedLayerPreviewDefinitions()
         {
             List<LayerAssetDefinition> layers = new List<LayerAssetDefinition>();
-            AddSelectedLayer(layers, layer =>
-                (IsLayerKind(layer, "BackHair") || IsLayerKind(layer, "BaseBody"))
-                && string.Equals(layer.AssetId, SelectedLayerPreviewBaseBodyId, StringComparison.OrdinalIgnoreCase));
-            AddSelectedLayer(layers, layer =>
-                (IsLayerKind(layer, "CostumeBody") || IsLayerKind(layer, "Costume"))
-                && string.Equals(layer.CostumeId, SelectedLayerPreviewCostumeId, StringComparison.OrdinalIgnoreCase));
-            AddSelectedLayer(layers, layer =>
-                (IsLayerKind(layer, "HeadExpression") || IsLayerKind(layer, "Expression"))
-                && string.Equals(layer.ExpressionId, SelectedLayerPreviewExpressionId, StringComparison.OrdinalIgnoreCase));
+            AddPreferredSelectedLayer(
+                layers,
+                layer => IsExactLayerKind(layer, "BackHair") &&
+                    string.Equals(layer.AssetId, SelectedLayerPreviewBaseBodyId, StringComparison.OrdinalIgnoreCase),
+                layer => IsExactLayerKind(layer, "BaseBody") &&
+                    string.Equals(layer.AssetId, SelectedLayerPreviewBaseBodyId, StringComparison.OrdinalIgnoreCase));
+            AddPreferredSelectedLayer(
+                layers,
+                layer => IsExactLayerKind(layer, "CostumeBody") &&
+                    string.Equals(layer.CostumeId, SelectedLayerPreviewCostumeId, StringComparison.OrdinalIgnoreCase),
+                layer => IsExactLayerKind(layer, "Costume") &&
+                    string.Equals(layer.CostumeId, SelectedLayerPreviewCostumeId, StringComparison.OrdinalIgnoreCase));
+            AddPreferredSelectedLayer(
+                layers,
+                layer => IsExactLayerKind(layer, "HeadExpression") &&
+                    string.Equals(layer.ExpressionId, SelectedLayerPreviewExpressionId, StringComparison.OrdinalIgnoreCase),
+                layer => IsExactLayerKind(layer, "Expression") &&
+                    string.Equals(layer.ExpressionId, SelectedLayerPreviewExpressionId, StringComparison.OrdinalIgnoreCase));
 
             foreach (LayerAssetDefinition accessory in LayerAssetDefinitions
                 .Where(layer => layer != null && IsOptionalEightLayerKind(layer) &&
@@ -7423,6 +7432,24 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 layers.Add(layer);
             }
+        }
+
+        private void AddPreferredSelectedLayer(
+            List<LayerAssetDefinition> layers,
+            Func<LayerAssetDefinition, bool> preferredPredicate,
+            Func<LayerAssetDefinition, bool> fallbackPredicate)
+        {
+            LayerAssetDefinition preferred = LayerAssetDefinitions
+                .Where(layer => layer != null)
+                .OrderBy(layer => layer.DrawOrder)
+                .FirstOrDefault(preferredPredicate);
+            if (preferred != null)
+            {
+                layers.Add(preferred);
+                return;
+            }
+
+            AddSelectedLayer(layers, fallbackPredicate);
         }
 
         private Dictionary<string, HeroineAsset> BuildAcceptedAssetDictionary()
@@ -7477,6 +7504,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
             return false;
         }
 
+        private static bool IsExactLayerKind(LayerAssetDefinition layer, string layerKind)
+        {
+            return layer != null && string.Equals(
+                layer.LayerKind?.Trim(),
+                layerKind,
+                StringComparison.OrdinalIgnoreCase);
+        }
+
         private static string SelectExistingOrFirst(string previousValue, ObservableCollection<string> options)
         {
             if (!string.IsNullOrWhiteSpace(previousValue)
@@ -7488,6 +7523,22 @@ namespace FantasyLoveSimAssetTool.ViewModels
             return options.FirstOrDefault(option => !string.IsNullOrWhiteSpace(option))
                 ?? options.FirstOrDefault()
                 ?? string.Empty;
+        }
+
+        private static string SelectPreferredOrFirst(
+            string previousValue,
+            string preferredValue,
+            ObservableCollection<string> options)
+        {
+            if (!string.IsNullOrWhiteSpace(previousValue) &&
+                options.Contains(previousValue, StringComparer.OrdinalIgnoreCase))
+            {
+                return previousValue;
+            }
+
+            string preferred = options.FirstOrDefault(option =>
+                string.Equals(option, preferredValue, StringComparison.OrdinalIgnoreCase));
+            return preferred ?? SelectExistingOrFirst(string.Empty, options);
         }
 
         private static void RefreshStringOptions(ObservableCollection<string> target, IEnumerable<string> values, bool includeEmpty)
