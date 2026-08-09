@@ -72,6 +72,7 @@ namespace FantasyLoveSimAssetTool.Models
         public ProductionStatusCell SkillTree { get; set; }
         public ProductionStatusCell Events { get; set; }
         public ProductionStatusCell ActionReactions { get; set; }
+        public ProductionStatusCell MenuActions { get; set; }
         public ProductionStatusCell Voice { get; set; }
         public ProductionStatusCell ExportReadiness { get; set; }
 
@@ -88,6 +89,7 @@ namespace FantasyLoveSimAssetTool.Models
             SkillTree?.Kind != ProductionStatusKind.Complete ||
             Events?.Kind != ProductionStatusKind.Complete ||
             ActionReactions?.Kind != ProductionStatusKind.Complete ||
+            MenuActions?.Kind != ProductionStatusKind.Complete ||
             Voice?.Kind == ProductionStatusKind.Missing ||
             ExportReadiness?.Kind != ProductionStatusKind.Complete;
     }

@@ -31,6 +31,7 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(ProductionStatusKind.Complete, row.SkillTree.Kind);
             Assert.AreEqual(ProductionStatusKind.Complete, row.Events.Kind);
             Assert.AreEqual(ProductionStatusKind.Complete, row.ActionReactions.Kind);
+            Assert.AreEqual(ProductionStatusKind.Complete, row.MenuActions.Kind);
             Assert.AreEqual(ProductionStatusKind.Complete, row.ExportReadiness.Kind);
             Assert.IsFalse(row.HasIncomplete);
         }
@@ -62,6 +63,23 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual("×", row.BasicInformation.Symbol);
             Assert.AreEqual(ProductionStatusKind.Missing, row.BattleMessages.Kind);
             Assert.AreEqual(ProductionStatusKind.Missing, row.TrainingImages.Kind);
+            Assert.AreEqual(ProductionStatusKind.Missing, row.MenuActions.Kind);
+        }
+
+        [TestMethod]
+        public void EvaluateMenuActions_InvalidLayoutIsNavigable()
+        {
+            HeroineProfile profile = CompleteProfile();
+            MenuActionDefinition talk = profile.MenuActions.First(x => x.ActionId == "Talk");
+            talk.DisplayColumn = 9;
+            talk.SortOrder = profile.MenuActions.First(x => x.ActionId == "Rest").SortOrder;
+
+            CharacterProductionStatusRow row = EvaluateWithDefinitions(profile);
+
+            Assert.AreEqual(ProductionStatusKind.Missing, row.MenuActions.Kind);
+            Assert.AreEqual(18, row.MenuActions.TargetTabIndex);
+            Assert.IsTrue(row.MenuActions.Checks.Any(x => x.Details.Contains("表示列")));
+            Assert.IsTrue(row.MenuActions.Checks.Any(x => x.Details.Contains("表示順")));
         }
 
         [TestMethod]
@@ -574,6 +592,7 @@ namespace FantasyLoveSimAssetTool.Tests
                 reaction.Conditions.ActionId = actionId;
                 profile.ConversationEntries.Add(reaction);
             }
+            MenuActionDefinitionService.AddMissingStandardActions(profile);
             return profile;
         }
 

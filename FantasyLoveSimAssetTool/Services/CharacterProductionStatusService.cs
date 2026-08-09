@@ -43,10 +43,46 @@ namespace FantasyLoveSimAssetTool.Services
                 SkillTree = EvaluateSkillTree(profile),
                 Events = EvaluateEvents(profile, expressionList, costumeList),
                 ActionReactions = EvaluateActionReactions(profile, expressionList, costumeList),
+                MenuActions = EvaluateMenuActions(profile),
                 Voice = EvaluateVoice(profile, audioItems, isAudioProjectConfigured)
             };
             row.ExportReadiness = EvaluateExportReadiness(profile, row, acceptedAssetFileExists, exportValidation);
             return row;
+        }
+
+        private static ProductionStatusCell EvaluateMenuActions(HeroineProfile profile)
+        {
+            const int menuTabIndex = 18;
+            IReadOnlyList<string> warnings = MenuActionDefinitionService.Validate(profile);
+            List<ProductionStatusCheckItem> checks = warnings
+                .Select(warning => Check(
+                    warning,
+                    false,
+                    warning,
+                    ProductionStatusTargetKind.None,
+                    string.Empty,
+                    menuTabIndex))
+                .ToList();
+            if (checks.Count == 0)
+            {
+                checks.Add(Check(
+                    "標準メニュー設定",
+                    true,
+                    "必須13項目、表示列、表示順、実行種別に問題はありません。",
+                    ProductionStatusTargetKind.None,
+                    string.Empty,
+                    menuTabIndex));
+            }
+
+            return Cell(
+                profile,
+                "メニュー設定",
+                menuTabIndex,
+                warnings.Count == 0 ? ProductionStatusKind.Complete : ProductionStatusKind.Missing,
+                warnings.Count == 0
+                    ? "標準メニュー13項目と配置設定は有効です。"
+                    : $"メニュー設定に {warnings.Count} 件の確認事項があります。",
+                checks);
         }
 
         private static ProductionStatusCell EvaluateVoice(
@@ -465,7 +501,7 @@ namespace FantasyLoveSimAssetTool.Services
             ExportValidationResult exportValidation)
         {
             ProductionStatusCell[] categories = { row.BasicInformation, row.BattleMessages, row.TrainingImages, row.TrainingDialogues, row.CharacterImages, row.Conversations,
-                row.Expressions, row.Costumes, row.BattleSkills, row.SkillTree, row.Events, row.ActionReactions };
+                row.Expressions, row.Costumes, row.BattleSkills, row.SkillTree, row.Events, row.ActionReactions, row.MenuActions };
             List<HeroineAsset> accepted = (profile.Assets ?? new System.Collections.ObjectModel.ObservableCollection<HeroineAsset>())
                 .Where(x => x != null && x.Status == AssetStatus.Accepted).ToList();
             Func<HeroineAsset, bool> fileCheck = acceptedAssetFileExists ?? (asset => !string.IsNullOrWhiteSpace(asset.StoredPath));

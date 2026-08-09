@@ -56,6 +56,29 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void ApplyStandardLayout_RepairsExistingLayoutAndPreservesCustomActions()
+        {
+            HeroineProfile profile = new HeroineProfile
+            {
+                MenuActions = new ObservableCollection<MenuActionDefinition>
+                {
+                    new MenuActionDefinition { ActionId = "Talk", DisplayName = "Broken", DisplayColumn = 0, SortOrder = 99, ExecutionType = "SimpleAction" },
+                    new MenuActionDefinition { ActionId = "Custom", DisplayName = "Custom", DisplayColumn = 3, SortOrder = 500 }
+                }
+            };
+
+            int updated = MenuActionDefinitionService.ApplyStandardLayout(profile);
+
+            MenuActionDefinition talk = profile.MenuActions.Single(x => x.ActionId == "Talk");
+            Assert.IsTrue(updated > 0);
+            Assert.AreEqual("会話", talk.DisplayName);
+            Assert.AreEqual(1, talk.DisplayColumn);
+            Assert.AreEqual(10, talk.SortOrder);
+            Assert.AreEqual("OpenConversationGenres", talk.ExecutionType);
+            Assert.AreEqual(500, profile.MenuActions.Single(x => x.ActionId == "Custom").SortOrder);
+        }
+
+        [TestMethod]
         public void Validate_ReportsMissingAndIncorrectNavigationActions()
         {
             HeroineProfile profile = new HeroineProfile

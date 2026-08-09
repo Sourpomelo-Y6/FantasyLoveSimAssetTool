@@ -2384,6 +2384,107 @@
                         </Grid>
                     </TabItem>
 
+                    <TabItem Header="メニュー設定">
+                        <Grid Margin="0,12,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="160"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                                <TextBlock Text="ヒロイン別メインメニュー"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Margin="0,4,0,8"
+                                           Foreground="Gray"
+                                           TextWrapping="Wrap"
+                                           Text="配置列は 0=自動、1=左、2=中央、3=右です。標準項目を準備は不足分だけを追加し、標準配置へ戻すは標準13項目の表示名・列・順序・実行種別を修復します。"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="標準項目を準備"
+                                            Command="{Binding PrepareStandardMenuActionsCommand}"
+                                            Width="150" Height="28" Margin="0,0,8,0"/>
+                                    <Button Content="標準配置へ戻す"
+                                            Command="{Binding ApplyStandardMenuLayoutCommand}"
+                                            Width="150" Height="28" Margin="0,0,8,0"/>
+                                    <Button Content="項目を追加"
+                                            Command="{Binding AddMenuActionCommand}"
+                                            Width="110" Height="28" Margin="0,0,8,0"/>
+                                    <Button Content="選択項目を削除"
+                                            Command="{Binding RemoveMenuActionCommand}"
+                                            Width="130" Height="28" Margin="0,0,8,0"/>
+                                    <Button Content="検証"
+                                            Command="{Binding ValidateMenuActionsCommand}"
+                                            Width="90" Height="28"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <DataGrid Grid.Row="1"
+                                      ItemsSource="{Binding SelectedProfile.MenuActions}"
+                                      SelectedItem="{Binding SelectedMenuAction, Mode=TwoWay}"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      SelectionMode="Single"
+                                      Margin="0,0,0,12">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="ActionId"
+                                                        Binding="{Binding ActionId, UpdateSourceTrigger=PropertyChanged}"
+                                                        Width="150"/>
+                                    <DataGridTextColumn Header="表示名"
+                                                        Binding="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}"
+                                                        Width="150"/>
+                                    <DataGridTemplateColumn Header="配置列" Width="110">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ComboBox ItemsSource="{Binding Data.MenuActionColumnOptions, Source={StaticResource ViewModelProxy}}"
+                                                          DisplayMemberPath="Value"
+                                                          SelectedValuePath="Key"
+                                                          SelectedValue="{Binding DisplayColumn, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="表示順"
+                                                        Binding="{Binding SortOrder, UpdateSourceTrigger=PropertyChanged}"
+                                                        Width="80"/>
+                                    <DataGridTemplateColumn Header="実行種別" Width="220">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ComboBox ItemsSource="{Binding Data.MenuActionExecutionTypes, Source={StaticResource ViewModelProxy}}"
+                                                          SelectedItem="{Binding ExecutionType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridCheckBoxColumn Header="有効"
+                                                            Binding="{Binding IsEnabled, UpdateSourceTrigger=PropertyChanged}"
+                                                            Width="65"/>
+                                    <DataGridCheckBoxColumn Header="必須"
+                                                            Binding="{Binding IsRequired, UpdateSourceTrigger=PropertyChanged}"
+                                                            Width="65"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <GroupBox Grid.Row="2" Header="検証結果" Margin="0,0,0,12">
+                                <ListBox ItemsSource="{Binding MenuActionWarnings}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="#B04030" Margin="4,2"/>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </GroupBox>
+
+                            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+                                <TextBlock Text="編集後は保存し、Export後にUnityで Heroine Export Import を実行してください。"
+                                           Foreground="Gray" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                <Button Content="保存"
+                                        Command="{Binding SaveSelectedProfileCommand}"
+                                        Width="120" Height="30"/>
+                            </StackPanel>
+                        </Grid>
+                    </TabItem>
+
                     <TabItem Header="差分定義">
                         <Grid Margin="0,12,0,0">
                             <Grid.RowDefinitions>
@@ -3400,15 +3501,16 @@
                             </StackPanel>
                         </Grid>
                     </TabItem>
+
                 </TabControl>
             </Border>
         </Grid>
 
-        <DockPanel Grid.Row="2" Margin="0,12,0,0">
+        <!--<DockPanel Grid.Row="2" Margin="0,12,0,0">
             <Button DockPanel.Dock="Right" Content="戦闘メッセージへ"
                     Command="{Binding OpenBattleMessagesTabCommand}"
                     Width="130" Height="28" Margin="8,0,0,0"/>
             <TextBox Text="{Binding StatusMessage}" Foreground="#444444" IsReadOnly="True" />
-        </DockPanel>
+        </DockPanel>-->
     </Grid>
 </Window>

@@ -174,6 +174,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private HeroineBattleSkill selectedProductionBattleSkill;
         private HeroineTrainingSkill selectedProductionTrainingSkill;
         private HeroineSkillTreeNode selectedProductionSkillTreeNode;
+        private MenuActionDefinition selectedMenuAction;
         private bool isBattleSkillEditorExpanded;
         private bool isSkillTreeEditorExpanded;
 
@@ -192,6 +193,24 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<string> VoiceUsageOptions { get; }
 
         public ObservableCollection<string> VoiceAssignmentTargetOptions { get; }
+
+        public ObservableCollection<KeyValuePair<int, string>> MenuActionColumnOptions { get; }
+
+        public ObservableCollection<string> MenuActionExecutionTypes { get; }
+
+        public ObservableCollection<string> MenuActionWarnings { get; }
+
+        public MenuActionDefinition SelectedMenuAction
+        {
+            get => selectedMenuAction;
+            set
+            {
+                if (selectedMenuAction == value) return;
+                selectedMenuAction = value;
+                OnPropertyChanged(nameof(SelectedMenuAction));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
 
         public HeroineBattleSkill SelectedProductionBattleSkill
         {
@@ -1373,6 +1392,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 RefreshSelectedStillStatus();
                 RefreshAvailableVoiceIds();
                 RefreshFilteredAudioLibrary();
+                SelectedMenuAction = selectedProfile?.MenuActions?.FirstOrDefault();
+                ValidateMenuActions();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -2158,6 +2179,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand PrepareStandardMenuActionsCommand { get; }
 
+        public ICommand ApplyStandardMenuLayoutCommand { get; }
+
+        public ICommand AddMenuActionCommand { get; }
+
+        public ICommand RemoveMenuActionCommand { get; }
+
+        public ICommand ValidateMenuActionsCommand { get; }
+
         public ICommand ImportActionsFromUnityCommand { get; }
 
         public ICommand ImportConversationsFromUnityCommand { get; }
@@ -2396,6 +2425,28 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 ConversationDataKind.ActionReactions,
                 ConversationDataKind.Endings
             };
+            MenuActionColumnOptions = new ObservableCollection<KeyValuePair<int, string>>
+            {
+                new KeyValuePair<int, string>(0, "自動"),
+                new KeyValuePair<int, string>(1, "左"),
+                new KeyValuePair<int, string>(2, "中央"),
+                new KeyValuePair<int, string>(3, "右")
+            };
+            MenuActionExecutionTypes = new ObservableCollection<string>
+            {
+                "SimpleAction",
+                "OpenConversationGenres",
+                "OpenOutfitPanel",
+                "OpenOutfitReactionPanel",
+                "OpenSchedulePanel",
+                "OpenStatusDetailPanel",
+                "OpenStillGalleryPanel",
+                "OpenMessageLogPanel",
+                "OpenDebugBattlePanel",
+                "OpenTrainingPanel",
+                "OpenSkillPanel"
+            };
+            MenuActionWarnings = new ObservableCollection<string>();
             heroineIdInput = "TestHeroine";
             displayNameInput = "テストヒロイン";
             enemyIdInput = "ForestSlime";
@@ -2727,6 +2778,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedProfile != null);
             PrepareStandardMenuActionsCommand = new RelayCommand(
                 PrepareStandardMenuActions,
+                () => SelectedProfile != null);
+            ApplyStandardMenuLayoutCommand = new RelayCommand(
+                ApplyStandardMenuLayout,
+                () => SelectedProfile != null);
+            AddMenuActionCommand = new RelayCommand(
+                AddMenuAction,
+                () => SelectedProfile != null);
+            RemoveMenuActionCommand = new RelayCommand(
+                RemoveMenuAction,
+                () => SelectedProfile != null && SelectedMenuAction != null);
+            ValidateMenuActionsCommand = new RelayCommand(
+                ValidateMenuActions,
                 () => SelectedProfile != null);
             ImportActionsFromUnityCommand = new RelayCommand(
                 ImportActionsFromUnity,
@@ -8308,6 +8371,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 characterProjectService.SaveProfile(SelectedProfile);
                 RefreshStillPromptAfterProfilePromptChanged();
                 RefreshSelectedStillStatus();
+                ValidateMenuActions();
                 RefreshProductionStatus();
                 StatusMessage = $"{SelectedProfile.HeroineId} を保存しました。";
             }
@@ -8736,6 +8800,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 int added = MenuActionDefinitionService.AddMissingStandardActions(SelectedProfile);
                 characterProjectService.SaveProfile(SelectedProfile);
                 OnPropertyChanged(nameof(SelectedProfile));
+                ValidateMenuActions();
                 StatusMessage = added > 0
                     ? $"標準メニュー項目を {added} 件追加して保存しました。既存項目は維持されています。"
                     : "標準メニュー項目はすべて登録済みです。既存項目は変更していません。";
@@ -8744,6 +8809,92 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 StatusMessage = $"標準メニュー項目の準備に失敗しました: {ex.Message}";
             }
+        }
+
+        private void ApplyStandardMenuLayout()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            MessageBoxResult result = MessageBox.Show(
+                "標準13項目の表示名・配置列・表示順・実行種別を標準値へ戻します。\n" +
+                "独自に追加した項目は変更しません。実行しますか？",
+                "標準メニュー配置へ戻す",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+            if (result != MessageBoxResult.Yes)
+            {
+                StatusMessage = "標準メニュー配置の適用をキャンセルしました。";
+                return;
+            }
+
+            int updated = MenuActionDefinitionService.ApplyStandardLayout(SelectedProfile);
+            characterProjectService.SaveProfile(SelectedProfile);
+            OnPropertyChanged(nameof(SelectedProfile));
+            SelectedMenuAction = SelectedProfile.MenuActions.FirstOrDefault();
+            ValidateMenuActions();
+            RefreshProductionStatus();
+            StatusMessage = $"標準メニュー配置を適用して保存しました。更新: {updated} 件。";
+        }
+
+        private void AddMenuAction()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            SelectedProfile.MenuActions ??= new ObservableCollection<MenuActionDefinition>();
+            MenuActionDefinition action = new MenuActionDefinition
+            {
+                ActionId = "NewAction",
+                DisplayName = "新しい項目",
+                DisplayColumn = 0,
+                SortOrder = SelectedProfile.MenuActions.Count == 0
+                    ? 10
+                    : SelectedProfile.MenuActions.Max(x => x?.SortOrder ?? 0) + 10,
+                ExecutionType = "SimpleAction",
+                IsEnabled = true,
+                IsRequired = false
+            };
+            SelectedProfile.MenuActions.Add(action);
+            SelectedMenuAction = action;
+            ValidateMenuActions();
+            StatusMessage = "メニュー項目を追加しました。編集後に保存してください。";
+        }
+
+        private void RemoveMenuAction()
+        {
+            if (SelectedProfile?.MenuActions == null || SelectedMenuAction == null)
+            {
+                return;
+            }
+
+            string actionId = SelectedMenuAction.ActionId;
+            SelectedProfile.MenuActions.Remove(SelectedMenuAction);
+            SelectedMenuAction = SelectedProfile.MenuActions.FirstOrDefault();
+            ValidateMenuActions();
+            StatusMessage = $"メニュー項目 `{actionId}` を削除しました。保存すると確定します。";
+        }
+
+        private void ValidateMenuActions()
+        {
+            MenuActionWarnings.Clear();
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            foreach (string warning in MenuActionDefinitionService.Validate(SelectedProfile))
+            {
+                MenuActionWarnings.Add(warning);
+            }
+
+            StatusMessage = MenuActionWarnings.Count == 0
+                ? "メニュー設定に問題はありません。"
+                : $"メニュー設定に {MenuActionWarnings.Count} 件の確認事項があります。";
         }
 
         private void ImportActionsFromUnity()
@@ -11075,6 +11226,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 row.SkillTree,
                 row.Events,
                 row.ActionReactions,
+                row.MenuActions,
                 row.Voice,
                 row.ExportReadiness
             })

@@ -68,6 +68,43 @@ namespace FantasyLoveSimAssetTool.Services
             return added;
         }
 
+        public static int ApplyStandardLayout(HeroineProfile profile)
+        {
+            if (profile == null)
+            {
+                throw new ArgumentNullException(nameof(profile));
+            }
+
+            AddMissingStandardActions(profile);
+            int updated = 0;
+            foreach (MenuActionDefinition template in StandardActions)
+            {
+                MenuActionDefinition action = profile.MenuActions.FirstOrDefault(x => x != null &&
+                    string.Equals(x.ActionId, template.ActionId, StringComparison.OrdinalIgnoreCase));
+                if (action == null)
+                {
+                    continue;
+                }
+
+                bool changed = action.DisplayName != template.DisplayName ||
+                    action.DisplayColumn != template.DisplayColumn ||
+                    action.SortOrder != template.SortOrder ||
+                    action.ExecutionType != template.ExecutionType ||
+                    !action.IsRequired;
+                action.DisplayName = template.DisplayName;
+                action.DisplayColumn = template.DisplayColumn;
+                action.SortOrder = template.SortOrder;
+                action.ExecutionType = template.ExecutionType;
+                action.IsRequired = true;
+                if (changed)
+                {
+                    updated++;
+                }
+            }
+
+            return updated;
+        }
+
         public static void Normalize(HeroineProfile profile)
         {
             profile.MenuActions ??= new ObservableCollection<MenuActionDefinition>();
@@ -110,10 +147,30 @@ namespace FantasyLoveSimAssetTool.Services
 
             foreach (MenuActionDefinition action in actions.Where(x => x != null))
             {
+                if (string.IsNullOrWhiteSpace(action.ActionId))
+                {
+                    warnings.Add("ActionId が空の Menu Action があります。");
+                }
+                if (string.IsNullOrWhiteSpace(action.DisplayName))
+                {
+                    warnings.Add($"Menu Action `{action.ActionId}` の表示名が空です。");
+                }
+                if (action.DisplayColumn < 0 || action.DisplayColumn > 3)
+                {
+                    warnings.Add($"Menu Action `{action.ActionId}` の表示列は 0～3 で指定してください。現在値: {action.DisplayColumn}");
+                }
                 if (!ExecutionTypes.Contains(action.ExecutionType ?? string.Empty))
                 {
                     warnings.Add($"Menu Action `{action.ActionId}` の ExecutionType `{action.ExecutionType}` は未対応です。");
                 }
+            }
+
+            foreach (IGrouping<int, MenuActionDefinition> duplicate in actions
+                .Where(x => x != null && x.SortOrder > 0)
+                .GroupBy(x => x.SortOrder)
+                .Where(x => x.Count() > 1))
+            {
+                warnings.Add($"Menu Action の表示順 `{duplicate.Key}` が重複しています: {string.Join(", ", duplicate.Select(x => x.ActionId))}");
             }
 
             return warnings;
