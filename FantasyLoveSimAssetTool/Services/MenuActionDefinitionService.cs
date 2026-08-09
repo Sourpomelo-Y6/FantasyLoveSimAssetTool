@@ -11,19 +11,19 @@ namespace FantasyLoveSimAssetTool.Services
     {
         private static readonly MenuActionDefinition[] StandardActions =
         {
-            Create("Talk", "会話", 0, "OpenConversationGenres"),
-            Create("Tea", "お茶", 0, "SimpleAction"),
-            Create("Rest", "休む", 0, "SimpleAction"),
-            Create("Walk", "散歩", 0, "SimpleAction"),
-            Create("Gift", "プレゼント", 1, "SimpleAction"),
-            Create("DressUp", "着せ替え", 1, "OpenOutfitPanel"),
-            Create("OutfitReaction", "衣装を見る", 1, "OpenOutfitReactionPanel"),
-            Create("Schedule", "スケジュール", 1, "OpenSchedulePanel"),
-            Create("Training", "訓練", 2, "OpenTrainingPanel"),
-            Create("Skill", "スキル", 2, "OpenSkillPanel"),
-            Create("StatusDetail", "状態", 2, "OpenStatusDetailPanel"),
-            Create("StillGallery", "回想", 2, "OpenStillGalleryPanel"),
-            Create("MessageLog", "ログ", 3, "OpenMessageLogPanel")
+            Create("Talk", "会話", 1, 10, "OpenConversationGenres"),
+            Create("StatusDetail", "状態", 2, 12, "OpenStatusDetailPanel"),
+            Create("StillGallery", "回想", 2, 13, "OpenStillGalleryPanel"),
+            Create("MessageLog", "ログ", 2, 14, "OpenMessageLogPanel"),
+            Create("Training", "訓練", 2, 17, "OpenTrainingPanel"),
+            Create("Skill", "スキル", 2, 18, "OpenSkillPanel"),
+            Create("Rest", "休む", 1, 20, "SimpleAction"),
+            Create("Walk", "散歩", 1, 30, "SimpleAction"),
+            Create("Tea", "お茶", 1, 40, "SimpleAction"),
+            Create("Gift", "プレゼント", 2, 50, "SimpleAction"),
+            Create("DressUp", "着せ替え", 3, 60, "OpenOutfitPanel"),
+            Create("OutfitReaction", "衣装を見る", 3, 65, "OpenOutfitReactionPanel"),
+            Create("Schedule", "スケジュール", 3, 70, "OpenSchedulePanel")
         };
 
         private static readonly HashSet<string> ExecutionTypes = new HashSet<string>(StringComparer.Ordinal)
@@ -132,6 +132,7 @@ namespace FantasyLoveSimAssetTool.Services
                         actionId = x.ActionId,
                         displayName = x.DisplayName,
                         displayColumn = x.DisplayColumn,
+                        sortOrder = x.SortOrder,
                         executionType = x.ExecutionType,
                         isEnabled = x.IsEnabled,
                         isRequired = x.IsRequired
@@ -140,13 +141,14 @@ namespace FantasyLoveSimAssetTool.Services
             return JsonSerializer.Serialize(export, new JsonSerializerOptions { WriteIndented = true });
         }
 
-        private static MenuActionDefinition Create(string id, string name, int column, string executionType)
+        private static MenuActionDefinition Create(string id, string name, int column, int sortOrder, string executionType)
         {
             return new MenuActionDefinition
             {
                 ActionId = id,
                 DisplayName = name,
                 DisplayColumn = column,
+                SortOrder = sortOrder,
                 ExecutionType = executionType
             };
         }
@@ -158,6 +160,7 @@ namespace FantasyLoveSimAssetTool.Services
                 ActionId = source.ActionId,
                 DisplayName = source.DisplayName,
                 DisplayColumn = source.DisplayColumn,
+                SortOrder = source.SortOrder,
                 ExecutionType = source.ExecutionType,
                 IsEnabled = source.IsEnabled,
                 IsRequired = source.IsRequired

@@ -8,6 +8,8 @@ namespace FantasyLoveSimAssetTool.Models
 
         public int DisplayColumn { get; set; }
 
+        public int SortOrder { get; set; }
+
         public string ExecutionType { get; set; } = "SimpleAction";
 
         public bool IsEnabled { get; set; } = true;

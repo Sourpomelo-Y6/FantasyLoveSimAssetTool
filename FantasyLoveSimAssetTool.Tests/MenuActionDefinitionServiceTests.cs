@@ -27,6 +27,10 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(
                 "OpenOutfitPanel",
                 profile.MenuActions.Single(x => x.ActionId == "DressUp").ExecutionType);
+            Assert.AreEqual(1, profile.MenuActions.Single(x => x.ActionId == "Talk").DisplayColumn);
+            Assert.AreEqual(10, profile.MenuActions.Single(x => x.ActionId == "Talk").SortOrder);
+            Assert.AreEqual(3, profile.MenuActions.Single(x => x.ActionId == "Schedule").DisplayColumn);
+            Assert.AreEqual(70, profile.MenuActions.Single(x => x.ActionId == "Schedule").SortOrder);
         }
 
         [TestMethod]
@@ -80,6 +84,7 @@ namespace FantasyLoveSimAssetTool.Tests
             JsonElement talk = json.RootElement.GetProperty("items").EnumerateArray()
                 .Single(x => x.GetProperty("actionId").GetString() == "Talk");
             Assert.AreEqual("OpenConversationGenres", talk.GetProperty("executionType").GetString());
+            Assert.AreEqual(10, talk.GetProperty("sortOrder").GetInt32());
         }
     }
 }
