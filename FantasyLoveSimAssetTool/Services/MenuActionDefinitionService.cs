@@ -118,6 +118,144 @@ namespace FantasyLoveSimAssetTool.Services
             }
         }
 
+        public static MenuActionImportSummary MergeFromUnity(
+            HeroineProfile profile,
+            IEnumerable<FromUnityActionDataItem> importedItems)
+        {
+            if (profile == null)
+            {
+                throw new ArgumentNullException(nameof(profile));
+            }
+
+            profile.MenuActions ??= new ObservableCollection<MenuActionDefinition>();
+            MenuActionImportSummary summary = new MenuActionImportSummary();
+            HashSet<string> importedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (FromUnityActionDataItem item in importedItems ?? Enumerable.Empty<FromUnityActionDataItem>())
+            {
+                if (item == null || string.IsNullOrWhiteSpace(item.Id))
+                {
+                    summary.SkippedCount++;
+                    summary.Warnings.Add("ActionId が空のUnity Actionをスキップしました。");
+                    continue;
+                }
+
+                string actionId = item.Id.Trim();
+                if (!importedIds.Add(actionId))
+                {
+                    summary.SkippedCount++;
+                    summary.Warnings.Add($"Unity ActionのActionIdが重複しているためスキップしました: {actionId}");
+                    continue;
+                }
+
+                MenuActionDefinition action = profile.MenuActions.FirstOrDefault(x => x != null &&
+                    string.Equals(x.ActionId, actionId, StringComparison.OrdinalIgnoreCase));
+                bool added = action == null;
+                if (added)
+                {
+                    action = new MenuActionDefinition
+                    {
+                        ActionId = actionId,
+                        DisplayName = actionId,
+                        ExecutionType = "SimpleAction",
+                        IsEnabled = true,
+                        IsRequired = StandardActions.Any(x => string.Equals(x.ActionId, actionId, StringComparison.OrdinalIgnoreCase))
+                    };
+                    profile.MenuActions.Add(action);
+                }
+
+                bool changed = false;
+                if (!string.IsNullOrWhiteSpace(item.DisplayName) && action.DisplayName != item.DisplayName.Trim())
+                {
+                    action.DisplayName = item.DisplayName.Trim();
+                    changed = true;
+                }
+
+                string executionType = !string.IsNullOrWhiteSpace(item.ExecutionType)
+                    ? item.ExecutionType.Trim()
+                    : ExecutionTypes.Contains(item.Category ?? string.Empty)
+                        ? item.Category.Trim()
+                        : string.Empty;
+                if (!string.IsNullOrEmpty(executionType))
+                {
+                    if (!ExecutionTypes.Contains(executionType))
+                    {
+                        summary.Warnings.Add($"未対応のExecutionTypeを維持せず既存値を使用します: {actionId} / {executionType}");
+                    }
+                    else if (action.ExecutionType != executionType)
+                    {
+                        action.ExecutionType = executionType;
+                        changed = true;
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(item.DisplayColumn))
+                {
+                    int column;
+                    if (TryParseDisplayColumn(item.DisplayColumn, out column))
+                    {
+                        if (action.DisplayColumn != column)
+                        {
+                            action.DisplayColumn = column;
+                            changed = true;
+                        }
+                    }
+                    else
+                    {
+                        summary.Warnings.Add($"未対応のDisplayColumnのため既存値を使用します: {actionId} / {item.DisplayColumn}");
+                    }
+                }
+
+                if (item.SortOrder.HasValue && action.SortOrder != item.SortOrder.Value)
+                {
+                    action.SortOrder = item.SortOrder.Value;
+                    changed = true;
+                }
+                if (item.IsEnabled.HasValue && action.IsEnabled != item.IsEnabled.Value)
+                {
+                    action.IsEnabled = item.IsEnabled.Value;
+                    changed = true;
+                }
+
+                if (added)
+                {
+                    summary.AddedCount++;
+                }
+                else if (changed)
+                {
+                    summary.UpdatedCount++;
+                }
+                else
+                {
+                    summary.UnchangedCount++;
+                }
+            }
+
+            return summary;
+        }
+
+        private static bool TryParseDisplayColumn(string value, out int column)
+        {
+            column = 0;
+            if (int.TryParse(value, out int numeric))
+            {
+                if (numeric >= 0 && numeric <= 3)
+                {
+                    column = numeric;
+                    return true;
+                }
+                return false;
+            }
+
+            switch ((value ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "auto": column = 0; return true;
+                case "left": column = 1; return true;
+                case "center": column = 2; return true;
+                case "right": column = 3; return true;
+                default: return false;
+            }
+        }
+
         public static IReadOnlyList<string> Validate(HeroineProfile profile)
         {
             ObservableCollection<MenuActionDefinition> actions = profile?.MenuActions

@@ -21,6 +21,14 @@ namespace FantasyLoveSimAssetTool.Models
 
         public string Category { get; set; }
 
+        public string ExecutionType { get; set; }
+
+        public string DisplayColumn { get; set; }
+
+        public int? SortOrder { get; set; }
+
+        public bool? IsEnabled { get; set; }
+
         public string RequiredItemId { get; set; }
 
         public List<string> RequiredFlagIds { get; set; }
@@ -34,6 +42,15 @@ namespace FantasyLoveSimAssetTool.Models
         public string Memo { get; set; }
 
         public List<FromUnityActionReaction> Reactions { get; set; }
+    }
+
+    public class MenuActionImportSummary
+    {
+        public int AddedCount { get; set; }
+        public int UpdatedCount { get; set; }
+        public int UnchangedCount { get; set; }
+        public int SkippedCount { get; set; }
+        public List<string> Warnings { get; } = new List<string>();
     }
 
     public class FromUnityActionReaction

@@ -71,6 +71,8 @@ Use `標準メニュー項目を準備` for a new heroine before export. It adds
 
 The `メニュー設定` tab displays and edits `ActionId`, display name, column, sort order, execution type, enabled state, and required state. Use `標準項目を準備` to add only missing items. Use `標準配置へ戻す` to repair the standard 13 items after confirming the warning dialog; custom action definitions are preserved. The validation area reports missing required items, duplicate IDs or sort orders, empty names, invalid columns, and unsupported execution types. The production-status page includes the same validation and links to this tab.
 
+`Unity Action読込` also merges the Unity-exported display name, column, sort order, execution type, and enabled state into the menu definitions. Existing action reactions and definitions absent from the Unity file remain intact. Older JSON that omits a menu field preserves the current Tool value; invalid column or execution-type values are reported as warnings instead of overwriting it. The completion message reports added, updated, unchanged, skipped, and warning counts separately from action-reaction import counts.
+
 `DebugBattle` is intentionally excluded from the production template. Add it separately only when the selected heroine needs the development battle entry.
 
 The menu definition and the action reaction text are related but must not be treated as the same data:

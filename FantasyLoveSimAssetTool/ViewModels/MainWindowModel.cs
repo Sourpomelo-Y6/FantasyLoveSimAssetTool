@@ -8958,6 +8958,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             SelectedProfile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
+            MenuActionImportSummary menuSummary = MenuActionDefinitionService.MergeFromUnity(
+                SelectedProfile,
+                actionData.Items);
             List<ConversationEntry> importedEntries = new List<ConversationEntry>();
             int skippedCount = 0;
 
@@ -9000,6 +9003,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             characterProjectService.SaveProfile(SelectedProfile);
+            OnPropertyChanged(nameof(SelectedProfile));
+            SelectedMenuAction = SelectedProfile.MenuActions?.FirstOrDefault();
+            ValidateMenuActions();
+            foreach (string warning in menuSummary.Warnings)
+            {
+                if (!MenuActionWarnings.Contains(warning))
+                {
+                    MenuActionWarnings.Add(warning);
+                }
+            }
+            RefreshProductionStatus();
             SelectedConversationDataKind = ConversationDataKind.ActionReactions;
             RefreshConversationCategorySuggestions();
             RefreshFilteredConversationEntries();
@@ -9008,7 +9022,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 SelectedConversationEntry = importedEntries[0];
             }
 
-            StatusMessage = $"FromUnity actions を取り込みました。追加 {importedEntries.Count} 件、スキップ {skippedCount} 件。";
+            StatusMessage =
+                $"FromUnity actions を取り込みました。メニュー: 追加 {menuSummary.AddedCount} / 更新 {menuSummary.UpdatedCount} / 維持 {menuSummary.UnchangedCount} / スキップ {menuSummary.SkippedCount}、" +
+                $"行動反応: 追加 {importedEntries.Count} / スキップ {skippedCount}、警告 {menuSummary.Warnings.Count} 件。";
         }
 
         private bool HasExistingActionReaction(string actionId, string reactionId)

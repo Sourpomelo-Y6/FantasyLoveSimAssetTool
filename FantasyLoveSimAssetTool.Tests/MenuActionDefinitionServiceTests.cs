@@ -109,5 +109,77 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual("OpenConversationGenres", talk.GetProperty("executionType").GetString());
             Assert.AreEqual(10, talk.GetProperty("sortOrder").GetInt32());
         }
+
+        [TestMethod]
+        public void MergeFromUnity_UpdatesMenuFieldsWithoutRemovingExistingDefinitions()
+        {
+            HeroineProfile profile = new HeroineProfile();
+            MenuActionDefinitionService.AddMissingStandardActions(profile);
+            int originalCount = profile.MenuActions.Count;
+
+            MenuActionImportSummary summary = MenuActionDefinitionService.MergeFromUnity(
+                profile,
+                new[]
+                {
+                    new FromUnityActionDataItem
+                    {
+                        Id = "Talk",
+                        DisplayName = "会話（Unity）",
+                        ExecutionType = "OpenConversationGenres",
+                        DisplayColumn = "Left",
+                        SortOrder = 15,
+                        IsEnabled = false
+                    },
+                    new FromUnityActionDataItem
+                    {
+                        Id = "DebugBattle",
+                        DisplayName = "戦闘テスト",
+                        ExecutionType = "OpenDebugBattlePanel",
+                        DisplayColumn = "2",
+                        SortOrder = 90,
+                        IsEnabled = true
+                    }
+                });
+
+            MenuActionDefinition talk = profile.MenuActions.Single(x => x.ActionId == "Talk");
+            MenuActionDefinition debug = profile.MenuActions.Single(x => x.ActionId == "DebugBattle");
+            Assert.AreEqual(1, summary.UpdatedCount);
+            Assert.AreEqual(1, summary.AddedCount);
+            Assert.AreEqual(originalCount + 1, profile.MenuActions.Count);
+            Assert.AreEqual("会話（Unity）", talk.DisplayName);
+            Assert.AreEqual(1, talk.DisplayColumn);
+            Assert.AreEqual(15, talk.SortOrder);
+            Assert.IsFalse(talk.IsEnabled);
+            Assert.AreEqual("OpenDebugBattlePanel", debug.ExecutionType);
+            Assert.AreEqual(2, debug.DisplayColumn);
+            Assert.IsFalse(debug.IsRequired);
+        }
+
+        [TestMethod]
+        public void MergeFromUnity_OmittedFieldsPreserveExistingValuesAndInvalidValuesWarn()
+        {
+            HeroineProfile profile = new HeroineProfile();
+            MenuActionDefinitionService.AddMissingStandardActions(profile);
+            MenuActionDefinition talk = profile.MenuActions.Single(x => x.ActionId == "Talk");
+
+            MenuActionImportSummary summary = MenuActionDefinitionService.MergeFromUnity(
+                profile,
+                new[]
+                {
+                    new FromUnityActionDataItem
+                    {
+                        Id = "Talk",
+                        DisplayColumn = "Outside",
+                        ExecutionType = "UnknownExecution"
+                    }
+                });
+
+            Assert.AreEqual(1, summary.UnchangedCount);
+            Assert.AreEqual(2, summary.Warnings.Count);
+            Assert.AreEqual(1, talk.DisplayColumn);
+            Assert.AreEqual(10, talk.SortOrder);
+            Assert.IsTrue(talk.IsEnabled);
+            Assert.AreEqual("OpenConversationGenres", talk.ExecutionType);
+        }
     }
 }
