@@ -56,9 +56,20 @@ Consequently, an item can be absent because no `ActionData` asset exists, or it 
 
 ## Root Cause In The Tool Workflow
 
-The Tool currently treats `ActionReactions` primarily as dialogue attached to an action ID. When Unity has no matching `ActionData`, the import workflow can create a minimal action. A minimal action receives Unity's default `SimpleAction` execution type.
+The Tool stores menu definitions separately from `ActionReactions`. Unity imports `Data/actions_export.json` before action reactions, creates missing `ActionData`, and updates existing menu display and navigation settings while preserving reactions and Unity-only image references.
 
-This is safe for `Tea`, `Rest`, `Walk`, and `Gift`, but it is not sufficient for navigation actions such as `Talk`, `Schedule`, and `DressUp`. The Tool also does not currently enforce a complete standard menu action set for each heroine.
+Use `標準メニュー項目を準備` for a new heroine before export. It adds missing production menu definitions without overwriting definitions already stored for that heroine.
+
+## Current Workflow
+
+1. Select the heroine in AssetTool.
+2. Open the `会話データ` tab.
+3. Click `標準メニュー項目を準備`.
+4. Export the heroine and confirm that `Data/actions_export.json` exists.
+5. In Unity, run `FantasyLoveSim > Import Heroine Export` and select that export folder.
+6. Confirm that the import result reports `Menu actions: 13` and that the main menu shows all production entries.
+
+`DebugBattle` is intentionally excluded from the production template. Add it separately only when the selected heroine needs the development battle entry.
 
 The menu definition and the action reaction text are related but must not be treated as the same data:
 
