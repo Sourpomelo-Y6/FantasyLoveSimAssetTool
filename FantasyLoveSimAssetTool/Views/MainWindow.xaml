@@ -1296,6 +1296,7 @@
                                 <StackPanel>
                                     <GroupBox Header="Unityから取り込んだ訓練一覧" Margin="0,8,0,8">
                                         <DataGrid ItemsSource="{Binding SelectedProfile.TrainingCatalog.Items}"
+                                                  SelectedItem="{Binding SelectedTrainingCatalogItem}"
                                                   AutoGenerateColumns="False"
                                                   CanUserAddRows="False"
                                                   IsReadOnly="True"

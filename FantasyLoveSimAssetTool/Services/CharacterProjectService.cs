@@ -500,7 +500,9 @@ namespace FantasyLoveSimAssetTool.Services
                 item.UnlockNodeIds ??= new List<string>();
                 item.UnlockNodeNames ??= new List<string>();
             }
-            TrainingCatalogSyncService.RefreshReferenceWarnings(profile.TrainingCatalog);
+            TrainingCatalogSyncService.RefreshReferenceWarnings(
+                profile.TrainingCatalog,
+                profile.HeroineSkillTree?.Nodes?.Where(node => node != null).Select(node => node.NodeId));
         }
 
         private static void ApplyDefaultResourcePaths(HeroineProfile profile)

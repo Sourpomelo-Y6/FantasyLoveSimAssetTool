@@ -34,6 +34,7 @@ namespace FantasyLoveSimAssetTool.Services
                 BasicInformation = EvaluateBasicInformation(profile),
                 BattleMessages = EvaluateBattleMessages(profile),
                 TrainingImages = EvaluateTrainingImages(profile),
+                TrainingConditions = EvaluateTrainingConditions(profile),
                 TrainingDialogues = EvaluateTrainingDialogues(profile),
                 CharacterImages = EvaluateCharacterImages(profile, stillList, acceptedAssetFileExists),
                 Conversations = EvaluateConversations(profile),
@@ -500,7 +501,7 @@ namespace FantasyLoveSimAssetTool.Services
             Func<HeroineAsset, bool> acceptedAssetFileExists,
             ExportValidationResult exportValidation)
         {
-            ProductionStatusCell[] categories = { row.BasicInformation, row.BattleMessages, row.TrainingImages, row.TrainingDialogues, row.CharacterImages, row.Conversations,
+            ProductionStatusCell[] categories = { row.BasicInformation, row.BattleMessages, row.TrainingConditions, row.TrainingImages, row.TrainingDialogues, row.CharacterImages, row.Conversations,
                 row.Expressions, row.Costumes, row.BattleSkills, row.SkillTree, row.Events, row.ActionReactions, row.MenuActions };
             List<HeroineAsset> accepted = (profile.Assets ?? new System.Collections.ObjectModel.ObservableCollection<HeroineAsset>())
                 .Where(x => x != null && x.Status == AssetStatus.Accepted).ToList();
@@ -926,6 +927,46 @@ namespace FantasyLoveSimAssetTool.Services
                 ? $"登録済み訓練 {trainingIds.Length} 件の全 {totalSlots} 枠がAcceptedです。"
                 : $"Accepted {completeSlots}/{totalSlots} 枠。不足: {string.Join(", ", incomplete)}";
             return Cell(profile, "訓練画像", 4, kind, details, checks);
+        }
+
+        private static ProductionStatusCell EvaluateTrainingConditions(HeroineProfile profile)
+        {
+            List<TrainingCatalogItem> items = profile.TrainingCatalog?.Items?.Where(item => item != null).ToList()
+                ?? new List<TrainingCatalogItem>();
+            if (items.Count == 0)
+            {
+                return Cell(profile, "訓練条件", 4, ProductionStatusKind.Missing,
+                    "登録済み訓練がありません。Unity訓練一覧を読み込んでください。",
+                    new[] { Check("訓練一覧", false, "Unity訓練一覧を読み込んでください。") });
+            }
+
+            HashSet<string> validRanks = new HashSet<string>(
+                new[] { "Excellent", "Good", "Normal", "Poor", "Awful" }, StringComparer.OrdinalIgnoreCase);
+            HashSet<string> validOccurrenceTypes = new HashSet<string>(
+                new[] { "Repeatable", "OncePerSave" }, StringComparer.OrdinalIgnoreCase);
+            IEnumerable<string> nodeIds = profile.HeroineSkillTree?.Nodes?
+                .Where(node => node != null).Select(node => node.NodeId) ?? Enumerable.Empty<string>();
+            TrainingCatalogSyncService.RefreshReferenceWarnings(profile.TrainingCatalog, nodeIds);
+
+            List<ProductionStatusCheckItem> checks = new List<ProductionStatusCheckItem>();
+            foreach (TrainingCatalogItem item in items)
+            {
+                List<string> problems = new List<string>();
+                if (string.IsNullOrWhiteSpace(item.TrainingId)) problems.Add("TrainingId未設定");
+                if (string.IsNullOrWhiteSpace(item.DisplayName)) problems.Add("表示名未設定");
+                if (!validOccurrenceTypes.Contains(item.OccurrenceType ?? string.Empty)) problems.Add("出現回数種別が不正");
+                if ((item.VisibleConditionRanks ?? new List<string>()).Any(rank => !validRanks.Contains(rank))) problems.Add("表示調子が不正");
+                if ((item.ExecutableConditionRanks ?? new List<string>()).Any(rank => !validRanks.Contains(rank))) problems.Add("実行調子が不正");
+                if (!string.IsNullOrWhiteSpace(item.ReferenceWarning)) problems.Add(item.ReferenceWarning);
+                string label = string.IsNullOrWhiteSpace(item.TrainingId) ? "TrainingId未設定" : item.TrainingId.Trim();
+                checks.Add(Check("訓練条件 " + label, problems.Count == 0,
+                    problems.Count == 0 ? item.ConditionBadgeSummary + "。" + item.ConditionDetails.Replace("\n", " / ") :
+                    "要確認: " + string.Join(" / ", problems),
+                    ProductionStatusTargetKind.TrainingCatalog, item.TrainingId, 4));
+            }
+            int complete = checks.Count(check => check.IsComplete);
+            return Cell(profile, "訓練条件", 4, Kind(complete, checks.Count),
+                $"有効な条件設定 {complete}/{checks.Count}。回数、調子、前提訓練、解放ノードを確認します。", checks);
         }
 
         private static ProductionStatusCheckItem Check(

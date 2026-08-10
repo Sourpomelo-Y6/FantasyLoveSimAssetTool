@@ -432,6 +432,21 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.IsTrue(row.Conversations.Checks.Any(x => x.Name == "Food フォールバック" && !x.IsComplete));
         }
 
+        [TestMethod]
+        public void EvaluateTrainingConditions_ReportsInvalidPrerequisiteAndUnlockNode()
+        {
+            HeroineProfile profile = CompleteProfile();
+            TrainingCatalogItem item = profile.TrainingCatalog.Items[0];
+            item.RequiredCompletedTrainingIds.Add("MissingTraining");
+            item.UnlockNodeIds.Add("MissingNode");
+
+            CharacterProductionStatusRow row = CharacterProductionStatusService.Evaluate(profile);
+
+            Assert.AreEqual(ProductionStatusKind.Missing, row.TrainingConditions.Kind);
+            StringAssert.Contains(row.TrainingConditions.Checks.Single().Details, "MissingTraining");
+            StringAssert.Contains(row.TrainingConditions.Checks.Single().Details, "MissingNode");
+        }
+
         private static HeroineProfile CompleteProfile()
         {
             HeroineProfile profile = new HeroineProfile
@@ -445,7 +460,7 @@ namespace FantasyLoveSimAssetTool.Tests
                 {
                     Items = new ObservableCollection<TrainingCatalogItem>
                     {
-                        new TrainingCatalogItem { TrainingId = "TrainingA" }
+                        new TrainingCatalogItem { TrainingId = "TrainingA", DisplayName = "訓練A" }
                     }
                 },
                 TrainingImages = new TrainingImageSettings

@@ -35,6 +35,37 @@ namespace FantasyLoveSimAssetTool.Services
             return data;
         }
 
+        public static string BuildExportJson(HeroineProfile profile)
+        {
+            if (profile == null) throw new ArgumentNullException(nameof(profile));
+            object exportModel = new
+            {
+                schemaVersion = 1,
+                heroineId = profile.HeroineId,
+                source = "FantasyLoveSimAssetTool",
+                items = (profile.TrainingCatalog?.Items ?? new ObservableCollection<TrainingCatalogItem>())
+                    .Where(item => item != null)
+                    .Select(item => new
+                    {
+                        trainingId = item.TrainingId,
+                        displayName = item.DisplayName,
+                        trainingCategoryId = item.TrainingCategoryId,
+                        unlockedByDefault = item.UnlockedByDefault,
+                        sortOrder = item.SortOrder,
+                        occurrenceType = item.OccurrenceType,
+                        visibleConditionRanks = item.VisibleConditionRanks,
+                        executableConditionRanks = item.ExecutableConditionRanks,
+                        requiredCompletedTrainingIds = item.RequiredCompletedTrainingIds,
+                        requireAllCompletedTrainings = item.RequireAllCompletedTrainings,
+                        hideUntilPrerequisitesMet = item.HideUntilPrerequisitesMet,
+                        hideAfterCompletion = item.HideAfterCompletion,
+                        unlockNodeIds = item.UnlockNodeIds,
+                        unlockNodeNames = item.UnlockNodeNames
+                    }).ToList()
+            };
+            return JsonSerializer.Serialize(exportModel, new JsonSerializerOptions { WriteIndented = true });
+        }
+
         public static TrainingCatalogMergeResult MergeFromUnity(
             TrainingCatalogSettings settings,
             string expectedHeroineId,
@@ -114,25 +145,104 @@ namespace FantasyLoveSimAssetTool.Services
 
         public static int RefreshReferenceWarnings(TrainingCatalogSettings settings)
         {
+            return RefreshReferenceWarnings(settings, null);
+        }
+
+        public static int RefreshReferenceWarnings(
+            TrainingCatalogSettings settings,
+            IEnumerable<string> knownUnlockNodeIds)
+        {
             if (settings?.Items == null) return 0;
+            List<TrainingCatalogItem> items = settings.Items.Where(item => item != null).ToList();
             HashSet<string> knownIds = new HashSet<string>(
-                settings.Items.Where(item => item != null && !string.IsNullOrWhiteSpace(item.TrainingId))
+                items.Where(item => !string.IsNullOrWhiteSpace(item.TrainingId))
                     .Select(item => item.TrainingId),
-                StringComparer.Ordinal);
+                StringComparer.OrdinalIgnoreCase);
+            HashSet<string> knownNodes = knownUnlockNodeIds == null ? null : new HashSet<string>(
+                knownUnlockNodeIds.Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id.Trim()),
+                StringComparer.OrdinalIgnoreCase);
+            HashSet<string> duplicateIds = new HashSet<string>(items
+                .Where(item => !string.IsNullOrWhiteSpace(item.TrainingId))
+                .GroupBy(item => item.TrainingId.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > 1).Select(group => group.Key), StringComparer.OrdinalIgnoreCase);
             int warningCount = 0;
-            foreach (TrainingCatalogItem item in settings.Items.Where(item => item != null))
+            foreach (TrainingCatalogItem item in items)
             {
                 item.RequiredCompletedTrainingIds ??= new List<string>();
+                item.UnlockNodeIds ??= new List<string>();
+                List<string> warnings = new List<string>();
+                string itemId = (item.TrainingId ?? string.Empty).Trim();
+                if (itemId.Length == 0) warnings.Add("TrainingId が空です");
+                else if (duplicateIds.Contains(itemId)) warnings.Add("TrainingId が重複しています");
                 List<string> missingIds = item.RequiredCompletedTrainingIds
-                    .Where(id => !knownIds.Contains(id))
-                    .Distinct(StringComparer.Ordinal)
+                    .Where(id => !string.IsNullOrWhiteSpace(id) && !knownIds.Contains(id.Trim()))
+                    .Select(id => id.Trim()).Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList();
-                item.ReferenceWarning = missingIds.Count > 0
-                    ? "未登録の前提訓練: " + string.Join(" / ", missingIds)
-                    : string.Empty;
-                warningCount += missingIds.Count;
+                if (missingIds.Count > 0) warnings.Add("未登録の前提訓練: " + string.Join(" / ", missingIds));
+                if (item.RequiredCompletedTrainingIds.Any(id =>
+                    string.Equals(id?.Trim(), itemId, StringComparison.OrdinalIgnoreCase)))
+                    warnings.Add("自分自身を前提訓練に指定しています");
+                if (knownNodes != null)
+                {
+                    List<string> missingNodes = item.UnlockNodeIds
+                        .Where(id => !string.IsNullOrWhiteSpace(id) && !knownNodes.Contains(id.Trim()))
+                        .Select(id => id.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                    if (missingNodes.Count > 0) warnings.Add("未登録の解放ノード: " + string.Join(" / ", missingNodes));
+                }
+                item.ReferenceWarning = string.Join(" / ", warnings);
+                warningCount += warnings.Count;
+            }
+
+            HashSet<string> cyclicIds = FindCyclicTrainingIds(items, knownIds);
+            foreach (TrainingCatalogItem item in items.Where(item =>
+                cyclicIds.Contains((item.TrainingId ?? string.Empty).Trim())))
+            {
+                item.ReferenceWarning = string.IsNullOrWhiteSpace(item.ReferenceWarning)
+                    ? "前提訓練が循環しています"
+                    : item.ReferenceWarning + " / 前提訓練が循環しています";
+                warningCount++;
             }
             return warningCount;
+        }
+
+        private static HashSet<string> FindCyclicTrainingIds(
+            IEnumerable<TrainingCatalogItem> items,
+            HashSet<string> knownIds)
+        {
+            Dictionary<string, List<string>> graph = items
+                .Where(item => !string.IsNullOrWhiteSpace(item.TrainingId))
+                .GroupBy(item => item.TrainingId.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key,
+                    group => group.First().RequiredCompletedTrainingIds
+                        .Where(id => !string.IsNullOrWhiteSpace(id) && knownIds.Contains(id.Trim()))
+                        .Select(id => id.Trim()).ToList(), StringComparer.OrdinalIgnoreCase);
+            HashSet<string> cyclic = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string start in graph.Keys)
+            {
+                FindCycles(start, graph, new List<string>(), new HashSet<string>(StringComparer.OrdinalIgnoreCase), cyclic);
+            }
+            return cyclic;
+        }
+
+        private static void FindCycles(
+            string current,
+            Dictionary<string, List<string>> graph,
+            List<string> path,
+            HashSet<string> visiting,
+            HashSet<string> cyclic)
+        {
+            if (visiting.Contains(current))
+            {
+                int start = path.FindIndex(id => string.Equals(id, current, StringComparison.OrdinalIgnoreCase));
+                if (start >= 0) foreach (string id in path.Skip(start)) cyclic.Add(id);
+                return;
+            }
+            visiting.Add(current);
+            path.Add(current);
+            if (graph.TryGetValue(current, out List<string> dependencies))
+                foreach (string dependency in dependencies) FindCycles(dependency, graph, path, visiting, cyclic);
+            path.RemoveAt(path.Count - 1);
+            visiting.Remove(current);
         }
 
         private static List<string> CleanIds(IEnumerable<string> values)

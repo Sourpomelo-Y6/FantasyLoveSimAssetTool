@@ -44,6 +44,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private OutfitMessageOverride selectedOutfitMessageOverride;
         private OutfitReactionMessageOverride selectedOutfitReactionMessageOverride;
         private TrainingImageEntry selectedTrainingImageEntry;
+        private TrainingCatalogItem selectedTrainingCatalogItem;
         private HeroineAsset selectedTrainingAsset;
         private TrainingDialogueEntry selectedTrainingDialogueEntry;
         private TrainingDialogueMessage selectedTrainingDialogueMessage;
@@ -733,6 +734,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public TrainingCatalogItem SelectedTrainingCatalogItem
+        {
+            get { return selectedTrainingCatalogItem; }
+            set
+            {
+                if (selectedTrainingCatalogItem == value) return;
+                selectedTrainingCatalogItem = value;
+                OnPropertyChanged(nameof(SelectedTrainingCatalogItem));
+            }
+        }
+
         public HeroineAsset SelectedTrainingAsset
         {
             get { return selectedTrainingAsset; }
@@ -1382,6 +1394,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 SelectedOutfitMessageOverride = selectedProfile?.OutfitMessageOverrides?.FirstOrDefault();
                 SelectedOutfitReactionMessageOverride = selectedProfile?.OutfitReactionMessageOverrides?.FirstOrDefault();
                 SelectedTrainingImageEntry = selectedProfile?.TrainingImages?.Items?.FirstOrDefault();
+                SelectedTrainingCatalogItem = selectedProfile?.TrainingCatalog?.Items?.FirstOrDefault();
                 SelectedBattleResultEvent = null;
                 SelectedBattlePanelMessage = null;
                 RefreshStillPromptAfterProfilePromptChanged();
@@ -11307,6 +11320,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 row.BasicInformation,
                 row.BattleMessages,
+                row.TrainingConditions,
                 row.TrainingImages,
                 row.TrainingDialogues,
                 row.CharacterImages,
@@ -11395,6 +11409,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                         string.Equals(TrainingDialogueSyncService.NormalizeVisualState(x.VisualState), normalizedState, StringComparison.Ordinal));
                     SelectedTrainingDialogueMessage = SelectedTrainingDialogueEntry?.Messages?.FirstOrDefault(x =>
                         x == null || string.IsNullOrWhiteSpace(x.Text)) ?? SelectedTrainingDialogueEntry?.Messages?.FirstOrDefault();
+                    break;
+                case ProductionStatusTargetKind.TrainingCatalog:
+                    SelectedTrainingCatalogItem = SelectedProfile.TrainingCatalog?.Items?.FirstOrDefault(item =>
+                        string.Equals(item.TrainingId, check.TargetId, StringComparison.OrdinalIgnoreCase));
                     break;
                 case ProductionStatusTargetKind.SkillTreeNode:
                     IsSkillTreeEditorExpanded = true;

@@ -106,5 +106,65 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.ThrowsException<System.InvalidOperationException>(() =>
                 TrainingCatalogSyncService.DeserializeFromUnity("{\"schemaVersion\":2}"));
         }
+
+        [TestMethod]
+        public void RefreshReferenceWarnings_DetectsCyclesSelfReferencesAndMissingNodes()
+        {
+            TrainingCatalogSettings settings = new TrainingCatalogSettings
+            {
+                Items = new ObservableCollection<TrainingCatalogItem>
+                {
+                    new TrainingCatalogItem
+                    {
+                        TrainingId = "A",
+                        RequiredCompletedTrainingIds = new List<string> { "B" },
+                        UnlockNodeIds = new List<string> { "MissingNode" }
+                    },
+                    new TrainingCatalogItem
+                    {
+                        TrainingId = "B",
+                        RequiredCompletedTrainingIds = new List<string> { "A" }
+                    },
+                    new TrainingCatalogItem
+                    {
+                        TrainingId = "Self",
+                        RequiredCompletedTrainingIds = new List<string> { "Self" }
+                    }
+                }
+            };
+
+            int warnings = TrainingCatalogSyncService.RefreshReferenceWarnings(
+                settings, new[] { "ExistingNode" });
+
+            Assert.IsTrue(warnings >= 4);
+            StringAssert.Contains(settings.Items[0].ReferenceWarning, "MissingNode");
+            StringAssert.Contains(settings.Items[0].ReferenceWarning, "循環");
+            StringAssert.Contains(settings.Items[1].ReferenceWarning, "循環");
+            StringAssert.Contains(settings.Items[2].ReferenceWarning, "自分自身");
+        }
+
+        [TestMethod]
+        public void ImportAndExport_RoundTripsAvailabilityConditions()
+        {
+            FromUnityTrainingCatalogDataFile imported = TrainingCatalogSyncService.DeserializeFromUnity(
+                "{\"schemaVersion\":1,\"heroineId\":\"TestHeroine\",\"items\":[{" +
+                "\"trainingId\":\"Limited\",\"displayName\":\"限定\",\"occurrenceType\":\"OncePerSave\"," +
+                "\"visibleConditionRanks\":[\"Excellent\"],\"requiredCompletedTrainingIds\":[\"Preparation\"]," +
+                "\"unlockNodeIds\":[\"TestHeroine_Limited\"],\"hideAfterCompletion\":true}]}" );
+            HeroineProfile profile = new HeroineProfile { HeroineId = "TestHeroine" };
+            profile.TrainingCatalog.Items.Add(new TrainingCatalogItem
+                { TrainingId = "Preparation", DisplayName = "準備" });
+            TrainingCatalogSyncService.MergeFromUnity(profile.TrainingCatalog, profile.HeroineId, imported);
+
+            FromUnityTrainingCatalogDataFile exported = TrainingCatalogSyncService.DeserializeFromUnity(
+                TrainingCatalogSyncService.BuildExportJson(profile));
+            FromUnityTrainingCatalogItem item = exported.Items.Single(value => value.TrainingId == "Limited");
+
+            Assert.AreEqual("OncePerSave", item.OccurrenceType);
+            CollectionAssert.AreEqual(new[] { "Excellent" }, item.VisibleConditionRanks);
+            CollectionAssert.AreEqual(new[] { "Preparation" }, item.RequiredCompletedTrainingIds);
+            CollectionAssert.AreEqual(new[] { "TestHeroine_Limited" }, item.UnlockNodeIds);
+            Assert.IsTrue(item.HideAfterCompletion.Value);
+        }
     }
 }

@@ -18,6 +18,7 @@ namespace FantasyLoveSimAssetTool.Models
         BattleSkill,
         TrainingSkill,
         TrainingDialogue,
+        TrainingCatalog,
         SkillTreeNode,
         Expression,
         Costume,
@@ -63,6 +64,7 @@ namespace FantasyLoveSimAssetTool.Models
         public ProductionStatusCell BasicInformation { get; set; }
         public ProductionStatusCell BattleMessages { get; set; }
         public ProductionStatusCell TrainingImages { get; set; }
+        public ProductionStatusCell TrainingConditions { get; set; }
         public ProductionStatusCell TrainingDialogues { get; set; }
         public ProductionStatusCell CharacterImages { get; set; }
         public ProductionStatusCell Conversations { get; set; }
@@ -80,6 +82,7 @@ namespace FantasyLoveSimAssetTool.Models
             BasicInformation?.Kind != ProductionStatusKind.Complete ||
             BattleMessages?.Kind != ProductionStatusKind.Complete ||
             TrainingImages?.Kind != ProductionStatusKind.Complete ||
+            TrainingConditions?.Kind != ProductionStatusKind.Complete ||
             TrainingDialogues?.Kind != ProductionStatusKind.Complete ||
             CharacterImages?.Kind != ProductionStatusKind.Complete ||
             Conversations?.Kind != ProductionStatusKind.Complete ||
