@@ -28,9 +28,16 @@
         </Grid.RowDefinitions>
 
         <DockPanel Grid.Row="0" Margin="0,0,0,12">
+            <Button DockPanel.Dock="Right"
+                    Content="保存先を変更"
+                    Command="{Binding ChangeWorkspaceCommand}"
+                    Padding="14,6"
+                    Margin="12,0,0,0"
+                    VerticalAlignment="Center"/>
             <StackPanel>
                 <TextBlock Text="FantasyLoveSimAssetTool" FontSize="22" FontWeight="SemiBold"/>
                 <TextBlock Text="{Binding WorkspacePath, StringFormat=Workspace: {0}}" Foreground="Gray" Margin="0,4,0,0"/>
+                <TextBlock Text="{Binding WorkspaceWarning}" Foreground="#C06000" Margin="0,3,0,0"/>
             </StackPanel>
         </DockPanel>
 

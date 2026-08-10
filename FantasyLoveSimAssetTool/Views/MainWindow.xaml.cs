@@ -1,4 +1,5 @@
 ﻿using FantasyLoveSimAssetTool.ViewModels;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 
@@ -12,6 +13,16 @@ namespace FantasyLoveSimAssetTool.Views
         public MainWindow()
         {
             InitializeComponent();
+            Loaded += MainWindow_Loaded;
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (DesignerProperties.GetIsInDesignMode(this)) return;
+            if (DataContext is MainWindowModel model)
+            {
+                model.CheckLegacyWorkspaceMigration();
+            }
         }
 
         private void ImageSourcePath_PreviewDragOver(object sender, DragEventArgs e)

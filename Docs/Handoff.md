@@ -527,7 +527,9 @@ WPF ツールは、Unity に渡す内容の作成、整理、export に集中し
 
 ## 未決事項
 
-- 作業データの保存先をアプリ直下に固定するか、ユーザーが選べるようにするか
+- 作業データは既定で `ドキュメント/FantasyLoveSimAssetToolWorkspace` に保存し、画面上部から変更できる
+- 旧 `bin/Debug` 保存データは起動時に検出し、確認後にバックアップ付きで移行する
+- `profile.json` は一時ファイル経由で置換し、キャラクターごとに直前の内容を最大5世代バックアップする
 - JSON の細かいスキーマ
 - `StillWorkItems` を `profile.json` に保存する現方式で十分か、将来は専用 JSON に分離するか
 - スチル状態 `StillStatus` と画像状態 `HeroineAsset.Status` をどの程度連動させるか

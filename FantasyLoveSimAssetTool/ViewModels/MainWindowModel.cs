@@ -21,6 +21,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
     {
         private const int LayerPreviewTabIndex = 11;
 
+        private readonly WorkspacePathService workspacePathService;
         private readonly CharacterProjectService characterProjectService;
         private readonly EnemyProjectService enemyProjectService;
         private readonly PromptRecordService promptRecordService;
@@ -39,6 +40,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly AudioPreviewService audioPreviewService;
         private readonly List<AudioLibraryItem> allAudioLibraryItems =
             new List<AudioLibraryItem>();
+        private bool legacyWorkspaceChecked;
         private OutfitMessageOverride selectedOutfitMessageOverride;
         private OutfitReactionMessageOverride selectedOutfitReactionMessageOverride;
         private TrainingImageEntry selectedTrainingImageEntry;
@@ -381,6 +383,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             get { return characterProjectService.WorkspaceRoot; }
         }
+
+        public string WorkspaceWarning => WorkspacePathService.IsBuildOutputPath(WorkspacePath)
+            ? "警告: ビルド出力内の作業フォルダーです。［保存先を変更］で移行してください。"
+            : string.Empty;
 
         public string ExportPath
         {
@@ -2019,6 +2025,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand CreateCharacterCommand { get; }
 
+        public ICommand ChangeWorkspaceCommand { get; }
+
         public ICommand SaveSelectedProfileCommand { get; }
 
         public ICommand ImportHeroineProfileFromUnityCommand { get; }
@@ -2245,7 +2253,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public MainWindowModel()
         {
-            characterProjectService = new CharacterProjectService();
+            workspacePathService = new WorkspacePathService();
+            string workspaceRoot = workspacePathService.ResolveWorkspaceRoot();
+            workspacePathService.SeedBundledDefaults(AppContext.BaseDirectory, workspaceRoot);
+            characterProjectService = new CharacterProjectService(workspaceRoot);
             enemyProjectService = new EnemyProjectService(characterProjectService.WorkspaceRoot);
             playerProjectService = new PlayerProjectService(characterProjectService.WorkspaceRoot);
             promptRecordService = new PromptRecordService(characterProjectService);
@@ -2262,6 +2273,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             audioLibraryService = new AudioLibraryService();
             audioPreviewService = new AudioPreviewService();
             audioPreviewService.PlaybackFailed += OnAudioPreviewFailed;
+            ChangeWorkspaceCommand = new RelayCommand(ChangeWorkspace);
             Profiles = new ObservableCollection<HeroineProfile>();
             ProductionStatusCategories = new ObservableCollection<ProductionStatusCell>();
             AudioLibraryItems = new ObservableCollection<AudioLibraryItem>();
@@ -2885,6 +2897,69 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 RefreshAudioLibrary();
             }
             StatusMessage = "キャラクター基本情報の保存準備ができています。";
+        }
+
+        public void CheckLegacyWorkspaceMigration()
+        {
+            if (legacyWorkspaceChecked) return;
+            legacyWorkspaceChecked = true;
+
+            string legacyWorkspace = workspacePathService.FindLegacyWorkspace(WorkspacePath);
+            if (string.IsNullOrWhiteSpace(legacyWorkspace)) return;
+
+            MessageBoxResult migrate = MessageBox.Show(
+                "以前の保存先にキャラクターデータが見つかりました。\n\n" + legacyWorkspace +
+                "\n\n現在の安定した保存先へバックアップ付きで移行しますか？\n" +
+                "［いいえ］を選んだ場合、今回は移行しません。",
+                "作業データの移行", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (migrate != MessageBoxResult.Yes)
+            {
+                StatusMessage = "旧保存先のデータは移行されていません。次回起動時にもう一度確認します。";
+                return;
+            }
+
+            WorkspaceMigrationResult result = workspacePathService.Migrate(legacyWorkspace, WorkspacePath);
+            ReloadComfySettings();
+            LoadDefinitionCatalog();
+            LoadStillDefinitions();
+            LoadProfiles();
+            LoadEnemies();
+            LoadPlayerProfile();
+            StatusMessage = $"旧作業データを移行しました（{result.CopiedFiles} ファイル）。";
+        }
+
+        private void ChangeWorkspace()
+        {
+            using (var dialog = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = "AssetTool の作業データ保存先を選択してください。",
+                SelectedPath = WorkspacePath,
+                ShowNewFolderButton = true
+            })
+            {
+                if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+                string destination = Path.GetFullPath(dialog.SelectedPath);
+                if (string.Equals(destination.TrimEnd(Path.DirectorySeparatorChar),
+                    Path.GetFullPath(WorkspacePath).TrimEnd(Path.DirectorySeparatorChar),
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    StatusMessage = "現在と同じ作業フォルダーが選択されています。";
+                    return;
+                }
+
+                MessageBoxResult confirmation = MessageBox.Show(
+                    "現在の作業データを選択先へコピーし、次回起動から使用します。\n" +
+                    "同名ファイルがある場合は、移行バックアップを作成してから更新します。\n\n" +
+                    destination + "\n\n続行しますか？",
+                    "作業フォルダーの変更", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (confirmation != MessageBoxResult.Yes) return;
+
+                WorkspaceMigrationResult result = workspacePathService.Migrate(WorkspacePath, destination);
+                workspacePathService.SaveWorkspaceRoot(destination);
+                StatusMessage = $"{result.CopiedFiles} ファイルを移行しました。新しい保存先は次回起動から有効です。";
+                MessageBox.Show(StatusMessage + "\nAssetTool を再起動してください。",
+                    "移行完了", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
 
         private void BrowseUnityProject()

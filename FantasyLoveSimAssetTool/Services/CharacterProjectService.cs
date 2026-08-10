@@ -11,6 +11,7 @@ namespace FantasyLoveSimAssetTool.Services
     public class CharacterProjectService
     {
         private const string ProfileFileName = "profile.json";
+        private const int MaximumProfileBackups = 5;
         private readonly JsonSerializerOptions jsonOptions;
 
         public string WorkspaceRoot { get; }
@@ -104,7 +105,57 @@ namespace FantasyLoveSimAssetTool.Services
             EnsureCharacterDirectories(profile.HeroineId);
 
             string json = JsonSerializer.Serialize(profile, jsonOptions);
-            File.WriteAllText(GetProfilePath(profile.HeroineId), json);
+            WriteProfileSafely(GetProfilePath(profile.HeroineId), json);
+        }
+
+        private static void WriteProfileSafely(string profilePath, string json)
+        {
+            string directory = Path.GetDirectoryName(profilePath);
+            string temporaryPath = profilePath + ".tmp";
+            if (File.Exists(profilePath))
+            {
+                string backupDirectory = Path.Combine(directory, "Backups");
+                Directory.CreateDirectory(backupDirectory);
+                string backupPath = Path.Combine(backupDirectory,
+                    "profile_" + DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + "_" +
+                    Guid.NewGuid().ToString("N").Substring(0, 8) + ".json");
+                File.Copy(profilePath, backupPath, false);
+
+                foreach (string oldBackup in Directory.GetFiles(backupDirectory, "profile_*.json")
+                    .OrderByDescending(File.GetLastWriteTimeUtc)
+                    .Skip(MaximumProfileBackups))
+                {
+                    File.Delete(oldBackup);
+                }
+            }
+
+            try
+            {
+                File.WriteAllText(temporaryPath, json);
+                if (File.Exists(profilePath))
+                {
+                    try
+                    {
+                        File.Replace(temporaryPath, profilePath, null);
+                    }
+                    catch (PlatformNotSupportedException)
+                    {
+                        File.Copy(temporaryPath, profilePath, true);
+                    }
+                    catch (IOException)
+                    {
+                        File.Copy(temporaryPath, profilePath, true);
+                    }
+                }
+                else
+                {
+                    File.Move(temporaryPath, profilePath);
+                }
+            }
+            finally
+            {
+                if (File.Exists(temporaryPath)) File.Delete(temporaryPath);
+            }
         }
 
         public HeroineAsset AddImageAsset(
