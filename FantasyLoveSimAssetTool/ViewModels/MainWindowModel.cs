@@ -45,6 +45,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private OutfitReactionMessageOverride selectedOutfitReactionMessageOverride;
         private TrainingImageEntry selectedTrainingImageEntry;
         private TrainingCatalogItem selectedTrainingCatalogItem;
+        private string selectedTrainingPrerequisiteCandidate;
+        private string selectedTrainingUnlockNodeCandidate;
         private HeroineAsset selectedTrainingAsset;
         private TrainingDialogueEntry selectedTrainingDialogueEntry;
         private TrainingDialogueMessage selectedTrainingDialogueMessage;
@@ -745,6 +747,30 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public string TrainingIdSuggestions => string.Join(", ",
+            SelectedProfile?.TrainingCatalog?.Items?
+                .Where(item => item != null && !string.IsNullOrWhiteSpace(item.TrainingId))
+                .Select(item => item.TrainingId).Distinct(StringComparer.OrdinalIgnoreCase)
+                ?? Enumerable.Empty<string>());
+
+        public string TrainingUnlockNodeSuggestions => string.Join(", ",
+            SelectedProfile?.HeroineSkillTree?.Nodes?
+                .Where(node => node != null && !string.IsNullOrWhiteSpace(node.NodeId))
+                .Select(node => node.NodeId).Distinct(StringComparer.OrdinalIgnoreCase)
+                ?? Enumerable.Empty<string>());
+
+        public string SelectedTrainingPrerequisiteCandidate
+        {
+            get => selectedTrainingPrerequisiteCandidate;
+            set { if (selectedTrainingPrerequisiteCandidate != value) { selectedTrainingPrerequisiteCandidate = value; OnPropertyChanged(); } }
+        }
+
+        public string SelectedTrainingUnlockNodeCandidate
+        {
+            get => selectedTrainingUnlockNodeCandidate;
+            set { if (selectedTrainingUnlockNodeCandidate != value) { selectedTrainingUnlockNodeCandidate = value; OnPropertyChanged(); } }
+        }
+
         public HeroineAsset SelectedTrainingAsset
         {
             get { return selectedTrainingAsset; }
@@ -1391,6 +1417,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 }
 
                 OnPropertyChanged(nameof(SelectedProfile));
+                OnPropertyChanged(nameof(TrainingIdSuggestions));
+                OnPropertyChanged(nameof(TrainingUnlockNodeSuggestions));
                 SelectedOutfitMessageOverride = selectedProfile?.OutfitMessageOverrides?.FirstOrDefault();
                 SelectedOutfitReactionMessageOverride = selectedProfile?.OutfitReactionMessageOverrides?.FirstOrDefault();
                 SelectedTrainingImageEntry = selectedProfile?.TrainingImages?.Items?.FirstOrDefault();
@@ -2038,6 +2066,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand CreateCharacterCommand { get; }
 
+        public ICommand AddTrainingPrerequisiteCommand { get; }
+
+        public ICommand ClearTrainingPrerequisitesCommand { get; }
+
+        public ICommand AddTrainingUnlockNodeCommand { get; }
+
+        public ICommand ClearTrainingUnlockNodesCommand { get; }
+
         public ICommand ChangeWorkspaceCommand { get; }
 
         public ICommand SaveSelectedProfileCommand { get; }
@@ -2287,6 +2323,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
             audioPreviewService = new AudioPreviewService();
             audioPreviewService.PlaybackFailed += OnAudioPreviewFailed;
             ChangeWorkspaceCommand = new RelayCommand(ChangeWorkspace);
+            AddTrainingPrerequisiteCommand = new RelayCommand(AddTrainingPrerequisite,
+                () => SelectedTrainingCatalogItem != null && !string.IsNullOrWhiteSpace(SelectedTrainingPrerequisiteCandidate));
+            ClearTrainingPrerequisitesCommand = new RelayCommand(ClearTrainingPrerequisites,
+                () => (SelectedTrainingCatalogItem?.RequiredCompletedTrainingIds?.Count ?? 0) > 0);
+            AddTrainingUnlockNodeCommand = new RelayCommand(AddTrainingUnlockNode,
+                () => SelectedTrainingCatalogItem != null && !string.IsNullOrWhiteSpace(SelectedTrainingUnlockNodeCandidate));
+            ClearTrainingUnlockNodesCommand = new RelayCommand(ClearTrainingUnlockNodes,
+                () => (SelectedTrainingCatalogItem?.UnlockNodeIds?.Count ?? 0) > 0);
             Profiles = new ObservableCollection<HeroineProfile>();
             ProductionStatusCategories = new ObservableCollection<ProductionStatusCell>();
             AudioLibraryItems = new ObservableCollection<AudioLibraryItem>();
@@ -2973,6 +3017,44 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 MessageBox.Show(StatusMessage + "\nAssetTool を再起動してください。",
                     "移行完了", MessageBoxButton.OK, MessageBoxImage.Information);
             }
+        }
+
+        private void AddTrainingPrerequisite()
+        {
+            SelectedTrainingCatalogItem.RequiredCompletedTrainingIds ??= new List<string>();
+            if (!SelectedTrainingCatalogItem.RequiredCompletedTrainingIds.Contains(
+                SelectedTrainingPrerequisiteCandidate, StringComparer.OrdinalIgnoreCase))
+                SelectedTrainingCatalogItem.RequiredCompletedTrainingIds.Add(SelectedTrainingPrerequisiteCandidate);
+            SelectedTrainingCatalogItem.NotifyConditionsChanged();
+            OnPropertyChanged(nameof(SelectedTrainingCatalogItem));
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void ClearTrainingPrerequisites()
+        {
+            SelectedTrainingCatalogItem.RequiredCompletedTrainingIds.Clear();
+            SelectedTrainingCatalogItem.NotifyConditionsChanged();
+            OnPropertyChanged(nameof(SelectedTrainingCatalogItem));
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void AddTrainingUnlockNode()
+        {
+            SelectedTrainingCatalogItem.UnlockNodeIds ??= new List<string>();
+            if (!SelectedTrainingCatalogItem.UnlockNodeIds.Contains(
+                SelectedTrainingUnlockNodeCandidate, StringComparer.OrdinalIgnoreCase))
+                SelectedTrainingCatalogItem.UnlockNodeIds.Add(SelectedTrainingUnlockNodeCandidate);
+            SelectedTrainingCatalogItem.NotifyConditionsChanged();
+            OnPropertyChanged(nameof(SelectedTrainingCatalogItem));
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void ClearTrainingUnlockNodes()
+        {
+            SelectedTrainingCatalogItem.UnlockNodeIds.Clear();
+            SelectedTrainingCatalogItem.NotifyConditionsChanged();
+            OnPropertyChanged(nameof(SelectedTrainingCatalogItem));
+            CommandManager.InvalidateRequerySuggested();
         }
 
         private void BrowseUnityProject()

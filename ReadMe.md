@@ -324,6 +324,12 @@ GameStartIntro_01.prompt.json
 
 Unity 向けの export 結果は、次の構成を基本にします。
 
+訓練タブではUnityから取り込んだ訓練を選び、出現回数、調子、前提訓練、表示規則、
+解放NodeIdを編集できます。`条件を検証して保存`後にExportすると、
+`Data/training_catalog_export.json`へ出力されます。Unity側の
+`FantasyLoveSim > Import Heroine Export`で取り込むと、既存`TrainingData`の可否条件と
+対象ヒロインの解放ノードを更新します。HP消費や報酬など、条件編集欄にない値は変更しません。
+
 ```text
 Export/
   TestHeroine/

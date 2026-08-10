@@ -1329,6 +1329,89 @@
                                             </DataGrid.Columns>
                                         </DataGrid>
                                     </GroupBox>
+                                    <GroupBox Header="選択中の訓練条件を編集" Margin="0,0,0,8">
+                                        <Grid Margin="8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="出現回数" VerticalAlignment="Center"/>
+                                            <ComboBox Grid.Row="0" Grid.Column="1"
+                                                      SelectedValue="{Binding SelectedTrainingCatalogItem.OccurrenceType, UpdateSourceTrigger=PropertyChanged}"
+                                                      SelectedValuePath="Tag" Margin="0,0,12,6">
+                                                <ComboBoxItem Content="反復可能" Tag="Repeatable"/>
+                                                <ComboBoxItem Content="セーブデータにつき一回" Tag="OncePerSave"/>
+                                            </ComboBox>
+                                            <CheckBox Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2"
+                                                      Content="初期解放"
+                                                      IsChecked="{Binding SelectedTrainingCatalogItem.UnlockedByDefault, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="表示できる調子" VerticalAlignment="Center"/>
+                                            <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"
+                                                     Text="{Binding SelectedTrainingCatalogItem.VisibleConditionRanksText, UpdateSourceTrigger=LostFocus}"
+                                                     Margin="0,0,0,6"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="実行できる調子" VerticalAlignment="Center"/>
+                                            <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
+                                                     Text="{Binding SelectedTrainingCatalogItem.ExecutableConditionRanksText, UpdateSourceTrigger=LostFocus}"
+                                                     Margin="0,0,0,6"/>
+                                            <TextBlock Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
+                                                       Text="候補: Excellent, Good, Normal, Poor, Awful。空欄ならすべての調子。"
+                                                       Foreground="Gray" Margin="0,0,0,6"/>
+
+                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="前提TrainingId" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,0,12,6">
+                                                <TextBox Text="{Binding SelectedTrainingCatalogItem.RequiredCompletedTrainingIdsText, UpdateSourceTrigger=LostFocus}"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <ComboBox ItemsSource="{Binding SelectedProfile.TrainingCatalog.Items}"
+                                                              DisplayMemberPath="TrainingId" SelectedValuePath="TrainingId"
+                                                              SelectedValue="{Binding SelectedTrainingPrerequisiteCandidate}"
+                                                              Width="170"/>
+                                                    <Button Content="追加" Command="{Binding AddTrainingPrerequisiteCommand}" Margin="4,0,0,0"/>
+                                                    <Button Content="全解除" Command="{Binding ClearTrainingPrerequisitesCommand}" Margin="4,0,0,0"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <CheckBox Grid.Row="4" Grid.Column="2" Content="すべて必要"
+                                                      IsChecked="{Binding SelectedTrainingCatalogItem.RequireAllCompletedTrainings, UpdateSourceTrigger=PropertyChanged}"/>
+                                            <CheckBox Grid.Row="4" Grid.Column="3" Content="前提未達時は隠す"
+                                                      IsChecked="{Binding SelectedTrainingCatalogItem.HideUntilPrerequisitesMet, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                            <TextBlock Grid.Row="5" Grid.Column="0" Text="解放NodeId" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Row="5" Grid.Column="1" Margin="0,0,12,6">
+                                                <TextBox Text="{Binding SelectedTrainingCatalogItem.UnlockNodeIdsText, UpdateSourceTrigger=LostFocus}"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <ComboBox ItemsSource="{Binding SelectedProfile.HeroineSkillTree.Nodes}"
+                                                              DisplayMemberPath="NodeId" SelectedValuePath="NodeId"
+                                                              SelectedValue="{Binding SelectedTrainingUnlockNodeCandidate}"
+                                                              Width="170"/>
+                                                    <Button Content="追加" Command="{Binding AddTrainingUnlockNodeCommand}" Margin="4,0,0,0"/>
+                                                    <Button Content="全解除" Command="{Binding ClearTrainingUnlockNodesCommand}" Margin="4,0,0,0"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <CheckBox Grid.Row="5" Grid.Column="2" Grid.ColumnSpan="2" Content="完了後は隠す"
+                                                      IsChecked="{Binding SelectedTrainingCatalogItem.HideAfterCompletion, UpdateSourceTrigger=PropertyChanged}"/>
+
+                                            <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="4">
+                                                <TextBlock Text="{Binding TrainingIdSuggestions, StringFormat=登録済み訓練: {0}}" Foreground="Gray" TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding TrainingUnlockNodeSuggestions, StringFormat=登録済み解放ノード: {0}}" Foreground="Gray" TextWrapping="Wrap" Margin="0,2,0,6"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Content="条件を検証して保存" Command="{Binding SaveSelectedProfileCommand}" MinWidth="150" Height="28"/>
+                                                    <TextBlock Text="保存後にExportし、Unityの Heroine Export Import で反映します。共通TrainingDataの条件は全ヒロインに影響します。"
+                                                               Foreground="#A06000" TextWrapping="Wrap" Margin="12,5,0,0"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                                    </GroupBox>
                                     <GroupBox Header="訓練共通画像 AssetId" Margin="0,8,0,8">
                                         <Grid Margin="8">
                                             <Grid.ColumnDefinitions>

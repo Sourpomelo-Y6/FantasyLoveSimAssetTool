@@ -75,7 +75,7 @@ namespace FantasyLoveSimAssetTool.Models
             new ObservableCollection<TrainingDialogueEntry>();
     }
 
-    public class TrainingCatalogItem
+    public class TrainingCatalogItem : ObservableObject
     {
         public string TrainingId { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
@@ -91,6 +91,43 @@ namespace FantasyLoveSimAssetTool.Models
         public bool HideAfterCompletion { get; set; }
         public List<string> UnlockNodeIds { get; set; } = new List<string>();
         public List<string> UnlockNodeNames { get; set; } = new List<string>();
+
+        [JsonIgnore]
+        public string VisibleConditionRanksText
+        {
+            get => JoinIds(VisibleConditionRanks);
+            set { VisibleConditionRanks = SplitIds(value); NotifyConditionsChanged(); }
+        }
+
+        [JsonIgnore]
+        public string ExecutableConditionRanksText
+        {
+            get => JoinIds(ExecutableConditionRanks);
+            set { ExecutableConditionRanks = SplitIds(value); NotifyConditionsChanged(); }
+        }
+
+        [JsonIgnore]
+        public string RequiredCompletedTrainingIdsText
+        {
+            get => JoinIds(RequiredCompletedTrainingIds);
+            set { RequiredCompletedTrainingIds = SplitIds(value); NotifyConditionsChanged(); }
+        }
+
+        [JsonIgnore]
+        public string UnlockNodeIdsText
+        {
+            get => JoinIds(UnlockNodeIds);
+            set { UnlockNodeIds = SplitIds(value); NotifyConditionsChanged(); }
+        }
+
+        public void NotifyConditionsChanged()
+        {
+            OnPropertyChanged(nameof(ConditionBadgeSummary));
+            OnPropertyChanged(nameof(PrerequisiteSummary));
+            OnPropertyChanged(nameof(ConditionDetails));
+            OnPropertyChanged(nameof(UnlockSummary));
+            OnPropertyChanged(nameof(ReferenceWarning));
+        }
 
         [JsonIgnore]
         public string ReferenceWarning { get; set; } = string.Empty;
@@ -172,6 +209,14 @@ namespace FantasyLoveSimAssetTool.Models
             if (string.Equals(rank, "Awful", System.StringComparison.OrdinalIgnoreCase)) return "絶不調";
             return rank ?? string.Empty;
         }
+
+        private static string JoinIds(IEnumerable<string> values) =>
+            string.Join(", ", values ?? Enumerable.Empty<string>());
+
+        private static List<string> SplitIds(string value) =>
+            (value ?? string.Empty).Split(new[] { ',', '\r', '\n' }, System.StringSplitOptions.RemoveEmptyEntries)
+                .Select(item => item.Trim()).Where(item => item.Length > 0)
+                .Distinct(System.StringComparer.OrdinalIgnoreCase).ToList();
     }
 
     public class TrainingCatalogSettings
