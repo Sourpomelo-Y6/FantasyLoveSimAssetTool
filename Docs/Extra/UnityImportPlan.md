@@ -5,7 +5,7 @@
 WPF ツールは Unity の ScriptableObject `.asset` を直接生成しない。
 WPF ツールは画像と中間 JSON を出力し、Unity Editor 拡張が Unity Editor 内で JSON を読み込んで `.asset` を生成、更新する。
 
-Unity 側で手修正したデータを WPF Tool 側へ戻す場合は、正方向 Import とは分けて `Docs/Extra_FantasyLoveSimAssetTool/UnityToWpfSyncPlan.md` の FromUnity JSON 方針に従う。
+Unity 側で手修正したデータを WPF Tool 側へ戻す場合は、正方向 Import とは分けて `Docs/Extra/UnityToWpfSyncPlan.md` の FromUnity JSON 方針に従う。
 WPF Tool は Unity `.asset` YAML を直接読まない。
 
 ### Unity レイヤーデータを AssetTool へ戻す
@@ -19,13 +19,6 @@ AssetToolでは対象キャラクターを選択し、`差分定義 > Unityレ�
 `CostumeBody / HeadExpression / BackHair / FrontAccessory` へ正規化して取り込む。
 Toolに同じ `AssetId` の画像が既にあれば保持し、画像がない場合だけ設定済みUnityプロジェクトからコピーして
 Accepted素材として登録する。取り込み後は衣装・表情候補とレイヤープレビューを即時更新する。
-
-取り込んだ衣装レイヤーは `服装設定` タブでも編集できる。衣装IDを選び、衣装本体、後ろアクセサリー、
-前アクセサリーのAccepted画像を1セットとして指定する。保存すると個別の `layer_assets.json` エントリへ反映されるため、
-詳細編集、Unity Export、従来のレイヤープレビューとの互換性を維持する。
-前後アクセサリー画像が未作成の場合は、`前後アクセサリー画像枠を準備` を押すと、選択衣装用の
-`Accessory_<CostumeId>_Back` と `Accessory_<CostumeId>_Front`、透過画像生成Prompt、服装セットへの割り当てを追加できる。
-既存の画像状態や編集済みPromptは上書きしない。
 
 ## 基本方針
 
@@ -68,7 +61,7 @@ WPF ツールは通常の C# アプリとして管理できるため、同じリ
 
 Unity 側は上記の契約を読み込む Editor 拡張を持つ。
 WPF 側はこの契約に沿った export を出す。
-どちらかの実装を変更する場合も、まず `Docs/Extra_FantasyLoveSimAssetTool/UnityImportPlan.md` の契約を更新し、その後で WPF 側と Unity 側を合わせる。
+どちらかの実装を変更する場合も、まず `Docs/Extra/UnityImportPlan.md` の契約を更新し、その後で WPF 側と Unity 側を合わせる。
 
 必要になった場合は、WPF ツール側に Unity プロジェクトの import 用フォルダへ直接 export する設定を追加する。
 この場合もリポジトリを統合する必要はなく、出力先パスを設定として持つだけでよい。
@@ -171,7 +164,7 @@ Unity 側の ScriptableObject 型は次を基本にする。
   - `lockedMessage`
   - `changedMessage`
   - 今後追加: `lockedExpressionId`
-  - 今後追加: `changedExpressionId`
+  - `changedExpressionId`: 衣装変更成功時の表情ID。空なら共通衣装設定または現在表情を使用
 - `outfitReactionMessageOverrides`
   - `reactionType`: `Praise`, `Dislike`, `Bored`, `Change`
   - `message`
@@ -260,7 +253,7 @@ Data/
 
 このときも WPF 側から `.asset` を直接生成しない。
 Unity Editor 側で `ConversationData`、`GameEventData`、`ActionReactionData`、`EndingData` の `.asset` を生成、更新する。
-会話データの JSON スキーマと WPF 画面方針は `Docs/Extra_FantasyLoveSimAssetTool/ConversationDataPlan.md` にまとめる。
+会話データの JSON スキーマと WPF 画面方針は `Docs/Extra/ConversationDataPlan.md` にまとめる。
 `GameEvents` のカテゴリ、条件、発火判定、イベントスチル参照の運用は `Docs/GameEventDataGuide.md` にまとめる。
 
 会話データの ScriptableObject は、会話 item ごとに個別 `.asset` を作る。
@@ -339,9 +332,9 @@ WPF 側では、`Definitions/layer_assets.json` に定義され、かつ Accepte
 | field | 必須 | 空欄 | 内容 |
 | --- | --- | --- | --- |
 | `assetId` | 必須 | 不可 | WPF と Unity の主キー。`assets_export.json` の `assetId` と一致する |
-| `layerKind` | 必須 | 不可 | `BaseBody`, `Costume`, `Expression`, `Accessory` のいずれか |
-| `costumeId` | 条件付き | 可 | `layerKind == Costume` では必須。それ以外では空欄可 |
-| `expressionId` | 条件付き | 可 | `layerKind == Expression` では必須。それ以外では空欄可 |
+| `layerKind` | 必須 | 不可 | 新8階層または互換用の旧4階層のいずれか |
+| `costumeId` | 条件付き | 可 | `CostumeBody` / 旧`Costume`では必須。それ以外は表示条件として任意 |
+| `expressionId` | 条件付き | 可 | `HeadExpression` / 旧`Expression`では必須。それ以外は表示条件として任意 |
 | `displayName` | 必須 | 不可 | Unity Editor 表示用の名前 |
 | `drawOrder` | 必須 | 不可 | 小さい順に背面から前面へ重ねる |
 | `fileName` | 必須 | 不可 | 画像ファイル名。原則 `.png` |
@@ -352,10 +345,17 @@ WPF 側では、`Definitions/layer_assets.json` に定義され、かつ Accepte
 
 | layerKind | 意味 | ID ルール |
 | --- | --- | --- |
-| `BaseBody` | 体、髪、基本シルエットなど、常に表示するベース | `costumeId`, `expressionId` は空欄でよい |
-| `Costume` | 衣装差分 | `costumeId` が必須 |
-| `Expression` | 表情差分、顔パーツ差分 | `expressionId` が必須 |
-| `Accessory` | 任意の小物、装飾 | 必要に応じて `costumeId` や `expressionId` で条件付けしてよい |
+| `Background` | 任意のキャラクター固有背景 | 通常はID条件なし。画面共通背景を使う場合は登録不要 |
+| `BackAccessory` | 後ろリボン、帽子後部、フード裏 | 条件は任意 |
+| `BackHair` | 首の後ろへ垂れる髪 | 条件は任意 |
+| `CostumeBody` | 衣装と必要な身体部分 | `costumeId` が必須 |
+| `HeadExpression` | 頭、顔、前髪、表情をまとめた差分 | `expressionId` が必須。顔パーツ分離は要求しない |
+| `FrontAccessory` | 眼鏡、前リボン、髪飾りなど | 条件は任意 |
+| `FrontArm` | 前へ出す腕や手 | 条件は任意 |
+| `Effect` | ハート、汗などの前景演出 | 条件は任意 |
+
+旧`BaseBody / Costume / Expression / Accessory`も既存Export互換用として引き続きImportできる。
+新8階層が1件でも存在するデータは8階層表示を使用し、旧4階層リストは同時表示しない。
 
 Unity 側では、`assetId` を主キーとして既存レイヤーを更新する。
 `displayName` は表示用であり、参照キーには使わない。
@@ -366,10 +366,8 @@ Unity 側では、`assetId` を主キーとして既存レイヤーを更新す�
 Unity 側の想定:
 
 - `HeroineLayeredSpriteData.asset`
-  - `BaseBody`
-  - `Costume` layers
-  - `Expression` layers
-  - `Accessory` layers
+  - 新8階層の種類別リスト
+  - 既存アセット互換用の旧4階層リスト
 - `HeroineLayeredSpriteView`
   - 現在の `costumeId` と `expressionId` から表示レイヤーを選ぶ
   - `drawOrder` 順に重ねる
@@ -383,10 +381,15 @@ public class HeroineLayeredSpriteData : ScriptableObject
     public string heroineId;
     public string defaultCostumeId = "Default";
     public string defaultExpressionId = "Neutral";
-    public List<LayerEntry> baseBodyLayers;
-    public List<LayerEntry> costumeLayers;
-    public List<LayerEntry> expressionLayers;
-    public List<LayerEntry> accessoryLayers;
+    public List<LayerEntry> backgroundLayers;
+    public List<LayerEntry> backAccessoryLayers;
+    public List<LayerEntry> backHairLayers;
+    public List<LayerEntry> costumeBodyLayers;
+    public List<LayerEntry> headExpressionLayers;
+    public List<LayerEntry> frontAccessoryLayers;
+    public List<LayerEntry> frontArmLayers;
+    public List<LayerEntry> effectLayers;
+    // 旧4階層のリストも移行期間中は保持する
 }
 ```
 
@@ -410,11 +413,11 @@ public class LayerEntry
 
 1. `HeroineLayeredSpriteData` を参照する。
 2. 現在の `costumeId` と `expressionId` を受け取る。
-3. `BaseBody` を常に表示する。
-4. `Costume` は現在の `costumeId` に一致するものを表示する。
-5. `Expression` は現在の `expressionId` に一致するものを表示する。
-6. `Accessory` は常時表示、または条件が一致するものだけ表示する。
-7. 表示対象を `drawOrder` 昇順で並べる。
+3. 8階層データがあれば8種類、なければ旧4種類を使用する。
+4. `CostumeBody`は現在の`costumeId`、`HeadExpression`は現在の`expressionId`に一致するものを表示する。
+5. その他の層は条件なし、または衣装・表情条件が一致するものを表示する。
+6. 表示対象を`drawOrder`昇順で並べる。
+7. 新8階層用Imageがシーンにない場合は、同名の子Imageを実行時に自動生成する。
 
 ### Unity Import 手順
 
@@ -427,22 +430,22 @@ public class LayerEntry
 5. `Sprite` が見つからない場合は Import warning に出し、そのレイヤーは参照なしで残すか、取り込み対象から外す。
 6. `HeroineLayeredSpriteData.asset` を `heroineId` で検索する。
 7. 既存 `.asset` があれば `assetId` をキーに更新し、なければ新規作成する。
-8. `BaseBody`, `Costume`, `Expression`, `Accessory` の各リストへ `LayerEntry` を設定する。
+8. 新8階層または互換用旧4階層の各リストへ`LayerEntry`を設定する。
 9. `drawOrder` 昇順で各リスト、または表示時の統合リストを並べる。
 10. `AssetDatabase.SaveAssets` で保存する。
 
 Import 時の推奨警告:
 
 - `layers` が空
-- `BaseBody` が1件もない
-- `Default` の `Costume` がない
-- `Neutral` の `Expression` がない
+- 8階層に`BackHair / CostumeBody / HeadExpression`が1件もない
+- `Default`の`CostumeBody`がない
+- `Neutral`の`HeadExpression`がない
 - 同じ `assetId` が複数ある
 - 同じ `layerKind + costumeId + expressionId` の表示対象が複数ある
 - `unityImagePath` から `Sprite` を解決できない
 - `layerKind` が未知
-- `Costume` なのに `costumeId` が空
-- `Expression` なのに `expressionId` が空
+- `CostumeBody`または旧`Costume`なのに`costumeId`が空
+- `HeadExpression`または旧`Expression`なのに`expressionId`が空
 
 ### fallback ルール
 
@@ -452,8 +455,8 @@ Import 時の推奨警告:
 2. なければ `Default` 衣装を使う。
 3. 指定された `expressionId` の表情があればそれを使う。
 4. なければ `Neutral` 表情を使う。
-5. `BaseBody` がない場合は表示不能としてログまたはエラー表示にする。
-6. `Accessory` は条件なしなら常時表示、`costumeId` または `expressionId` が入っている場合は一致時だけ表示する。
+5. 表示可能な層が1件もない場合は警告し、単一の完成立ち絵へフォールバックする。
+6. アクセサリー、腕、エフェクトは条件なしなら常時表示し、条件付きなら一致時だけ表示する。
 
 WPF 側 Export warning の追加候補:
 

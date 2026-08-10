@@ -21,6 +21,22 @@ Unity プロジェクト本体とは分けて運用し、生成した成果物�
 画像生成は、外部ツールで生成済みの画像ファイルを登録する運用を基本にする。
 ローカル ComfyUI 連携を追加する場合も、この外部ファイル登録フローは残し、ComfyUI 生成結果を同じ登録処理に渡せるようにする。
 
+### Stable Diffusion制作時の立ち絵レイヤー方針
+
+Stable Diffusionで生成した画像は、頭、前髪、目、口などを同じ位置と輪郭のまま安全に分離することが難しい。
+顔・髪・表情の分割を本番素材の必須条件にはせず、背景を含まない完成済み立ち絵を表情または衣装ごとに
+差し替える方式を基本とする。
+
+```text
+Heroine_Normal.png
+Heroine_Smile.png
+Heroine_Default_Normal.png
+Heroine_Summer_Smile.png
+```
+
+この方式は画像数と容量が増える一方、パーツ境界のずれや衣装と腕の重なり不良を避けやすい。
+透過レイヤーを安定して制作できる素材では、`Docs/TransparentLayerAssetWorkflow.md` の手順を利用する。
+
 ## 管理対象
 
 ### キャラクター基本情報
@@ -73,6 +89,10 @@ Assets/Images/Heroines/<HeroineId>/Battle/
 Unity の `.asset` は ScriptableObject の保存ファイルであり、Asset Serialization が Force Text の場合は YAML として外部から読み書きできる。
 ただし、`.asset` を外部ツールから直接生成する場合は、`.meta` の GUID、ScriptableObject の型情報、fileID、Assembly 名、Unity バージョン差分を正しく扱う必要がある。
 そのため、このツールから `.asset` を直接出力することは将来拡張としても優先しない。
+
+現在の正式な分担は、AssetToolが画像と中間JSONを `Export/<HeroineId>/` へ出力し、Unity Editor拡張が
+JSONを読み込んでScriptableObjectを生成・更新する方式とする。`.meta`、GUID、fileID、型情報はUnityに管理させる。
+JSON構成、取り込み順、既存データを保持する更新規則は `Docs/Extra/UnityImportPlan.md` を正本とする。
 
 会話データを作成できるようにする場合は、次の段階的な方式を基本にする。
 

@@ -1,10 +1,10 @@
 # Unity Editor Import Implementation Plan
 
 このドキュメントは、`FantasyLoveSimAssetTool` の `Export/<HeroineId>/` を Unity プロジェクト側で取り込む Editor 拡張の実装メモである。
-データ契約そのものは `Docs/Extra_FantasyLoveSimAssetTool/UnityImportPlan.md` を正とし、このドキュメントでは Unity 側に置くファイル、クラス、処理順、更新ルールを具体化する。
+データ契約そのものは `Docs/Extra/UnityImportPlan.md` を正とし、このドキュメントでは Unity 側に置くファイル、クラス、処理順、更新ルールを具体化する。
 
 Unity 側で手修正したデータを WPF Tool 側へ戻す逆方向同期は、通常 Import とは別機能として扱う。
-方針は `Docs/Extra_FantasyLoveSimAssetTool/UnityToWpfSyncPlan.md` を参照する。
+方針は `Docs/Extra/UnityToWpfSyncPlan.md` を参照する。
 
 ## 目的
 

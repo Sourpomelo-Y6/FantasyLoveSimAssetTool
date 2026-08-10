@@ -1,8 +1,8 @@
 # Training Image Plan
 
-このドキュメントは、訓練画面で訓練選択時と LP 消費時に表示するヒロイン画像を切り替え、`FantasyLoveSimAssetTool` で画像生成、採用、export、Unity import まで扱うための設計メモである。
+このドキュメントは、訓練画面で訓練選択時と LP 消費時に表示するヒロイン画像を切り替え、`FantasyLoveSimAssetTool` で画像生成、採用、export、Unity import まで扱うための実装済み仕様をまとめたものである。
 
-現時点では設計だけを記録し、Unity Runtime、Unity Editor Importer、AssetTool の実装は後続作業とする。
+Unity Runtime、Unity Editor Importer、AssetTool の接続は実装済み。TestHeroineの初期3訓練には5状態ずつ画像を設定済みで、追加訓練 `CooperativeDrill` の5状態とDefaultHeroineの画像データは未設定である。試作用画像はGit管理外のため、別環境ではAssetToolから再Importするか本番素材一式を用意する。
 
 ## 目的
 
@@ -35,18 +35,18 @@
 
 同時消費は個別消費より優先する。LP画像を表示した次の通常ステップでは `SelectedAfterFirstStep` へ戻し、訓練ボタンを押した場合は選択した訓練の進行状況画像へ切り替える。訓練終了後の結果専用画像は今回の範囲に含めない。
 
-LP消費判定はセッション全体の累計カウンターから推測せず、各 `AdvanceStep()` の直前と直後の差分を使う。実装時は `TrainingStepResult` に `playerLpConsumed` / `heroineLpConsumed` を追加し、画像、ログ、実績集計が同じステップ結果を参照できるようにする。
+LP消費判定はセッション全体の累計カウンターから推測せず、各 `AdvanceStep()` の直前と直後の差分を使う。`TrainingStepResult.playerLpConsumed` / `heroineLpConsumed` を画像、ログ、実績集計で共有する。
 
-## Unity Runtime データ案
+## Unity Runtime データ
 
-ヒロイン別の ScriptableObject として `HeroineTrainingImageData` を追加する。
+ヒロイン別の ScriptableObjectとして `HeroineTrainingImageData` を使用する。
 
 ```text
 Assets/Resources/Heroines/<HeroineId>/TrainingImages/
   HeroineTrainingImageData.asset
 ```
 
-想定フィールド:
+実装フィールド:
 
 ```csharp
 string heroineId;
@@ -196,6 +196,7 @@ Training_EnduranceTraining_SimultaneousLpConsumed.png
 trainingId
 visualState
 messages[]
+voicedMessages[]  // message + voiceId。任意
 ```
 
 画像とセリフが別々に状態判定を行うと表示が食い違うため、訓練進行時に `TrainingVisualState` を一度だけ決定し、画像切り替えとセリフ選択の両方へ渡す。
@@ -220,23 +221,24 @@ messages[]
 - 同じ枠に複数候補がある場合は、直前と同じセリフを除外してランダム選択
 - `trainingId` が空のエントリは、ヒロイン内の状態共通フォールバック
 - データまたはUIが未設定でも例外を発生させない
-- 音声付き候補は本文と `voiceId` を組で保持し、従来の音声なし候補も維持する
+- `voicedMessages` がある枠は音声付き候補を優先し、未設定の枠は従来の `messages` を使用
+- `voiceId` は `Resources/Audio/Voice/<HeroineId>/` 以下の拡張子なしパス
 
 `TrainingPanel` のUIには次のTextMeshProUGUIを追加する。
 
 ```text
 HeroineNameText
 TrainingMessageText
+VoiceReplayButton（任意）
 ```
 
 同名の子GameObjectであれば自動検出する。Inspectorから明示的に参照を設定してもよい。
 訓練選択時とステップ進行時に、画像とセリフへ同じ `TrainingVisualState` を適用する。
+`VoiceReplayButton` のOn Clickはコードが登録するため、Inspectorでは登録しない。
 
 ### AssetToolとUnity Importer
 
 AssetToolの訓練画像タブでは、選択中の画像枠に対応するセリフ候補を追加、編集、削除できる。
-候補を選択すると本文と `Voice ID（拡張子なし）` を編集できる。Voice IDは
-`Training/LightPractice01` のように、`Resources/Audio/Voice/<HeroineId>/` 以下の相対パスを入力する。
 `標準15枠を準備` は不足する画像枠とセリフ枠を同時に作成し、既存候補は上書きしない。
 Export時は次のファイルを生成する。
 
@@ -244,13 +246,36 @@ Export時は次のファイルを生成する。
 Data/training_dialogues_export.json
 ```
 
-JSONは `heroineId` と、`trainingId`、`visualState`、音声なしの `messages[]`、
-本文とVoice IDを組にした `voicedMessages[]` の一覧を持つ。
+JSONは `heroineId` と、`trainingId`、`visualState`、`messages[]` の一覧を持つ。
 Unity Importerはファイルが存在する場合だけ `HeroineTrainingDialogueData.asset` を更新する。旧Exportのようにファイルが存在しない場合は既存セリフを維持する。
-`voicedMessages` キーがない旧JSONでは既存Voice IDを維持し、新形式の空配列だけを削除として扱う。
-UnityからToolへ戻す場合は本文一致で候補を重複追加せずVoice IDを更新する。
-実音声ファイルは同期・Git管理せず、文字列IDだけを往復する。
 空のセリフ、重複キー、存在しないTrainingId、未知のVisualStateは警告またはスキップ対象とする。
+
+逆方向はUnity Editorの `FantasyLoveSim/Export Heroine Unity Data` が次を出力する。
+
+```text
+training_dialogues_from_unity.json
+```
+
+AssetToolの訓練画像タブからこのファイルを読み込むと、`trainingId + visualState` が一致する既存枠へ未登録候補だけを追加する。既存候補は削除・置換しないため、Toolを正本としながらUnity側の手修正を安全に回収できる。
+
+AssetTool同期は音声なし候補の `messages[]` と、本文・Voice IDを組にした
+`voicedMessages[]` の両方に対応する。訓練画像タブで候補を選択し、本文の下にある
+`Voice ID（拡張子なし）` へ `Training/LightPractice01` のように入力する。
+Unity Importerは `voicedMessages` がない旧JSONを読み込んでも既存音声IDを維持する。
+新形式の空配列は意図した削除として扱う。実音声は
+`Resources/Audio/Voice/<HeroineId>/` 以下へローカル配置し、同期・Git管理するのは文字列IDだけとする。
+
+### 動的な訓練カタログ
+
+初期3訓練をToolのソースコードへ固定せず、Unity Editorの同じFromUnity Exportで次も生成する。
+
+```text
+training_catalog_from_unity.json
+```
+
+`TrainingData`から `trainingId`、表示名、カテゴリー、初期解放状態を出力し、現在ヒロインに適用される訓練解放ノードID・表示名も付ける。初期未解放かつ現在ヒロインに解放経路がない訓練は出力しない。AssetToolの `Unity訓練一覧読込` は既存カタログを削除せずID単位で追加・更新する。
+
+`登録済み訓練の不足枠を準備` は、取り込んだ各訓練について固定5状態の画像候補、Prompt、セリフ枠、画像マッピングを不足分だけ作る。既存の採用画像、Prompt、マッピング、セリフ候補は上書きしない。旧プロフィールに訓練カタログがない場合は、互換用に初期3訓練を補完する。共通 `TrainingData` のHP消費や報酬は引き続きUnityを正本とし、Toolから書き戻さない。
 
 ## prompt JSON
 
@@ -305,11 +330,19 @@ Unity Editor Importer は次の順で処理する。
 
 Runtime は参照切れや未設定を許容し、画像がないことを理由に訓練処理を停止させない。
 
-## 実装順
+## 実装状況と残作業
 
-1. AssetTool に `Training` 用途、固定状態、9枚の生成・採用枠を追加する。
-2. `training_images_export.json` を出力する。
-3. Unity Runtime に `HeroineTrainingImageData` と状態判定を追加する。
-4. Unity Editor Importer に Training 画像と対応JSONのImportを追加する。
-5. TestHeroineで選択前後、主人公LP、ヒロインLP、同時LPを確認する。
-6. 表示確認後にDefaultHeroineや追加訓練へ展開する。
+実装済み:
+
+1. AssetToolの `Training` 用途、固定5状態、生成・採用枠
+2. `training_images_export.json` の出力
+3. Unity Runtimeの `HeroineTrainingImageData`、状態判定、`TrainingPanel.heroineImage`への適用
+4. Unity Editor ImporterによるTraining画像と対応JSONのImport
+5. TestHeroineの `LightPractice`、`SparringPractice`、`EnduranceTraining` 各5状態への画像設定
+6. 画像と訓練セリフで同じ `TrainingVisualState` を共有する表示処理
+
+残作業:
+
+1. TestHeroineの `CooperativeDrill` 5状態への画像設定
+2. DefaultHeroine用 `HeroineTrainingImageData.asset` と画像の作成
+3. `ResolveSprite`の訓練別・共通フォールバックとLP状態判定に対する専用EditMode Test（追加済み）

@@ -15,7 +15,7 @@
 
 ## Toolへ同期する項目
 
-### 優先度1: 訓練画像
+### 優先度1: 訓練画像（実装済み）
 
 - `usage = Training`
 - `Images/Training/`
@@ -32,9 +32,10 @@ Toolの編集画面では文字列の自由入力だけでなく、既知のス�
 
 Unity Importerは `requiredSkillIds` がJSONに存在する場合だけ更新し、省略された旧JSONでは既存の条件を維持する。FromUnity export/importでも同じ配列を往復させる。
 
-### 優先度3: HeroineProfileData
+### 優先度3: HeroineProfileData（実装済み）
 
-現在のTool未対応項目を追加する。
+Toolのプロフィール編集、保存、`heroine_profile_export.json`、Unityからの
+`heroine_profile_from_unity.json` 読み込みに次の項目を追加済み。
 
 - `initialDialogueMessage`
 - `nextActionPrompt`
@@ -49,7 +50,12 @@ Unity Importerは `requiredSkillIds` がJSONに存在する場合だけ更新し
 
 `battleSkills` はヒロイン固有定義としてToolで編集可能にする。MP、効果、対象、使用確率、優先度、最大使用回数などUnity側の全フィールドを確認してDTOを固定する。旧JSONのImportで既存戦闘スキルを空配列に置き換えない。
 
-### 優先度4: ヒロイン別スキルツリーと訓練スキル
+共通メッセージ、衣装メッセージ、Resources path、`battleSkills` は
+Toolのプロフィール画面から編集できる。Unityからの読み込みではJSONで省略された項目を
+既存値の維持として扱い、`battleSkills: []` が明示された場合だけ空配列を反映する。
+保存・再読込・export・旧profile JSONの既定値補完はMSTestで回帰確認する。
+
+### 優先度4: ヒロイン別スキルツリーと訓練スキル（実装済み）
 
 ヒロイン固有の戦闘・訓練スキルとツリーノードをToolで制作できるようにする。ただし、主人公共通スキル、敵バランス、共通 `TrainingData` は当面Unityを正本とする。
 
@@ -71,7 +77,16 @@ Data/heroine_skills_export.json
 
 共通データを誤って上書きしないよう、Unity Importerは `targetHeroineId` が対象ヒロインと一致するノードだけを更新する。
 
-### 優先度5: 戦闘・訓練・結果文章
+Toolのプロフィール画面に訓練スキルとヒロインノードの編集欄を追加し、
+`heroine_skills_export.json` を出力する。Unityはヒロイン別の
+`Assets/Resources/Skills/Heroines/{heroineId}/` と
+`Assets/Resources/SkillTreeNodes/Heroines/{heroineId}/` だけを更新し、
+主人公ノード、他ヒロイン、共通 `TrainingData` は変更しない。
+Unityからは `heroine_skills_from_unity.json` を出力し、Toolで
+`heroine_profile_from_unity.json` を読み込む際に同じフォルダから併せて取り込む。
+配列が省略された旧JSONでは既存値を維持し、明示された空配列だけを削除として扱う。
+
+### 優先度5: 戦闘・訓練・結果文章（戦闘結果・訓練文章は実装済み）
 
 既存の会話系データに加えて、次をToolで編集・同期する候補とする。
 
@@ -80,6 +95,48 @@ Data/heroine_skills_export.json
 - 訓練開始、切替、LP消費、終了時のヒロイン別文章
 
 訓練文章の専用データ型がUnity側で確定するまでは、Toolへ先行して不安定なJSONを追加せず、`training_images_export.json` と画像生成を優先する。
+
+### ボイスID同期（主要データの双方向同期を実装済み）
+
+Unity側では通常会話、ゲームイベント、エンディングに加え、予定イベントの準備・結果、
+行動反応、選択肢返答、ヒロイン共通メッセージ、訓練セリフへボイスIDを設定できる。
+実音声はGit管理せず、ToolとのJSON同期では文字列IDだけを往復対象にする。
+通常会話、ゲームイベント、予定イベント、行動反応、エンディングは、各 `lines[]` の
+`voiceId` をAssetToolからUnityへ取り込み、Unityの `*_from_unity.json` にも戻す。
+旧JSONに項目がない場合は空文字として安全に扱い、音声なしの本文として利用できる。
+訓練セリフは従来の音声なし `messages[]` と、`message` / `voiceId` を組にした
+`voicedMessages[]` を往復する。Toolの訓練画像タブで選択中候補のVoice IDを編集できる。
+Unity Importerは旧JSONに `voicedMessages` キーがない場合は既存音声IDを維持し、
+新形式で空配列が明示された場合だけその枠の音声付き候補を空にする。ToolのFromUnity
+Importは本文一致で候補を複製せずVoice IDを更新し、本文だけの旧JSONでは既存Voice IDを消さない。
+戦闘後イベントと戦闘パネル結果文も各項目に任意の `voiceId` を持ち、AssetToolの
+「戦闘メッセージ」タブで編集して既存の双方向JSONで往復する。旧JSONで `voiceId` が
+省略されている場合は既存値を維持し、空文字が明示された場合だけ解除する。
+
+通常会話・予定イベント・行動反応・エンディングのVoice IDあり／なしと双方向同期は
+Unity側の `VoiceIdHeroineDataSyncIntegrationTests`、ゲームイベントは
+`RequiredSkillIdGameEventIntegrationTests` で検証する。テストは論理IDだけを使用し、
+実際のVOICEファイルを必要としない。
+
+訓練文章は `training_dialogues_export.json` で同期済み。戦闘結果文章は
+`battle_result_events_export.json` と `battle_panel_result_messages_export.json` をToolから出力し、
+Unityからは対応する `*_from_unity.json` を出力する。Toolの戦闘メッセージタブでは、
+勝敗・逃走種別、`battleContextId`、本文、`stillId`、好感度変化、解放衣装を編集できる。
+Unity Importerは `HeroineProfileData` のヒロイン別Resources pathだけを更新し、共通フォールバックデータは変更しない。
+戦闘後イベントは `speakerType`、任意の `speakerName`、`expressionId` を保持し、
+既存の話者・表情付きメッセージキューへ渡す。表情未指定時は現在表示を変更しない。
+`visualMode` は `Auto / StillOnly / StillWithPortrait / PortraitOnly` から選択し、専用スチルと立ち絵の重複を防ぐ。
+`Auto` はスチル解決時に立ち絵を隠し、スチル未設定・参照切れ時は半透明の黒い暗幕と立ち絵へ安全にフォールバックする。
+Toolの結果種別はComboBoxから選び、`stillId` と解放衣装IDは登録済み候補を参照できる。
+Export時は空ID・空メッセージ・未知の結果種別・同一結果条件の重複をError、
+未登録のスチル／衣装参照をWarningとしてExport結果へ表示する。
+Unity Import完了時には戦闘メッセージの追加・更新・削除・スキップ件数を表示する。
+AssetToolのUnity Profile読込後は、戦闘結果イベントと戦闘パネル文を分けて追加・更新・削除・維持件数を表示し、
+話者・表情・表示方式の変更件数、実際に読み込んだファイル名、同じフォルダにない関連JSONのスキップ件数も確認できる。
+画面下の `戦闘メッセージへ` から結果表示と編集表へ直接移動できる。
+Toolでは話者種別と登録済み表情を候補から選択でき、未知の話者種別をError、
+表示方式も候補から選択できる。未知の表示方式をError、未登録の表情IDをWarningとして検出する。新フィールドは省略可能で、旧JSONは
+`Heroine` 話者・話者名自動解決・表情維持として読み込む。
 
 ## Toolで扱わない範囲
 
@@ -104,22 +161,16 @@ Tool側へ必要なのは、これらのIDを参照候補として読み込む�
 - FromUnity importは既存Toolデータを無条件上書きせず、新規追加または選択反映にする。
 - `schemaVersion` を更新し、読み込み可能な最小・最大versionを明示する。
 
-戦闘後イベントと戦闘パネル結果メッセージのVoice ID同期は実装済み。
-「戦闘メッセージ」タブの各表にある `Voice ID` 列へ、
-`Battle/DuoVictoryForest01` のように拡張子なしで入力する。
-`battle_result_events_*.json` と `battle_panel_result_messages_*.json` の
-各項目に `voiceId` を含めて往復する。旧JSONでフィールドが省略されている場合は
-既存値を維持し、空文字が明示された場合だけ解除する。実音声ファイルは同期しない。
+## 実装結果
 
-## 推奨実装順
-
-1. `requiredSkillIds` とHeroineProfile共通セリフを既存export/importへ追加し、欠落による上書きを防ぐ。
-2. AssetToolの画像用途に `Training` を追加する。
-3. 9枚のTestHeroine訓練画像を生成、採用できるUIを追加する。
-4. `training_images_export.json` とUnity Importerを接続する。
-5. `battleSkills` の往復対応を追加する。
-6. ヒロイン別スキル・ノードのexportを追加する。
-7. TestHeroineで Tool -> Unity -> FromUnity -> Tool の往復テストを行う。
+1. `requiredSkillIds` とHeroineProfile共通セリフを既存export/importへ追加し、欠落による上書きを防止済み。
+2. AssetToolの画像用途に `Training` を追加済み。
+3. 固定3訓練だけでなく、Unityから取り込んだ訓練カタログの各訓練×5状態を生成、採用できるUIを追加済み。
+4. `training_images_export.json` とUnity Importerを接続済み。
+5. `battleSkills` の往復に対応済み。
+6. ヒロイン別スキル・ノードのexportに対応済み。
+7. TestHeroineの初期3訓練はUnity側の15画像枠へ接続済み。`CooperativeDrill` とDefaultHeroineの画像展開は残作業。
+8. Unityの訓練カタログは一回限定、調子条件、前提訓練、表示規則を出力し、前提完了で将来解放される訓練も制作対象へ含める。AssetTool側の条件表示と参照警告は残作業。
 
 ## 完了条件
 

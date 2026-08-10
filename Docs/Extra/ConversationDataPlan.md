@@ -132,8 +132,8 @@ Unity 側で実際の ID を変更した場合は、この一覧、WPF 側の候
       "category": "Daily",
       "conditions": {
         "locationId": "Forest",
-        "minAffection": 10,
-        "maxAffection": 100,
+        "minAffection": 100,
+        "maxAffection": 9999,
         "weather": "",
         "season": "",
         "timeOfDay": "",
@@ -156,6 +156,11 @@ Unity 側で実際の ID を変更した場合は、この一覧、WPF 側の候
 
 Unity 側の対応先は `ConversationData` を想定する。
 
+好感度は Unity 側と同じ `0〜9999` の整数尺度を使用する。旧データの
+`minAffection`、`maxAffection`、`affectionChange` は10倍へ移行し、通常コンテンツの
+上限には旧上限の `100` ではなく `9999` を指定する。旧尺度の export を再利用すると、
+好感度101以上で会話などが候補から外れるため、そのまま再importしてはならない。
+
 ## game_events_export.json
 
 ゲーム開始、日開始、場所イベント、予定イベントなど、イベント単位で発生する本文を扱う。
@@ -173,6 +178,8 @@ Unity 側の対応先は `ConversationData` を想定する。
       "category": "Intro",
       "conditions": {
         "once": true,
+        "triggerType": "ScheduledEventCompleted",
+        "triggerContextId": "Forest",
         "locationId": "",
         "minAffection": 0,
         "costumeId": ""
@@ -196,9 +203,14 @@ Unity 側の対応先は `ConversationData` を想定する。
 ```
 
 Unity 側の対応先は `GameEventData` を想定する。
-`affectionChange` はイベント全体の完了効果で、Unityでは全ページの表示完了時に
-一度だけ反映する。AssetToolではイベント編集欄の「イベント完了時変化」で編集し、
+`affectionChange` はイベント全体の完了効果であり、選択肢の値ではない。Unityでは
+全ページを表示し終えた時だけ反映され、`showOnce` イベントは表示済み記録と同時に
+一度だけ確定する。AssetToolではイベント編集欄の「イベント完了時変化」で編集し、
 Unity向けexportとFromUnity importの両方で維持する。
+`conditions.triggerType` と `conditions.triggerContextId` はカテゴリとは別の実行接続情報。
+`ScheduledEventCompleted` / `ActionCompleted` / `LocationEntered` / `QuestCompleted` では
+対象IDを必須とする。現在は `ScheduledEventCompleted:Forest` が森探索予定の完了後に
+接続されている。
 
 ## scheduled_events_export.json
 
@@ -223,7 +235,7 @@ Unity向けexportとFromUnity importの両方で維持する。
         "costumeId": "",
         "outfitPromptMode": "Conditional",
         "eventSpeakerType": "Heroine",
-        "affectionChange": 1
+        "affectionChange": 10
       },
       "preparationMessage": "今日は昼に森へ出かける予定です。",
       "eventMessage": "森を歩きながら、静かな時間を過ごしました。",
@@ -258,7 +270,7 @@ Unity向けexportとFromUnity importの両方で維持する。
       "category": "Tea",
       "conditions": {
         "actionId": "Tea",
-        "minAffection": 10,
+        "minAffection": 100,
         "costumeId": "",
         "requiredItemId": ""
       },
@@ -282,7 +294,10 @@ Unity向けexportとFromUnity importの両方で維持する。
 Unity 側の対応先は `ActionData.reactions` 内の `ActionReactionData` とする。
 `conditions.actionId` に一致する `ActionData` を探し、その action の reactions を JSON 由来で置き換える。
 既存 action がない場合は最小の `ActionData` を作成する。
-`lines[0]` を `resultMessage`、`imageAssetIds[0]` を `stillId` / `stillSprite` に変換する。
+`lines[0]` を `resultMessage`、`lines[0].expression` を `expressionId`、`imageAssetIds[0]` を `stillId` / `stillSprite` に変換する。
+UnityからAssetToolへ戻す際も `ActionReactionData.expressionId` を `lines[0].expression` として出力する。
+
+Unity側で `ActionData.reactions` が実行されるのは `SimpleAction` だけである。会話、衣装変更、衣装反応など専用画面を開く行動は専用データを編集対象とし、行動反応データを作成しない。UnityへImportした後は `FantasyLoveSim > Validation > Data > Action Reaction Data` で、ID重複、条件衝突、参照切れ、フォールバック不足を確認する。
 
 ## endings_export.json
 
@@ -299,7 +314,7 @@ Good、Normal、Bad などの結果条件と、対応するエンディングス
       "title": "Good Ending",
       "category": "Good",
       "conditions": {
-        "minAffection": 80,
+        "minAffection": 800,
         "costumeId": "",
         "requiredFlagIds": []
       },
@@ -322,7 +337,8 @@ Good、Normal、Bad などの結果条件と、対応するエンディングス
 
 Unity 側の対応先は `EndingData` とする。
 item ごとに `Assets/Resources/Heroines/<HeroineId>/Endings/<EndingId>.asset` を作成、更新する。
-`lines[]` は改行結合して `message` に入れ、`imageAssetIds[0]` をエンディングスチルとして解決する。
+`lines[]` は順番を維持して `EndingData.pages` に変換し、`speaker`、`speakerName`、`text`、`expression`、`stillId` をページ単位で保持する。互換用の `message` には本文を改行結合して保存し、`imageAssetIds[0]` は旧形式のエンディングスチルとしても解決する。ページがない旧データは従来どおり `message` / `stillSprite` を使用する。
+UnityへImportした後は `FantasyLoveSim > Validation > Data > Ending Data` を実行し、ID重複、参照切れ、条件なしフォールバック、同じ必要好感度・衣装条件による選択曖昧さを確認する。同時成立し得る分岐は `conditions.minAffection` を分け、Unity側の選択結果を一意にする。
 
 ## WPF 画面案
 

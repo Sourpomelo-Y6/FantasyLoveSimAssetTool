@@ -42,6 +42,8 @@ UnityImport/
       game_events_from_unity.json
       scheduled_events_from_unity.json
       endings_from_unity.json
+      training_dialogues_from_unity.json
+      training_catalog_from_unity.json
       sprite_links_from_unity.json
       export_report.json
 ```
@@ -72,7 +74,7 @@ heroine_profile_from_unity.json
 - `outfitReactionMessageOverrides`
 
 `outfitMessageOverrides` は `outfitId`、`lockedMessage`、`changedMessage` を持つ。
-今後は衣装変更成功時と未解放時の表情を変えられるように、`changedExpressionId` と `lockedExpressionId` も戻す。
+衣装変更成功時の `changedExpressionId` と衣装評価時の `expressionId` は Unity とAssetToolのプロフィールJSONで往復する。空IDは現在表情を維持する。未解放時の `lockedExpressionId` は未実装のため、必要になった段階で追加する。
 `outfitReactionMessageOverrides` は `reactionType` と `message` を持つ。
 今後は `衣装を見る` 実行後のヒロイン反応ごとに表情を変えられるように、`expressionId` も戻す。
 WPF Tool 側では、同じ `outfitId` / `reactionType` の既存データを無条件上書きせず、差分確認または新規追加候補として扱う。
@@ -172,12 +174,32 @@ Unity 側でヒロイン別の翌日予定、お出かけ、デート本文を�
 scheduled_events_from_unity.json
 ```
 
-`HeroineProfileData.scheduledEventResourcePath` から `ScheduledEventData` を読み、`scheduleType`、`actionId`、`triggerTimeSlot`、`outfitPromptMode`、`eventSpeakerType`、`preparationMessage`、`eventMessage`、`stillId`、`affectionChange` を戻す。
+`HeroineProfileData.scheduledEventResourcePath` から `ScheduledEventData` を読み、`scheduleType`、`actionId`、`triggerTimeSlot`、`outfitPromptMode`、`eventSpeakerType`、`preparationMessage`、`eventMessage`、準備・結果の `voiceId`、`stillId`、`affectionChange` を戻す。
 共通フォールバックの `Assets/Resources/ScheduledEvents/` は、ヒロイン固有データと混ざらないよう逆 export 対象にしない。
+
+通常会話、ゲームイベント、予定イベント、行動反応、エンディングは、各本文行の
+`voiceId` をFromUnity JSONへ戻す。AssetTool側で再編集してUnityへExportした場合も同じIDを
+Importerが復元する。音声ファイル、拡張子、Unity GUIDは同期対象に含めない。
 
 ### 8. HeroineTrainingImageData
 
 訓練画像の画像本体やUnity GUIDは戻さず、`trainingId`、表示状態、対応する `assetId` だけを `training_images_from_unity.json` として戻す。WPF Toolは既存のAccepted画像と照合し、見つからない `assetId` をwarningとして表示する。詳細は `TrainingImagePlan.md` を参照する。
+
+### 9. HeroineTrainingDialogueData
+
+訓練セリフは実装済みの `training_dialogues_from_unity.json` で戻す。Unity Editorはヒロイン別の `HeroineTrainingDialogueData` を読み、`trainingId + visualState` ごとの音声なし `messages[]` と、`message` / `voiceId` を持つ `voicedMessages[]` を出力する。重複した枠は1枠へ統合し、空の候補は出力しない。
+
+WPF Toolの訓練画像タブにある `Unity訓練セリフ読込` からJSONを選択する。同一キーの既存枠は保持し、Unity側にしかない候補だけを追加する。同じ文面は重複追加せずVoice IDを更新する。本文だけの旧JSONは既存Voice IDを消さない。旧ローカルデータの `BeforeFirstStep` / `AfterFirstStep` は、現行の `SelectedBeforeFirstStep` / `SelectedAfterFirstStep` へ正規化する。
+
+### 10. TrainingData参照カタログ
+
+`training_catalog_from_unity.json` は、AssetToolが画像・セリフを制作すべき訓練を動的に知るための参照データとして実装済み。共通 `TrainingData` のゲームバランス値をToolへ移すものではない。現在ヒロインで利用可能または解放可能な訓練だけを出力し、Toolは `Unity訓練一覧読込` でID単位に追加・更新する。取り込み後は訓練数×5状態の不足枠を自動作成できる。
+
+Unity側のカタログには `sortOrder`、`occurrenceType`、表示可能な調子、実行可能な調子、
+前提訓練ID、前提のAND/OR、前提未達時と完了後の表示設定も含める。
+前提訓練で将来解放される訓練は、初期解放やスキルツリーノード解放がなくても制作対象とする。
+AssetTool側ではこれらを編集値ではなく読込専用の条件バッジ／説明として表示し、
+存在しない前提訓練IDを警告する対応が残っている。
 
 ## Unity Editor 拡張案
 
@@ -191,7 +213,7 @@ FantasyLoveSim/Export Heroine Unity Data
 
 1. `HeroineProfileData` または HeroineId を選ぶ。
 2. `Assets/Resources/Heroines/<HeroineId>/` を基準に関連 ScriptableObject を探す。
-3. `HeroineProfileData`、`ActionData`、`ConversationData`、`GameEventData`、`ScheduledEventData`、`EndingData`、`HeroineAssetCatalog`、`HeroineLayeredSpriteData` を読む。
+3. `HeroineProfileData`、`ActionData`、`ConversationData`、`GameEventData`、`ScheduledEventData`、`EndingData`、`HeroineTrainingDialogueData`、`HeroineAssetCatalog`、`HeroineLayeredSpriteData` を読む。
 4. FromUnity JSON DTO へ変換する。
 5. `UnityImport/FromUnity/<HeroineId>/` へ JSON を出す。
 6. 件数と warning を `export_report.json` と Console に出す。
@@ -223,6 +245,11 @@ Unity Editor 拡張側で型付き ScriptableObject を読むため、WPF Tool �
 同じ `Id` の通常会話が既に存在する場合は上書きせずスキップする。
 `Unity Event読込` から `game_events_from_unity.json` を選んだ場合は、`GameEvents` の `ConversationEntry` として新規追加する。
 同じ `Id` のイベントが既に存在する場合は上書きせずスキップする。
+`訓練画像` タブの `Unity訓練セリフ読込` では `training_dialogues_from_unity.json` を選ぶ。同じ `trainingId + visualState` の枠は上書きせず、未登録の文面だけを候補へ追加して直ちに `profile.json` を保存する。
+
+戦闘メッセージのFromUnity JSONは、戦闘後イベントと戦闘パネル結果文の各項目に
+任意の `voiceId` を含む。Toolは既存の追加・更新・削除規則でVoice IDも比較・保存する。
+旧JSONでVoice IDが省略されている場合はTool側の既存値を維持し、明示された空文字は解除として扱う。
 Unity 側 exporter が `sourceMetadata.choices` に退避した選択肢は、WPF 側の `Choices` に取り込む。
 保持する項目は `choiceText`、`responseText`、`affectionChange` とする。
 `Unity Ending読込` から `endings_from_unity.json` を選んだ場合は、`Endings` の `ConversationEntry` として新規追加する想定にする。
@@ -299,7 +326,7 @@ scheduled_events_from_unity.json
 endings_from_unity.json
 ```
 
-フィールドは `Docs/Extra_FantasyLoveSimAssetTool/ConversationDataPlan.md` と `Docs/GameEventDataGuide.md` を基準にする。
+フィールドは `Docs/Extra/ConversationDataPlan.md` と `Docs/GameEventDataGuide.md` を基準にする。
 Unity 側にしかないフィールドは `unity` または `sourceMetadata` のような補助領域に逃がし、WPF の正本フィールドとは混ぜない。
 
 ## Warning
