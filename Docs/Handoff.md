@@ -1,5 +1,17 @@
 # FantasyLoveSimAssetTool 引継ぎ
 
+## 帰還後反応の編集とUnity同期
+
+「戦闘メッセージ」タブの下段で、主人公が単独外出から帰還した後のヒロイン反応を編集できる。
+`ReactionId`、`SoloVictory` / `SoloDefeat` / `SoloEscape`、任意のBattle Context、本文、
+Voice ID、Still ID、表示方式、表情を設定する。AssetToolからのexportでは
+`Data/solo_return_reactions_export.json` を出力し、Unity importerがヒロイン別の
+`SoloReturnReactionData`を作成・更新する。Unityからのexportは
+`solo_return_reactions_from_unity.json`となり、プロフィール取込時に同じフォルダーから読む。
+
+古い交換フォルダーにこのJSONが存在しない場合は既存データを維持する。
+`items`を省略したJSONも維持、明示的な空配列は全削除の指定として扱う。
+
 ## 概要
 
 `FantasyLoveSimAssetTool` は、Unity プロジェクト `FantasyLoveSim` 向けのヒロイン画像素材とキャラクター設定を管理する WPF アプリです。

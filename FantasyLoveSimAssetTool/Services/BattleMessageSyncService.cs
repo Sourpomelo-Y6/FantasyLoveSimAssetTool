@@ -38,10 +38,23 @@ namespace FantasyLoveSimAssetTool.Services
             }, Options);
         }
 
+        public static string BuildSoloReturnReactionsJson(HeroineProfile profile)
+        {
+            if (profile == null) throw new ArgumentNullException(nameof(profile));
+            Normalize(profile);
+            return JsonSerializer.Serialize(new SoloReturnReactionsDataFile
+            {
+                HeroineId = profile.HeroineId,
+                Items = profile.BattleMessages.SoloReturnReactions.ToArray()
+            }, Options);
+        }
+
         public static BattleResultEventsDataFile DeserializeResultEvents(string json) =>
             Validate(JsonSerializer.Deserialize<BattleResultEventsDataFile>(json, Options));
         public static BattlePanelResultMessagesDataFile DeserializePanelMessages(string json) =>
             Validate(JsonSerializer.Deserialize<BattlePanelResultMessagesDataFile>(json, Options));
+        public static SoloReturnReactionsDataFile DeserializeSoloReturnReactions(string json) =>
+            Validate(JsonSerializer.Deserialize<SoloReturnReactionsDataFile>(json, Options));
 
         public static void ApplyResultEvents(HeroineProfile profile, BattleResultEventsDataFile data)
         {
@@ -69,11 +82,27 @@ namespace FantasyLoveSimAssetTool.Services
             }
         }
 
+        public static void ApplySoloReturnReactions(HeroineProfile profile, SoloReturnReactionsDataFile data)
+        {
+            ValidateHeroine(profile, data?.HeroineId);
+            profile.BattleMessages ??= new BattleMessageSettings();
+            // Items省略は旧データとして扱い、現在の設定を維持する。
+            if (data.Items != null)
+            {
+                PreserveMissingSoloReturnVoiceIds(
+                    profile.BattleMessages.SoloReturnReactions,
+                    data.Items);
+                profile.BattleMessages.SoloReturnReactions = NormalizeSoloReturnReactions(data.Items);
+            }
+        }
+
         public static void Normalize(HeroineProfile profile)
         {
             profile.BattleMessages ??= new BattleMessageSettings();
             profile.BattleMessages.ResultEvents = NormalizeEvents(profile.BattleMessages.ResultEvents);
             profile.BattleMessages.PanelMessages = NormalizePanelMessages(profile.BattleMessages.PanelMessages);
+            profile.BattleMessages.SoloReturnReactions = NormalizeSoloReturnReactions(
+                profile.BattleMessages.SoloReturnReactions);
         }
 
         public static BattleMessageChangeSummary AnalyzeChanges(
@@ -159,6 +188,23 @@ namespace FantasyLoveSimAssetTool.Services
                 if (!panelTypes.Contains(item.ResultType?.Trim() ?? "")) messages.Add($"[Error] 戦闘パネル `{label}`: resultType `{item.ResultType}` は候補外です。");
                 if (string.IsNullOrWhiteSpace(item.Message)) messages.Add($"[Error] 戦闘パネル `{label}`: message が空です。");
             }
+            List<SoloReturnReactionEntry> returns = (settings.SoloReturnReactions ??
+                new ObservableCollection<SoloReturnReactionEntry>()).Where(x => x != null).ToList();
+            foreach (IGrouping<string, SoloReturnReactionEntry> group in returns.GroupBy(
+                x => (x.ResultType?.Trim() ?? "") + "|" + (x.BattleContextId?.Trim() ?? ""),
+                StringComparer.OrdinalIgnoreCase).Where(x => x.Count() > 1))
+                messages.Add($"[Error] 帰還後反応: resultType + battleContextId `{group.Key}` が重複しています。");
+            foreach (SoloReturnReactionEntry item in returns)
+            {
+                string label = string.IsNullOrWhiteSpace(item.ReactionId) ? "ReactionId未設定" : item.ReactionId.Trim();
+                if (string.IsNullOrWhiteSpace(item.ReactionId)) messages.Add("[Error] 帰還後反応: ReactionId が空です。");
+                if (!new[] { "SoloVictory", "SoloDefeat", "SoloEscape" }.Contains(item.ResultType?.Trim() ?? ""))
+                    messages.Add($"[Error] 帰還後反応 `{label}`: resultType `{item.ResultType}` は候補外です。");
+                if (string.IsNullOrWhiteSpace(item.Message)) messages.Add($"[Error] 帰還後反応 `{label}`: message が空です。");
+                if (!visualModes.Contains(item.VisualMode?.Trim() ?? "")) messages.Add($"[Error] 帰還後反応 `{label}`: visualMode `{item.VisualMode}` は候補外です。");
+                if (!string.IsNullOrWhiteSpace(item.StillId) && !stillIds.Contains(item.StillId.Trim())) messages.Add($"[Warning] 帰還後反応 `{label}`: stillId `{item.StillId}` は登録済み候補にありません。");
+                if (!string.IsNullOrWhiteSpace(item.ExpressionId) && !expressionIds.Contains(item.ExpressionId.Trim())) messages.Add($"[Warning] 帰還後反応 `{label}`: expressionId `{item.ExpressionId}` は登録済み候補にありません。");
+            }
             return messages;
         }
 
@@ -203,6 +249,30 @@ namespace FantasyLoveSimAssetTool.Services
                 result.Add(item);
             }
             return new ObservableCollection<BattlePanelResultMessageEntry>(result);
+        }
+
+        private static ObservableCollection<SoloReturnReactionEntry> NormalizeSoloReturnReactions(
+            IEnumerable<SoloReturnReactionEntry> source)
+        {
+            List<SoloReturnReactionEntry> result = new List<SoloReturnReactionEntry>();
+            HashSet<string> ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (SoloReturnReactionEntry item in source ?? Enumerable.Empty<SoloReturnReactionEntry>())
+            {
+                if (item == null) continue;
+                item.ResultType = string.IsNullOrWhiteSpace(item.ResultType) ? "SoloVictory" : item.ResultType.Trim();
+                item.BattleContextId = item.BattleContextId?.Trim() ?? string.Empty;
+                item.ReactionId = string.IsNullOrWhiteSpace(item.ReactionId)
+                    ? BuildId(item.ResultType, item.BattleContextId)
+                    : item.ReactionId.Trim();
+                if (!ids.Add(item.ReactionId)) continue;
+                item.Message ??= string.Empty;
+                item.VoiceId = item.VoiceId?.Trim() ?? string.Empty;
+                item.StillId = item.StillId?.Trim() ?? string.Empty;
+                item.VisualMode = string.IsNullOrWhiteSpace(item.VisualMode) ? "Auto" : item.VisualMode.Trim();
+                item.ExpressionId = item.ExpressionId?.Trim() ?? string.Empty;
+                result.Add(item);
+            }
+            return new ObservableCollection<SoloReturnReactionEntry>(result);
         }
 
         private static string JoinIds(string value) => string.Join(", ", (value ?? string.Empty).Split(',')
@@ -263,6 +333,18 @@ namespace FantasyLoveSimAssetTool.Services
                 }
             }
         }
+        private static void PreserveMissingSoloReturnVoiceIds(
+            IEnumerable<SoloReturnReactionEntry> existing,
+            IEnumerable<SoloReturnReactionEntry> incoming)
+        {
+            Dictionary<string, SoloReturnReactionEntry> existingById = ToMap(existing, item => item.ReactionId);
+            foreach (SoloReturnReactionEntry item in incoming ?? Enumerable.Empty<SoloReturnReactionEntry>())
+            {
+                if (item != null && item.VoiceId == null && !string.IsNullOrWhiteSpace(item.ReactionId) &&
+                    existingById.TryGetValue(item.ReactionId.Trim(), out SoloReturnReactionEntry previous))
+                    item.VoiceId = previous.VoiceId ?? string.Empty;
+            }
+        }
         private static void ValidateHeroine(HeroineProfile profile, string heroineId)
         {
             if (profile == null) throw new ArgumentNullException(nameof(profile));
@@ -272,7 +354,9 @@ namespace FantasyLoveSimAssetTool.Services
         private static T Validate<T>(T data) where T : class
         {
             if (data == null) throw new InvalidOperationException("戦闘メッセージJSONを読み込めませんでした。");
-            int version = data is BattleResultEventsDataFile events ? events.SchemaVersion : ((BattlePanelResultMessagesDataFile)(object)data).SchemaVersion;
+            int version = data is BattleResultEventsDataFile events ? events.SchemaVersion :
+                data is BattlePanelResultMessagesDataFile panels ? panels.SchemaVersion :
+                ((SoloReturnReactionsDataFile)(object)data).SchemaVersion;
             if (version != 1) throw new InvalidOperationException($"未対応の schemaVersion です: {version}");
             return data;
         }

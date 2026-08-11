@@ -180,6 +180,7 @@ namespace FantasyLoveSimAssetTool.Services
             File.WriteAllText(Path.Combine(dataDirectory, "heroine_skills_export.json"), HeroineSkillTreeSyncService.BuildExportJson(profile));
             File.WriteAllText(Path.Combine(dataDirectory, "battle_result_events_export.json"), BattleMessageSyncService.BuildResultEventsJson(profile));
             File.WriteAllText(Path.Combine(dataDirectory, "battle_panel_result_messages_export.json"), BattleMessageSyncService.BuildPanelMessagesJson(profile));
+            File.WriteAllText(Path.Combine(dataDirectory, "solo_return_reactions_export.json"), BattleMessageSyncService.BuildSoloReturnReactionsJson(profile));
             File.WriteAllText(Path.Combine(dataDirectory, "conversations_export.json"), BuildConversationExportJson(profile, ConversationDataKind.Conversations));
             File.WriteAllText(Path.Combine(dataDirectory, "game_events_export.json"), BuildConversationExportJson(profile, ConversationDataKind.GameEvents));
             File.WriteAllText(Path.Combine(dataDirectory, "scheduled_events_export.json"), BuildScheduledEventsExportJson(profile));
@@ -293,6 +294,7 @@ namespace FantasyLoveSimAssetTool.Services
                 scheduledEventResourcePath = profile.ScheduledEventResourcePath,
                 battleResultEventResourcePath = profile.BattleResultEventResourcePath,
                 battlePanelResultMessageResourcePath = profile.BattlePanelResultMessageResourcePath,
+                soloReturnReactionResourcePath = profile.SoloReturnReactionResourcePath,
                 endingResourcePath = profile.EndingResourcePath
             };
 

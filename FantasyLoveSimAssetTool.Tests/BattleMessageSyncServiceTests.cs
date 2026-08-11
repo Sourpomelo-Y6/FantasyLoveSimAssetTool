@@ -19,6 +19,9 @@ namespace FantasyLoveSimAssetTool.Tests
                 BattleMessageSyncService.DeserializeResultEvents(BattleMessageSyncService.BuildResultEventsJson(source)));
             BattleMessageSyncService.ApplyPanelMessages(target,
                 BattleMessageSyncService.DeserializePanelMessages(BattleMessageSyncService.BuildPanelMessagesJson(source)));
+            BattleMessageSyncService.ApplySoloReturnReactions(target,
+                BattleMessageSyncService.DeserializeSoloReturnReactions(
+                    BattleMessageSyncService.BuildSoloReturnReactionsJson(source)));
 
             BattleResultEventEntry result = target.BattleMessages.ResultEvents.Single();
             Assert.AreEqual("DuoVictory_Forest", result.EventId);
@@ -31,6 +34,10 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(
                 "Battle/Victory01",
                 target.BattleMessages.PanelMessages.Single().VoiceId);
+            SoloReturnReactionEntry reaction = target.BattleMessages.SoloReturnReactions.Single();
+            Assert.AreEqual("SoloDefeat", reaction.ResultType);
+            Assert.AreEqual("帰ってきてくれてよかった", reaction.Message);
+            Assert.AreEqual("Battle/ReturnDefeat01", reaction.VoiceId);
         }
 
         [TestMethod]
@@ -41,9 +48,12 @@ namespace FantasyLoveSimAssetTool.Tests
                 BattleMessageSyncService.DeserializeResultEvents("{\"schemaVersion\":1,\"heroineId\":\"TestHeroine\"}"));
             BattleMessageSyncService.ApplyPanelMessages(profile,
                 BattleMessageSyncService.DeserializePanelMessages("{\"schemaVersion\":1,\"heroineId\":\"TestHeroine\"}"));
+            BattleMessageSyncService.ApplySoloReturnReactions(profile,
+                BattleMessageSyncService.DeserializeSoloReturnReactions("{\"schemaVersion\":1,\"heroineId\":\"TestHeroine\"}"));
 
             Assert.AreEqual(1, profile.BattleMessages.ResultEvents.Count);
             Assert.AreEqual(1, profile.BattleMessages.PanelMessages.Count);
+            Assert.AreEqual(1, profile.BattleMessages.SoloReturnReactions.Count);
         }
 
         [TestMethod]
@@ -231,6 +241,18 @@ namespace FantasyLoveSimAssetTool.Tests
                             ResultType = "Victory",
                             Message = "勝利しました",
                             VoiceId = "Battle/Victory01"
+                        }
+                    },
+                    SoloReturnReactions = new ObservableCollection<SoloReturnReactionEntry>
+                    {
+                        new SoloReturnReactionEntry
+                        {
+                            ReactionId = "SoloDefeat",
+                            ResultType = "SoloDefeat",
+                            Message = "帰ってきてくれてよかった",
+                            VoiceId = "Battle/ReturnDefeat01",
+                            VisualMode = "Auto",
+                            ExpressionId = "Smile"
                         }
                     }
                 }

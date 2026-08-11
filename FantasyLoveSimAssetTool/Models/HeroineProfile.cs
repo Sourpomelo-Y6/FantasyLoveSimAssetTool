@@ -97,6 +97,8 @@ namespace FantasyLoveSimAssetTool.Models
 
         public string BattlePanelResultMessageResourcePath { get; set; }
 
+        public string SoloReturnReactionResourcePath { get; set; }
+
         public string EndingResourcePath { get; set; }
 
         public ObservableCollection<HeroineAsset> Assets { get; set; }
@@ -143,6 +145,7 @@ namespace FantasyLoveSimAssetTool.Models
             ScheduledEventResourcePath = string.Empty;
             BattleResultEventResourcePath = string.Empty;
             BattlePanelResultMessageResourcePath = string.Empty;
+            SoloReturnReactionResourcePath = string.Empty;
             EndingResourcePath = string.Empty;
             Assets = new ObservableCollection<HeroineAsset>();
             StillWorkItems = new ObservableCollection<StillWorkItem>();

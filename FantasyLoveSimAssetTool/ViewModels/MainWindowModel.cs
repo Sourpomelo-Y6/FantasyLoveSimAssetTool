@@ -313,6 +313,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ObservableCollection<string> BattlePanelResultTypeOptions { get; }
 
+        public ObservableCollection<string> SoloReturnResultTypeOptions { get; }
+
         public ObservableCollection<string> BattleSpeakerTypeOptions { get; }
 
         public ObservableCollection<string> BattleVisualModeOptions { get; }
@@ -2403,6 +2405,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             BattlePanelResultTypeOptions = new ObservableCollection<string>(new[]
             {
                 "Victory", "Defeat", "Escape", "Default"
+            });
+            SoloReturnResultTypeOptions = new ObservableCollection<string>(new[]
+            {
+                "SoloVictory", "SoloDefeat", "SoloEscape"
             });
             BattleSpeakerTypeOptions = new ObservableCollection<string>(new[]
             {
@@ -8697,6 +8703,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ApplyOptionalProfileText(profileData.ScheduledEventResourcePath, value => SelectedProfile.ScheduledEventResourcePath = value);
             ApplyOptionalProfileText(profileData.BattleResultEventResourcePath, value => SelectedProfile.BattleResultEventResourcePath = value);
             ApplyOptionalProfileText(profileData.BattlePanelResultMessageResourcePath, value => SelectedProfile.BattlePanelResultMessageResourcePath = value);
+            ApplyOptionalProfileText(profileData.SoloReturnReactionResourcePath, value => SelectedProfile.SoloReturnReactionResourcePath = value);
             ApplyOptionalProfileText(profileData.EndingResourcePath, value => SelectedProfile.EndingResourcePath = value);
 
             SelectedProfile.OutfitMessageOverrides ??= new ObservableCollection<OutfitMessageOverride>();
@@ -8762,6 +8769,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             string fromUnityFolder = Path.GetDirectoryName(filePath) ?? string.Empty;
             string battleEventsPath = Path.Combine(fromUnityFolder, "battle_result_events_from_unity.json");
             string battlePanelMessagesPath = Path.Combine(fromUnityFolder, "battle_panel_result_messages_from_unity.json");
+            string soloReturnReactionsPath = Path.Combine(fromUnityFolder, "solo_return_reactions_from_unity.json");
             BattleResultEventEntry[] beforeBattleEvents = SelectedProfile.BattleMessages?.ResultEvents?.ToArray()
                 ?? Array.Empty<BattleResultEventEntry>();
             BattlePanelResultMessageEntry[] beforePanelMessages = SelectedProfile.BattleMessages?.PanelMessages?.ToArray()
@@ -8783,6 +8791,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 importedBattleMessages = true;
             }
 
+            if (File.Exists(soloReturnReactionsPath))
+            {
+                BattleMessageSyncService.ApplySoloReturnReactions(
+                    SelectedProfile,
+                    BattleMessageSyncService.DeserializeSoloReturnReactions(File.ReadAllText(soloReturnReactionsPath)));
+                importedBattleMessages = true;
+            }
+
             BattleMessageChangeSummary battleSummary = BattleMessageSyncService.AnalyzeChanges(
                 beforeBattleEvents,
                 SelectedProfile.BattleMessages?.ResultEvents,
@@ -8791,7 +8807,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             List<string> battleFiles = new List<string>();
             if (File.Exists(battleEventsPath)) battleFiles.Add(Path.GetFileName(battleEventsPath));
             if (File.Exists(battlePanelMessagesPath)) battleFiles.Add(Path.GetFileName(battlePanelMessagesPath));
-            int skippedBattleFiles = 2 - battleFiles.Count;
+            if (File.Exists(soloReturnReactionsPath)) battleFiles.Add(Path.GetFileName(soloReturnReactionsPath));
+            int skippedBattleFiles = 3 - battleFiles.Count;
             LastBattleMessageImportReport = importedBattleMessages
                 ? $"読込: {string.Join(", ", battleFiles)}\n" +
                   $"戦闘結果: 追加 {battleSummary.ResultAdded} / 更新 {battleSummary.ResultUpdated} / 削除 {battleSummary.ResultDeleted} / 維持 {battleSummary.ResultUnchanged}\n" +

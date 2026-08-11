@@ -328,6 +328,7 @@
                                             <TextBox Text="{Binding SelectedProfile.ActionResourcePath, UpdateSourceTrigger=PropertyChanged}" ToolTip="Action Resource Path" Margin="0,0,0,4"/>
                                             <TextBox Text="{Binding SelectedProfile.ScheduledEventResourcePath, UpdateSourceTrigger=PropertyChanged}" ToolTip="Scheduled Event Resource Path" Margin="0,0,0,4"/>
                                             <TextBox Text="{Binding SelectedProfile.BattleResultEventResourcePath, UpdateSourceTrigger=PropertyChanged}" ToolTip="Battle Result Event Resource Path" Margin="0,0,0,4"/>
+                                            <TextBox Text="{Binding SelectedProfile.SoloReturnReactionResourcePath, UpdateSourceTrigger=PropertyChanged}" ToolTip="Solo Return Reaction Resource Path" Margin="0,0,0,4"/>
                                             <TextBox Text="{Binding SelectedProfile.BattlePanelResultMessageResourcePath, UpdateSourceTrigger=PropertyChanged}" ToolTip="Battle Panel Result Message Resource Path" Margin="0,0,0,4"/>
                                             <TextBox Text="{Binding SelectedProfile.EndingResourcePath, UpdateSourceTrigger=PropertyChanged}" ToolTip="Ending Resource Path"/>
                                         </StackPanel>
@@ -878,6 +879,8 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Text="戦闘後イベント（結果種別、戦闘Context、本文、スチル、好感度、解放衣装）"
                                        FontWeight="SemiBold" Margin="0,0,0,6"/>
@@ -982,7 +985,49 @@
                                     </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
-                            <Grid Grid.Row="4" Margin="0,12,0,0">
+                            <TextBlock Grid.Row="4" Text="主人公単独外出後の帰還反応（未設定ならゲームでは何も追加しません）"
+                                       FontWeight="SemiBold" Margin="0,12,0,6"/>
+                            <DataGrid Grid.Row="5" ItemsSource="{Binding SelectedProfile.BattleMessages.SoloReturnReactions}"
+                                      AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="ReactionId" Binding="{Binding ReactionId}" Width="130"/>
+                                    <DataGridTemplateColumn Header="結果種別" Width="120">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ComboBox ItemsSource="{Binding Data.SoloReturnResultTypeOptions, Source={StaticResource ViewModelProxy}}"
+                                                          SelectedItem="{Binding ResultType, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="BattleContextId" Binding="{Binding BattleContextId}" Width="130"/>
+                                    <DataGridTextColumn Header="メッセージ" Binding="{Binding Message}" Width="*"/>
+                                    <DataGridTemplateColumn Header="Voice ID" Width="180">
+                                        <DataGridTemplateColumn.CellTemplate><DataTemplate>
+                                            <ComboBox ItemsSource="{Binding Data.AvailableVoiceIds, Source={StaticResource ViewModelProxy}}"
+                                                      Text="{Binding VoiceId, UpdateSourceTrigger=PropertyChanged}" IsEditable="True"/>
+                                        </DataTemplate></DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="StillId" Width="130">
+                                        <DataGridTemplateColumn.CellTemplate><DataTemplate>
+                                            <ComboBox ItemsSource="{Binding Data.BattleStillIdOptions, Source={StaticResource ViewModelProxy}}"
+                                                      Text="{Binding StillId, UpdateSourceTrigger=PropertyChanged}" IsEditable="True"/>
+                                        </DataTemplate></DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="表示方式" Width="140">
+                                        <DataGridTemplateColumn.CellTemplate><DataTemplate>
+                                            <ComboBox ItemsSource="{Binding Data.BattleVisualModeOptions, Source={StaticResource ViewModelProxy}}"
+                                                      SelectedItem="{Binding VisualMode, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </DataTemplate></DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="表情" Width="120">
+                                        <DataGridTemplateColumn.CellTemplate><DataTemplate>
+                                            <ComboBox ItemsSource="{Binding Data.ExpressionIdOptions, Source={StaticResource ViewModelProxy}}"
+                                                      Text="{Binding ExpressionId, UpdateSourceTrigger=PropertyChanged}" IsEditable="True"/>
+                                        </DataTemplate></DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <Grid Grid.Row="6" Margin="0,12,0,0">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>

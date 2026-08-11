@@ -309,9 +309,16 @@ namespace FantasyLoveSimAssetTool.Services
                 && string.IsNullOrWhiteSpace(profile.ScheduledEventResourcePath)
                 && string.IsNullOrWhiteSpace(profile.BattleResultEventResourcePath)
                 && string.IsNullOrWhiteSpace(profile.BattlePanelResultMessageResourcePath)
+                && string.IsNullOrWhiteSpace(profile.SoloReturnReactionResourcePath)
                 && string.IsNullOrWhiteSpace(profile.EndingResourcePath))
             {
                 ApplyDefaultResourcePaths(profile);
+            }
+            else if (string.IsNullOrWhiteSpace(profile.SoloReturnReactionResourcePath) &&
+                !string.IsNullOrWhiteSpace(profile.HeroineId))
+            {
+                profile.SoloReturnReactionResourcePath =
+                    $"Heroines/{profile.HeroineId}/SoloReturnReactions";
             }
             NormalizeConversationEntries(profile.ConversationEntries);
 
@@ -434,6 +441,7 @@ namespace FantasyLoveSimAssetTool.Services
             profile.ScheduledEventResourcePath ??= string.Empty;
             profile.BattleResultEventResourcePath ??= string.Empty;
             profile.BattlePanelResultMessageResourcePath ??= string.Empty;
+            profile.SoloReturnReactionResourcePath ??= string.Empty;
             profile.EndingResourcePath ??= string.Empty;
         }
 
@@ -514,6 +522,7 @@ namespace FantasyLoveSimAssetTool.Services
             profile.ScheduledEventResourcePath = $"{root}/ScheduledEvents";
             profile.BattleResultEventResourcePath = $"{root}/BattleResultEvents";
             profile.BattlePanelResultMessageResourcePath = $"{root}/BattlePanelResultMessages";
+            profile.SoloReturnReactionResourcePath = $"{root}/SoloReturnReactions";
             profile.EndingResourcePath = $"{root}/Endings";
         }
 

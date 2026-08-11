@@ -39,12 +39,26 @@ namespace FantasyLoveSimAssetTool.Models
         public string VoiceId { get; set; }
     }
 
+    public class SoloReturnReactionEntry
+    {
+        public string ReactionId { get; set; } = string.Empty;
+        public string ResultType { get; set; } = "SoloVictory";
+        public string BattleContextId { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public string VoiceId { get; set; }
+        public string StillId { get; set; } = string.Empty;
+        public string VisualMode { get; set; } = "Auto";
+        public string ExpressionId { get; set; } = string.Empty;
+    }
+
     public class BattleMessageSettings
     {
         public ObservableCollection<BattleResultEventEntry> ResultEvents { get; set; } =
             new ObservableCollection<BattleResultEventEntry>();
         public ObservableCollection<BattlePanelResultMessageEntry> PanelMessages { get; set; } =
             new ObservableCollection<BattlePanelResultMessageEntry>();
+        public ObservableCollection<SoloReturnReactionEntry> SoloReturnReactions { get; set; } =
+            new ObservableCollection<SoloReturnReactionEntry>();
     }
 
     public class BattleResultEventsDataFile
@@ -59,5 +73,12 @@ namespace FantasyLoveSimAssetTool.Models
         public int SchemaVersion { get; set; } = 1;
         public string HeroineId { get; set; } = string.Empty;
         public BattlePanelResultMessageEntry[] Items { get; set; }
+    }
+
+    public class SoloReturnReactionsDataFile
+    {
+        public int SchemaVersion { get; set; } = 1;
+        public string HeroineId { get; set; } = string.Empty;
+        public SoloReturnReactionEntry[] Items { get; set; }
     }
 }

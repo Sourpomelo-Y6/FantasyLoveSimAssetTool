@@ -38,6 +38,7 @@ namespace FantasyLoveSimAssetTool.Models
         public string ScheduledEventResourcePath { get; set; }
         public string BattleResultEventResourcePath { get; set; }
         public string BattlePanelResultMessageResourcePath { get; set; }
+        public string SoloReturnReactionResourcePath { get; set; }
         public string EndingResourcePath { get; set; }
 
         // 初期化しないことで、JSONで省略された値(null)と明示的な空値を区別する。
