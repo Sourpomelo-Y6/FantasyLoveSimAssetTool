@@ -9056,7 +9056,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 : "衣装定義の CostumeId はすべて衣装メッセージに登録済みです。";
 
             SelectedMainTabIndex = 0;
-            SelectedBasicInfoTabIndex = 2;
+            SelectedBasicInfoTabIndex = 4;
         }
 
         private void RemoveOutfitMessageOverride()
@@ -12015,12 +12015,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
                         string.Equals(x.AssetId, check.TargetId, StringComparison.OrdinalIgnoreCase));
                     break;
                 case ProductionStatusTargetKind.BattleSkill:
-                    IsBattleSkillEditorExpanded = true;
+                    SelectedBasicInfoTabIndex = 2;
                     SelectedProductionBattleSkill = SelectedProfile.BattleSkills?.FirstOrDefault(x =>
                         string.Equals(x.SkillId, check.TargetId, StringComparison.OrdinalIgnoreCase));
                     break;
                 case ProductionStatusTargetKind.TrainingSkill:
-                    IsSkillTreeEditorExpanded = true;
+                    SelectedBasicInfoTabIndex = 3;
                     SelectedProductionTrainingSkill = SelectedProfile.HeroineSkillTree?.TrainingSkills?.FirstOrDefault(x =>
                         string.Equals(x.SkillId, check.TargetId, StringComparison.OrdinalIgnoreCase));
                     break;
@@ -12041,7 +12041,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                         string.Equals(item.TrainingId, check.TargetId, StringComparison.OrdinalIgnoreCase));
                     break;
                 case ProductionStatusTargetKind.SkillTreeNode:
-                    IsSkillTreeEditorExpanded = true;
+                    SelectedBasicInfoTabIndex = 3;
                     SelectedProductionSkillTreeNode = SelectedProfile.HeroineSkillTree?.Nodes?.FirstOrDefault(x =>
                         string.Equals(x.NodeId, check.TargetId, StringComparison.OrdinalIgnoreCase));
                     break;
@@ -12088,12 +12088,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
                                 StringComparison.OrdinalIgnoreCase));
                     break;
                 case ProductionStatusTargetKind.OutfitMessage:
-                    SelectedBasicInfoTabIndex = 2;
+                    SelectedBasicInfoTabIndex = 4;
                     SelectedOutfitMessageOverride = SelectedProfile.OutfitMessageOverrides?.FirstOrDefault(item =>
                         string.Equals(item.OutfitId, check.TargetId, StringComparison.OrdinalIgnoreCase));
                     break;
                 case ProductionStatusTargetKind.OutfitReactionMessage:
-                    SelectedBasicInfoTabIndex = 2;
+                    SelectedBasicInfoTabIndex = 4;
                     SelectedOutfitReactionMessageOverride = SelectedProfile.OutfitReactionMessageOverrides?.FirstOrDefault(item =>
                         string.Equals(item.ReactionType, check.TargetId, StringComparison.OrdinalIgnoreCase));
                     break;
