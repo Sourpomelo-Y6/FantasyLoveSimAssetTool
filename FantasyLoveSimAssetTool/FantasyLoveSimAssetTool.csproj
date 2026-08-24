@@ -13,6 +13,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Page Update="Views\LocalAiShortTextPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Update="Views\LocalAiShortTextPanel.xaml.cs">
+      <DependentUpon>LocalAiShortTextPanel.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="..\PromptTemplates\templates.json" Link="PromptTemplates\templates.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
