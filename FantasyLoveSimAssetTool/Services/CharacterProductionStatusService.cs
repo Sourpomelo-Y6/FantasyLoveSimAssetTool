@@ -614,12 +614,14 @@ namespace FantasyLoveSimAssetTool.Services
             {
                 string label = string.IsNullOrWhiteSpace(skill.SkillId) ? "SkillId未設定" : skill.SkillId.Trim();
                 bool valid = !string.IsNullOrWhiteSpace(skill.DisplayName) &&
-                    !string.IsNullOrWhiteSpace(skill.EffectType) && !string.IsNullOrWhiteSpace(skill.Target) &&
-                    skill.Cost >= 0 && skill.Power >= 0 && skill.StatusDurationTurns >= 0 &&
+                    SkillValueCatalog.Contains(SkillValueCatalog.BattleEffectTypes, skill.EffectType) &&
+                    SkillValueCatalog.Contains(SkillValueCatalog.BattleTargets, skill.Target) &&
+                    SkillValueCatalog.Contains(SkillValueCatalog.BattleStats, skill.AffectedStat) &&
+                    skill.Cost >= 0 && skill.Power >= 0 && skill.StatusDurationTurns >= 1 &&
                     skill.UseChancePercent >= 0 && skill.UseChancePercent <= 100 && skill.MaxUsesPerBattle >= 0;
                 checks.Add(Check($"戦闘スキル {label}", valid, valid
                     ? $"{skill.DisplayName} / {skill.EffectType} / {skill.Target} / MP {skill.Cost}"
-                    : "表示名、効果、対象、MP・威力・期間・確率・回数の値を確認してください。",
+                    : "表示名、効果、対象、能力、MP・威力・期間（1以上）・確率（0～100）・回数の値を確認してください。",
                     ProductionStatusTargetKind.BattleSkill, skill.SkillId));
             }
             int complete = checks.Count(x => x.IsComplete);
@@ -639,6 +641,8 @@ namespace FantasyLoveSimAssetTool.Services
                 .Where(x => !string.IsNullOrWhiteSpace(x.SkillId)).Select(x => x.SkillId.Trim()), StringComparer.OrdinalIgnoreCase);
             HashSet<string> trainingIds = new HashSet<string>((profile.TrainingCatalog?.Items ?? new System.Collections.ObjectModel.ObservableCollection<TrainingCatalogItem>())
                 .Where(x => x != null && !string.IsNullOrWhiteSpace(x.TrainingId)).Select(x => x.TrainingId.Trim()), StringComparer.OrdinalIgnoreCase);
+            HashSet<string> trainingCategoryIds = new HashSet<string>((profile.TrainingCatalog?.Items ?? new System.Collections.ObjectModel.ObservableCollection<TrainingCatalogItem>())
+                .Where(x => x != null && !string.IsNullOrWhiteSpace(x.TrainingCategoryId)).Select(x => x.TrainingCategoryId.Trim()), StringComparer.OrdinalIgnoreCase);
             HashSet<string> nodeIds = new HashSet<string>(nodes
                 .Where(x => !string.IsNullOrWhiteSpace(x.NodeId)).Select(x => x.NodeId.Trim()), StringComparer.OrdinalIgnoreCase);
             HashSet<string> eventIds = new HashSet<string>((profile.ConversationEntries ?? new System.Collections.ObjectModel.ObservableCollection<ConversationEntry>())
@@ -661,6 +665,27 @@ namespace FantasyLoveSimAssetTool.Services
             checks.Add(Check("訓練SkillId", trainingSkillsValid,
                 trainingSkillsValid ? $"訓練スキル {trainingSkills.Count} 件のIDと表示名は有効です。" : "訓練スキルに空ID、重複ID、表示名不足があります。",
                 ProductionStatusTargetKind.TrainingSkill, trainingSkills.FirstOrDefault(x => string.IsNullOrWhiteSpace(x.SkillId) || string.IsNullOrWhiteSpace(x.DisplayName))?.SkillId));
+            foreach (HeroineTrainingSkill skill in trainingSkills)
+            {
+                string label = string.IsNullOrWhiteSpace(skill.SkillId) ? "SkillId未設定" : skill.SkillId.Trim();
+                List<string> problems = new List<string>();
+                if (!SkillValueCatalog.Contains(SkillValueCatalog.TrainingApplicationScopes, skill.ApplicationScope))
+                    problems.Add("適用範囲");
+                if (skill.PlayerHpCostReduction < 0) problems.Add("主人公HP軽減");
+                if (skill.HeroineHpCostReduction < 0) problems.Add("ヒロインHP軽減");
+                string targetId = (skill.ApplicationTargetId ?? string.Empty).Trim();
+                if (string.Equals(skill.ApplicationScope, "AllTrainings", StringComparison.Ordinal) && targetId.Length > 0)
+                    problems.Add("全訓練には対象ID不要");
+                else if (string.Equals(skill.ApplicationScope, "TrainingCategory", StringComparison.Ordinal) &&
+                    (targetId.Length == 0 || !trainingCategoryIds.Contains(targetId)))
+                    problems.Add("対象カテゴリー:" + targetId);
+                else if (string.Equals(skill.ApplicationScope, "Training", StringComparison.Ordinal) &&
+                    (targetId.Length == 0 || !trainingIds.Contains(targetId)))
+                    problems.Add("対象訓練:" + targetId);
+                checks.Add(Check($"訓練スキル {label}", problems.Count == 0,
+                    problems.Count == 0 ? "適用範囲、対象ID、数値は有効です。" : "要確認: " + string.Join(", ", problems),
+                    ProductionStatusTargetKind.TrainingSkill, skill.SkillId));
+            }
             string idPrefix = string.IsNullOrWhiteSpace(profile.HeroineId) ? string.Empty : profile.HeroineId.Trim() + "_";
             bool skillNamespacesValid = !string.IsNullOrEmpty(idPrefix) && trainingSkills.All(x =>
                 !string.IsNullOrWhiteSpace(x.SkillId) && x.SkillId.StartsWith(idPrefix, StringComparison.Ordinal));

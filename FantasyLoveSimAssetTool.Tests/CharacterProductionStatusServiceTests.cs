@@ -312,6 +312,49 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void Evaluate_BattleSkillRejectsUnknownSelectionsAndInvalidRanges()
+        {
+            HeroineProfile profile = CompleteProfile();
+            HeroineBattleSkill skill = profile.BattleSkills[0];
+            skill.EffectType = "UnknownEffect";
+            skill.Target = "UnknownTarget";
+            skill.AffectedStat = "UnknownStat";
+            skill.StatusDurationTurns = 0;
+            skill.UseChancePercent = 101;
+
+            CharacterProductionStatusRow row = EvaluateWithDefinitions(profile);
+            ProductionStatusCheckItem check = row.BattleSkills.Checks.First(x => x.Name.Contains(skill.SkillId));
+
+            Assert.IsFalse(check.IsComplete);
+            Assert.AreEqual(ProductionStatusTargetKind.BattleSkill, check.TargetKind);
+            StringAssert.Contains(check.Details, "期間（1以上）");
+        }
+
+        [TestMethod]
+        public void Evaluate_TrainingSkillValidatesScopeTargetAndReductions()
+        {
+            HeroineProfile profile = CompleteProfile();
+            HeroineTrainingSkill skill = profile.HeroineSkillTree.TrainingSkills[0];
+            skill.ApplicationScope = "Training";
+            skill.ApplicationTargetId = "MissingTraining";
+            skill.PlayerHpCostReduction = -1;
+
+            CharacterProductionStatusRow invalid = EvaluateWithDefinitions(profile);
+            ProductionStatusCheckItem invalidCheck = invalid.SkillTree.Checks.First(x =>
+                x.Name.Contains("訓練スキル " + skill.SkillId));
+            Assert.IsFalse(invalidCheck.IsComplete);
+            StringAssert.Contains(invalidCheck.Details, "対象訓練:MissingTraining");
+            StringAssert.Contains(invalidCheck.Details, "主人公HP軽減");
+
+            skill.ApplicationTargetId = "TrainingA";
+            skill.PlayerHpCostReduction = 0;
+            CharacterProductionStatusRow valid = EvaluateWithDefinitions(profile);
+            ProductionStatusCheckItem validCheck = valid.SkillTree.Checks.First(x =>
+                x.Name.Contains("訓練スキル " + skill.SkillId));
+            Assert.IsTrue(validCheck.IsComplete);
+        }
+
+        [TestMethod]
         public void Evaluate_GameEventShowsCompletionAffectionAndRejectsOutOfRangeValue()
         {
             HeroineProfile profile = CompleteProfile();

@@ -280,6 +280,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ObservableCollection<string> AudioCategoryOptions { get; }
 
+        public ObservableCollection<string> BattleSkillEffectTypeOptions { get; }
+
+        public ObservableCollection<string> BattleSkillTargetOptions { get; }
+
+        public ObservableCollection<string> BattleSkillAffectedStatOptions { get; }
+
+        public ObservableCollection<string> TrainingSkillApplicationScopeOptions { get; }
+
         public ObservableCollection<string> AvailableVoiceIds { get; }
 
         public ObservableCollection<string> VoiceUsageOptions { get; }
@@ -2497,6 +2505,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 "すべて", "BGM", "SE", "VOICE", "未配置"
             };
+            BattleSkillEffectTypeOptions = new ObservableCollection<string>(SkillValueCatalog.BattleEffectTypes);
+            BattleSkillTargetOptions = new ObservableCollection<string>(SkillValueCatalog.BattleTargets);
+            BattleSkillAffectedStatOptions = new ObservableCollection<string>(SkillValueCatalog.BattleStats);
+            TrainingSkillApplicationScopeOptions = new ObservableCollection<string>(SkillValueCatalog.TrainingApplicationScopes);
             AvailableVoiceIds = new ObservableCollection<string>();
             VoiceUsageOptions = new ObservableCollection<string>
             {

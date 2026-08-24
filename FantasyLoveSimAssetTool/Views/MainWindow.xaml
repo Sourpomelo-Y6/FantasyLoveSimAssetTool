@@ -310,11 +310,20 @@
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="SkillId" Binding="{Binding SkillId}" Width="130"/>
                                                 <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName}" Width="130"/>
-                                                <DataGridTextColumn Header="効果" Binding="{Binding EffectType}" Width="90"/>
-                                                <DataGridTextColumn Header="対象" Binding="{Binding Target}" Width="80"/>
+                                                <DataGridComboBoxColumn Header="効果"
+                                                                        SelectedItemBinding="{Binding EffectType, UpdateSourceTrigger=PropertyChanged}"
+                                                                        ItemsSource="{Binding Data.BattleSkillEffectTypeOptions, Source={StaticResource ViewModelProxy}}"
+                                                                        Width="90"/>
+                                                <DataGridComboBoxColumn Header="対象"
+                                                                        SelectedItemBinding="{Binding Target, UpdateSourceTrigger=PropertyChanged}"
+                                                                        ItemsSource="{Binding Data.BattleSkillTargetOptions, Source={StaticResource ViewModelProxy}}"
+                                                                        Width="90"/>
                                                 <DataGridTextColumn Header="MP" Binding="{Binding Cost}" Width="55"/>
                                                 <DataGridTextColumn Header="威力" Binding="{Binding Power}" Width="55"/>
-                                                <DataGridTextColumn Header="能力" Binding="{Binding AffectedStat}" Width="80"/>
+                                                <DataGridComboBoxColumn Header="能力"
+                                                                        SelectedItemBinding="{Binding AffectedStat, UpdateSourceTrigger=PropertyChanged}"
+                                                                        ItemsSource="{Binding Data.BattleSkillAffectedStatOptions, Source={StaticResource ViewModelProxy}}"
+                                                                        Width="85"/>
                                                 <DataGridTextColumn Header="期間" Binding="{Binding StatusDurationTurns}" Width="55"/>
                                                 <DataGridTextColumn Header="確率" Binding="{Binding UseChancePercent}" Width="55"/>
                                                 <DataGridTextColumn Header="優先" Binding="{Binding Priority}" Width="55"/>
@@ -345,7 +354,10 @@
                                                 <DataGridTextColumn Header="ヒロインHP軽減" Binding="{Binding HeroineHpCostReduction}" Width="100"/>
                                                 <DataGridTextColumn Header="好感度補正" Binding="{Binding AffectionRewardModifier}" Width="80"/>
                                                 <DataGridTextColumn Header="熟練度補正" Binding="{Binding ProficiencyRewardModifier}" Width="80"/>
-                                                <DataGridTextColumn Header="適用範囲" Binding="{Binding ApplicationScope}" Width="110"/>
+                                                <DataGridComboBoxColumn Header="適用範囲"
+                                                                        SelectedItemBinding="{Binding ApplicationScope, UpdateSourceTrigger=PropertyChanged}"
+                                                                        ItemsSource="{Binding Data.TrainingSkillApplicationScopeOptions, Source={StaticResource ViewModelProxy}}"
+                                                                        Width="130"/>
                                                 <DataGridTextColumn Header="対象ID" Binding="{Binding ApplicationTargetId}" Width="120"/>
                                             </DataGrid.Columns>
                                         </DataGrid>
