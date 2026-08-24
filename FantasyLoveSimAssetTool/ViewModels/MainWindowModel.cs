@@ -2144,6 +2144,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand GenerateShortTextCandidatesCommand { get; }
 
+        public ICommand GenerateMissingShortTextCandidatesCommand { get; }
+
         public ICommand CancelShortTextGenerationCommand { get; }
 
         public ICommand AdoptShortTextCandidateCommand { get; }
@@ -2722,6 +2724,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             GenerateShortTextCandidatesCommand = new AsyncRelayCommand(
                 GenerateShortTextCandidatesAsync,
                 () => SelectedProfile != null && SelectedShortTextTarget != null && !IsGeneratingShortText);
+            GenerateMissingShortTextCandidatesCommand = new AsyncRelayCommand(
+                GenerateMissingShortTextCandidatesAsync,
+                () => SelectedProfile != null && SelectedShortTextTarget != null &&
+                    ShortTextCandidates.Count > 0 && ShortTextCandidates.Count < 3 && !IsGeneratingShortText);
             CancelShortTextGenerationCommand = new RelayCommand(
                 () => shortTextGenerationCancellation?.Cancel(),
                 () => IsGeneratingShortText);
@@ -8632,14 +8638,32 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private async Task GenerateShortTextCandidatesAsync()
         {
+            await GenerateShortTextCandidatesCoreAsync(3, true);
+        }
+
+        private async Task GenerateMissingShortTextCandidatesAsync()
+        {
+            int missingCount = Math.Max(0, 3 - ShortTextCandidates.Count);
+            if (missingCount == 0)
+            {
+                ShortTextAiStatus = "候補は3件そろっています。";
+                return;
+            }
+            await GenerateShortTextCandidatesCoreAsync(missingCount, false);
+        }
+
+        private async Task GenerateShortTextCandidatesCoreAsync(int requestedCount, bool clearExisting)
+        {
             if (SelectedProfile == null || SelectedShortTextTarget == null) return;
             ShortTextGenerationTarget target = SelectedShortTextTarget;
 
             shortTextGenerationCancellation?.Dispose();
             shortTextGenerationCancellation = new CancellationTokenSource();
             IsGeneratingShortText = true;
-            ShortTextCandidates.Clear();
-            ShortTextAiPrompt = ShortTextGenerationService.BuildPrompt(SelectedProfile, target);
+            if (clearExisting) ShortTextCandidates.Clear();
+            List<string> existingCandidates = ShortTextCandidates.Select(candidate => candidate.Text).ToList();
+            ShortTextAiPrompt = ShortTextGenerationService.BuildPrompt(
+                SelectedProfile, target, requestedCount, existingCandidates);
             ShortTextAiRawResponse = string.Empty;
             ShortTextAiStatus = $"{target.DisplayName}の候補を生成中...";
             StatusMessage = ShortTextAiStatus;
@@ -8651,13 +8675,29 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     target,
                     settings,
                     localAiInstructionService.Load(),
+                    requestedCount,
+                    existingCandidates,
                     shortTextGenerationCancellation.Token);
 
                 if (SelectedShortTextTarget != target) return;
-                foreach (string candidate in result.Candidates)
-                    ShortTextCandidates.Add(new TextGenerationCandidate(candidate));
                 ShortTextAiRawResponse = result.RawResponse;
-                ShortTextAiStatus = $"{target.DisplayName}を3件生成しました（Model: {result.ModelId}）。";
+                if (!string.IsNullOrWhiteSpace(result.ParseError))
+                {
+                    ShortTextAiStatus = $"候補を解析できませんでした: {result.ParseError} 生レスポンスを確認してください。";
+                    StatusMessage = ShortTextAiStatus;
+                    return;
+                }
+                foreach (string candidate in result.Candidates)
+                {
+                    if (ShortTextCandidates.Any(existing =>
+                        string.Equals(existing.Text, candidate, StringComparison.Ordinal))) continue;
+                    if (ShortTextCandidates.Count >= 3) break;
+                    ShortTextCandidates.Add(new TextGenerationCandidate(candidate, target.MinLength, target.MaxLength));
+                }
+                int missingCount = Math.Max(0, 3 - ShortTextCandidates.Count);
+                ShortTextAiStatus = missingCount == 0
+                    ? $"{target.DisplayName}を3件生成しました（Model: {result.ModelId}）。"
+                    : $"{ShortTextCandidates.Count}件を取得しました。あと{missingCount}件は「不足分を再生成」で追加できます。";
                 StatusMessage = ShortTextAiStatus;
             }
             catch (OperationCanceledException)
