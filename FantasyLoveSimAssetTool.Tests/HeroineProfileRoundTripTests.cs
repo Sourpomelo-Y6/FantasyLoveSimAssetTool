@@ -117,6 +117,30 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void UnityProfileJson_DeserializesAllOutfitMessageFields()
+        {
+            string json = "{\"schemaVersion\":1,\"heroineId\":\"RoundTripHeroine\"," +
+                "\"outfitMessageOverrides\":[{\"outfitId\":\"Formal\",\"lockedMessage\":\"locked\"," +
+                "\"lockedExpressionId\":\"Concerned\",\"changedMessage\":\"changed\"," +
+                "\"changedExpressionId\":\"Smile\"}],\"outfitReactionMessageOverrides\":[" +
+                "{\"reactionType\":\"Praise\",\"message\":\"praise\",\"expressionId\":\"Shy\"}]}";
+
+            FromUnityHeroineProfileData data = JsonSerializer.Deserialize<FromUnityHeroineProfileData>(
+                json,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            Assert.IsNotNull(data);
+            Assert.AreEqual("Formal", data.OutfitMessageOverrides[0].OutfitId);
+            Assert.AreEqual("locked", data.OutfitMessageOverrides[0].LockedMessage);
+            Assert.AreEqual("Concerned", data.OutfitMessageOverrides[0].LockedExpressionId);
+            Assert.AreEqual("changed", data.OutfitMessageOverrides[0].ChangedMessage);
+            Assert.AreEqual("Smile", data.OutfitMessageOverrides[0].ChangedExpressionId);
+            Assert.AreEqual("Praise", data.OutfitReactionMessageOverrides[0].ReactionType);
+            Assert.AreEqual("praise", data.OutfitReactionMessageOverrides[0].Message);
+            Assert.AreEqual("Shy", data.OutfitReactionMessageOverrides[0].ExpressionId);
+        }
+
+        [TestMethod]
         public void LoadProfile_OldJsonWithoutUnityFieldsUsesSafeValuesAndDefaultPaths()
         {
             const string heroineId = "LegacyHeroine";
