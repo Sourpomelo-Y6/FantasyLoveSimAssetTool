@@ -201,6 +201,46 @@ namespace FantasyLoveSimAssetTool.Tests
             }
         }
 
+        [TestMethod]
+        public void Validate_OutfitExpressionReferences_ReturnNavigableErrors()
+        {
+            string workspace = CreateWorkspace();
+            try
+            {
+                CharacterProjectService project = new CharacterProjectService(workspace);
+                HeroineProfile profile = project.CreateCharacter("TestHeroine", "Test");
+                new DefinitionCatalogService(workspace).SaveExpressionDefinitionFile(new[]
+                {
+                    new ExpressionDefinition { ExpressionId = "Neutral", DisplayName = "Neutral" }
+                });
+                profile.OutfitMessageOverrides.Add(new OutfitMessageOverride
+                {
+                    OutfitId = "Formal",
+                    LockedExpressionId = string.Empty,
+                    ChangedExpressionId = "Unknown"
+                });
+                profile.OutfitReactionMessageOverrides.Add(new OutfitReactionMessageOverride
+                {
+                    ReactionType = "Praise",
+                    ExpressionId = "Unknown"
+                });
+
+                ExportValidationResult result = new ExportValidationService(project).Validate(profile);
+
+                Assert.AreEqual(3, result.Issues.Count(issue =>
+                    issue.TargetKind == ProductionStatusTargetKind.OutfitMessage ||
+                    issue.TargetKind == ProductionStatusTargetKind.OutfitReactionMessage));
+                Assert.IsTrue(result.Issues.Where(issue =>
+                    issue.TargetKind == ProductionStatusTargetKind.OutfitMessage ||
+                    issue.TargetKind == ProductionStatusTargetKind.OutfitReactionMessage)
+                    .All(issue => issue.Severity == ExportValidationSeverity.Error && issue.TargetTabIndex == 0));
+            }
+            finally
+            {
+                Directory.Delete(workspace, true);
+            }
+        }
+
         private static string CreateWorkspace()
         {
             string path = Path.Combine(Path.GetTempPath(), "FantasyLoveSimAssetToolTests", Guid.NewGuid().ToString("N"));

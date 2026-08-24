@@ -12045,6 +12045,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
                                 check.TargetId,
                                 StringComparison.OrdinalIgnoreCase));
                     break;
+                case ProductionStatusTargetKind.OutfitMessage:
+                    SelectedBasicInfoTabIndex = 2;
+                    SelectedOutfitMessageOverride = SelectedProfile.OutfitMessageOverrides?.FirstOrDefault(item =>
+                        string.Equals(item.OutfitId, check.TargetId, StringComparison.OrdinalIgnoreCase));
+                    break;
+                case ProductionStatusTargetKind.OutfitReactionMessage:
+                    SelectedBasicInfoTabIndex = 2;
+                    SelectedOutfitReactionMessageOverride = SelectedProfile.OutfitReactionMessageOverrides?.FirstOrDefault(item =>
+                        string.Equals(item.ReactionType, check.TargetId, StringComparison.OrdinalIgnoreCase));
+                    break;
             }
         }
 

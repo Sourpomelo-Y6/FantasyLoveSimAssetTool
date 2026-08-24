@@ -53,6 +53,7 @@ namespace FantasyLoveSimAssetTool.Services
             if (string.IsNullOrWhiteSpace(profile.HeroineId)) Add(issues, ExportValidationSeverity.Error, "HeroineId が空です。");
             ValidateHeroineSkillTreeNamespaces(issues, profile);
             ValidateCostumeLayers(issues, acceptedIds);
+            ValidateOutfitMessageExpressions(issues, profile, expressionIds);
             foreach (HeroineAsset asset in accepted)
             {
                 string directory = projectService.GetCharacterDirectory(profile.HeroineId);
@@ -223,6 +224,51 @@ namespace FantasyLoveSimAssetTool.Services
                     Add(issues, ExportValidationSeverity.Error,
                         $"NodeId {node.NodeId} は {prefix} で始めてください。",
                         ProductionStatusTargetKind.SkillTreeNode, node.NodeId, 6);
+            }
+        }
+
+        private static void ValidateOutfitMessageExpressions(
+            List<ExportValidationIssue> issues,
+            HeroineProfile profile,
+            HashSet<string> expressionIds)
+        {
+            foreach (OutfitMessageOverride item in profile.OutfitMessageOverrides ??
+                new System.Collections.ObjectModel.ObservableCollection<OutfitMessageOverride>())
+            {
+                if (item == null) continue;
+                string label = string.IsNullOrWhiteSpace(item.OutfitId) ? "OutfitId未設定" : item.OutfitId.Trim();
+                ValidateOutfitExpression(issues, expressionIds, item.LockedExpressionId,
+                    $"衣装 {label}: 未解放メッセージの表情", ProductionStatusTargetKind.OutfitMessage, label);
+                ValidateOutfitExpression(issues, expressionIds, item.ChangedExpressionId,
+                    $"衣装 {label}: 着替え完了メッセージの表情", ProductionStatusTargetKind.OutfitMessage, label);
+            }
+
+            foreach (OutfitReactionMessageOverride item in profile.OutfitReactionMessageOverrides ??
+                new System.Collections.ObjectModel.ObservableCollection<OutfitReactionMessageOverride>())
+            {
+                if (item == null) continue;
+                string label = string.IsNullOrWhiteSpace(item.ReactionType) ? "ReactionType未設定" : item.ReactionType.Trim();
+                ValidateOutfitExpression(issues, expressionIds, item.ExpressionId,
+                    $"衣装反応 {label}: 表情", ProductionStatusTargetKind.OutfitReactionMessage, label);
+            }
+        }
+
+        private static void ValidateOutfitExpression(
+            List<ExportValidationIssue> issues,
+            HashSet<string> expressionIds,
+            string expressionId,
+            string label,
+            ProductionStatusTargetKind targetKind,
+            string targetId)
+        {
+            if (string.IsNullOrWhiteSpace(expressionId))
+            {
+                Add(issues, ExportValidationSeverity.Error, label + "ID が空です。", targetKind, targetId, 0);
+            }
+            else if (!expressionIds.Contains(expressionId.Trim()))
+            {
+                Add(issues, ExportValidationSeverity.Error,
+                    label + $"ID {expressionId.Trim()} が差分定義に存在しません。", targetKind, targetId, 0);
             }
         }
 

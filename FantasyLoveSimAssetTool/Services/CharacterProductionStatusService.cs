@@ -782,6 +782,16 @@ namespace FantasyLoveSimAssetTool.Services
                 references.Add(line.Expression.Trim());
             foreach (BattleResultEventEntry item in profile.BattleMessages?.ResultEvents ?? new System.Collections.ObjectModel.ObservableCollection<BattleResultEventEntry>())
                 if (item != null && !string.IsNullOrWhiteSpace(item.ExpressionId)) references.Add(item.ExpressionId.Trim());
+            foreach (OutfitMessageOverride item in profile.OutfitMessageOverrides ?? new System.Collections.ObjectModel.ObservableCollection<OutfitMessageOverride>())
+            {
+                AddOutfitExpressionCheck(checks, definitionIds, item?.LockedExpressionId,
+                    $"衣装 {item?.OutfitId} / 未解放表情", ProductionStatusTargetKind.OutfitMessage, item?.OutfitId);
+                AddOutfitExpressionCheck(checks, definitionIds, item?.ChangedExpressionId,
+                    $"衣装 {item?.OutfitId} / 変更完了表情", ProductionStatusTargetKind.OutfitMessage, item?.OutfitId);
+            }
+            foreach (OutfitReactionMessageOverride item in profile.OutfitReactionMessageOverrides ?? new System.Collections.ObjectModel.ObservableCollection<OutfitReactionMessageOverride>())
+                AddOutfitExpressionCheck(checks, definitionIds, item?.ExpressionId,
+                    $"衣装反応 {item?.ReactionType} / 表情", ProductionStatusTargetKind.OutfitReactionMessage, item?.ReactionType);
             foreach (string reference in references.OrderBy(x => x))
                 checks.Add(Check($"表情参照 {reference}", definitionIds.Contains(reference),
                     definitionIds.Contains(reference) ? "登録済み表情を参照しています。" : "参照先の表情定義がありません。",
@@ -789,6 +799,22 @@ namespace FantasyLoveSimAssetTool.Services
             int complete = checks.Count(x => x.IsComplete);
             return Cell(profile, "表情", 8, Kind(complete, checks.Count),
                 $"完成条件 {complete}/{checks.Count}。Neutral、表情レイヤー、会話・戦闘からの参照を確認します。", checks);
+        }
+
+        private static void AddOutfitExpressionCheck(
+            List<ProductionStatusCheckItem> checks,
+            HashSet<string> definitionIds,
+            string expressionId,
+            string name,
+            ProductionStatusTargetKind targetKind,
+            string targetId)
+        {
+            bool hasValue = !string.IsNullOrWhiteSpace(expressionId);
+            bool isRegistered = hasValue && definitionIds.Contains(expressionId.Trim());
+            checks.Add(Check(name, isRegistered,
+                !hasValue ? "表情IDが未入力です。" :
+                isRegistered ? $"{expressionId.Trim()} を参照しています。" : $"表情定義 {expressionId.Trim()} が存在しません。",
+                targetKind, targetId));
         }
 
         private static ProductionStatusCell EvaluateCostumes(
@@ -1021,7 +1047,12 @@ namespace FantasyLoveSimAssetTool.Services
             foreach (ProductionStatusCheckItem check in checks ?? Array.Empty<ProductionStatusCheckItem>())
             {
                 check.CharacterId = profile.HeroineId ?? string.Empty;
-                if (check.TargetTabIndex == 0) check.TargetTabIndex = tabIndex;
+                if (check.TargetTabIndex == 0 &&
+                    check.TargetKind != ProductionStatusTargetKind.OutfitMessage &&
+                    check.TargetKind != ProductionStatusTargetKind.OutfitReactionMessage)
+                {
+                    check.TargetTabIndex = tabIndex;
+                }
             }
             return new ProductionStatusCell
             {

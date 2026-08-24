@@ -359,7 +359,7 @@
                                     </ScrollViewer>
                                 </TabItem>
 
-                                <TabItem Header="衣装メッセージ・AI">
+                                <TabItem Header="衣装メッセージ">
                                     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
                                         <Grid Margin="12,12,18,18">
                                             <Grid.ColumnDefinitions>

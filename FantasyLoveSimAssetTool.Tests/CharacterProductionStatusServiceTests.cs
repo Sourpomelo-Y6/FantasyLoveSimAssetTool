@@ -164,6 +164,35 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void Evaluate_OutfitExpressionProblems_AppearInExpressionsWithOutfitNavigation()
+        {
+            HeroineProfile profile = CompleteProfile();
+            profile.OutfitMessageOverrides.Add(new OutfitMessageOverride
+            {
+                OutfitId = "Formal",
+                LockedExpressionId = string.Empty,
+                ChangedExpressionId = "Unknown"
+            });
+            profile.OutfitReactionMessageOverrides.Add(new OutfitReactionMessageOverride
+            {
+                ReactionType = "Praise",
+                ExpressionId = "Neutral"
+            });
+
+            CharacterProductionStatusRow row = EvaluateWithDefinitions(profile);
+
+            Assert.AreEqual(ProductionStatusKind.Partial, row.Expressions.Kind);
+            ProductionStatusCheckItem missing = row.Expressions.Checks.First(check =>
+                check.TargetKind == ProductionStatusTargetKind.OutfitMessage &&
+                check.Name.Contains("未解放"));
+            Assert.IsFalse(missing.IsComplete);
+            Assert.AreEqual("Formal", missing.TargetId);
+            Assert.AreEqual(0, missing.TargetTabIndex);
+            Assert.IsTrue(row.Expressions.Checks.Any(check =>
+                check.TargetKind == ProductionStatusTargetKind.OutfitReactionMessage && check.IsComplete));
+        }
+
+        [TestMethod]
         public void Evaluate_BrokenSkillTreeReferences_ReturnsPartialDetails()
         {
             HeroineProfile profile = CompleteProfile();

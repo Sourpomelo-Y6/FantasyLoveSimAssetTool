@@ -24,7 +24,9 @@ namespace FantasyLoveSimAssetTool.Models
         Costume,
         LayerAsset,
         StillDefinition,
-        Audio
+        Audio,
+        OutfitMessage,
+        OutfitReactionMessage
     }
 
     public sealed class ProductionStatusCell
