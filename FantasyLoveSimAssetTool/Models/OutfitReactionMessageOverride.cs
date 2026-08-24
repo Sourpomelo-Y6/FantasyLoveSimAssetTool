@@ -1,15 +1,28 @@
+using FantasyLoveSimAssetTool.Common;
+
 namespace FantasyLoveSimAssetTool.Models
 {
-    public class OutfitReactionMessageOverride
+    public class OutfitReactionMessageOverride : ObservableObject
     {
-        public string ReactionType { get; set; }
+        private string reactionType;
+        private string message;
 
-        public string Message { get; set; }
+        public string ReactionType
+        {
+            get => reactionType;
+            set { if (reactionType != value) { reactionType = value; OnPropertyChanged(); } }
+        }
+
+        public string Message
+        {
+            get => message;
+            set { if (message != value) { message = value; OnPropertyChanged(); } }
+        }
 
         public OutfitReactionMessageOverride()
         {
-            ReactionType = string.Empty;
-            Message = string.Empty;
+            reactionType = string.Empty;
+            message = string.Empty;
         }
     }
 }

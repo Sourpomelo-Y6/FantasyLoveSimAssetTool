@@ -243,101 +243,8 @@
                                                 <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
 
-                                    <Grid Grid.Row="14" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,12,0,8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0"
-                                                   Text="衣装メッセージ override"
-                                                   FontWeight="SemiBold"
-                                                   VerticalAlignment="Center"/>
-                                        <Button Grid.Column="1"
-                                                Content="Unity Profile読込"
-                                                Command="{Binding ImportHeroineProfileFromUnityCommand}"
-                                                Height="26"
-                                                MinWidth="132"
-                                                Margin="0,0,8,0"/>
-                                        <Button Grid.Column="2"
-                                                Content="追加"
-                                                Command="{Binding AddOutfitMessageOverrideCommand}"
-                                                Height="26"
-                                                MinWidth="72"
-                                                Margin="0,0,8,0"/>
-                                        <Button Grid.Column="3"
-                                                Content="削除"
-                                                Command="{Binding RemoveOutfitMessageOverrideCommand}"
-                                                Height="26"
-                                                MinWidth="72"/>
-                                    </Grid>
-
-                                    <DataGrid Grid.Row="15"
-                                              Grid.Column="0"
-                                              Grid.ColumnSpan="2"
-                                              ItemsSource="{Binding SelectedProfile.OutfitMessageOverrides}"
-                                              SelectedItem="{Binding SelectedOutfitMessageOverride}"
-                                              AutoGenerateColumns="False"
-                                              CanUserAddRows="False"
-                                              Height="190"
-                                              Margin="0,0,0,8">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Header="OutfitId"
-                                                                Width="140"
-                                                                Binding="{Binding OutfitId, UpdateSourceTrigger=PropertyChanged}"/>
-                                            <DataGridTextColumn Header="lockedMessage"
-                                                                Width="*"
-                                                                Binding="{Binding LockedMessage, UpdateSourceTrigger=PropertyChanged}"/>
-                                            <DataGridTextColumn Header="changedMessage"
-                                                                Width="*"
-                                                                Binding="{Binding ChangedMessage, UpdateSourceTrigger=PropertyChanged}"/>
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-
-                                    <Grid Grid.Row="16" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0"
-                                                   Text="衣装反応メッセージ override"
-                                                   FontWeight="SemiBold"
-                                                   VerticalAlignment="Center"/>
-                                        <Button Grid.Column="1"
-                                                Content="追加"
-                                                Command="{Binding AddOutfitReactionMessageOverrideCommand}"
-                                                Height="26"
-                                                MinWidth="72"
-                                                Margin="0,0,8,0"/>
-                                        <Button Grid.Column="2"
-                                                Content="削除"
-                                                Command="{Binding RemoveOutfitReactionMessageOverrideCommand}"
-                                                Height="26"
-                                                MinWidth="72"/>
-                                    </Grid>
-
-                                    <DataGrid Grid.Row="17"
-                                              Grid.Column="0"
-                                              Grid.ColumnSpan="2"
-                                              ItemsSource="{Binding SelectedProfile.OutfitReactionMessageOverrides}"
-                                              SelectedItem="{Binding SelectedOutfitReactionMessageOverride}"
-                                              AutoGenerateColumns="False"
-                                              CanUserAddRows="False"
-                                              Height="190">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Header="reactionType"
-                                                                Width="160"
-                                                                Binding="{Binding ReactionType, UpdateSourceTrigger=PropertyChanged}"/>
-                                            <DataGridTextColumn Header="message"
-                                                                Width="*"
-                                                                Binding="{Binding Message, UpdateSourceTrigger=PropertyChanged}"/>
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-
                                     <Expander Grid.Row="18" Grid.Column="0" Grid.ColumnSpan="2"
-                                              Header="Unity 共通台詞・AI文章支援" IsExpanded="True" Margin="0,16,0,12">
+                                              Header="Unity 共通台詞" IsExpanded="True" Margin="0,16,0,12">
                                         <Grid Margin="0,8,0,0">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="140"/>
@@ -358,93 +265,6 @@
                                             <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedProfile.NextActionPrompt, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
                                             <TextBlock Grid.Row="2" Text="朝の挨拶" Margin="0,4,8,8"/>
                                             <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedProfile.MorningGreeting, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
-                                            <Border Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2"
-                                                    Background="#F4EFF6" BorderBrush="#B99AC4" BorderThickness="1"
-                                                    CornerRadius="7" Padding="14" Margin="0,2,0,14">
-                                                <StackPanel>
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                                        <StackPanel>
-                                                            <TextBlock Text="AI 共通台詞候補" FontWeight="SemiBold" FontSize="15"/>
-                                                            <TextBlock Text="対象を選んで3案を生成します。採用するまで現在値は変わりません。"
-                                                                       Foreground="#66606A" TextWrapping="Wrap" Margin="0,3,12,0"/>
-                                                        </StackPanel>
-                                                        <WrapPanel Grid.Column="1">
-                                                            <Button Content="3案を生成 / 再生成"
-                                                                    Command="{Binding GenerateShortTextCandidatesCommand}"
-                                                                    Padding="12,6" Margin="0,0,6,0"/>
-                                                            <Button Content="不足分を再生成"
-                                                                    Command="{Binding GenerateMissingShortTextCandidatesCommand}"
-                                                                    Padding="12,6" Margin="0,0,6,0"/>
-                                                            <Button Content="キャンセル"
-                                                                    Command="{Binding CancelShortTextGenerationCommand}"
-                                                                    Padding="12,6"/>
-                                                        </WrapPanel>
-                                                    </Grid>
-                                                    <Grid Margin="0,12,0,8">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="120"/>
-                                                            <ColumnDefinition Width="240"/>
-                                                            <ColumnDefinition Width="90"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <TextBlock Text="生成対象" VerticalAlignment="Center"/>
-                                                        <ComboBox Grid.Column="1" ItemsSource="{Binding ShortTextTargets}"
-                                                                  SelectedItem="{Binding SelectedShortTextTarget}"
-                                                                  DisplayMemberPath="DisplayName" Margin="0,0,14,0"/>
-                                                        <TextBlock Grid.Column="2" Text="現在値" VerticalAlignment="Center"/>
-                                                        <TextBox Grid.Column="3" Text="{Binding CurrentShortTextValue, Mode=OneWay}"
-                                                                 IsReadOnly="True" TextWrapping="Wrap" MinHeight="38"/>
-                                                    </Grid>
-                                                    <TextBox Text="{Binding ShortTextAiStatus, Mode=OneWay}"
-                                                             IsReadOnly="True" TextWrapping="Wrap" MinHeight="36"
-                                                             Margin="0,0,0,8"/>
-                                                    <ItemsControl ItemsSource="{Binding ShortTextCandidates}">
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <Grid Margin="0,4,0,4">
-                                                                    <Grid.ColumnDefinitions>
-                                                                        <ColumnDefinition Width="*"/>
-                                                                        <ColumnDefinition Width="150"/>
-                                                                        <ColumnDefinition Width="Auto"/>
-                                                                    </Grid.ColumnDefinitions>
-                                                                    <TextBox Text="{Binding Text, Mode=OneWay}" IsReadOnly="True"
-                                                                             TextWrapping="Wrap" MinHeight="38" Margin="0,0,8,0"/>
-                                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,8,0">
-                                                                        <TextBlock Text="{Binding CharacterCount, StringFormat={}{0}文字}"/>
-                                                                        <TextBlock Text="{Binding ValidationMessage}" TextWrapping="Wrap">
-                                                                            <TextBlock.Style>
-                                                                                <Style TargetType="TextBlock">
-                                                                                    <Setter Property="Foreground" Value="#39734B"/>
-                                                                                    <Style.Triggers>
-                                                                                        <DataTrigger Binding="{Binding HasWarning}" Value="True">
-                                                                                            <Setter Property="Foreground" Value="#9A5B28"/>
-                                                                                        </DataTrigger>
-                                                                                    </Style.Triggers>
-                                                                                </Style>
-                                                                            </TextBlock.Style>
-                                                                        </TextBlock>
-                                                                    </StackPanel>
-                                                                    <Button Grid.Column="2" Content="この案を採用" Padding="12,6"
-                                                                            Command="{Binding DataContext.AdoptShortTextCandidateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                            CommandParameter="{Binding}"/>
-                                                                </Grid>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                    <Expander Header="送信プロンプト・生レスポンス" Margin="0,8,0,0">
-                                                        <Grid Margin="0,8,0,0">
-                                                            <Grid.RowDefinitions><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
-                                                            <TextBox Text="{Binding ShortTextAiPrompt, Mode=OneWay}" IsReadOnly="True"
-                                                                     AcceptsReturn="True" Height="130" TextWrapping="Wrap"
-                                                                     VerticalScrollBarVisibility="Auto"/>
-                                                            <TextBox Grid.Row="1" Text="{Binding ShortTextAiRawResponse, Mode=OneWay}" IsReadOnly="True"
-                                                                     AcceptsReturn="True" Height="110" FontFamily="Consolas" FontSize="11"
-                                                                     HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0"/>
-                                                        </Grid>
-                                                    </Expander>
-                                                </StackPanel>
-                                            </Border>
                                             <TextBlock Grid.Row="3" Text="夜の挨拶" Margin="0,4,8,12"/>
                                             <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding SelectedProfile.GoodNightGreeting, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12"/>
                                             <TextBlock Grid.Row="4" Text="開始時fallback" Margin="0,4,8,12"/>
@@ -532,6 +352,207 @@
                                         </StackPanel>
                                     </Expander>
 
+                                        </Grid>
+                                    </ScrollViewer>
+                                </TabItem>
+
+                                <TabItem Header="衣装メッセージ・AI">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
+                                        <Grid Margin="12,12,18,18">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="180"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                    <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,12,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="衣装メッセージ override"
+                                                   FontWeight="SemiBold"
+                                                   VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1"
+                                                Content="Unity Profile読込"
+                                                Command="{Binding ImportHeroineProfileFromUnityCommand}"
+                                                Height="26"
+                                                MinWidth="132"
+                                                Margin="0,0,8,0"/>
+                                        <Button Grid.Column="2"
+                                                Content="追加"
+                                                Command="{Binding AddOutfitMessageOverrideCommand}"
+                                                Height="26"
+                                                MinWidth="72"
+                                                Margin="0,0,8,0"/>
+                                        <Button Grid.Column="3"
+                                                Content="削除"
+                                                Command="{Binding RemoveOutfitMessageOverrideCommand}"
+                                                Height="26"
+                                                MinWidth="72"/>
+                                    </Grid>
+
+                                    <DataGrid Grid.Row="1"
+                                              Grid.Column="0"
+                                              Grid.ColumnSpan="2"
+                                              ItemsSource="{Binding SelectedProfile.OutfitMessageOverrides}"
+                                              SelectedItem="{Binding SelectedOutfitMessageOverride}"
+                                              AutoGenerateColumns="False"
+                                              CanUserAddRows="False"
+                                              Height="190"
+                                              Margin="0,0,0,8">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="OutfitId"
+                                                                Width="140"
+                                                                Binding="{Binding OutfitId, UpdateSourceTrigger=PropertyChanged}"/>
+                                            <DataGridTextColumn Header="lockedMessage"
+                                                                Width="*"
+                                                                Binding="{Binding LockedMessage, UpdateSourceTrigger=PropertyChanged}"/>
+                                            <DataGridTextColumn Header="changedMessage"
+                                                                Width="*"
+                                                                Binding="{Binding ChangedMessage, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+
+                                    <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="衣装反応メッセージ override"
+                                                   FontWeight="SemiBold"
+                                                   VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1"
+                                                Content="追加"
+                                                Command="{Binding AddOutfitReactionMessageOverrideCommand}"
+                                                Height="26"
+                                                MinWidth="72"
+                                                Margin="0,0,8,0"/>
+                                        <Button Grid.Column="2"
+                                                Content="削除"
+                                                Command="{Binding RemoveOutfitReactionMessageOverrideCommand}"
+                                                Height="26"
+                                                MinWidth="72"/>
+                                    </Grid>
+
+                                    <DataGrid Grid.Row="3"
+                                              Grid.Column="0"
+                                              Grid.ColumnSpan="2"
+                                              ItemsSource="{Binding SelectedProfile.OutfitReactionMessageOverrides}"
+                                              SelectedItem="{Binding SelectedOutfitReactionMessageOverride}"
+                                              AutoGenerateColumns="False"
+                                              CanUserAddRows="False"
+                                              Height="190">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="reactionType"
+                                                                Width="160"
+                                                                Binding="{Binding ReactionType, UpdateSourceTrigger=PropertyChanged}"/>
+                                            <DataGridTextColumn Header="message"
+                                                                Width="*"
+                                                                Binding="{Binding Message, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+
+                                            <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
+                                                    Background="#F4EFF6" BorderBrush="#B99AC4" BorderThickness="1"
+                                                    CornerRadius="7" Padding="14" Margin="0,2,0,14">
+                                                <StackPanel>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                        <StackPanel>
+                                                            <TextBlock Text="AI 共通台詞候補" FontWeight="SemiBold" FontSize="15"/>
+                                                            <TextBlock Text="対象を選んで3案を生成します。採用するまで現在値は変わりません。"
+                                                                       Foreground="#66606A" TextWrapping="Wrap" Margin="0,3,12,0"/>
+                                                        </StackPanel>
+                                                        <WrapPanel Grid.Column="1">
+                                                            <Button Content="3案を生成 / 再生成"
+                                                                    Command="{Binding GenerateShortTextCandidatesCommand}"
+                                                                    Padding="12,6" Margin="0,0,6,0"/>
+                                                            <Button Content="不足分を再生成"
+                                                                    Command="{Binding GenerateMissingShortTextCandidatesCommand}"
+                                                                    Padding="12,6" Margin="0,0,6,0"/>
+                                                            <Button Content="キャンセル"
+                                                                    Command="{Binding CancelShortTextGenerationCommand}"
+                                                                    Padding="12,6"/>
+                                                        </WrapPanel>
+                                                    </Grid>
+                                                    <Grid Margin="0,12,0,8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="120"/>
+                                                            <ColumnDefinition Width="240"/>
+                                                            <ColumnDefinition Width="90"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="生成対象" VerticalAlignment="Center"/>
+                                                        <ComboBox Grid.Column="1" ItemsSource="{Binding ShortTextTargets}"
+                                                                  SelectedItem="{Binding SelectedShortTextTarget}"
+                                                                  DisplayMemberPath="DisplayName" Margin="0,0,14,0"/>
+                                                        <TextBlock Grid.Column="2" Text="現在値" VerticalAlignment="Center"/>
+                                                        <TextBox Grid.Column="3" Text="{Binding CurrentShortTextValue, Mode=OneWay}"
+                                                                 IsReadOnly="True" TextWrapping="Wrap" MinHeight="38"/>
+                                                    </Grid>
+                                                    <TextBlock Text="{Binding CurrentShortTextContext, Mode=OneWay}"
+                                                               Foreground="#66606A" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                                                    <TextBox Text="{Binding ShortTextAiStatus, Mode=OneWay}"
+                                                             IsReadOnly="True" TextWrapping="Wrap" MinHeight="36"
+                                                             Margin="0,0,0,8"/>
+                                                    <ItemsControl ItemsSource="{Binding ShortTextCandidates}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Grid Margin="0,4,0,4">
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                        <ColumnDefinition Width="150"/>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <TextBox Text="{Binding Text, Mode=OneWay}" IsReadOnly="True"
+                                                                             TextWrapping="Wrap" MinHeight="38" Margin="0,0,8,0"/>
+                                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                                        <TextBlock Text="{Binding CharacterCount, StringFormat={}{0}文字}"/>
+                                                                        <TextBlock Text="{Binding ValidationMessage}" TextWrapping="Wrap">
+                                                                            <TextBlock.Style>
+                                                                                <Style TargetType="TextBlock">
+                                                                                    <Setter Property="Foreground" Value="#39734B"/>
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding HasWarning}" Value="True">
+                                                                                            <Setter Property="Foreground" Value="#9A5B28"/>
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </TextBlock.Style>
+                                                                        </TextBlock>
+                                                                    </StackPanel>
+                                                                    <Button Grid.Column="2" Content="この案を採用" Padding="12,6"
+                                                                            Command="{Binding DataContext.AdoptShortTextCandidateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                            CommandParameter="{Binding}"/>
+                                                                </Grid>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                    <Expander Header="送信プロンプト・生レスポンス" Margin="0,8,0,0">
+                                                        <Grid Margin="0,8,0,0">
+                                                            <Grid.RowDefinitions><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                                                            <TextBox Text="{Binding ShortTextAiPrompt, Mode=OneWay}" IsReadOnly="True"
+                                                                     AcceptsReturn="True" Height="130" TextWrapping="Wrap"
+                                                                     VerticalScrollBarVisibility="Auto"/>
+                                                            <TextBox Grid.Row="1" Text="{Binding ShortTextAiRawResponse, Mode=OneWay}" IsReadOnly="True"
+                                                                     AcceptsReturn="True" Height="110" FontFamily="Consolas" FontSize="11"
+                                                                     HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Margin="0,8,0,0"/>
+                                                        </Grid>
+                                                    </Expander>
+                                                </StackPanel>
+                                            </Border>
                                         </Grid>
                                     </ScrollViewer>
                                 </TabItem>

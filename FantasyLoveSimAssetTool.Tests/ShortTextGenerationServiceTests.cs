@@ -84,6 +84,36 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void BuildPrompt_ForOutfitMessage_IncludesOnlySelectedOutfitId()
+        {
+            var profile = new HeroineProfile { DisplayName = "リリア" };
+            var target = new ShortTextGenerationTarget(
+                "OutfitChangedMessage", "衣装：変更完了", "着替え後の台詞", 10, 60,
+                requiredContext: "OutfitMessage");
+
+            string prompt = ShortTextGenerationService.BuildPrompt(profile, target, context:
+                new ShortTextGenerationContext { OutfitId = "SummerDress", ReactionType = "Ignored" });
+
+            StringAssert.Contains(prompt, "衣装ID: SummerDress");
+            Assert.IsFalse(prompt.Contains("反応種類"));
+        }
+
+        [TestMethod]
+        public void BuildPrompt_ForOutfitReaction_RequiresReactionType()
+        {
+            var profile = new HeroineProfile { DisplayName = "リリア" };
+            var target = new ShortTextGenerationTarget(
+                "OutfitReactionMessage", "衣装：反応", "衣装への反応", 10, 60,
+                requiredContext: "OutfitReaction");
+
+            InvalidOperationException error = Assert.ThrowsException<InvalidOperationException>(() =>
+                ShortTextGenerationService.BuildPrompt(profile, target,
+                    context: new ShortTextGenerationContext()));
+
+            StringAssert.Contains(error.Message, "ReactionType");
+        }
+
+        [TestMethod]
         public void TextGenerationCandidate_ReportsLengthWarningWithoutBlockingAdoption()
         {
             var candidate = new TextGenerationCandidate("短い", 15, 50);

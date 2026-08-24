@@ -3,7 +3,7 @@ namespace FantasyLoveSimAssetTool.Models
     public sealed class ShortTextGenerationTarget
     {
         public ShortTextGenerationTarget(string id, string displayName, string purpose, int minLength, int maxLength,
-            bool includeActionPolicy = false)
+            bool includeActionPolicy = false, string requiredContext = "None")
         {
             Id = id;
             DisplayName = displayName;
@@ -11,6 +11,7 @@ namespace FantasyLoveSimAssetTool.Models
             MinLength = minLength;
             MaxLength = maxLength;
             IncludeActionPolicy = includeActionPolicy;
+            RequiredContext = requiredContext;
         }
 
         public string Id { get; }
@@ -19,5 +20,6 @@ namespace FantasyLoveSimAssetTool.Models
         public int MinLength { get; }
         public int MaxLength { get; }
         public bool IncludeActionPolicy { get; }
+        public string RequiredContext { get; }
     }
 }

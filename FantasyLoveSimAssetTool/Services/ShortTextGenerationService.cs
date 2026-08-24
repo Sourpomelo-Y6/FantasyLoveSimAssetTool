@@ -34,11 +34,12 @@ namespace FantasyLoveSimAssetTool.Services
             string baseInstruction,
             int candidateCount = 3,
             IReadOnlyCollection<string> excludedCandidates = null,
+            ShortTextGenerationContext context = null,
             CancellationToken cancellationToken = default)
         {
             if (profile == null) throw new InvalidOperationException("ヒロインを選択してください。");
             if (target == null) throw new InvalidOperationException("生成対象を選択してください。");
-            string prompt = BuildPrompt(profile, target, candidateCount, excludedCandidates);
+            string prompt = BuildPrompt(profile, target, candidateCount, excludedCandidates, context);
             LocalLlmTestResult response = await llmClient.GenerateAsync(
                 settings.ServerUrl, settings.ModelId, baseInstruction, prompt,
                 settings.Temperature, settings.MaxTokens, settings.TimeoutSeconds, cancellationToken);
@@ -66,7 +67,8 @@ namespace FantasyLoveSimAssetTool.Services
         }
 
         public static string BuildPrompt(HeroineProfile profile, ShortTextGenerationTarget target,
-            int candidateCount = 3, IReadOnlyCollection<string> excludedCandidates = null)
+            int candidateCount = 3, IReadOnlyCollection<string> excludedCandidates = null,
+            ShortTextGenerationContext context = null)
         {
             if (candidateCount < 1 || candidateCount > 3)
                 throw new InvalidOperationException("候補数は1～3件で指定してください。");
@@ -80,6 +82,18 @@ namespace FantasyLoveSimAssetTool.Services
             Append(builder, "二人称", profile.SecondPerson, 40);
             if (target.IncludeActionPolicy)
                 Append(builder, "行動反応方針", profile.ActionReactionPolicy, 200);
+            if (target.RequiredContext == "OutfitMessage")
+            {
+                if (string.IsNullOrWhiteSpace(context?.OutfitId))
+                    throw new InvalidOperationException("衣装メッセージ行を選択し、OutfitIdを入力してください。");
+                Append(builder, "衣装ID", context.OutfitId, 80);
+            }
+            else if (target.RequiredContext == "OutfitReaction")
+            {
+                if (string.IsNullOrWhiteSpace(context?.ReactionType))
+                    throw new InvalidOperationException("衣装反応行を選択し、ReactionTypeを入力してください。");
+                Append(builder, "反応種類", context.ReactionType, 80);
+            }
             List<string> exclusions = (excludedCandidates ?? Array.Empty<string>())
                 .Where(value => !string.IsNullOrWhiteSpace(value)).Take(3).ToList();
             if (exclusions.Count > 0)

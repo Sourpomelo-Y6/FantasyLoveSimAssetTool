@@ -192,6 +192,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private bool isGeneratingShortText;
         private CancellationTokenSource shortTextGenerationCancellation;
         private ShortTextGenerationTarget selectedShortTextTarget;
+        private OutfitMessageOverride generatedShortTextOutfitMessage;
+        private OutfitReactionMessageOverride generatedShortTextOutfitReaction;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
 
@@ -209,11 +211,28 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 selectedShortTextTarget = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(CurrentShortTextValue));
+                OnPropertyChanged(nameof(CurrentShortTextContext));
                 ClearShortTextGenerationResult();
             }
         }
 
         public string CurrentShortTextValue => GetShortTextValue(SelectedProfile, SelectedShortTextTarget);
+
+        public string CurrentShortTextContext
+        {
+            get
+            {
+                if (SelectedShortTextTarget?.RequiredContext == "OutfitMessage")
+                    return string.IsNullOrWhiteSpace(SelectedOutfitMessageOverride?.OutfitId)
+                        ? "衣装メッセージ行を選択してください。"
+                        : $"OutfitId: {SelectedOutfitMessageOverride.OutfitId}";
+                if (SelectedShortTextTarget?.RequiredContext == "OutfitReaction")
+                    return string.IsNullOrWhiteSpace(SelectedOutfitReactionMessageOverride?.ReactionType)
+                        ? "衣装反応行を選択してください。"
+                        : $"ReactionType: {SelectedOutfitReactionMessageOverride.ReactionType}";
+                return "ヒロイン共通台詞";
+            }
+        }
 
         public string ShortTextAiStatus
         {
@@ -1567,8 +1586,19 @@ namespace FantasyLoveSimAssetTool.ViewModels
             set
             {
                 if (selectedOutfitMessageOverride == value) { return; }
+                if (selectedOutfitMessageOverride != null)
+                    selectedOutfitMessageOverride.PropertyChanged -= SelectedOutfitMessageOverridePropertyChanged;
                 selectedOutfitMessageOverride = value;
+                if (selectedOutfitMessageOverride != null)
+                    selectedOutfitMessageOverride.PropertyChanged += SelectedOutfitMessageOverridePropertyChanged;
                 OnPropertyChanged(nameof(SelectedOutfitMessageOverride));
+                OnPropertyChanged(nameof(CurrentShortTextContext));
+                OnPropertyChanged(nameof(CurrentShortTextValue));
+                if (SelectedShortTextTarget?.RequiredContext == "OutfitMessage")
+                {
+                    shortTextGenerationCancellation?.Cancel();
+                    ClearShortTextGenerationResult();
+                }
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -1579,8 +1609,19 @@ namespace FantasyLoveSimAssetTool.ViewModels
             set
             {
                 if (selectedOutfitReactionMessageOverride == value) { return; }
+                if (selectedOutfitReactionMessageOverride != null)
+                    selectedOutfitReactionMessageOverride.PropertyChanged -= SelectedOutfitReactionMessageOverridePropertyChanged;
                 selectedOutfitReactionMessageOverride = value;
+                if (selectedOutfitReactionMessageOverride != null)
+                    selectedOutfitReactionMessageOverride.PropertyChanged += SelectedOutfitReactionMessageOverridePropertyChanged;
                 OnPropertyChanged(nameof(SelectedOutfitReactionMessageOverride));
+                OnPropertyChanged(nameof(CurrentShortTextContext));
+                OnPropertyChanged(nameof(CurrentShortTextValue));
+                if (SelectedShortTextTarget?.RequiredContext == "OutfitReaction")
+                {
+                    shortTextGenerationCancellation?.Cancel();
+                    ClearShortTextGenerationResult();
+                }
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -2416,7 +2457,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 new ShortTextGenerationTarget("MorningGreeting", "朝の挨拶", "朝、最初にプレイヤーへ話す挨拶", 15, 50),
                 new ShortTextGenerationTarget("GoodNightGreeting", "夜の挨拶", "一日の終わりにプレイヤーへ話す挨拶", 15, 50),
                 new ShortTextGenerationTarget("GameStartFallbackMessage", "開始時fallback", "専用イベントがないゲーム開始時に表示する台詞", 15, 60),
-                new ShortTextGenerationTarget("GameStartFollowUpMessage", "開始後メッセージ", "ゲーム開始時の案内に続けて表示する短い台詞", 10, 60)
+                new ShortTextGenerationTarget("GameStartFollowUpMessage", "開始後メッセージ", "ゲーム開始時の案内に続けて表示する短い台詞", 10, 60),
+                new ShortTextGenerationTarget("OutfitLockedMessage", "衣装：未解放", "未解放の衣装を選んだプレイヤーへ返す短い台詞", 10, 50, requiredContext: "OutfitMessage"),
+                new ShortTextGenerationTarget("OutfitChangedMessage", "衣装：変更完了", "衣装へ着替えた直後にプレイヤーへ話す短い台詞", 10, 60, requiredContext: "OutfitMessage"),
+                new ShortTextGenerationTarget("OutfitReactionMessage", "衣装：反応", "衣装に関するプレイヤーの行動へ反応する短い台詞", 10, 60, requiredContext: "OutfitReaction")
             };
             selectedShortTextTarget = ShortTextTargets.First(target => target.Id == "MorningGreeting");
             shortTextAiStatus = "ヒロインを選択してください。";
@@ -2723,10 +2767,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SaveSelectedProfileCommand = new RelayCommand(SaveSelectedProfile, () => SelectedProfile != null);
             GenerateShortTextCandidatesCommand = new AsyncRelayCommand(
                 GenerateShortTextCandidatesAsync,
-                () => SelectedProfile != null && SelectedShortTextTarget != null && !IsGeneratingShortText);
+                () => CanGenerateSelectedShortText() && !IsGeneratingShortText);
             GenerateMissingShortTextCandidatesCommand = new AsyncRelayCommand(
                 GenerateMissingShortTextCandidatesAsync,
-                () => SelectedProfile != null && SelectedShortTextTarget != null &&
+                () => CanGenerateSelectedShortText() &&
                     ShortTextCandidates.Count > 0 && ShortTextCandidates.Count < 3 && !IsGeneratingShortText);
             CancelShortTextGenerationCommand = new RelayCommand(
                 () => shortTextGenerationCancellation?.Cancel(),
@@ -4457,6 +4501,26 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 RefreshStillPromptAfterProfilePromptChanged();
             }
+        }
+
+        private void SelectedOutfitMessageOverridePropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            OnPropertyChanged(nameof(CurrentShortTextValue));
+            OnPropertyChanged(nameof(CurrentShortTextContext));
+            if (e.PropertyName == nameof(OutfitMessageOverride.OutfitId) &&
+                SelectedShortTextTarget?.RequiredContext == "OutfitMessage")
+                ClearShortTextGenerationResult();
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void SelectedOutfitReactionMessageOverridePropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            OnPropertyChanged(nameof(CurrentShortTextValue));
+            OnPropertyChanged(nameof(CurrentShortTextContext));
+            if (e.PropertyName == nameof(OutfitReactionMessageOverride.ReactionType) &&
+                SelectedShortTextTarget?.RequiredContext == "OutfitReaction")
+                ClearShortTextGenerationResult();
+            CommandManager.InvalidateRequerySuggested();
         }
 
         private void SelectedEnemyProfile_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -8654,8 +8718,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private async Task GenerateShortTextCandidatesCoreAsync(int requestedCount, bool clearExisting)
         {
-            if (SelectedProfile == null || SelectedShortTextTarget == null) return;
+            if (!CanGenerateSelectedShortText())
+            {
+                ShortTextAiStatus = CurrentShortTextContext;
+                return;
+            }
             ShortTextGenerationTarget target = SelectedShortTextTarget;
+            OutfitMessageOverride sourceOutfitMessage = SelectedOutfitMessageOverride;
+            OutfitReactionMessageOverride sourceOutfitReaction = SelectedOutfitReactionMessageOverride;
+            ShortTextGenerationContext generationContext = CreateShortTextGenerationContext(target);
 
             shortTextGenerationCancellation?.Dispose();
             shortTextGenerationCancellation = new CancellationTokenSource();
@@ -8663,7 +8734,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             if (clearExisting) ShortTextCandidates.Clear();
             List<string> existingCandidates = ShortTextCandidates.Select(candidate => candidate.Text).ToList();
             ShortTextAiPrompt = ShortTextGenerationService.BuildPrompt(
-                SelectedProfile, target, requestedCount, existingCandidates);
+                SelectedProfile, target, requestedCount, existingCandidates, generationContext);
             ShortTextAiRawResponse = string.Empty;
             ShortTextAiStatus = $"{target.DisplayName}の候補を生成中...";
             StatusMessage = ShortTextAiStatus;
@@ -8677,9 +8748,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     localAiInstructionService.Load(),
                     requestedCount,
                     existingCandidates,
+                    generationContext,
                     shortTextGenerationCancellation.Token);
 
-                if (SelectedShortTextTarget != target) return;
+                if (SelectedShortTextTarget != target ||
+                    (target.RequiredContext == "OutfitMessage" && SelectedOutfitMessageOverride != sourceOutfitMessage) ||
+                    (target.RequiredContext == "OutfitReaction" && SelectedOutfitReactionMessageOverride != sourceOutfitReaction)) return;
+                generatedShortTextOutfitMessage = sourceOutfitMessage;
+                generatedShortTextOutfitReaction = sourceOutfitReaction;
                 ShortTextAiRawResponse = result.RawResponse;
                 if (!string.IsNullOrWhiteSpace(result.ParseError))
                 {
@@ -8724,6 +8800,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             if (SelectedProfile == null || SelectedShortTextTarget == null ||
                 candidate == null || string.IsNullOrWhiteSpace(candidate.Text)) return;
+            if ((SelectedShortTextTarget.RequiredContext == "OutfitMessage" &&
+                    SelectedOutfitMessageOverride != generatedShortTextOutfitMessage) ||
+                (SelectedShortTextTarget.RequiredContext == "OutfitReaction" &&
+                    SelectedOutfitReactionMessageOverride != generatedShortTextOutfitReaction))
+            {
+                ClearShortTextGenerationResult();
+                ShortTextAiStatus = "生成元の衣装行が変更されたため候補を破棄しました。もう一度生成してください。";
+                return;
+            }
             SetShortTextValue(SelectedProfile, SelectedShortTextTarget, candidate.Text.Trim());
             OnPropertyChanged(nameof(SelectedProfile));
             OnPropertyChanged(nameof(CurrentShortTextValue));
@@ -8739,9 +8824,36 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 : "生成対象を確認して「3案を生成」を押してください。";
             ShortTextAiPrompt = string.Empty;
             ShortTextAiRawResponse = string.Empty;
+            generatedShortTextOutfitMessage = null;
+            generatedShortTextOutfitReaction = null;
         }
 
-        private static string GetShortTextValue(HeroineProfile profile, ShortTextGenerationTarget target)
+        private bool CanGenerateSelectedShortText()
+        {
+            if (SelectedProfile == null || SelectedShortTextTarget == null) return false;
+            if (SelectedShortTextTarget.RequiredContext == "OutfitMessage")
+                return SelectedOutfitMessageOverride != null &&
+                    !string.IsNullOrWhiteSpace(SelectedOutfitMessageOverride.OutfitId);
+            if (SelectedShortTextTarget.RequiredContext == "OutfitReaction")
+                return SelectedOutfitReactionMessageOverride != null &&
+                    !string.IsNullOrWhiteSpace(SelectedOutfitReactionMessageOverride.ReactionType);
+            return true;
+        }
+
+        private ShortTextGenerationContext CreateShortTextGenerationContext(ShortTextGenerationTarget target)
+        {
+            return new ShortTextGenerationContext
+            {
+                OutfitId = target.RequiredContext == "OutfitMessage"
+                    ? SelectedOutfitMessageOverride?.OutfitId ?? string.Empty
+                    : string.Empty,
+                ReactionType = target.RequiredContext == "OutfitReaction"
+                    ? SelectedOutfitReactionMessageOverride?.ReactionType ?? string.Empty
+                    : string.Empty
+            };
+        }
+
+        private string GetShortTextValue(HeroineProfile profile, ShortTextGenerationTarget target)
         {
             if (profile == null || target == null) return string.Empty;
             switch (target.Id)
@@ -8752,11 +8864,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 case "GoodNightGreeting": return profile.GoodNightGreeting ?? string.Empty;
                 case "GameStartFallbackMessage": return profile.GameStartFallbackMessage ?? string.Empty;
                 case "GameStartFollowUpMessage": return profile.GameStartFollowUpMessage ?? string.Empty;
+                case "OutfitLockedMessage": return SelectedOutfitMessageOverride?.LockedMessage ?? string.Empty;
+                case "OutfitChangedMessage": return SelectedOutfitMessageOverride?.ChangedMessage ?? string.Empty;
+                case "OutfitReactionMessage": return SelectedOutfitReactionMessageOverride?.Message ?? string.Empty;
                 default: return string.Empty;
             }
         }
 
-        private static void SetShortTextValue(HeroineProfile profile, ShortTextGenerationTarget target, string value)
+        private void SetShortTextValue(HeroineProfile profile, ShortTextGenerationTarget target, string value)
         {
             switch (target.Id)
             {
@@ -8766,6 +8881,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 case "GoodNightGreeting": profile.GoodNightGreeting = value; break;
                 case "GameStartFallbackMessage": profile.GameStartFallbackMessage = value; break;
                 case "GameStartFollowUpMessage": profile.GameStartFollowUpMessage = value; break;
+                case "OutfitLockedMessage": SelectedOutfitMessageOverride.LockedMessage = value; break;
+                case "OutfitChangedMessage": SelectedOutfitMessageOverride.ChangedMessage = value; break;
+                case "OutfitReactionMessage": SelectedOutfitReactionMessageOverride.Message = value; break;
                 default: throw new InvalidOperationException($"未対応の生成対象です: {target.Id}");
             }
         }

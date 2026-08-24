@@ -1,18 +1,36 @@
+using FantasyLoveSimAssetTool.Common;
+
 namespace FantasyLoveSimAssetTool.Models
 {
-    public class OutfitMessageOverride
+    public class OutfitMessageOverride : ObservableObject
     {
-        public string OutfitId { get; set; }
+        private string outfitId;
+        private string lockedMessage;
+        private string changedMessage;
 
-        public string LockedMessage { get; set; }
+        public string OutfitId
+        {
+            get => outfitId;
+            set { if (outfitId != value) { outfitId = value; OnPropertyChanged(); } }
+        }
 
-        public string ChangedMessage { get; set; }
+        public string LockedMessage
+        {
+            get => lockedMessage;
+            set { if (lockedMessage != value) { lockedMessage = value; OnPropertyChanged(); } }
+        }
+
+        public string ChangedMessage
+        {
+            get => changedMessage;
+            set { if (changedMessage != value) { changedMessage = value; OnPropertyChanged(); } }
+        }
 
         public OutfitMessageOverride()
         {
-            OutfitId = string.Empty;
-            LockedMessage = string.Empty;
-            ChangedMessage = string.Empty;
+            outfitId = string.Empty;
+            lockedMessage = string.Empty;
+            changedMessage = string.Empty;
         }
     }
 }
