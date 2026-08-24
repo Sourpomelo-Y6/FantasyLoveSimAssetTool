@@ -8764,8 +8764,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             IsGeneratingShortText = true;
             if (clearExisting) ShortTextCandidates.Clear();
             List<string> existingCandidates = ShortTextCandidates.Select(candidate => candidate.Text).ToList();
+            IReadOnlyCollection<string> expressionIds = GetShortTextExpressionIds(target);
             ShortTextAiPrompt = ShortTextGenerationService.BuildPrompt(
-                SelectedProfile, target, requestedCount, existingCandidates, generationContext);
+                SelectedProfile, target, requestedCount, existingCandidates, generationContext, expressionIds);
             ShortTextAiRawResponse = string.Empty;
             ShortTextAiStatus = $"{target.DisplayName}の候補を生成中...";
             StatusMessage = ShortTextAiStatus;
@@ -8780,6 +8781,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     requestedCount,
                     existingCandidates,
                     generationContext,
+                    expressionIds,
                     shortTextGenerationCancellation.Token);
 
                 if (SelectedShortTextTarget != target ||
@@ -8794,12 +8796,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     StatusMessage = ShortTextAiStatus;
                     return;
                 }
-                foreach (string candidate in result.Candidates)
+                foreach (ShortTextGeneratedCandidate candidate in result.Candidates)
                 {
                     if (ShortTextCandidates.Any(existing =>
-                        string.Equals(existing.Text, candidate, StringComparison.Ordinal))) continue;
+                        string.Equals(existing.Text, candidate.Text, StringComparison.Ordinal))) continue;
                     if (ShortTextCandidates.Count >= 3) break;
-                    ShortTextCandidates.Add(new TextGenerationCandidate(candidate, target.MinLength, target.MaxLength));
+                    ShortTextCandidates.Add(new TextGenerationCandidate(
+                        candidate.Text, target.MinLength, target.MaxLength, candidate.ExpressionId));
                 }
                 int missingCount = Math.Max(0, 3 - ShortTextCandidates.Count);
                 ShortTextAiStatus = missingCount == 0
@@ -8841,6 +8844,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 return;
             }
             SetShortTextValue(SelectedProfile, SelectedShortTextTarget, candidate.Text.Trim());
+            if (candidate.UseExpressionSuggestion && candidate.HasExpressionSuggestion)
+            {
+                SetShortTextExpression(SelectedShortTextTarget, candidate.ExpressionId);
+            }
             OnPropertyChanged(nameof(SelectedProfile));
             OnPropertyChanged(nameof(CurrentShortTextValue));
             ShortTextAiStatus = $"候補を「{SelectedShortTextTarget.DisplayName}」へ反映しました。保存ボタンで確定してください。";
@@ -8882,6 +8889,41 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     ? SelectedOutfitReactionMessageOverride?.ReactionType ?? string.Empty
                     : string.Empty
             };
+        }
+
+        private IReadOnlyCollection<string> GetShortTextExpressionIds(ShortTextGenerationTarget target)
+        {
+            if (target?.RequiredContext != "OutfitMessage" && target?.RequiredContext != "OutfitReaction")
+            {
+                return Array.Empty<string>();
+            }
+
+            return ExpressionIdOptions
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Select(id => id.Trim())
+                .Distinct(StringComparer.Ordinal)
+                .Take(20)
+                .ToList();
+        }
+
+        private void SetShortTextExpression(ShortTextGenerationTarget target, string expressionId)
+        {
+            if (target == null || string.IsNullOrWhiteSpace(expressionId)) return;
+            switch (target.Id)
+            {
+                case "OutfitLockedMessage":
+                    if (SelectedOutfitMessageOverride != null)
+                        SelectedOutfitMessageOverride.LockedExpressionId = expressionId;
+                    break;
+                case "OutfitChangedMessage":
+                    if (SelectedOutfitMessageOverride != null)
+                        SelectedOutfitMessageOverride.ChangedExpressionId = expressionId;
+                    break;
+                case "OutfitReactionMessage":
+                    if (SelectedOutfitReactionMessageOverride != null)
+                        SelectedOutfitReactionMessageOverride.ExpressionId = expressionId;
+                    break;
+            }
         }
 
         private string GetShortTextValue(HeroineProfile profile, ShortTextGenerationTarget target)

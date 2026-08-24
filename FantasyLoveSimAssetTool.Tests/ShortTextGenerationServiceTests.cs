@@ -99,6 +99,34 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void BuildPrompt_ForOutfitMessage_IncludesConstrainedExpressionIds()
+        {
+            var profile = new HeroineProfile { DisplayName = "リリア" };
+            var target = new ShortTextGenerationTarget(
+                "OutfitChangedMessage", "衣装：変更完了", "着替え後の台詞", 10, 60,
+                requiredContext: "OutfitMessage");
+
+            string prompt = ShortTextGenerationService.BuildPrompt(
+                profile, target, context: new ShortTextGenerationContext { OutfitId = "SummerDress" },
+                expressionIds: new[] { "Smile", "Shy" });
+
+            StringAssert.Contains(prompt, "Smile,Shy");
+            StringAssert.Contains(prompt, "expressionId");
+        }
+
+        [TestMethod]
+        public void ParseCandidateItems_DiscardsExpressionOutsideAllowedIds()
+        {
+            IReadOnlyList<ShortTextGeneratedCandidate> candidates = ShortTextGenerationService.ParseCandidateItems(
+                "{\"candidates\":[{\"text\":\"似合うね\",\"expressionId\":\"Smile\"}," +
+                "{\"text\":\"どうかな\",\"expressionId\":\"Unknown\"}]}",
+                new[] { "Smile", "Shy" });
+
+            Assert.AreEqual("Smile", candidates[0].ExpressionId);
+            Assert.AreEqual(string.Empty, candidates[1].ExpressionId);
+        }
+
+        [TestMethod]
         public void BuildPrompt_ForOutfitReaction_RequiresReactionType()
         {
             var profile = new HeroineProfile { DisplayName = "リリア" };
@@ -121,6 +149,16 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(2, candidate.CharacterCount);
             Assert.IsTrue(candidate.HasWarning);
             StringAssert.Contains(candidate.ValidationMessage, "短め");
+        }
+
+        [TestMethod]
+        public void TextGenerationCandidate_WithExpression_EnablesOptionalAdoption()
+        {
+            var candidate = new TextGenerationCandidate("似合うね", 2, 50, "Smile");
+
+            Assert.IsTrue(candidate.HasExpressionSuggestion);
+            Assert.IsTrue(candidate.UseExpressionSuggestion);
+            Assert.AreEqual("Smile", candidate.ExpressionId);
         }
 
         [TestMethod]
