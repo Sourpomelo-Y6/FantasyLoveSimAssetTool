@@ -126,8 +126,10 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Padding="4">
-                                <Grid Margin="12,8,18,18">
+                            <TabControl Grid.Row="0" Margin="0,0,0,4">
+                                <TabItem Header="プロフィール">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
+                                        <Grid Margin="12,12,18,18">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="180"/>
                                         <ColumnDefinition Width="*"/>
@@ -204,6 +206,42 @@
 
                                     <TextBlock Grid.Row="13" Grid.Column="0" Text="エンディング方針" VerticalAlignment="Top" Margin="0,4,8,0"/>
                                     <TextBox Grid.Row="13" Grid.Column="1" Text="{Binding SelectedProfile.EndingPolicy, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="88" TextWrapping="Wrap"/>
+
+                                        </Grid>
+                                    </ScrollViewer>
+                                </TabItem>
+
+                                <TabItem Header="ゲーム設定・台詞">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
+                                        <Grid Margin="12,12,18,18">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="180"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
 
                                     <Grid Grid.Row="14" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,12,0,8">
                                         <Grid.ColumnDefinitions>
@@ -457,8 +495,10 @@
                                         </StackPanel>
                                     </Expander>
 
-                                </Grid>
-                            </ScrollViewer>
+                                        </Grid>
+                                    </ScrollViewer>
+                                </TabItem>
+                            </TabControl>
 
                             <Button Grid.Row="1" Content="保存" Command="{Binding SaveSelectedProfileCommand}" Width="120" Height="30" HorizontalAlignment="Right" Margin="0,12,0,0"/>
                         </Grid>
