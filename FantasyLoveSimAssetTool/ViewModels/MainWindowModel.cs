@@ -163,6 +163,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string statusMessage;
         private string lastBattleMessageImportReport;
         private int selectedMainTabIndex;
+        private int selectedBasicInfoTabIndex;
         private bool showOnlyIncompleteProductionStatus;
         private string unityProjectPath;
         private string audioLibrarySearchText;
@@ -1964,6 +1965,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public int SelectedBasicInfoTabIndex
+        {
+            get { return selectedBasicInfoTabIndex; }
+            set
+            {
+                if (selectedBasicInfoTabIndex == value) { return; }
+                selectedBasicInfoTabIndex = value;
+                OnPropertyChanged(nameof(SelectedBasicInfoTabIndex));
+            }
+        }
+
         public bool ShowOnlyIncompleteProductionStatus
         {
             get { return showOnlyIncompleteProductionStatus; }
@@ -2748,6 +2760,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             statusMessage = string.Empty;
             lastBattleMessageImportReport = "Unityから戦闘メッセージを読み込むと、ここに差分が表示されます。";
             selectedMainTabIndex = 0;
+            selectedBasicInfoTabIndex = 0;
             showOnlyIncompleteProductionStatus = false;
             unityProjectPath = AudioLibraryService.LoadUnityProjectPath();
             audioLibrarySearchText = string.Empty;
@@ -8983,6 +8996,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             StatusMessage = addedCount > 0
                 ? $"衣装定義から衣装メッセージ override を {addedCount} 件追加しました。"
                 : "衣装定義の CostumeId はすべて衣装メッセージに登録済みです。";
+
+            SelectedMainTabIndex = 0;
+            SelectedBasicInfoTabIndex = 2;
         }
 
         private void RemoveOutfitMessageOverride()

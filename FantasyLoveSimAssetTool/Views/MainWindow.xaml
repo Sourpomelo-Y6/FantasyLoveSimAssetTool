@@ -126,7 +126,8 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <TabControl Grid.Row="0" Margin="0,0,0,4">
+                            <TabControl Grid.Row="0" Margin="0,0,0,4"
+                                        SelectedIndex="{Binding SelectedBasicInfoTabIndex, Mode=TwoWay}">
                                 <TabItem Header="プロフィール">
                                     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
                                         <Grid Margin="12,12,18,18">
@@ -379,24 +380,32 @@
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0"
                                                    Text="衣装メッセージ override"
                                                    FontWeight="SemiBold"
                                                    VerticalAlignment="Center"/>
                                         <Button Grid.Column="1"
+                                                Content="衣装定義から反映"
+                                                Command="{Binding PopulateOutfitMessagesFromCostumeDefinitionsCommand}"
+                                                Height="26"
+                                                MinWidth="132"
+                                                ToolTip="衣装定義の CostumeId を未登録の衣装メッセージ項目へ追加します"
+                                                Margin="0,0,8,0"/>
+                                        <Button Grid.Column="2"
                                                 Content="Unity Profile読込"
                                                 Command="{Binding ImportHeroineProfileFromUnityCommand}"
                                                 Height="26"
                                                 MinWidth="132"
                                                 Margin="0,0,8,0"/>
-                                        <Button Grid.Column="2"
+                                        <Button Grid.Column="3"
                                                 Content="追加"
                                                 Command="{Binding AddOutfitMessageOverrideCommand}"
                                                 Height="26"
                                                 MinWidth="72"
                                                 Margin="0,0,8,0"/>
-                                        <Button Grid.Column="3"
+                                        <Button Grid.Column="4"
                                                 Content="削除"
                                                 Command="{Binding RemoveOutfitMessageOverrideCommand}"
                                                 Height="26"
