@@ -20,6 +20,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
     public class MainWindowModel : ObservableObject
     {
         private const int LayerPreviewTabIndex = 11;
+        private static readonly string[] OutfitReactionTypes =
+        {
+            "Praise",
+            "Dislike",
+            "Bored",
+            "Change"
+        };
 
         private readonly WorkspacePathService workspacePathService;
         private readonly CharacterProjectService characterProjectService;
@@ -2237,6 +2244,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand RemoveOutfitReactionMessageOverrideCommand { get; }
 
+        public ICommand PopulateOutfitReactionMessagesCommand { get; }
+
         public ICommand RefreshProfilesCommand { get; }
 
         public ICommand RefreshEnemiesCommand { get; }
@@ -2834,6 +2843,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RemoveOutfitReactionMessageOverrideCommand = new RelayCommand(
                 RemoveOutfitReactionMessageOverride,
                 () => SelectedProfile != null && SelectedOutfitReactionMessageOverride != null);
+            PopulateOutfitReactionMessagesCommand = new RelayCommand(
+                PopulateOutfitReactionMessages,
+                () => SelectedProfile != null);
             RefreshProfilesCommand = new RelayCommand(LoadProfiles);
             RefreshEnemiesCommand = new RelayCommand(LoadEnemies);
             CreateEnemyCommand = new RelayCommand(CreateEnemy);
@@ -9034,6 +9046,49 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SelectedProfile.OutfitReactionMessageOverrides.Add(item);
             SelectedOutfitReactionMessageOverride = item;
             StatusMessage = "衣装反応メッセージ override を追加しました。";
+        }
+
+        private void PopulateOutfitReactionMessages()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            SelectedProfile.OutfitReactionMessageOverrides ??=
+                new ObservableCollection<OutfitReactionMessageOverride>();
+            var existingTypes = new HashSet<string>(
+                SelectedProfile.OutfitReactionMessageOverrides
+                    .Where(item => item != null && !string.IsNullOrWhiteSpace(item.ReactionType))
+                    .Select(item => item.ReactionType.Trim()),
+                StringComparer.Ordinal);
+
+            OutfitReactionMessageOverride lastAddedItem = null;
+            int addedCount = 0;
+            foreach (string reactionType in OutfitReactionTypes)
+            {
+                if (!existingTypes.Add(reactionType))
+                {
+                    continue;
+                }
+
+                lastAddedItem = new OutfitReactionMessageOverride
+                {
+                    ReactionType = reactionType,
+                    Message = string.Empty
+                };
+                SelectedProfile.OutfitReactionMessageOverrides.Add(lastAddedItem);
+                addedCount++;
+            }
+
+            if (lastAddedItem != null)
+            {
+                SelectedOutfitReactionMessageOverride = lastAddedItem;
+            }
+
+            StatusMessage = addedCount > 0
+                ? $"衣装反応メッセージ override を {addedCount} 件補完しました。"
+                : "衣装反応メッセージの4項目はすべて登録済みです。";
         }
 
         private void RemoveOutfitReactionMessageOverride()
