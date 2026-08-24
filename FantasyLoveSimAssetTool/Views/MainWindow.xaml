@@ -34,6 +34,14 @@
                     Padding="14,6"
                     Margin="12,0,0,0"
                     VerticalAlignment="Center"/>
+            <Button DockPanel.Dock="Right"
+                    Content="LocalAI 接続設定"
+                    Click="OpenLocalAiSettings_Click"
+                    Padding="14,6"
+                    Margin="12,0,0,0"
+                    Background="#765D91"
+                    Foreground="White"
+                    VerticalAlignment="Center"/>
             <StackPanel>
                 <TextBlock Text="FantasyLoveSimAssetTool" FontSize="22" FontWeight="SemiBold"/>
                 <TextBlock Text="{Binding WorkspacePath, StringFormat=Workspace: {0}}" Foreground="Gray" Margin="0,4,0,0"/>

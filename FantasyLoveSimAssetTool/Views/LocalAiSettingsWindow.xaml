@@ -1,0 +1,126 @@
+<Window x:Class="FantasyLoveSimAssetTool.Views.LocalAiSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="LocalAI 接続設定" Height="720" Width="920"
+        MinHeight="620" MinWidth="760"
+        Background="#11131A" Foreground="#F5F2FA"
+        WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <SolidColorBrush x:Key="PanelBrush" Color="#1C1F2A"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#D678A2"/>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#EEEAF2"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="0,6,8,2"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="Background" Value="#34394A"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#555D73"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="0,5,0,8"/>
+            <Setter Property="Padding" Value="9"/>
+            <Setter Property="Background" Value="#0D0F15"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CaretBrush" Value="White"/>
+            <Setter Property="BorderBrush" Value="#555D73"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Margin" Value="0,5,0,8"/>
+            <Setter Property="Padding" Value="7"/>
+            <Setter Property="Background" Value="#0D0F15"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#555D73"/>
+        </Style>
+        <Style x:Key="SectionStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelBrush}"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+        </Style>
+    </Window.Resources>
+    <DockPanel Margin="20">
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+            <TextBlock Text="LOCAL AI CONNECTION" Foreground="{StaticResource AccentBrush}" FontWeight="Bold" FontSize="13"/>
+            <TextBlock Text="ローカルAI 接続設定" FontSize="27" FontWeight="SemiBold"/>
+            <TextBlock Text="llama.cppのOpenAI互換APIへ接続し、AssetToolから利用できるモデルを確認します。"
+                       Foreground="#A8ADBB" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <Border DockPanel.Dock="Bottom" Background="#191C25" Padding="10" CornerRadius="5">
+            <TextBox Text="{Binding StatusMessage, Mode=OneWay}"
+                     IsReadOnly="True"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     MinHeight="42"
+                     MaxHeight="110"
+                     VerticalScrollBarVisibility="Auto"
+                     ToolTip="エラー内容を選択してコピーできます"/>
+        </Border>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Border Style="{StaticResource SectionStyle}">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="1  接続先" FontSize="18" FontWeight="Bold"/>
+                                <TextBlock Text="既定値はローカルのllama-serverです。" Foreground="#A8ADBB"/>
+                            </StackPanel>
+                            <Border Grid.Column="1" Background="#12151D" BorderBrush="{Binding ConnectionStatusColor, Mode=OneWay}"
+                                    BorderThickness="1" CornerRadius="12" Padding="12,5" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding ConnectionStatus, Mode=OneWay}"
+                                           Foreground="{Binding ConnectionStatusColor, Mode=OneWay}" FontWeight="Bold"/>
+                            </Border>
+                        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="130"/></Grid.ColumnDefinitions>
+                            <StackPanel Margin="0,0,12,0">
+                                <TextBlock Text="Server URL"/>
+                                <TextBox Text="{Binding ServerUrl, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Timeout（秒）"/>
+                                <TextBox Text="{Binding TimeoutSecondsText, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="Model"/>
+                        <ComboBox ItemsSource="{Binding Models}" SelectedItem="{Binding SelectedModelId}"
+                                  IsEditable="True" Text="{Binding SelectedModelId, UpdateSourceTrigger=PropertyChanged}"/>
+                        <WrapPanel>
+                            <Button Content="▶ モデル一覧を更新" Command="{Binding RefreshModelsCommand}" Background="#497568" FontWeight="Bold"/>
+                            <Button Content="設定を保存" Command="{Binding SaveCommand}"/>
+                            <Button Content="通信をキャンセル" Command="{Binding CancelCommand}"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource SectionStyle}">
+                    <StackPanel>
+                        <TextBlock Text="2  日本語通信テスト" FontSize="18" FontWeight="Bold"/>
+                        <TextBlock Text="送信内容" Foreground="#DCA3BE" Margin="0,8,0,0"/>
+                        <TextBox Text="{Binding TestPrompt, UpdateSourceTrigger=PropertyChanged}" Height="62"
+                                 AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                        <Button Content="▶ 選択モデルへ送信" Command="{Binding SendTestCommand}"
+                                Background="#765D91" FontSize="15" FontWeight="Bold" HorizontalAlignment="Stretch"/>
+                        <TextBlock Text="ローカルLLMからの応答" Foreground="#DCA3BE" Margin="0,8,0,0"/>
+                        <TextBox Text="{Binding TestResult, Mode=OneWay}" Height="115" IsReadOnly="True" AcceptsReturn="True"
+                                 TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                        <Expander Header="生レスポンスを確認" Foreground="#CFAFC0" Margin="0,6,0,0">
+                            <TextBox Text="{Binding RawResponse, Mode=OneWay}" Height="130" IsReadOnly="True" AcceptsReturn="True"
+                                     FontFamily="Consolas" FontSize="11" TextWrapping="NoWrap"
+                                     HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Margin="10,6,0,0"/>
+                        </Expander>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#211B25" BorderBrush="#6F4B60" BorderThickness="1" CornerRadius="8" Padding="14">
+                    <TextBlock Text="接続テストはヒロインや会話データを変更しません。サーバー停止や通信失敗時も、既存のAssetToolデータは保持されます。"
+                               TextWrapping="Wrap" Foreground="#D9C5D0"/>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

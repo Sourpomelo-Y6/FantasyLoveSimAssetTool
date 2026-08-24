@@ -25,6 +25,14 @@ namespace FantasyLoveSimAssetTool.Views
             }
         }
 
+        private void OpenLocalAiSettings_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is MainWindowModel model)
+            {
+                new LocalAiSettingsWindow(model.WorkspacePath) { Owner = this }.ShowDialog();
+            }
+        }
+
         private void ImageSourcePath_PreviewDragOver(object sender, DragEventArgs e)
         {
             e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop)
