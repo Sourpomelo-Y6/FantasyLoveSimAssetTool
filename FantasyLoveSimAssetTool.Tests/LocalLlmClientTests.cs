@@ -4,6 +4,7 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -86,6 +87,30 @@ namespace FantasyLoveSimAssetTool.Tests
                 () => client.GetModelIdsAsync("http://localhost:8080", 1));
 
             StringAssert.Contains(error.Message, "タイムアウト");
+        }
+
+        [TestMethod]
+        public async Task GenerateAsync_SendsSpecifiedSystemPromptAndGenerationSettings()
+        {
+            string requestBody = null;
+            using var httpClient = new HttpClient(new AsyncStubHandler(async (request, _) =>
+            {
+                requestBody = await request.Content.ReadAsStringAsync();
+                return Json(HttpStatusCode.OK,
+                    "{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"candidates\\\":[]}\"}}]}");
+            }));
+            using var client = new LocalLlmClient(httpClient);
+
+            await client.GenerateAsync("http://localhost:8080", "model-a",
+                "共通指示", "生成指示", 0.35, 777, 10);
+
+            using JsonDocument requestJson = JsonDocument.Parse(requestBody);
+            JsonElement root = requestJson.RootElement;
+            Assert.AreEqual("共通指示", root.GetProperty("messages")[0].GetProperty("content").GetString());
+            Assert.AreEqual("生成指示", root.GetProperty("messages")[1].GetProperty("content").GetString());
+            Assert.AreEqual(0.35, root.GetProperty("temperature").GetDouble());
+            Assert.AreEqual(777, root.GetProperty("max_tokens").GetInt32());
+            Assert.IsFalse(requestBody.Contains(":null"));
         }
 
         private static HttpResponseMessage Json(HttpStatusCode statusCode, string body)

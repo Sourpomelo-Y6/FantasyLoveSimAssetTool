@@ -16,6 +16,10 @@ namespace FantasyLoveSimAssetTool.Services
 
         Task<LocalLlmTestResult> SendTestAsync(string serverUrl, string modelId, string prompt,
             int timeoutSeconds, CancellationToken cancellationToken = default);
+
+        Task<LocalLlmTestResult> GenerateAsync(string serverUrl, string modelId, string systemPrompt,
+            string userPrompt, double temperature, int maxTokens, int timeoutSeconds,
+            CancellationToken cancellationToken = default);
     }
 
     public sealed class LocalLlmTestResult
@@ -87,8 +91,22 @@ namespace FantasyLoveSimAssetTool.Services
         public async Task<LocalLlmTestResult> SendTestAsync(string serverUrl, string modelId, string prompt,
             int timeoutSeconds, CancellationToken cancellationToken = default)
         {
-            string url = ValidateAndNormalizeUrl(serverUrl);
             if (string.IsNullOrWhiteSpace(prompt)) throw new InvalidOperationException("テスト送信内容を入力してください。");
+
+            return await GenerateAsync(serverUrl, modelId,
+                "あなたは通信テストに簡潔な日本語で応答するアシスタントです。",
+                prompt, 0.7, 1024, timeoutSeconds, cancellationToken);
+        }
+
+        public async Task<LocalLlmTestResult> GenerateAsync(string serverUrl, string modelId, string systemPrompt,
+            string userPrompt, double temperature, int maxTokens, int timeoutSeconds,
+            CancellationToken cancellationToken = default)
+        {
+            string url = ValidateAndNormalizeUrl(serverUrl);
+            if (string.IsNullOrWhiteSpace(systemPrompt)) throw new InvalidOperationException("共通指示が空です。");
+            if (string.IsNullOrWhiteSpace(userPrompt)) throw new InvalidOperationException("生成指示が空です。");
+            if (temperature < 0 || temperature > 2) throw new InvalidOperationException("Temperatureは0～2で指定してください。");
+            if (maxTokens < 1) throw new InvalidOperationException("MaxTokensは1以上にしてください。");
 
             string resolvedModelId = (modelId ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(resolvedModelId))
@@ -104,11 +122,11 @@ namespace FantasyLoveSimAssetTool.Services
                 Model = resolvedModelId,
                 Messages = new List<ChatMessage>
                 {
-                    new ChatMessage { Role = "system", Content = "あなたは通信テストに簡潔な日本語で応答するアシスタントです。" },
-                    new ChatMessage { Role = "user", Content = prompt }
+                    new ChatMessage { Role = "system", Content = systemPrompt },
+                    new ChatMessage { Role = "user", Content = userPrompt }
                 },
-                Temperature = 0.7,
-                MaxTokens = 1024,
+                Temperature = temperature,
+                MaxTokens = maxTokens,
                 Stream = false
             };
 
@@ -128,7 +146,7 @@ namespace FantasyLoveSimAssetTool.Services
             }
             catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
             {
-                throw new InvalidOperationException($"テスト送信が{timeoutSeconds}秒でタイムアウトしました。", ex);
+                throw new InvalidOperationException($"文章生成が{timeoutSeconds}秒でタイムアウトしました。", ex);
             }
             using HttpResponseMessage response = receivedResponse;
             string rawJson = await response.Content.ReadAsStringAsync();

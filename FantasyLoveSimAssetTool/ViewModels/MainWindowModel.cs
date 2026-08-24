@@ -38,6 +38,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly PlayerExportService playerExportService;
         private readonly AudioLibraryService audioLibraryService;
         private readonly AudioPreviewService audioPreviewService;
+        private readonly LocalAiSettingsService localAiSettingsService;
+        private readonly LocalAiInstructionService localAiInstructionService;
+        private readonly LocalLlmClient localLlmClient;
+        private readonly MorningGreetingGenerationService morningGreetingGenerationService;
         private readonly List<AudioLibraryItem> allAudioLibraryItems =
             new List<AudioLibraryItem>();
         private bool legacyWorkspaceChecked;
@@ -182,8 +186,45 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private MenuActionDefinition selectedMenuAction;
         private bool isBattleSkillEditorExpanded;
         private bool isSkillTreeEditorExpanded;
+        private string morningGreetingAiStatus;
+        private string morningGreetingAiPrompt;
+        private string morningGreetingAiRawResponse;
+        private bool isGeneratingMorningGreetings;
+        private CancellationTokenSource morningGreetingCancellation;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
+
+        public ObservableCollection<TextGenerationCandidate> MorningGreetingCandidates { get; }
+
+        public string MorningGreetingAiStatus
+        {
+            get => morningGreetingAiStatus;
+            private set { if (morningGreetingAiStatus != value) { morningGreetingAiStatus = value; OnPropertyChanged(); } }
+        }
+
+        public string MorningGreetingAiPrompt
+        {
+            get => morningGreetingAiPrompt;
+            private set { if (morningGreetingAiPrompt != value) { morningGreetingAiPrompt = value; OnPropertyChanged(); } }
+        }
+
+        public string MorningGreetingAiRawResponse
+        {
+            get => morningGreetingAiRawResponse;
+            private set { if (morningGreetingAiRawResponse != value) { morningGreetingAiRawResponse = value; OnPropertyChanged(); } }
+        }
+
+        public bool IsGeneratingMorningGreetings
+        {
+            get => isGeneratingMorningGreetings;
+            private set
+            {
+                if (isGeneratingMorningGreetings == value) return;
+                isGeneratingMorningGreetings = value;
+                OnPropertyChanged();
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
 
         public ObservableCollection<AudioLibraryItem> AudioLibraryItems { get; }
 
@@ -1419,6 +1460,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 }
 
                 OnPropertyChanged(nameof(SelectedProfile));
+                MorningGreetingCandidates?.Clear();
+                MorningGreetingAiStatus = selectedProfile == null
+                    ? "ヒロインを選択してください。"
+                    : "AI候補はまだ生成されていません。";
+                MorningGreetingAiPrompt = string.Empty;
+                MorningGreetingAiRawResponse = string.Empty;
                 OnPropertyChanged(nameof(TrainingIdSuggestions));
                 OnPropertyChanged(nameof(TrainingUnlockNodeSuggestions));
                 SelectedOutfitMessageOverride = selectedProfile?.OutfitMessageOverrides?.FirstOrDefault();
@@ -2080,6 +2127,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand SaveSelectedProfileCommand { get; }
 
+        public ICommand GenerateMorningGreetingCandidatesCommand { get; }
+
+        public ICommand CancelMorningGreetingGenerationCommand { get; }
+
+        public ICommand AdoptMorningGreetingCandidateCommand { get; }
+
         public ICommand ImportHeroineProfileFromUnityCommand { get; }
 
         public ICommand OpenBattleMessagesTabCommand { get; }
@@ -2323,6 +2376,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             playerExportService = new PlayerExportService(playerProjectService, imageInspectionService);
             audioLibraryService = new AudioLibraryService();
             audioPreviewService = new AudioPreviewService();
+            localAiSettingsService = new LocalAiSettingsService(characterProjectService.WorkspaceRoot);
+            localAiInstructionService = new LocalAiInstructionService(characterProjectService.WorkspaceRoot);
+            localLlmClient = new LocalLlmClient();
+            morningGreetingGenerationService = new MorningGreetingGenerationService(localLlmClient);
             audioPreviewService.PlaybackFailed += OnAudioPreviewFailed;
             ChangeWorkspaceCommand = new RelayCommand(ChangeWorkspace);
             AddTrainingPrerequisiteCommand = new RelayCommand(AddTrainingPrerequisite,
@@ -2334,6 +2391,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ClearTrainingUnlockNodesCommand = new RelayCommand(ClearTrainingUnlockNodes,
                 () => (SelectedTrainingCatalogItem?.UnlockNodeIds?.Count ?? 0) > 0);
             Profiles = new ObservableCollection<HeroineProfile>();
+            MorningGreetingCandidates = new ObservableCollection<TextGenerationCandidate>();
+            morningGreetingAiStatus = "ヒロインを選択してください。";
+            morningGreetingAiPrompt = string.Empty;
+            morningGreetingAiRawResponse = string.Empty;
             ProductionStatusCategories = new ObservableCollection<ProductionStatusCell>();
             AudioLibraryItems = new ObservableCollection<AudioLibraryItem>();
             BgmSeAudioItems = new ObservableCollection<AudioLibraryItem>();
@@ -2633,6 +2694,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             CreateCharacterCommand = new RelayCommand(CreateCharacter);
             SaveSelectedProfileCommand = new RelayCommand(SaveSelectedProfile, () => SelectedProfile != null);
+            GenerateMorningGreetingCandidatesCommand = new AsyncRelayCommand(
+                GenerateMorningGreetingCandidatesAsync,
+                () => SelectedProfile != null && !IsGeneratingMorningGreetings);
+            CancelMorningGreetingGenerationCommand = new RelayCommand(
+                () => morningGreetingCancellation?.Cancel(),
+                () => IsGeneratingMorningGreetings);
+            AdoptMorningGreetingCandidateCommand = new RelayCommand<TextGenerationCandidate>(
+                AdoptMorningGreetingCandidate,
+                candidate => SelectedProfile != null && candidate != null && !string.IsNullOrWhiteSpace(candidate.Text));
             ImportHeroineProfileFromUnityCommand = new RelayCommand(
                 ImportHeroineProfileFromUnity,
                 () => SelectedProfile != null);
@@ -8533,6 +8603,59 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 StatusMessage = $"prompt 保存に失敗しました: {ex.Message}";
             }
+        }
+
+        private async Task GenerateMorningGreetingCandidatesAsync()
+        {
+            if (SelectedProfile == null) return;
+
+            morningGreetingCancellation?.Dispose();
+            morningGreetingCancellation = new CancellationTokenSource();
+            IsGeneratingMorningGreetings = true;
+            MorningGreetingCandidates.Clear();
+            MorningGreetingAiPrompt = MorningGreetingGenerationService.BuildPrompt(SelectedProfile);
+            MorningGreetingAiRawResponse = string.Empty;
+            MorningGreetingAiStatus = "朝の挨拶候補を生成中...";
+            StatusMessage = MorningGreetingAiStatus;
+            try
+            {
+                LocalAiSettings settings = localAiSettingsService.Load();
+                MorningGreetingGenerationResult result = await morningGreetingGenerationService.GenerateAsync(
+                    SelectedProfile,
+                    settings,
+                    localAiInstructionService.Load(),
+                    morningGreetingCancellation.Token);
+
+                foreach (string candidate in result.Candidates)
+                    MorningGreetingCandidates.Add(new TextGenerationCandidate(candidate));
+                MorningGreetingAiRawResponse = result.RawResponse;
+                MorningGreetingAiStatus = $"3件生成しました（Model: {result.ModelId}）。候補を確認して採用してください。";
+                StatusMessage = MorningGreetingAiStatus;
+            }
+            catch (OperationCanceledException)
+            {
+                MorningGreetingAiStatus = "朝の挨拶生成をキャンセルしました。現在の挨拶は変更されていません。";
+                StatusMessage = MorningGreetingAiStatus;
+            }
+            catch (Exception ex)
+            {
+                MorningGreetingAiStatus = $"朝の挨拶生成に失敗しました: {ex.Message}";
+                StatusMessage = MorningGreetingAiStatus;
+            }
+            finally
+            {
+                morningGreetingCancellation.Dispose();
+                morningGreetingCancellation = null;
+                IsGeneratingMorningGreetings = false;
+            }
+        }
+
+        private void AdoptMorningGreetingCandidate(TextGenerationCandidate candidate)
+        {
+            if (SelectedProfile == null || candidate == null || string.IsNullOrWhiteSpace(candidate.Text)) return;
+            SelectedProfile.MorningGreeting = candidate.Text.Trim();
+            MorningGreetingAiStatus = "候補を朝の挨拶へ反映しました。ファイルへ確定するには「基本情報を保存」を押してください。";
+            StatusMessage = MorningGreetingAiStatus;
         }
 
         private void SaveSelectedProfile()

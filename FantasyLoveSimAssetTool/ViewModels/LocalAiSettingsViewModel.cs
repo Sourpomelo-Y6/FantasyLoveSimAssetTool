@@ -14,6 +14,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
     {
         private readonly LocalAiSettingsService settingsService;
         private readonly ILocalLlmClient llmClient;
+        private readonly LocalAiInstructionService instructionService;
         private readonly IDisposable disposableClient;
         private CancellationTokenSource operationCancellation;
         private string serverUrl;
@@ -26,15 +27,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string connectionStatusColor;
         private string statusMessage;
         private bool isBusy;
+        private string baseInstruction;
 
         public LocalAiSettingsViewModel(string workspaceRoot)
-            : this(new LocalAiSettingsService(workspaceRoot), new LocalLlmClient())
+            : this(new LocalAiSettingsService(workspaceRoot), new LocalAiInstructionService(workspaceRoot), new LocalLlmClient())
         {
         }
 
-        public LocalAiSettingsViewModel(LocalAiSettingsService settingsService, ILocalLlmClient llmClient)
+        public LocalAiSettingsViewModel(LocalAiSettingsService settingsService,
+            LocalAiInstructionService instructionService, ILocalLlmClient llmClient)
         {
             this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+            this.instructionService = instructionService ?? throw new ArgumentNullException(nameof(instructionService));
             this.llmClient = llmClient ?? throw new ArgumentNullException(nameof(llmClient));
             disposableClient = llmClient as IDisposable;
             Models = new ObservableCollection<string>();
@@ -85,6 +89,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
             set { if (testPrompt != value) { testPrompt = value; OnPropertyChanged(); } }
         }
 
+        public string BaseInstruction
+        {
+            get => baseInstruction;
+            set { if (baseInstruction != value) { baseInstruction = value; OnPropertyChanged(); } }
+        }
+
         public string TestResult
         {
             get => testResult;
@@ -133,6 +143,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ServerUrl = settings.ServerUrl;
             SelectedModelId = settings.ModelId;
             TimeoutSecondsText = settings.TimeoutSeconds.ToString();
+            BaseInstruction = instructionService.Load();
         }
 
         private void Save()
@@ -140,6 +151,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             try
             {
                 settingsService.Save(CreateSettings());
+                instructionService.Save(BaseInstruction);
                 StatusMessage = $"接続設定を保存しました: {settingsService.SettingsPath}";
             }
             catch (Exception ex)

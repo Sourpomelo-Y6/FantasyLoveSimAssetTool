@@ -7,6 +7,7 @@ namespace FantasyLoveSimAssetTool.Models
     {
         private string appearancePrompt;
         private string stillCommonPositivePrompt;
+        private string morningGreeting;
 
         public string HeroineId { get; set; }
 
@@ -28,7 +29,16 @@ namespace FantasyLoveSimAssetTool.Models
 
         public string NextActionPrompt { get; set; }
 
-        public string MorningGreeting { get; set; }
+        public string MorningGreeting
+        {
+            get { return morningGreeting; }
+            set
+            {
+                if (morningGreeting == value) return;
+                morningGreeting = value;
+                OnPropertyChanged(nameof(MorningGreeting));
+            }
+        }
 
         public string GoodNightGreeting { get; set; }
 
@@ -121,7 +131,7 @@ namespace FantasyLoveSimAssetTool.Models
             SecondPerson = string.Empty;
             InitialDialogueMessage = string.Empty;
             NextActionPrompt = string.Empty;
-            MorningGreeting = string.Empty;
+            morningGreeting = string.Empty;
             GoodNightGreeting = string.Empty;
             GameStartFallbackMessage = string.Empty;
             GameStartFollowUpMessage = string.Empty;

@@ -94,6 +94,15 @@
                             <Button Content="設定を保存" Command="{Binding SaveCommand}"/>
                             <Button Content="通信をキャンセル" Command="{Binding CancelCommand}"/>
                         </WrapPanel>
+                        <Expander Header="文章生成の共通指示" Foreground="#CFAFC0" Margin="0,10,0,0">
+                            <StackPanel Margin="10,8,0,0">
+                                <TextBlock Text="朝の挨拶を含む今後の文章生成へ適用します。空欄で保存すると既定値へ戻ります。"
+                                           Foreground="#A8ADBB" TextWrapping="Wrap"/>
+                                <TextBox Text="{Binding BaseInstruction, UpdateSourceTrigger=PropertyChanged}"
+                                         AcceptsReturn="True" TextWrapping="Wrap" Height="145"
+                                         VerticalScrollBarVisibility="Auto"/>
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
                 </Border>
 
