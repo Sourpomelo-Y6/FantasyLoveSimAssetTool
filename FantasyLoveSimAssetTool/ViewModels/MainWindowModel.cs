@@ -2387,6 +2387,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand RemoveCostumeDefinitionCommand { get; }
 
+        public ICommand PopulateOutfitMessagesFromCostumeDefinitionsCommand { get; }
+
         public ICommand AddLayerAssetDefinitionCommand { get; }
 
         public ICommand RemoveLayerAssetDefinitionCommand { get; }
@@ -3055,6 +3057,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RemoveCostumeDefinitionCommand = new RelayCommand(
                 RemoveCostumeDefinition,
                 () => SelectedCostumeDefinition != null);
+            PopulateOutfitMessagesFromCostumeDefinitionsCommand = new RelayCommand(
+                PopulateOutfitMessagesFromCostumeDefinitions,
+                () => SelectedProfile != null && CostumeDefinitions.Any(costume =>
+                    costume != null && !string.IsNullOrWhiteSpace(costume.CostumeId)));
             AddLayerAssetDefinitionCommand = new RelayCommand(AddLayerAssetDefinition);
             RemoveLayerAssetDefinitionCommand = new RelayCommand(
                 RemoveLayerAssetDefinition,
@@ -8931,6 +8937,52 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SelectedProfile.OutfitMessageOverrides.Add(item);
             SelectedOutfitMessageOverride = item;
             StatusMessage = "衣装メッセージ override を追加しました。";
+        }
+
+        private void PopulateOutfitMessagesFromCostumeDefinitions()
+        {
+            if (SelectedProfile == null)
+            {
+                return;
+            }
+
+            SelectedProfile.OutfitMessageOverrides ??= new ObservableCollection<OutfitMessageOverride>();
+            var existingIds = new HashSet<string>(
+                SelectedProfile.OutfitMessageOverrides
+                    .Where(item => item != null && !string.IsNullOrWhiteSpace(item.OutfitId))
+                    .Select(item => item.OutfitId.Trim()),
+                StringComparer.Ordinal);
+
+            OutfitMessageOverride lastAddedItem = null;
+            int addedCount = 0;
+            foreach (string costumeId in CostumeDefinitions
+                .Where(costume => costume != null && !string.IsNullOrWhiteSpace(costume.CostumeId))
+                .Select(costume => costume.CostumeId.Trim())
+                .Distinct(StringComparer.Ordinal))
+            {
+                if (!existingIds.Add(costumeId))
+                {
+                    continue;
+                }
+
+                lastAddedItem = new OutfitMessageOverride
+                {
+                    OutfitId = costumeId,
+                    LockedMessage = string.Empty,
+                    ChangedMessage = string.Empty
+                };
+                SelectedProfile.OutfitMessageOverrides.Add(lastAddedItem);
+                addedCount++;
+            }
+
+            if (lastAddedItem != null)
+            {
+                SelectedOutfitMessageOverride = lastAddedItem;
+            }
+
+            StatusMessage = addedCount > 0
+                ? $"衣装定義から衣装メッセージ override を {addedCount} 件追加しました。"
+                : "衣装定義の CostumeId はすべて衣装メッセージに登録済みです。";
         }
 
         private void RemoveOutfitMessageOverride()
