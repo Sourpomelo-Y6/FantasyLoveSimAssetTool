@@ -266,13 +266,16 @@ namespace FantasyLoveSimAssetTool.Services
                     {
                         outfitId = item.OutfitId,
                         lockedMessage = item.LockedMessage,
-                        changedMessage = item.ChangedMessage
+                        lockedExpressionId = item.LockedExpressionId,
+                        changedMessage = item.ChangedMessage,
+                        changedExpressionId = item.ChangedExpressionId
                     }).ToList(),
                 outfitReactionMessageOverrides = (profile.OutfitReactionMessageOverrides ?? new System.Collections.ObjectModel.ObservableCollection<OutfitReactionMessageOverride>())
                     .Select(item => new
                     {
                         reactionType = item.ReactionType,
-                        message = item.Message
+                        message = item.Message,
+                        expressionId = item.ExpressionId
                     }).ToList(),
                 battleSkills = BattleSkillSyncService.CreateExportValues(profile)?.Select(item => new
                     {

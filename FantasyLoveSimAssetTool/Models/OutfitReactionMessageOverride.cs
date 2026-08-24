@@ -6,6 +6,7 @@ namespace FantasyLoveSimAssetTool.Models
     {
         private string reactionType;
         private string message;
+        private string expressionId;
 
         public string ReactionType
         {
@@ -19,10 +20,17 @@ namespace FantasyLoveSimAssetTool.Models
             set { if (message != value) { message = value; OnPropertyChanged(); } }
         }
 
+        public string ExpressionId
+        {
+            get => expressionId;
+            set { if (expressionId != value) { expressionId = value; OnPropertyChanged(); } }
+        }
+
         public OutfitReactionMessageOverride()
         {
             reactionType = string.Empty;
             message = string.Empty;
+            expressionId = string.Empty;
         }
     }
 }

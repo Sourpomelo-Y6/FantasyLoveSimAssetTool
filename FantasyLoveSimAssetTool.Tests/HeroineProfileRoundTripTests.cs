@@ -43,10 +43,13 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(1, loaded.OutfitMessageOverrides.Count);
             Assert.AreEqual("Formal", loaded.OutfitMessageOverrides[0].OutfitId);
             Assert.AreEqual("まだ選べません", loaded.OutfitMessageOverrides[0].LockedMessage);
+            Assert.AreEqual("Concerned", loaded.OutfitMessageOverrides[0].LockedExpressionId);
             Assert.AreEqual("似合っています", loaded.OutfitMessageOverrides[0].ChangedMessage);
+            Assert.AreEqual("Smile", loaded.OutfitMessageOverrides[0].ChangedExpressionId);
             Assert.AreEqual(1, loaded.OutfitReactionMessageOverrides.Count);
             Assert.AreEqual("Like", loaded.OutfitReactionMessageOverrides[0].ReactionType);
             Assert.AreEqual("素敵ですね", loaded.OutfitReactionMessageOverrides[0].Message);
+            Assert.AreEqual("Shy", loaded.OutfitReactionMessageOverrides[0].ExpressionId);
             Assert.IsTrue(loaded.BattleSkillsSpecified);
             Assert.AreEqual("heroine_heal", loaded.BattleSkills[0].SkillId);
             Assert.AreEqual(12, loaded.ConversationEntries[0].AffectionChange);
@@ -81,7 +84,10 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(source.InitialDialogueMessage, root.GetProperty("initialDialogueMessage").GetString());
             Assert.AreEqual(source.GameStartFollowUpMessage, root.GetProperty("gameStartFollowUpMessage").GetString());
             Assert.AreEqual("Formal", root.GetProperty("outfitMessageOverrides")[0].GetProperty("outfitId").GetString());
+            Assert.AreEqual("Concerned", root.GetProperty("outfitMessageOverrides")[0].GetProperty("lockedExpressionId").GetString());
+            Assert.AreEqual("Smile", root.GetProperty("outfitMessageOverrides")[0].GetProperty("changedExpressionId").GetString());
             Assert.AreEqual("Like", root.GetProperty("outfitReactionMessageOverrides")[0].GetProperty("reactionType").GetString());
+            Assert.AreEqual("Shy", root.GetProperty("outfitReactionMessageOverrides")[0].GetProperty("expressionId").GetString());
             Assert.AreEqual("heroine_heal", root.GetProperty("battleSkills")[0].GetProperty("skillId").GetString());
             Assert.AreEqual(source.ConversationResourcePath, root.GetProperty("conversationResourcePath").GetString());
             Assert.AreEqual(source.EndingResourcePath, root.GetProperty("endingResourcePath").GetString());
@@ -150,12 +156,19 @@ namespace FantasyLoveSimAssetTool.Tests
                     {
                         OutfitId = "Formal",
                         LockedMessage = "まだ選べません",
-                        ChangedMessage = "似合っています"
+                        LockedExpressionId = "Concerned",
+                        ChangedMessage = "似合っています",
+                        ChangedExpressionId = "Smile"
                     }
                 },
                 OutfitReactionMessageOverrides = new ObservableCollection<OutfitReactionMessageOverride>
                 {
-                    new OutfitReactionMessageOverride { ReactionType = "Like", Message = "素敵ですね" }
+                    new OutfitReactionMessageOverride
+                    {
+                        ReactionType = "Like",
+                        Message = "素敵ですね",
+                        ExpressionId = "Shy"
+                    }
                 },
                 BattleSkillsSpecified = true,
                 BattleSkills = new ObservableCollection<HeroineBattleSkill>

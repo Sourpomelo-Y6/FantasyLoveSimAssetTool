@@ -8957,7 +8957,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                         .Where(overrideItem => overrideItem != null)
                         .Select(overrideItem => overrideItem.OutfitId)),
                 LockedMessage = string.Empty,
-                ChangedMessage = string.Empty
+                LockedExpressionId = string.Empty,
+                ChangedMessage = string.Empty,
+                ChangedExpressionId = string.Empty
             };
             SelectedProfile.OutfitMessageOverrides.Add(item);
             SelectedOutfitMessageOverride = item;
@@ -8994,7 +8996,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 {
                     OutfitId = costumeId,
                     LockedMessage = string.Empty,
-                    ChangedMessage = string.Empty
+                    LockedExpressionId = string.Empty,
+                    ChangedMessage = string.Empty,
+                    ChangedExpressionId = string.Empty
                 };
                 SelectedProfile.OutfitMessageOverrides.Add(lastAddedItem);
                 addedCount++;
@@ -9041,7 +9045,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     SelectedProfile.OutfitReactionMessageOverrides
                         .Where(overrideItem => overrideItem != null)
                         .Select(overrideItem => overrideItem.ReactionType)),
-                Message = string.Empty
+                Message = string.Empty,
+                ExpressionId = string.Empty
             };
             SelectedProfile.OutfitReactionMessageOverrides.Add(item);
             SelectedOutfitReactionMessageOverride = item;
@@ -9075,7 +9080,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 lastAddedItem = new OutfitReactionMessageOverride
                 {
                     ReactionType = reactionType,
-                    Message = string.Empty
+                    Message = string.Empty,
+                    ExpressionId = string.Empty
                 };
                 SelectedProfile.OutfitReactionMessageOverrides.Add(lastAddedItem);
                 addedCount++;
@@ -9205,7 +9211,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     {
                         OutfitId = item.OutfitId.Trim(),
                         LockedMessage = item.LockedMessage ?? string.Empty,
-                        ChangedMessage = item.ChangedMessage ?? string.Empty
+                        LockedExpressionId = item.LockedExpressionId ?? string.Empty,
+                        ChangedMessage = item.ChangedMessage ?? string.Empty,
+                        ChangedExpressionId = item.ChangedExpressionId ?? string.Empty
                     });
                     addedOutfitCount++;
                 }
@@ -9225,7 +9233,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     SelectedProfile.OutfitReactionMessageOverrides.Add(new OutfitReactionMessageOverride
                     {
                         ReactionType = item.ReactionType.Trim(),
-                        Message = item.Message ?? string.Empty
+                        Message = item.Message ?? string.Empty,
+                        ExpressionId = item.ExpressionId ?? string.Empty
                     });
                     addedReactionCount++;
                 }

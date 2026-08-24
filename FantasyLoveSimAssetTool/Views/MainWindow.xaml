@@ -428,9 +428,27 @@
                                             <DataGridTextColumn Header="lockedMessage"
                                                                 Width="*"
                                                                 Binding="{Binding LockedMessage, UpdateSourceTrigger=PropertyChanged}"/>
+                                            <DataGridTemplateColumn Header="locked表情" Width="130">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <ComboBox ItemsSource="{Binding Data.ExpressionIdOptions, Source={StaticResource ViewModelProxy}}"
+                                                                  Text="{Binding LockedExpressionId, UpdateSourceTrigger=PropertyChanged}"
+                                                                  IsEditable="True"/>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
                                             <DataGridTextColumn Header="changedMessage"
                                                                 Width="*"
                                                                 Binding="{Binding ChangedMessage, UpdateSourceTrigger=PropertyChanged}"/>
+                                            <DataGridTemplateColumn Header="changed表情" Width="130">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <ComboBox ItemsSource="{Binding Data.ExpressionIdOptions, Source={StaticResource ViewModelProxy}}"
+                                                                  Text="{Binding ChangedExpressionId, UpdateSourceTrigger=PropertyChanged}"
+                                                                  IsEditable="True"/>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
                                         </DataGrid.Columns>
                                     </DataGrid>
 
@@ -480,6 +498,15 @@
                                             <DataGridTextColumn Header="message"
                                                                 Width="*"
                                                                 Binding="{Binding Message, UpdateSourceTrigger=PropertyChanged}"/>
+                                            <DataGridTemplateColumn Header="表情" Width="150">
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <ComboBox ItemsSource="{Binding Data.ExpressionIdOptions, Source={StaticResource ViewModelProxy}}"
+                                                                  Text="{Binding ExpressionId, UpdateSourceTrigger=PropertyChanged}"
+                                                                  IsEditable="True"/>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
                                         </DataGrid.Columns>
                                     </DataGrid>
 
