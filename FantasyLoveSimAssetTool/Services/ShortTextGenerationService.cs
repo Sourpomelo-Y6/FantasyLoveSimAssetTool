@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace FantasyLoveSimAssetTool.Services
 {
-    public sealed class MorningGreetingGenerationResult
+    public sealed class ShortTextGenerationResult
     {
         public IReadOnlyList<string> Candidates { get; set; }
         public string Prompt { get; set; }
@@ -17,34 +17,30 @@ namespace FantasyLoveSimAssetTool.Services
         public string ModelId { get; set; }
     }
 
-    public sealed class MorningGreetingGenerationService
+    public sealed class ShortTextGenerationService
     {
         private readonly ILocalLlmClient llmClient;
 
-        public MorningGreetingGenerationService(ILocalLlmClient llmClient)
+        public ShortTextGenerationService(ILocalLlmClient llmClient)
         {
             this.llmClient = llmClient ?? throw new ArgumentNullException(nameof(llmClient));
         }
 
-        public async Task<MorningGreetingGenerationResult> GenerateAsync(
+        public async Task<ShortTextGenerationResult> GenerateAsync(
             HeroineProfile profile,
+            ShortTextGenerationTarget target,
             LocalAiSettings settings,
             string baseInstruction,
             CancellationToken cancellationToken = default)
         {
             if (profile == null) throw new InvalidOperationException("ヒロインを選択してください。");
-            string prompt = BuildPrompt(profile);
+            if (target == null) throw new InvalidOperationException("生成対象を選択してください。");
+            string prompt = BuildPrompt(profile, target);
             LocalLlmTestResult response = await llmClient.GenerateAsync(
-                settings.ServerUrl,
-                settings.ModelId,
-                baseInstruction,
-                prompt,
-                settings.Temperature,
-                settings.MaxTokens,
-                settings.TimeoutSeconds,
-                cancellationToken);
+                settings.ServerUrl, settings.ModelId, baseInstruction, prompt,
+                settings.Temperature, settings.MaxTokens, settings.TimeoutSeconds, cancellationToken);
 
-            return new MorningGreetingGenerationResult
+            return new ShortTextGenerationResult
             {
                 Candidates = ParseCandidates(response.Content),
                 Prompt = prompt,
@@ -53,16 +49,18 @@ namespace FantasyLoveSimAssetTool.Services
             };
         }
 
-        public static string BuildPrompt(HeroineProfile profile)
+        public static string BuildPrompt(HeroineProfile profile, ShortTextGenerationTarget target)
         {
             var builder = new StringBuilder();
-            builder.AppendLine("次のキャラクターの朝の挨拶を、異なる内容で3件作成してください。");
-            builder.AppendLine("各15～50文字のセリフだけにしてください。");
+            builder.AppendLine($"{target.Purpose}を、異なる内容で3件作成してください。");
+            builder.AppendLine($"各{target.MinLength}～{target.MaxLength}文字のセリフだけにしてください。");
             Append(builder, "名前", profile.DisplayName, 40);
             Append(builder, "性格", profile.Personality, 200);
             Append(builder, "口調", profile.SpeakingStyle, 200);
             Append(builder, "一人称", profile.FirstPerson, 40);
             Append(builder, "二人称", profile.SecondPerson, 40);
+            if (target.IncludeActionPolicy)
+                Append(builder, "行動反応方針", profile.ActionReactionPolicy, 200);
             builder.AppendLine("{\"candidates\":[{\"text\":\"候補1\"},{\"text\":\"候補2\"},{\"text\":\"候補3\"}]}");
             return builder.ToString().Trim();
         }
@@ -78,11 +76,7 @@ namespace FantasyLoveSimAssetTool.Services
                     throw new InvalidOperationException("生成結果にcandidates配列がありません。");
 
                 List<string> values = candidates.EnumerateArray()
-                    .Select(item => item.ValueKind == JsonValueKind.String
-                        ? item.GetString()
-                        : item.TryGetProperty("text", out JsonElement text) && text.ValueKind == JsonValueKind.String
-                            ? text.GetString()
-                            : string.Empty)
+                    .Select(GetCandidateText)
                     .Select(text => (text ?? string.Empty).Trim())
                     .Where(text => !string.IsNullOrWhiteSpace(text))
                     .Distinct(StringComparer.Ordinal)
@@ -96,6 +90,15 @@ namespace FantasyLoveSimAssetTool.Services
             {
                 throw new InvalidOperationException("生成結果を候補JSONとして解析できません。", ex);
             }
+        }
+
+        private static string GetCandidateText(JsonElement item)
+        {
+            if (item.ValueKind == JsonValueKind.String) return item.GetString();
+            if (item.ValueKind == JsonValueKind.Object &&
+                item.TryGetProperty("text", out JsonElement text) && text.ValueKind == JsonValueKind.String)
+                return text.GetString();
+            return string.Empty;
         }
 
         private static string ExtractJson(string content)

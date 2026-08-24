@@ -41,7 +41,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly LocalAiSettingsService localAiSettingsService;
         private readonly LocalAiInstructionService localAiInstructionService;
         private readonly LocalLlmClient localLlmClient;
-        private readonly MorningGreetingGenerationService morningGreetingGenerationService;
+        private readonly ShortTextGenerationService shortTextGenerationService;
         private readonly List<AudioLibraryItem> allAudioLibraryItems =
             new List<AudioLibraryItem>();
         private bool legacyWorkspaceChecked;
@@ -186,41 +186,60 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private MenuActionDefinition selectedMenuAction;
         private bool isBattleSkillEditorExpanded;
         private bool isSkillTreeEditorExpanded;
-        private string morningGreetingAiStatus;
-        private string morningGreetingAiPrompt;
-        private string morningGreetingAiRawResponse;
-        private bool isGeneratingMorningGreetings;
-        private CancellationTokenSource morningGreetingCancellation;
+        private string shortTextAiStatus;
+        private string shortTextAiPrompt;
+        private string shortTextAiRawResponse;
+        private bool isGeneratingShortText;
+        private CancellationTokenSource shortTextGenerationCancellation;
+        private ShortTextGenerationTarget selectedShortTextTarget;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
 
-        public ObservableCollection<TextGenerationCandidate> MorningGreetingCandidates { get; }
+        public ObservableCollection<TextGenerationCandidate> ShortTextCandidates { get; }
 
-        public string MorningGreetingAiStatus
+        public ObservableCollection<ShortTextGenerationTarget> ShortTextTargets { get; }
+
+        public ShortTextGenerationTarget SelectedShortTextTarget
         {
-            get => morningGreetingAiStatus;
-            private set { if (morningGreetingAiStatus != value) { morningGreetingAiStatus = value; OnPropertyChanged(); } }
+            get => selectedShortTextTarget;
+            set
+            {
+                if (selectedShortTextTarget == value) return;
+                shortTextGenerationCancellation?.Cancel();
+                selectedShortTextTarget = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(CurrentShortTextValue));
+                ClearShortTextGenerationResult();
+            }
         }
 
-        public string MorningGreetingAiPrompt
+        public string CurrentShortTextValue => GetShortTextValue(SelectedProfile, SelectedShortTextTarget);
+
+        public string ShortTextAiStatus
         {
-            get => morningGreetingAiPrompt;
-            private set { if (morningGreetingAiPrompt != value) { morningGreetingAiPrompt = value; OnPropertyChanged(); } }
+            get => shortTextAiStatus;
+            private set { if (shortTextAiStatus != value) { shortTextAiStatus = value; OnPropertyChanged(); } }
         }
 
-        public string MorningGreetingAiRawResponse
+        public string ShortTextAiPrompt
         {
-            get => morningGreetingAiRawResponse;
-            private set { if (morningGreetingAiRawResponse != value) { morningGreetingAiRawResponse = value; OnPropertyChanged(); } }
+            get => shortTextAiPrompt;
+            private set { if (shortTextAiPrompt != value) { shortTextAiPrompt = value; OnPropertyChanged(); } }
         }
 
-        public bool IsGeneratingMorningGreetings
+        public string ShortTextAiRawResponse
         {
-            get => isGeneratingMorningGreetings;
+            get => shortTextAiRawResponse;
+            private set { if (shortTextAiRawResponse != value) { shortTextAiRawResponse = value; OnPropertyChanged(); } }
+        }
+
+        public bool IsGeneratingShortText
+        {
+            get => isGeneratingShortText;
             private set
             {
-                if (isGeneratingMorningGreetings == value) return;
-                isGeneratingMorningGreetings = value;
+                if (isGeneratingShortText == value) return;
+                isGeneratingShortText = value;
                 OnPropertyChanged();
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -1460,12 +1479,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 }
 
                 OnPropertyChanged(nameof(SelectedProfile));
-                MorningGreetingCandidates?.Clear();
-                MorningGreetingAiStatus = selectedProfile == null
-                    ? "ヒロインを選択してください。"
-                    : "AI候補はまだ生成されていません。";
-                MorningGreetingAiPrompt = string.Empty;
-                MorningGreetingAiRawResponse = string.Empty;
+                OnPropertyChanged(nameof(CurrentShortTextValue));
+                ClearShortTextGenerationResult();
                 OnPropertyChanged(nameof(TrainingIdSuggestions));
                 OnPropertyChanged(nameof(TrainingUnlockNodeSuggestions));
                 SelectedOutfitMessageOverride = selectedProfile?.OutfitMessageOverrides?.FirstOrDefault();
@@ -2127,11 +2142,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand SaveSelectedProfileCommand { get; }
 
-        public ICommand GenerateMorningGreetingCandidatesCommand { get; }
+        public ICommand GenerateShortTextCandidatesCommand { get; }
 
-        public ICommand CancelMorningGreetingGenerationCommand { get; }
+        public ICommand CancelShortTextGenerationCommand { get; }
 
-        public ICommand AdoptMorningGreetingCandidateCommand { get; }
+        public ICommand AdoptShortTextCandidateCommand { get; }
 
         public ICommand ImportHeroineProfileFromUnityCommand { get; }
 
@@ -2379,7 +2394,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             localAiSettingsService = new LocalAiSettingsService(characterProjectService.WorkspaceRoot);
             localAiInstructionService = new LocalAiInstructionService(characterProjectService.WorkspaceRoot);
             localLlmClient = new LocalLlmClient();
-            morningGreetingGenerationService = new MorningGreetingGenerationService(localLlmClient);
+            shortTextGenerationService = new ShortTextGenerationService(localLlmClient);
             audioPreviewService.PlaybackFailed += OnAudioPreviewFailed;
             ChangeWorkspaceCommand = new RelayCommand(ChangeWorkspace);
             AddTrainingPrerequisiteCommand = new RelayCommand(AddTrainingPrerequisite,
@@ -2391,10 +2406,20 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ClearTrainingUnlockNodesCommand = new RelayCommand(ClearTrainingUnlockNodes,
                 () => (SelectedTrainingCatalogItem?.UnlockNodeIds?.Count ?? 0) > 0);
             Profiles = new ObservableCollection<HeroineProfile>();
-            MorningGreetingCandidates = new ObservableCollection<TextGenerationCandidate>();
-            morningGreetingAiStatus = "ヒロインを選択してください。";
-            morningGreetingAiPrompt = string.Empty;
-            morningGreetingAiRawResponse = string.Empty;
+            ShortTextCandidates = new ObservableCollection<TextGenerationCandidate>();
+            ShortTextTargets = new ObservableCollection<ShortTextGenerationTarget>
+            {
+                new ShortTextGenerationTarget("InitialDialogueMessage", "初回台詞", "ゲーム開始後、最初にプレイヤーへ話す台詞", 15, 60),
+                new ShortTextGenerationTarget("NextActionPrompt", "次の行動", "プレイヤーへ次の行動選択を促す台詞", 10, 50, true),
+                new ShortTextGenerationTarget("MorningGreeting", "朝の挨拶", "朝、最初にプレイヤーへ話す挨拶", 15, 50),
+                new ShortTextGenerationTarget("GoodNightGreeting", "夜の挨拶", "一日の終わりにプレイヤーへ話す挨拶", 15, 50),
+                new ShortTextGenerationTarget("GameStartFallbackMessage", "開始時fallback", "専用イベントがないゲーム開始時に表示する台詞", 15, 60),
+                new ShortTextGenerationTarget("GameStartFollowUpMessage", "開始後メッセージ", "ゲーム開始時の案内に続けて表示する短い台詞", 10, 60)
+            };
+            selectedShortTextTarget = ShortTextTargets.First(target => target.Id == "MorningGreeting");
+            shortTextAiStatus = "ヒロインを選択してください。";
+            shortTextAiPrompt = string.Empty;
+            shortTextAiRawResponse = string.Empty;
             ProductionStatusCategories = new ObservableCollection<ProductionStatusCell>();
             AudioLibraryItems = new ObservableCollection<AudioLibraryItem>();
             BgmSeAudioItems = new ObservableCollection<AudioLibraryItem>();
@@ -2694,14 +2719,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             CreateCharacterCommand = new RelayCommand(CreateCharacter);
             SaveSelectedProfileCommand = new RelayCommand(SaveSelectedProfile, () => SelectedProfile != null);
-            GenerateMorningGreetingCandidatesCommand = new AsyncRelayCommand(
-                GenerateMorningGreetingCandidatesAsync,
-                () => SelectedProfile != null && !IsGeneratingMorningGreetings);
-            CancelMorningGreetingGenerationCommand = new RelayCommand(
-                () => morningGreetingCancellation?.Cancel(),
-                () => IsGeneratingMorningGreetings);
-            AdoptMorningGreetingCandidateCommand = new RelayCommand<TextGenerationCandidate>(
-                AdoptMorningGreetingCandidate,
+            GenerateShortTextCandidatesCommand = new AsyncRelayCommand(
+                GenerateShortTextCandidatesAsync,
+                () => SelectedProfile != null && SelectedShortTextTarget != null && !IsGeneratingShortText);
+            CancelShortTextGenerationCommand = new RelayCommand(
+                () => shortTextGenerationCancellation?.Cancel(),
+                () => IsGeneratingShortText);
+            AdoptShortTextCandidateCommand = new RelayCommand<TextGenerationCandidate>(
+                AdoptShortTextCandidate,
                 candidate => SelectedProfile != null && candidate != null && !string.IsNullOrWhiteSpace(candidate.Text));
             ImportHeroineProfileFromUnityCommand = new RelayCommand(
                 ImportHeroineProfileFromUnity,
@@ -8605,57 +8630,104 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
-        private async Task GenerateMorningGreetingCandidatesAsync()
+        private async Task GenerateShortTextCandidatesAsync()
         {
-            if (SelectedProfile == null) return;
+            if (SelectedProfile == null || SelectedShortTextTarget == null) return;
+            ShortTextGenerationTarget target = SelectedShortTextTarget;
 
-            morningGreetingCancellation?.Dispose();
-            morningGreetingCancellation = new CancellationTokenSource();
-            IsGeneratingMorningGreetings = true;
-            MorningGreetingCandidates.Clear();
-            MorningGreetingAiPrompt = MorningGreetingGenerationService.BuildPrompt(SelectedProfile);
-            MorningGreetingAiRawResponse = string.Empty;
-            MorningGreetingAiStatus = "朝の挨拶候補を生成中...";
-            StatusMessage = MorningGreetingAiStatus;
+            shortTextGenerationCancellation?.Dispose();
+            shortTextGenerationCancellation = new CancellationTokenSource();
+            IsGeneratingShortText = true;
+            ShortTextCandidates.Clear();
+            ShortTextAiPrompt = ShortTextGenerationService.BuildPrompt(SelectedProfile, target);
+            ShortTextAiRawResponse = string.Empty;
+            ShortTextAiStatus = $"{target.DisplayName}の候補を生成中...";
+            StatusMessage = ShortTextAiStatus;
             try
             {
                 LocalAiSettings settings = localAiSettingsService.Load();
-                MorningGreetingGenerationResult result = await morningGreetingGenerationService.GenerateAsync(
+                ShortTextGenerationResult result = await shortTextGenerationService.GenerateAsync(
                     SelectedProfile,
+                    target,
                     settings,
                     localAiInstructionService.Load(),
-                    morningGreetingCancellation.Token);
+                    shortTextGenerationCancellation.Token);
 
+                if (SelectedShortTextTarget != target) return;
                 foreach (string candidate in result.Candidates)
-                    MorningGreetingCandidates.Add(new TextGenerationCandidate(candidate));
-                MorningGreetingAiRawResponse = result.RawResponse;
-                MorningGreetingAiStatus = $"3件生成しました（Model: {result.ModelId}）。候補を確認して採用してください。";
-                StatusMessage = MorningGreetingAiStatus;
+                    ShortTextCandidates.Add(new TextGenerationCandidate(candidate));
+                ShortTextAiRawResponse = result.RawResponse;
+                ShortTextAiStatus = $"{target.DisplayName}を3件生成しました（Model: {result.ModelId}）。";
+                StatusMessage = ShortTextAiStatus;
             }
             catch (OperationCanceledException)
             {
-                MorningGreetingAiStatus = "朝の挨拶生成をキャンセルしました。現在の挨拶は変更されていません。";
-                StatusMessage = MorningGreetingAiStatus;
+                ShortTextAiStatus = SelectedShortTextTarget == target
+                    ? "文章生成をキャンセルしました。現在値は変更されていません。"
+                    : "生成対象を確認して「3案を生成」を押してください。";
+                StatusMessage = ShortTextAiStatus;
             }
             catch (Exception ex)
             {
-                MorningGreetingAiStatus = $"朝の挨拶生成に失敗しました: {ex.Message}";
-                StatusMessage = MorningGreetingAiStatus;
+                ShortTextAiStatus = $"文章生成に失敗しました: {ex.Message}";
+                StatusMessage = ShortTextAiStatus;
             }
             finally
             {
-                morningGreetingCancellation.Dispose();
-                morningGreetingCancellation = null;
-                IsGeneratingMorningGreetings = false;
+                shortTextGenerationCancellation.Dispose();
+                shortTextGenerationCancellation = null;
+                IsGeneratingShortText = false;
             }
         }
 
-        private void AdoptMorningGreetingCandidate(TextGenerationCandidate candidate)
+        private void AdoptShortTextCandidate(TextGenerationCandidate candidate)
         {
-            if (SelectedProfile == null || candidate == null || string.IsNullOrWhiteSpace(candidate.Text)) return;
-            SelectedProfile.MorningGreeting = candidate.Text.Trim();
-            MorningGreetingAiStatus = "候補を朝の挨拶へ反映しました。ファイルへ確定するには「基本情報を保存」を押してください。";
-            StatusMessage = MorningGreetingAiStatus;
+            if (SelectedProfile == null || SelectedShortTextTarget == null ||
+                candidate == null || string.IsNullOrWhiteSpace(candidate.Text)) return;
+            SetShortTextValue(SelectedProfile, SelectedShortTextTarget, candidate.Text.Trim());
+            OnPropertyChanged(nameof(SelectedProfile));
+            OnPropertyChanged(nameof(CurrentShortTextValue));
+            ShortTextAiStatus = $"候補を「{SelectedShortTextTarget.DisplayName}」へ反映しました。保存ボタンで確定してください。";
+            StatusMessage = ShortTextAiStatus;
+        }
+
+        private void ClearShortTextGenerationResult()
+        {
+            ShortTextCandidates?.Clear();
+            ShortTextAiStatus = SelectedProfile == null
+                ? "ヒロインを選択してください。"
+                : "生成対象を確認して「3案を生成」を押してください。";
+            ShortTextAiPrompt = string.Empty;
+            ShortTextAiRawResponse = string.Empty;
+        }
+
+        private static string GetShortTextValue(HeroineProfile profile, ShortTextGenerationTarget target)
+        {
+            if (profile == null || target == null) return string.Empty;
+            switch (target.Id)
+            {
+                case "InitialDialogueMessage": return profile.InitialDialogueMessage ?? string.Empty;
+                case "NextActionPrompt": return profile.NextActionPrompt ?? string.Empty;
+                case "MorningGreeting": return profile.MorningGreeting ?? string.Empty;
+                case "GoodNightGreeting": return profile.GoodNightGreeting ?? string.Empty;
+                case "GameStartFallbackMessage": return profile.GameStartFallbackMessage ?? string.Empty;
+                case "GameStartFollowUpMessage": return profile.GameStartFollowUpMessage ?? string.Empty;
+                default: return string.Empty;
+            }
+        }
+
+        private static void SetShortTextValue(HeroineProfile profile, ShortTextGenerationTarget target, string value)
+        {
+            switch (target.Id)
+            {
+                case "InitialDialogueMessage": profile.InitialDialogueMessage = value; break;
+                case "NextActionPrompt": profile.NextActionPrompt = value; break;
+                case "MorningGreeting": profile.MorningGreeting = value; break;
+                case "GoodNightGreeting": profile.GoodNightGreeting = value; break;
+                case "GameStartFallbackMessage": profile.GameStartFallbackMessage = value; break;
+                case "GameStartFollowUpMessage": profile.GameStartFollowUpMessage = value; break;
+                default: throw new InvalidOperationException($"未対応の生成対象です: {target.Id}");
+            }
         }
 
         private void SaveSelectedProfile()
