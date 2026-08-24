@@ -315,19 +315,19 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public HeroineBattleSkill SelectedProductionBattleSkill
         {
             get => selectedProductionBattleSkill;
-            set { if (selectedProductionBattleSkill != value) { selectedProductionBattleSkill = value; OnPropertyChanged(nameof(SelectedProductionBattleSkill)); } }
+            set { if (selectedProductionBattleSkill != value) { selectedProductionBattleSkill = value; OnPropertyChanged(nameof(SelectedProductionBattleSkill)); CommandManager.InvalidateRequerySuggested(); } }
         }
 
         public HeroineTrainingSkill SelectedProductionTrainingSkill
         {
             get => selectedProductionTrainingSkill;
-            set { if (selectedProductionTrainingSkill != value) { selectedProductionTrainingSkill = value; OnPropertyChanged(nameof(SelectedProductionTrainingSkill)); } }
+            set { if (selectedProductionTrainingSkill != value) { selectedProductionTrainingSkill = value; OnPropertyChanged(nameof(SelectedProductionTrainingSkill)); CommandManager.InvalidateRequerySuggested(); } }
         }
 
         public HeroineSkillTreeNode SelectedProductionSkillTreeNode
         {
             get => selectedProductionSkillTreeNode;
-            set { if (selectedProductionSkillTreeNode != value) { selectedProductionSkillTreeNode = value; OnPropertyChanged(nameof(SelectedProductionSkillTreeNode)); } }
+            set { if (selectedProductionSkillTreeNode != value) { selectedProductionSkillTreeNode = value; OnPropertyChanged(nameof(SelectedProductionSkillTreeNode)); CommandManager.InvalidateRequerySuggested(); } }
         }
 
         public bool IsBattleSkillEditorExpanded
@@ -2220,6 +2220,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ImportHeroineProfileFromUnityCommand { get; }
 
+        public ICommand AddBattleSkillCommand { get; }
+        public ICommand DuplicateBattleSkillCommand { get; }
+        public ICommand RemoveBattleSkillCommand { get; }
+        public ICommand AddTrainingSkillCommand { get; }
+        public ICommand DuplicateTrainingSkillCommand { get; }
+        public ICommand RemoveTrainingSkillCommand { get; }
+        public ICommand AddSkillTreeNodeCommand { get; }
+        public ICommand DuplicateSkillTreeNodeCommand { get; }
+        public ICommand RemoveSkillTreeNodeCommand { get; }
+
         public ICommand OpenBattleMessagesTabCommand { get; }
 
         public ICommand RefreshProductionStatusCommand { get; }
@@ -2817,6 +2827,21 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ImportHeroineProfileFromUnityCommand = new RelayCommand(
                 ImportHeroineProfileFromUnity,
                 () => SelectedProfile != null);
+            AddBattleSkillCommand = new RelayCommand(AddBattleSkill, () => SelectedProfile != null);
+            DuplicateBattleSkillCommand = new RelayCommand(DuplicateBattleSkill,
+                () => SelectedProfile != null && SelectedProductionBattleSkill != null);
+            RemoveBattleSkillCommand = new RelayCommand(RemoveBattleSkill,
+                () => SelectedProfile != null && SelectedProductionBattleSkill != null);
+            AddTrainingSkillCommand = new RelayCommand(AddTrainingSkill, () => SelectedProfile != null);
+            DuplicateTrainingSkillCommand = new RelayCommand(DuplicateTrainingSkill,
+                () => SelectedProfile != null && SelectedProductionTrainingSkill != null);
+            RemoveTrainingSkillCommand = new RelayCommand(RemoveTrainingSkill,
+                () => SelectedProfile != null && SelectedProductionTrainingSkill != null);
+            AddSkillTreeNodeCommand = new RelayCommand(AddSkillTreeNode, () => SelectedProfile != null);
+            DuplicateSkillTreeNodeCommand = new RelayCommand(DuplicateSkillTreeNode,
+                () => SelectedProfile != null && SelectedProductionSkillTreeNode != null);
+            RemoveSkillTreeNodeCommand = new RelayCommand(RemoveSkillTreeNode,
+                () => SelectedProfile != null && SelectedProductionSkillTreeNode != null);
             OpenBattleMessagesTabCommand = new RelayCommand(() => SelectedMainTabIndex = 2);
             RefreshProductionStatusCommand = new RelayCommand(RefreshProductionStatus);
             OpenProductionStatusTargetCommand = new RelayCommand<object>(OpenProductionStatusTarget);
@@ -8364,6 +8389,168 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SelectedConversationExpressionSuggestion = ConversationExpressionSuggestions.Contains(previous)
                 ? previous
                 : ConversationExpressionSuggestions.FirstOrDefault() ?? string.Empty;
+        }
+
+        private string HeroineSkillIdPrefix()
+        {
+            return string.IsNullOrWhiteSpace(SelectedProfile?.HeroineId) ? "Heroine" : SelectedProfile.HeroineId.Trim();
+        }
+
+        private void AddBattleSkill()
+        {
+            SelectedProfile.BattleSkills ??= new ObservableCollection<HeroineBattleSkill>();
+            HeroineBattleSkill item = new HeroineBattleSkill
+            {
+                SkillId = BuildUniqueId(HeroineSkillIdPrefix() + "_BattleSkill", SelectedProfile.BattleSkills.Select(x => x?.SkillId)),
+                DisplayName = "新しい戦闘スキル"
+            };
+            SelectedProfile.BattleSkills.Add(item);
+            SelectedProfile.BattleSkillsSpecified = true;
+            SelectedProductionBattleSkill = item;
+            StatusMessage = $"戦闘スキル {item.SkillId} を追加しました。";
+        }
+
+        private void DuplicateBattleSkill()
+        {
+            HeroineBattleSkill source = SelectedProductionBattleSkill;
+            HeroineBattleSkill item = new HeroineBattleSkill
+            {
+                SkillId = BuildUniqueId(source.SkillId + "_Copy", SelectedProfile.BattleSkills.Select(x => x?.SkillId)),
+                DisplayName = source.DisplayName,
+                EffectType = source.EffectType,
+                Target = source.Target,
+                Cost = source.Cost,
+                Power = source.Power,
+                AffectedStat = source.AffectedStat,
+                StatusDurationTurns = source.StatusDurationTurns,
+                UseChancePercent = source.UseChancePercent,
+                Priority = source.Priority,
+                MaxUsesPerBattle = source.MaxUsesPerBattle
+            };
+            SelectedProfile.BattleSkills.Add(item);
+            SelectedProfile.BattleSkillsSpecified = true;
+            SelectedProductionBattleSkill = item;
+            StatusMessage = $"戦闘スキルを {item.SkillId} として複製しました。";
+        }
+
+        private void RemoveBattleSkill()
+        {
+            HeroineBattleSkill item = SelectedProductionBattleSkill;
+            int references = SelectedProfile.HeroineSkillTree?.Nodes?.Count(x => x != null &&
+                string.Equals(x.GrantedHeroineSkillId?.Trim(), item.SkillId?.Trim(), StringComparison.OrdinalIgnoreCase)) ?? 0;
+            if (!ConfirmSkillRemoval("戦闘スキル", item.SkillId, references, "スキルツリーノード")) return;
+            SelectedProfile.BattleSkills.Remove(item);
+            SelectedProductionBattleSkill = null;
+            StatusMessage = $"戦闘スキル {item.SkillId} を削除しました。";
+        }
+
+        private void AddTrainingSkill()
+        {
+            SelectedProfile.HeroineSkillTree ??= new HeroineSkillTreeSettings();
+            SelectedProfile.HeroineSkillTree.TrainingSkills ??= new ObservableCollection<HeroineTrainingSkill>();
+            HeroineTrainingSkill item = new HeroineTrainingSkill
+            {
+                SkillId = BuildUniqueId(HeroineSkillIdPrefix() + "_TrainingSkill", SelectedProfile.HeroineSkillTree.TrainingSkills.Select(x => x?.SkillId)),
+                DisplayName = "新しい訓練スキル"
+            };
+            SelectedProfile.HeroineSkillTree.TrainingSkills.Add(item);
+            SelectedProductionTrainingSkill = item;
+            StatusMessage = $"訓練スキル {item.SkillId} を追加しました。";
+        }
+
+        private void DuplicateTrainingSkill()
+        {
+            HeroineTrainingSkill source = SelectedProductionTrainingSkill;
+            HeroineTrainingSkill item = new HeroineTrainingSkill
+            {
+                SkillId = BuildUniqueId(source.SkillId + "_Copy", SelectedProfile.HeroineSkillTree.TrainingSkills.Select(x => x?.SkillId)),
+                DisplayName = source.DisplayName,
+                Description = source.Description,
+                SortOrder = source.SortOrder,
+                IsEnabled = source.IsEnabled,
+                PlayerHpCostReduction = source.PlayerHpCostReduction,
+                HeroineHpCostReduction = source.HeroineHpCostReduction,
+                AffectionRewardModifier = source.AffectionRewardModifier,
+                ProficiencyRewardModifier = source.ProficiencyRewardModifier,
+                ApplicationScope = source.ApplicationScope,
+                ApplicationTargetId = source.ApplicationTargetId
+            };
+            SelectedProfile.HeroineSkillTree.TrainingSkills.Add(item);
+            SelectedProductionTrainingSkill = item;
+            StatusMessage = $"訓練スキルを {item.SkillId} として複製しました。";
+        }
+
+        private void RemoveTrainingSkill()
+        {
+            HeroineTrainingSkill item = SelectedProductionTrainingSkill;
+            int references = SelectedProfile.HeroineSkillTree?.Nodes?.Count(x => x != null &&
+                string.Equals(x.TrainingSkillId?.Trim(), item.SkillId?.Trim(), StringComparison.OrdinalIgnoreCase)) ?? 0;
+            if (!ConfirmSkillRemoval("訓練スキル", item.SkillId, references, "スキルツリーノード")) return;
+            SelectedProfile.HeroineSkillTree.TrainingSkills.Remove(item);
+            SelectedProductionTrainingSkill = null;
+            StatusMessage = $"訓練スキル {item.SkillId} を削除しました。";
+        }
+
+        private void AddSkillTreeNode()
+        {
+            SelectedProfile.HeroineSkillTree ??= new HeroineSkillTreeSettings();
+            SelectedProfile.HeroineSkillTree.Nodes ??= new ObservableCollection<HeroineSkillTreeNode>();
+            HeroineSkillTreeNode item = new HeroineSkillTreeNode
+            {
+                NodeId = BuildUniqueId(HeroineSkillIdPrefix() + "_SkillNode", SelectedProfile.HeroineSkillTree.Nodes.Select(x => x?.NodeId)),
+                DisplayName = "新しいスキルノード"
+            };
+            SelectedProfile.HeroineSkillTree.Nodes.Add(item);
+            SelectedProductionSkillTreeNode = item;
+            StatusMessage = $"スキルツリーノード {item.NodeId} を追加しました。";
+        }
+
+        private void DuplicateSkillTreeNode()
+        {
+            HeroineSkillTreeNode source = SelectedProductionSkillTreeNode;
+            HeroineSkillTreeNode item = new HeroineSkillTreeNode
+            {
+                NodeId = BuildUniqueId(source.NodeId + "_Copy", SelectedProfile.HeroineSkillTree.Nodes.Select(x => x?.NodeId)),
+                DisplayName = source.DisplayName,
+                TrainingSkillId = source.TrainingSkillId,
+                GrantedHeroineSkillId = source.GrantedHeroineSkillId,
+                SortOrder = source.SortOrder,
+                SkillPointCost = source.SkillPointCost,
+                PrerequisiteNodeIds = new ObservableCollection<string>(source.PrerequisiteNodeIds ?? new ObservableCollection<string>()),
+                UnlockedTrainingIds = new ObservableCollection<string>(source.UnlockedTrainingIds ?? new ObservableCollection<string>()),
+                UnlockEventId = source.UnlockEventId,
+                UnlockConditions = new ObservableCollection<HeroineSkillTreeCondition>((source.UnlockConditions ?? new ObservableCollection<HeroineSkillTreeCondition>())
+                    .Select(x => new HeroineSkillTreeCondition { ConditionType = x.ConditionType, Scope = x.Scope, TargetId = x.TargetId, RequiredValue = x.RequiredValue })),
+                TreePositionX = source.TreePositionX,
+                TreePositionY = source.TreePositionY
+            };
+            SelectedProfile.HeroineSkillTree.Nodes.Add(item);
+            SelectedProductionSkillTreeNode = item;
+            StatusMessage = $"スキルツリーノードを {item.NodeId} として複製しました。";
+        }
+
+        private void RemoveSkillTreeNode()
+        {
+            HeroineSkillTreeNode item = SelectedProductionSkillTreeNode;
+            int nodeReferences = SelectedProfile.HeroineSkillTree.Nodes.Count(x => x?.PrerequisiteNodeIds?.Any(id =>
+                string.Equals(id?.Trim(), item.NodeId?.Trim(), StringComparison.OrdinalIgnoreCase)) == true);
+            int trainingReferences = SelectedProfile.TrainingCatalog?.Items?.Count(x => x?.UnlockNodeIds?.Any(id =>
+                string.Equals(id?.Trim(), item.NodeId?.Trim(), StringComparison.OrdinalIgnoreCase)) == true) ?? 0;
+            int references = nodeReferences + trainingReferences;
+            if (!ConfirmSkillRemoval("スキルツリーノード", item.NodeId, references, "他ノードまたは訓練定義")) return;
+            SelectedProfile.HeroineSkillTree.Nodes.Remove(item);
+            SelectedProductionSkillTreeNode = null;
+            StatusMessage = $"スキルツリーノード {item.NodeId} を削除しました。";
+        }
+
+        private static bool ConfirmSkillRemoval(string kind, string id, int referenceCount, string referenceKind)
+        {
+            if (referenceCount <= 0) return true;
+            return MessageBox.Show(
+                $"{kind} {id} は {referenceKind} {referenceCount} 件から参照されています。\n参照は残るため、削除後に制作状況で修正してください。\n\n削除しますか？",
+                kind + "の削除確認",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning) == MessageBoxResult.Yes;
         }
 
         private static string BuildUniqueId(string baseId, IEnumerable<string> existingIds)

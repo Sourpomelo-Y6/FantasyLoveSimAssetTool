@@ -301,12 +301,20 @@
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="*"/>
                                         </Grid.RowDefinitions>
-                                        <TextBlock Text="戦闘で使用するヒロイン固有スキルを編集します。"
-                                                   Foreground="#666666" Margin="0,0,0,10"/>
+                                        <DockPanel Margin="0,0,0,10">
+                                            <TextBlock Text="戦闘で使用するヒロイン固有スキルを編集します。"
+                                                       Foreground="#666666" VerticalAlignment="Center"/>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                <Button Content="追加" Command="{Binding AddBattleSkillCommand}" Width="70" Margin="8,0,0,0"/>
+                                                <Button Content="複製" Command="{Binding DuplicateBattleSkillCommand}" Width="70" Margin="8,0,0,0"/>
+                                                <Button Content="削除" Command="{Binding RemoveBattleSkillCommand}" Width="70" Margin="8,0,0,0"/>
+                                            </StackPanel>
+                                        </DockPanel>
                                         <DataGrid Grid.Row="1"
                                                   ItemsSource="{Binding SelectedProfile.BattleSkills}"
                                                   SelectedItem="{Binding SelectedProductionBattleSkill}"
-                                                  AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
+                                                  AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                                                  ToolTip="確率は0～100、期間は1以上、MP・威力・回数は0以上で入力します。">
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="SkillId" Binding="{Binding SkillId}" Width="130"/>
                                                 <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName}" Width="130"/>
@@ -341,12 +349,20 @@
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="*"/>
                                         </Grid.RowDefinitions>
-                                        <TextBlock Text="訓練スキル" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                        <DockPanel Margin="0,0,0,6">
+                                            <TextBlock Text="訓練スキル" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                <Button Content="追加" Command="{Binding AddTrainingSkillCommand}" Width="70" Margin="8,0,0,0"/>
+                                                <Button Content="複製" Command="{Binding DuplicateTrainingSkillCommand}" Width="70" Margin="8,0,0,0"/>
+                                                <Button Content="削除" Command="{Binding RemoveTrainingSkillCommand}" Width="70" Margin="8,0,0,0"/>
+                                            </StackPanel>
+                                        </DockPanel>
                                         <DataGrid Grid.Row="1"
                                                   ItemsSource="{Binding SelectedProfile.HeroineSkillTree.TrainingSkills}"
                                                   SelectedItem="{Binding SelectedProductionTrainingSkill}"
-                                                  AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True"
-                                                  MinHeight="140" Margin="0,0,0,14">
+                                                  AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                                                  MinHeight="140" Margin="0,0,0,14"
+                                                  ToolTip="適用範囲がAllTrainingsの場合は対象IDを空にします。TrainingCategoryではカテゴリーID、TrainingではTrainingIdを指定します。">
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="SkillId" Binding="{Binding SkillId}" Width="120"/>
                                                 <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName}" Width="120"/>
@@ -361,14 +377,21 @@
                                                 <DataGridTextColumn Header="対象ID" Binding="{Binding ApplicationTargetId}" Width="120"/>
                                             </DataGrid.Columns>
                                         </DataGrid>
-                                        <TextBlock Grid.Row="2"
-                                                   Text="ヒロインスキルツリーノード（前提・解放訓練・条件の詳細はJSON往復でも保持されます）"
-                                                   FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                        <DockPanel Grid.Row="2" Margin="0,0,0,6">
+                                            <TextBlock Text="ヒロインスキルツリーノード（前提・解放訓練・条件の詳細はJSON往復でも保持されます）"
+                                                       FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                <Button Content="追加" Command="{Binding AddSkillTreeNodeCommand}" Width="70" Margin="8,0,0,0"/>
+                                                <Button Content="複製" Command="{Binding DuplicateSkillTreeNodeCommand}" Width="70" Margin="8,0,0,0"/>
+                                                <Button Content="削除" Command="{Binding RemoveSkillTreeNodeCommand}" Width="70" Margin="8,0,0,0"/>
+                                            </StackPanel>
+                                        </DockPanel>
                                         <DataGrid Grid.Row="3"
                                                   ItemsSource="{Binding SelectedProfile.HeroineSkillTree.Nodes}"
                                                   SelectedItem="{Binding SelectedProductionSkillTreeNode}"
-                                                  AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True"
-                                                  MinHeight="140">
+                                                  AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                                                  MinHeight="140"
+                                                  ToolTip="前提NodeId・解放TrainingIdはカンマ区切り、条件はType|Scope|Target|Valueをセミコロン区切りで入力します。">
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="NodeId" Binding="{Binding NodeId}" Width="120"/>
                                                 <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName}" Width="120"/>
