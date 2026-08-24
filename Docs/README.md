@@ -9,6 +9,7 @@ Unity Runtime、Scene、Prefab、ゲーム内での利用方法は `FantasyLoveS
 - [`Handoff.md`](Handoff.md): 現在の実装状況と次の候補
 - [`CharacterAssetGenerationToolSpec.md`](CharacterAssetGenerationToolSpec.md): 素材管理・生成・Exportの全体仕様
 - [`ToolUsabilityReorganizationPlan.md`](ToolUsabilityReorganizationPlan.md): 画面構成と操作改善
+- [`LocalAIIntegrationPlan.md`](LocalAIIntegrationPlan.md): LocalAIEventPrototypeの機能・UIを統合する計画
 
 ## データ制作・管理
 
