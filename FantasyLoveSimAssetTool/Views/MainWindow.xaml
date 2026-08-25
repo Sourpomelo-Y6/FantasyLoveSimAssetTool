@@ -1053,7 +1053,11 @@
 
                                     <TabItem Header="条件・演出">
                                         <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                            <Grid Margin="8">
+                                            <StackPanel Margin="8">
+                                                <Expander Header="発生条件"
+                                                          IsExpanded="True"
+                                                          Margin="0,0,0,8">
+                                                    <Grid Margin="8">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="120"/>
                                                     <ColumnDefinition Width="*"/>
@@ -1126,8 +1130,24 @@
                                                     <TextBox Grid.Column="1" Text="{Binding SelectedConversationEntry.Conditions.RequiredSkillIdsText, UpdateSourceTrigger=PropertyChanged}" ToolTip="必要スキルID（カンマまたは改行区切り）" Margin="4,0,0,0"/>
                                                 </Grid>
 
-                                                <TextBlock Grid.Row="6" Grid.Column="0" Text="画像AssetId" VerticalAlignment="Top" Margin="0,4,8,8"/>
-                                                <Grid Grid.Row="6" Grid.Column="1" Margin="0,0,0,8">
+                                                    </Grid>
+                                                </Expander>
+
+                                                <Expander Header="画像・演出"
+                                                          IsExpanded="False"
+                                                          Margin="0,0,0,8">
+                                                    <Grid Margin="8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="120"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+
+                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="画像AssetId" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                                <Grid Grid.Row="0" Grid.Column="1" Margin="0,0,0,8">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="180"/>
@@ -1138,8 +1158,8 @@
                                                     <Button Grid.Column="2" Content="追加" Command="{Binding AddConversationImageAssetCommand}" Height="26" VerticalAlignment="Top"/>
                                                 </Grid>
 
-                                                <TextBlock Grid.Row="7" Grid.Column="0" Text="優先度・Ending" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                                <WrapPanel Grid.Row="7" Grid.Column="1" Margin="0,0,0,8">
+                                                <TextBlock Grid.Row="1" Grid.Column="0" Text="優先度・Ending" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                                <WrapPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,8">
                                                     <TextBox Text="{Binding SelectedConversationEntry.Priority, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
                                                     <StackPanel Orientation="Horizontal" Margin="24,0,0,0" Visibility="{Binding SelectedConversationEntry.IsEnding, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                         <TextBlock Text="Ending表示" VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -1148,9 +1168,20 @@
                                                     </StackPanel>
                                                 </WrapPanel>
 
-                                                <TextBlock Grid.Row="8" Grid.Column="0" Text="メモ" VerticalAlignment="Top" Margin="0,4,8,8"/>
-                                                <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding SelectedConversationEntry.Memo, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" MinHeight="100" TextWrapping="Wrap" Margin="0,0,0,8"/>
-                                            </Grid>
+                                                    </Grid>
+                                                </Expander>
+
+                                                <Expander Header="メモ"
+                                                          IsExpanded="False">
+                                                    <StackPanel Margin="8">
+                                                        <TextBlock Text="会話項目に関する補足情報" Foreground="Gray" Margin="0,0,0,6"/>
+                                                        <TextBox Text="{Binding SelectedConversationEntry.Memo, UpdateSourceTrigger=PropertyChanged}"
+                                                                 AcceptsReturn="True"
+                                                                 MinHeight="100"
+                                                                 TextWrapping="Wrap"/>
+                                                    </StackPanel>
+                                                </Expander>
+                                            </StackPanel>
                                         </ScrollViewer>
                                     </TabItem>
                                 </TabControl>
