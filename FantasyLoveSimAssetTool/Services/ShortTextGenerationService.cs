@@ -109,6 +109,17 @@ namespace FantasyLoveSimAssetTool.Services
                     throw new InvalidOperationException("生成対象のスキルまたはノードを選択してください。");
                 Append(builder, "対象設定", context.TaskContext, 500);
             }
+            else if (target.RequiredContext == "ConversationLine")
+            {
+                if (string.IsNullOrWhiteSpace(context?.ConversationKind))
+                    throw new InvalidOperationException("会話項目と台詞行を選択してください。");
+                Append(builder, "会話種別", context.ConversationKind, 40);
+                Append(builder, "会話ID", context.ConversationEntryId, 100);
+                Append(builder, "カテゴリ", context.ConversationCategory, 100);
+                Append(builder, "話者", context.ConversationSpeaker, 60);
+                Append(builder, "直前の台詞", context.PreviousConversationLines, 400);
+                Append(builder, "主要条件", context.ConversationConditions, 300);
+            }
             List<string> exclusions = (excludedCandidates ?? Array.Empty<string>())
                 .Where(value => !string.IsNullOrWhiteSpace(value)).Take(3).ToList();
             if (exclusions.Count > 0)

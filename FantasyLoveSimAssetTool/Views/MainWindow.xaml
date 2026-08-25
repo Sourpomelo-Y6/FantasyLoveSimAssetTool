@@ -929,6 +929,7 @@
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
 
                                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Id" VerticalAlignment="Center" Margin="0,0,8,8"/>
@@ -1011,7 +1012,15 @@
                                             </DataGrid.Columns>
                                         </DataGrid>
 
-                                        <Grid Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,8">
+                                        <Expander Grid.Row="5"
+                                                  Grid.Column="0"
+                                                  Grid.ColumnSpan="2"
+                                                  Header="選択中の台詞をAIで入力補助"
+                                                  Margin="0,4,0,8">
+                                            <local:LocalAiShortTextPanel TargetGroup="ConversationLine"/>
+                                        </Expander>
+
+                                        <Grid Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,8">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="100"/>
@@ -1022,7 +1031,7 @@
                                             <Button Grid.Column="2" Content="選択肢削除" Command="{Binding RemoveConversationChoiceCommand}" Height="26"/>
                                         </Grid>
 
-                                        <DataGrid Grid.Row="6"
+                                        <DataGrid Grid.Row="7"
                                                   Grid.Column="0"
                                                   Grid.ColumnSpan="2"
                                                   ItemsSource="{Binding SelectedConversationEntry.Choices}"

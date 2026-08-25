@@ -210,6 +210,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private HeroineBattleSkill generatedShortTextBattleSkill;
         private HeroineTrainingSkill generatedShortTextTrainingSkill;
         private HeroineSkillTreeNode generatedShortTextSkillTreeNode;
+        private ConversationEntry generatedShortTextConversationEntry;
+        private ConversationLine generatedShortTextConversationLine;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
 
@@ -252,6 +254,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     return SelectedProductionTrainingSkill == null ? "訓練スキルを選択してください。" : $"SkillId: {SelectedProductionTrainingSkill.SkillId}";
                 if (SelectedShortTextTarget?.RequiredContext == "SkillTreeNode")
                     return SelectedProductionSkillTreeNode == null ? "スキルツリーノードを選択してください。" : $"NodeId: {SelectedProductionSkillTreeNode.NodeId}";
+                if (SelectedShortTextTarget?.RequiredContext == "ConversationLine")
+                    return SelectedConversationEntry == null || SelectedConversationLine == null
+                        ? "会話項目と台詞行を選択してください。"
+                        : $"{SelectedConversationEntry.Kind}: {SelectedConversationEntry.Id} / 話者: {SelectedConversationLine.Speaker}";
                 return "ヒロイン共通台詞";
             }
         }
@@ -1076,6 +1082,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     ? null
                     : selectedConversationEntry.Choices.FirstOrDefault();
                 OnPropertyChanged(nameof(SelectedConversationEntry));
+                OnPropertyChanged(nameof(CurrentShortTextValue));
+                OnPropertyChanged(nameof(CurrentShortTextContext));
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -1254,10 +1262,29 @@ namespace FantasyLoveSimAssetTool.ViewModels
             set
             {
                 if (selectedConversationLine == value) { return; }
+                if (selectedConversationLine != null)
+                    selectedConversationLine.PropertyChanged -= OnSelectedConversationLinePropertyChanged;
                 selectedConversationLine = value;
+                if (selectedConversationLine != null)
+                    selectedConversationLine.PropertyChanged += OnSelectedConversationLinePropertyChanged;
                 OnPropertyChanged(nameof(SelectedConversationLine));
+                OnPropertyChanged(nameof(CurrentShortTextValue));
+                OnPropertyChanged(nameof(CurrentShortTextContext));
+                if (SelectedShortTextTarget?.RequiredContext == "ConversationLine")
+                {
+                    shortTextGenerationCancellation?.Cancel();
+                    ClearShortTextGenerationResult();
+                }
                 CommandManager.InvalidateRequerySuggested();
             }
+        }
+
+        private void OnSelectedConversationLinePropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(ConversationLine.Text))
+                OnPropertyChanged(nameof(CurrentShortTextValue));
+            if (e.PropertyName == nameof(ConversationLine.Speaker))
+                OnPropertyChanged(nameof(CurrentShortTextContext));
         }
 
         public ConversationChoice SelectedConversationChoice
@@ -2580,7 +2607,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 new ShortTextGenerationTarget("BattleSkillDisplayName", "戦闘スキル名", "選択した戦闘スキルの効果が伝わる短い表示名", 2, 18, requiredContext: "BattleSkill"),
                 new ShortTextGenerationTarget("TrainingSkillDisplayName", "訓練スキル名", "選択した訓練スキルの効果が伝わる短い表示名", 2, 18, requiredContext: "TrainingSkill"),
                 new ShortTextGenerationTarget("TrainingSkillDescription", "訓練スキル説明", "選択した訓練スキルの効果を自然に説明する文", 15, 80, requiredContext: "TrainingSkill"),
-                new ShortTextGenerationTarget("SkillTreeNodeDisplayName", "スキルノード名", "選択したスキルツリーノードの内容が伝わる短い表示名", 2, 18, requiredContext: "SkillTreeNode")
+                new ShortTextGenerationTarget("SkillTreeNodeDisplayName", "スキルノード名", "選択したスキルツリーノードの内容が伝わる短い表示名", 2, 18, requiredContext: "SkillTreeNode"),
+                new ShortTextGenerationTarget("ConversationLineText", "選択中の台詞本文", "選択中の会話行に入る自然な台詞", 5, 160, requiredContext: "ConversationLine")
             };
             selectedShortTextTarget = ShortTextTargets.First(target => target.Id == "MorningGreeting");
             shortTextAiStatus = "ヒロインを選択してください。";
@@ -9165,6 +9193,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             HeroineBattleSkill sourceBattleSkill = SelectedProductionBattleSkill;
             HeroineTrainingSkill sourceTrainingSkill = SelectedProductionTrainingSkill;
             HeroineSkillTreeNode sourceSkillTreeNode = SelectedProductionSkillTreeNode;
+            ConversationEntry sourceConversationEntry = SelectedConversationEntry;
+            ConversationLine sourceConversationLine = SelectedConversationLine;
             ShortTextGenerationContext generationContext = CreateShortTextGenerationContext(target);
 
             shortTextGenerationCancellation?.Dispose();
@@ -9197,12 +9227,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     (target.RequiredContext == "OutfitReaction" && SelectedOutfitReactionMessageOverride != sourceOutfitReaction) ||
                     (target.RequiredContext == "BattleSkill" && SelectedProductionBattleSkill != sourceBattleSkill) ||
                     (target.RequiredContext == "TrainingSkill" && SelectedProductionTrainingSkill != sourceTrainingSkill) ||
-                    (target.RequiredContext == "SkillTreeNode" && SelectedProductionSkillTreeNode != sourceSkillTreeNode)) return;
+                    (target.RequiredContext == "SkillTreeNode" && SelectedProductionSkillTreeNode != sourceSkillTreeNode) ||
+                    (target.RequiredContext == "ConversationLine" &&
+                        (SelectedConversationEntry != sourceConversationEntry || SelectedConversationLine != sourceConversationLine))) return;
                 generatedShortTextOutfitMessage = sourceOutfitMessage;
                 generatedShortTextOutfitReaction = sourceOutfitReaction;
                 generatedShortTextBattleSkill = sourceBattleSkill;
                 generatedShortTextTrainingSkill = sourceTrainingSkill;
                 generatedShortTextSkillTreeNode = sourceSkillTreeNode;
+                generatedShortTextConversationEntry = sourceConversationEntry;
+                generatedShortTextConversationLine = sourceConversationLine;
                 ShortTextAiRawResponse = result.RawResponse;
                 if (!string.IsNullOrWhiteSpace(result.ParseError))
                 {
@@ -9265,10 +9299,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 (SelectedShortTextTarget.RequiredContext == "TrainingSkill" &&
                     SelectedProductionTrainingSkill != generatedShortTextTrainingSkill) ||
                 (SelectedShortTextTarget.RequiredContext == "SkillTreeNode" &&
-                    SelectedProductionSkillTreeNode != generatedShortTextSkillTreeNode))
+                    SelectedProductionSkillTreeNode != generatedShortTextSkillTreeNode) ||
+                (SelectedShortTextTarget.RequiredContext == "ConversationLine" &&
+                    (SelectedConversationEntry != generatedShortTextConversationEntry ||
+                        SelectedConversationLine != generatedShortTextConversationLine)))
             {
                 ClearShortTextGenerationResult();
-                ShortTextAiStatus = "生成元の衣装行が変更されたため候補を破棄しました。もう一度生成してください。";
+                ShortTextAiStatus = "生成元の入力対象が変更されたため候補を破棄しました。もう一度生成してください。";
                 return;
             }
             SetShortTextValue(SelectedProfile, SelectedShortTextTarget, candidate.Text.Trim());
@@ -9295,6 +9332,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             generatedShortTextBattleSkill = null;
             generatedShortTextTrainingSkill = null;
             generatedShortTextSkillTreeNode = null;
+            generatedShortTextConversationEntry = null;
+            generatedShortTextConversationLine = null;
         }
 
         private bool CanGenerateSelectedShortText()
@@ -9309,6 +9348,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             if (SelectedShortTextTarget.RequiredContext == "BattleSkill") return SelectedProductionBattleSkill != null;
             if (SelectedShortTextTarget.RequiredContext == "TrainingSkill") return SelectedProductionTrainingSkill != null;
             if (SelectedShortTextTarget.RequiredContext == "SkillTreeNode") return SelectedProductionSkillTreeNode != null;
+            if (SelectedShortTextTarget.RequiredContext == "ConversationLine")
+                return SelectedConversationEntry != null && SelectedConversationLine != null;
             return true;
         }
 
@@ -9322,8 +9363,57 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 ReactionType = target.RequiredContext == "OutfitReaction"
                     ? SelectedOutfitReactionMessageOverride?.ReactionType ?? string.Empty
                     : string.Empty,
-                TaskContext = BuildSkillShortTextContext(target)
+                TaskContext = BuildSkillShortTextContext(target),
+                ConversationKind = target.RequiredContext == "ConversationLine"
+                    ? SelectedConversationEntry?.Kind.ToString() ?? string.Empty
+                    : string.Empty,
+                ConversationEntryId = target.RequiredContext == "ConversationLine"
+                    ? SelectedConversationEntry?.Id ?? string.Empty
+                    : string.Empty,
+                ConversationCategory = target.RequiredContext == "ConversationLine"
+                    ? SelectedConversationEntry?.Category ?? string.Empty
+                    : string.Empty,
+                ConversationSpeaker = target.RequiredContext == "ConversationLine"
+                    ? SelectedConversationLine?.Speaker ?? string.Empty
+                    : string.Empty,
+                PreviousConversationLines = target.RequiredContext == "ConversationLine"
+                    ? BuildPreviousConversationLines()
+                    : string.Empty,
+                ConversationConditions = target.RequiredContext == "ConversationLine"
+                    ? BuildConversationConditionSummary()
+                    : string.Empty
             };
+        }
+
+        private string BuildPreviousConversationLines()
+        {
+            if (SelectedConversationEntry?.Lines == null || SelectedConversationLine == null) return string.Empty;
+            int selectedIndex = SelectedConversationEntry.Lines.IndexOf(SelectedConversationLine);
+            if (selectedIndex <= 0) return string.Empty;
+            return string.Join(" / ", SelectedConversationEntry.Lines
+                .Skip(Math.Max(0, selectedIndex - 2))
+                .Take(Math.Min(2, selectedIndex))
+                .Where(line => line != null && !string.IsNullOrWhiteSpace(line.Text))
+                .Select(line => $"{line.Speaker}: {line.Text}"));
+        }
+
+        private string BuildConversationConditionSummary()
+        {
+            ConversationCondition conditions = SelectedConversationEntry?.Conditions;
+            if (conditions == null) return string.Empty;
+            var values = new List<string>();
+            AddConversationCondition(values, "場所", conditions.LocationId);
+            AddConversationCondition(values, "時間", conditions.TimeOfDay);
+            AddConversationCondition(values, "天候", conditions.Weather);
+            AddConversationCondition(values, "季節", conditions.Season);
+            AddConversationCondition(values, "衣装", conditions.CostumeId);
+            AddConversationCondition(values, "行動", conditions.ActionId);
+            return string.Join("; ", values);
+        }
+
+        private static void AddConversationCondition(ICollection<string> values, string label, string value)
+        {
+            if (!string.IsNullOrWhiteSpace(value)) values.Add($"{label}={value.Trim()}");
         }
 
         private string BuildSkillShortTextContext(ShortTextGenerationTarget target)
@@ -9432,6 +9522,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 case "TrainingSkillDisplayName": return SelectedProductionTrainingSkill?.DisplayName ?? string.Empty;
                 case "TrainingSkillDescription": return SelectedProductionTrainingSkill?.Description ?? string.Empty;
                 case "SkillTreeNodeDisplayName": return SelectedProductionSkillTreeNode?.DisplayName ?? string.Empty;
+                case "ConversationLineText": return SelectedConversationLine?.Text ?? string.Empty;
                 default: return string.Empty;
             }
         }
@@ -9453,6 +9544,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 case "TrainingSkillDisplayName": SelectedProductionTrainingSkill.DisplayName = value; break;
                 case "TrainingSkillDescription": SelectedProductionTrainingSkill.Description = value; break;
                 case "SkillTreeNodeDisplayName": SelectedProductionSkillTreeNode.DisplayName = value; break;
+                case "ConversationLineText": SelectedConversationLine.Text = value; break;
                 default: throw new InvalidOperationException($"未対応の生成対象です: {target.Id}");
             }
         }

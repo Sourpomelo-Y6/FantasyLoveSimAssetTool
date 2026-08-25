@@ -7,5 +7,17 @@ namespace FantasyLoveSimAssetTool.Models
         public string ReactionType { get; set; } = string.Empty;
 
         public string TaskContext { get; set; } = string.Empty;
+
+        public string ConversationKind { get; set; } = string.Empty;
+
+        public string ConversationEntryId { get; set; } = string.Empty;
+
+        public string ConversationCategory { get; set; } = string.Empty;
+
+        public string ConversationSpeaker { get; set; } = string.Empty;
+
+        public string PreviousConversationLines { get; set; } = string.Empty;
+
+        public string ConversationConditions { get; set; } = string.Empty;
     }
 }

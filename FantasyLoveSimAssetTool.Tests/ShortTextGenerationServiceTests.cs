@@ -176,6 +176,54 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void BuildPrompt_ForConversationLineIncludesOnlyCompactSelectedLineContext()
+        {
+            var profile = new HeroineProfile
+            {
+                DisplayName = "リリア",
+                Personality = "努力家",
+                SpeakingStyle = "丁寧",
+                FirstPerson = "私",
+                SecondPerson = "あなた"
+            };
+            var target = new ShortTextGenerationTarget(
+                "ConversationLineText", "選択中の台詞本文", "選択中の会話行に入る自然な台詞", 5, 160,
+                requiredContext: "ConversationLine");
+            var context = new ShortTextGenerationContext
+            {
+                ConversationKind = "GameEvents",
+                ConversationEntryId = "ForestDate",
+                ConversationCategory = "Date",
+                ConversationSpeaker = "Heroine",
+                PreviousConversationLines = "Player: 森へ行こう / Heroine: はい、楽しみです",
+                ConversationConditions = "場所=Forest; 時間=Noon; 衣装=Casual"
+            };
+
+            string prompt = ShortTextGenerationService.BuildPrompt(profile, target, context: context);
+
+            StringAssert.Contains(prompt, "会話種別: GameEvents");
+            StringAssert.Contains(prompt, "会話ID: ForestDate");
+            StringAssert.Contains(prompt, "話者: Heroine");
+            StringAssert.Contains(prompt, "直前の台詞: Player: 森へ行こう / Heroine: はい、楽しみです");
+            StringAssert.Contains(prompt, "主要条件: 場所=Forest; 時間=Noon; 衣装=Casual");
+            Assert.IsFalse(prompt.Contains("expressionId"));
+        }
+
+        [TestMethod]
+        public void BuildPrompt_ForConversationLineRequiresSelectedConversationContext()
+        {
+            var target = new ShortTextGenerationTarget(
+                "ConversationLineText", "選択中の台詞本文", "選択中の会話行に入る自然な台詞", 5, 160,
+                requiredContext: "ConversationLine");
+
+            InvalidOperationException error = Assert.ThrowsException<InvalidOperationException>(() =>
+                ShortTextGenerationService.BuildPrompt(new HeroineProfile(), target,
+                    context: new ShortTextGenerationContext()));
+
+            StringAssert.Contains(error.Message, "会話項目と台詞行");
+        }
+
+        [TestMethod]
         public void TextGenerationCandidate_ReportsLengthWarningWithoutBlockingAdoption()
         {
             var candidate = new TextGenerationCandidate("短い", 15, 50);

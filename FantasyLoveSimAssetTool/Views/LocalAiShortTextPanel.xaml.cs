@@ -81,6 +81,8 @@ namespace FantasyLoveSimAssetTool.Views
                 return target.RequiredContext == "TrainingSkill";
             if (string.Equals(targetGroup, "SkillTreeNode", StringComparison.OrdinalIgnoreCase))
                 return target.RequiredContext == "SkillTreeNode";
+            if (string.Equals(targetGroup, "ConversationLine", StringComparison.OrdinalIgnoreCase))
+                return target.RequiredContext == "ConversationLine";
             return target.RequiredContext == "None";
         }
     }
