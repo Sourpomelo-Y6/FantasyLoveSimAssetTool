@@ -128,7 +128,8 @@ namespace FantasyLoveSimAssetTool.Services
                 foreach (string exclusion in exclusions) Append(builder, "除外", exclusion, 100);
             }
             List<string> allowedExpressions = NormalizeExpressionIds(expressionIds);
-            if (target.RequiredContext == "OutfitMessage" || target.RequiredContext == "OutfitReaction")
+            if (target.RequiredContext == "OutfitMessage" || target.RequiredContext == "OutfitReaction" ||
+                target.RequiredContext == "ConversationLine")
             {
                 if (allowedExpressions.Count > 0)
                     builder.AppendLine("各候補の表情は次のIDから1つだけ選んでください: " + string.Join(",", allowedExpressions));

@@ -9430,7 +9430,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private IReadOnlyCollection<string> GetShortTextExpressionIds(ShortTextGenerationTarget target)
         {
-            if (target?.RequiredContext != "OutfitMessage" && target?.RequiredContext != "OutfitReaction")
+            if (target?.RequiredContext != "OutfitMessage" &&
+                target?.RequiredContext != "OutfitReaction" &&
+                target?.RequiredContext != "ConversationLine")
             {
                 return Array.Empty<string>();
             }
@@ -9459,6 +9461,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 case "OutfitReactionMessage":
                     if (SelectedOutfitReactionMessageOverride != null)
                         SelectedOutfitReactionMessageOverride.ExpressionId = expressionId;
+                    break;
+                case "ConversationLineText":
+                    if (SelectedConversationLine != null)
+                        SelectedConversationLine.Expression = expressionId;
                     break;
             }
         }

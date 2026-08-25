@@ -176,7 +176,7 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
-        public void BuildPrompt_ForConversationLineIncludesOnlyCompactSelectedLineContext()
+        public void BuildPrompt_ForConversationLineIncludesCompactContextAndConstrainedExpressions()
         {
             var profile = new HeroineProfile
             {
@@ -199,14 +199,16 @@ namespace FantasyLoveSimAssetTool.Tests
                 ConversationConditions = "場所=Forest; 時間=Noon; 衣装=Casual"
             };
 
-            string prompt = ShortTextGenerationService.BuildPrompt(profile, target, context: context);
+            string prompt = ShortTextGenerationService.BuildPrompt(
+                profile, target, context: context, expressionIds: new[] { "Smile", "Shy" });
 
             StringAssert.Contains(prompt, "会話種別: GameEvents");
             StringAssert.Contains(prompt, "会話ID: ForestDate");
             StringAssert.Contains(prompt, "話者: Heroine");
             StringAssert.Contains(prompt, "直前の台詞: Player: 森へ行こう / Heroine: はい、楽しみです");
             StringAssert.Contains(prompt, "主要条件: 場所=Forest; 時間=Noon; 衣装=Casual");
-            Assert.IsFalse(prompt.Contains("expressionId"));
+            StringAssert.Contains(prompt, "Smile,Shy");
+            StringAssert.Contains(prompt, "expressionId");
         }
 
         [TestMethod]
