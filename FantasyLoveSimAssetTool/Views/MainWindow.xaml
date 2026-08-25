@@ -11,6 +11,7 @@
         <local:BindingProxy x:Key="ViewModelProxy" Data="{Binding}"/>
         <local:StringToImageSourceConverter x:Key="StringToImageSourceConverter"/>
         <local:EmptyStringToIntConverter x:Key="EmptyStringToIntConverter"/>
+        <local:TrainingTargetOptionsConverter x:Key="TrainingTargetOptionsConverter"/>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <Style TargetType="{x:Type ComboBoxItem}">
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
@@ -348,10 +349,13 @@
                                             <RowDefinition Height="*"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="*"/>
+                                            <RowDefinition Height="190"/>
                                         </Grid.RowDefinitions>
                                         <DockPanel Margin="0,0,0,6">
                                             <TextBlock Text="訓練スキル" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                <Button Content="参照候補を更新" Command="{Binding RefreshSkillReferenceOptionsCommand}" Width="110" Margin="8,0,0,0"
+                                                        ToolTip="訓練IDやスキルIDを編集した後、参照用の選択肢を更新します"/>
                                                 <Button Content="追加" Command="{Binding AddTrainingSkillCommand}" Width="70" Margin="8,0,0,0"/>
                                                 <Button Content="複製" Command="{Binding DuplicateTrainingSkillCommand}" Width="70" Margin="8,0,0,0"/>
                                                 <Button Content="削除" Command="{Binding RemoveTrainingSkillCommand}" Width="70" Margin="8,0,0,0"/>
@@ -374,7 +378,27 @@
                                                                         SelectedItemBinding="{Binding ApplicationScope, UpdateSourceTrigger=PropertyChanged}"
                                                                         ItemsSource="{Binding Data.TrainingSkillApplicationScopeOptions, Source={StaticResource ViewModelProxy}}"
                                                                         Width="130"/>
-                                                <DataGridTextColumn Header="対象ID" Binding="{Binding ApplicationTargetId}" Width="120"/>
+                                                <DataGridTemplateColumn Header="対象ID" Width="150">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock Text="{Binding ApplicationTargetId}" Padding="4,2"/>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                                        <DataTemplate>
+                                                            <ComboBox SelectedItem="{Binding ApplicationTargetId, UpdateSourceTrigger=PropertyChanged}"
+                                                                      IsEditable="False">
+                                                                <ComboBox.ItemsSource>
+                                                                    <MultiBinding Converter="{StaticResource TrainingTargetOptionsConverter}">
+                                                                        <Binding Path="ApplicationScope"/>
+                                                                        <Binding Path="Data.TrainingCategoryIdOptions" Source="{StaticResource ViewModelProxy}"/>
+                                                                        <Binding Path="Data.TrainingIdOptions" Source="{StaticResource ViewModelProxy}"/>
+                                                                    </MultiBinding>
+                                                                </ComboBox.ItemsSource>
+                                                            </ComboBox>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                                </DataGridTemplateColumn>
                                             </DataGrid.Columns>
                                         </DataGrid>
                                         <DockPanel Grid.Row="2" Margin="0,0,0,6">
@@ -391,21 +415,73 @@
                                                   SelectedItem="{Binding SelectedProductionSkillTreeNode}"
                                                   AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                                                   MinHeight="140"
-                                                  ToolTip="前提NodeId・解放TrainingIdはカンマ区切り、条件はType|Scope|Target|Valueをセミコロン区切りで入力します。">
+                                                  ToolTip="付与スキルと取得時イベントは登録済みIDから選択します。条件はType|Scope|Target|Valueをセミコロン区切りで入力します。">
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="NodeId" Binding="{Binding NodeId}" Width="120"/>
                                                 <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName}" Width="120"/>
-                                                <DataGridTextColumn Header="訓練SkillId" Binding="{Binding TrainingSkillId}" Width="120"/>
-                                                <DataGridTextColumn Header="戦闘SkillId" Binding="{Binding GrantedHeroineSkillId}" Width="120"/>
+                                                <DataGridComboBoxColumn Header="訓練SkillId"
+                                                                        SelectedItemBinding="{Binding TrainingSkillId, UpdateSourceTrigger=PropertyChanged}"
+                                                                        ItemsSource="{Binding Data.TrainingSkillIdOptions, Source={StaticResource ViewModelProxy}}"
+                                                                        Width="130"/>
+                                                <DataGridComboBoxColumn Header="戦闘SkillId"
+                                                                        SelectedItemBinding="{Binding GrantedHeroineSkillId, UpdateSourceTrigger=PropertyChanged}"
+                                                                        ItemsSource="{Binding Data.BattleSkillIdOptions, Source={StaticResource ViewModelProxy}}"
+                                                                        Width="130"/>
                                                 <DataGridTextColumn Header="SP" Binding="{Binding SkillPointCost}" Width="45"/>
-                                                <DataGridTextColumn Header="前提NodeId（カンマ区切り）" Binding="{Binding PrerequisiteNodeIdsText}" Width="170"/>
-                                                <DataGridTextColumn Header="解放TrainingId（カンマ区切り）" Binding="{Binding UnlockedTrainingIdsText}" Width="180"/>
-                                                <DataGridTextColumn Header="取得時EventId" Binding="{Binding UnlockEventId}" Width="150"/>
+                                                <DataGridComboBoxColumn Header="取得時EventId"
+                                                                        SelectedItemBinding="{Binding UnlockEventId, UpdateSourceTrigger=PropertyChanged}"
+                                                                        ItemsSource="{Binding Data.GameEventIdOptions, Source={StaticResource ViewModelProxy}}"
+                                                                        Width="150"/>
                                                 <DataGridTextColumn Header="条件 Type|Scope|Target|Value（;区切り）" Binding="{Binding UnlockConditionsText}" Width="240"/>
                                                 <DataGridTextColumn Header="X" Binding="{Binding TreePositionX}" Width="55"/>
                                                 <DataGridTextColumn Header="Y" Binding="{Binding TreePositionY}" Width="55"/>
                                             </DataGrid.Columns>
                                         </DataGrid>
+                                        <Grid Grid.Row="4" Margin="0,12,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="16"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <GroupBox Header="選択ノードの前提ノード">
+                                                <Grid Margin="8">
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="*"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
+                                                    <DockPanel>
+                                                        <Button Content="追加" Command="{Binding AddSkillNodePrerequisiteCommand}" DockPanel.Dock="Right" Width="64" Margin="6,0,0,0"/>
+                                                        <ComboBox ItemsSource="{Binding SkillTreeNodeIdOptions}"
+                                                                  SelectedItem="{Binding SelectedSkillNodePrerequisiteCandidate}"/>
+                                                    </DockPanel>
+                                                    <ListBox Grid.Row="1" Margin="0,6"
+                                                             ItemsSource="{Binding SelectedProductionSkillTreeNode.PrerequisiteNodeIds}"
+                                                             SelectedItem="{Binding SelectedSkillNodePrerequisite}"/>
+                                                    <Button Grid.Row="2" Content="選択した前提を削除" Command="{Binding RemoveSkillNodePrerequisiteCommand}"
+                                                            HorizontalAlignment="Right" Width="130"/>
+                                                </Grid>
+                                            </GroupBox>
+                                            <GroupBox Grid.Column="2" Header="選択ノードが解放する訓練">
+                                                <Grid Margin="8">
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="*"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
+                                                    <DockPanel>
+                                                        <Button Content="追加" Command="{Binding AddSkillNodeUnlockedTrainingCommand}" DockPanel.Dock="Right" Width="64" Margin="6,0,0,0"/>
+                                                        <ComboBox ItemsSource="{Binding TrainingIdOptions}"
+                                                                  SelectedItem="{Binding SelectedSkillNodeUnlockedTrainingCandidate}"/>
+                                                    </DockPanel>
+                                                    <ListBox Grid.Row="1" Margin="0,6"
+                                                             ItemsSource="{Binding SelectedProductionSkillTreeNode.UnlockedTrainingIds}"
+                                                             SelectedItem="{Binding SelectedSkillNodeUnlockedTraining}"/>
+                                                    <Button Grid.Row="2" Content="選択した訓練を削除" Command="{Binding RemoveSkillNodeUnlockedTrainingCommand}"
+                                                            HorizontalAlignment="Right" Width="130"/>
+                                                </Grid>
+                                            </GroupBox>
+                                        </Grid>
                                     </Grid>
                                 </TabItem>
 

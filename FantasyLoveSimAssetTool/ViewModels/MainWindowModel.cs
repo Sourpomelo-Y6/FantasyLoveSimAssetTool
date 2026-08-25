@@ -58,6 +58,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private TrainingCatalogItem selectedTrainingCatalogItem;
         private string selectedTrainingPrerequisiteCandidate;
         private string selectedTrainingUnlockNodeCandidate;
+        private string selectedSkillNodePrerequisiteCandidate;
+        private string selectedSkillNodePrerequisite;
+        private string selectedSkillNodeUnlockedTrainingCandidate;
+        private string selectedSkillNodeUnlockedTraining;
         private HeroineAsset selectedTrainingAsset;
         private TrainingDialogueEntry selectedTrainingDialogueEntry;
         private TrainingDialogueMessage selectedTrainingDialogueMessage;
@@ -288,6 +292,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ObservableCollection<string> TrainingSkillApplicationScopeOptions { get; }
 
+        public ObservableCollection<string> TrainingIdOptions { get; }
+        public ObservableCollection<string> TrainingCategoryIdOptions { get; }
+        public ObservableCollection<string> BattleSkillIdOptions { get; }
+        public ObservableCollection<string> TrainingSkillIdOptions { get; }
+        public ObservableCollection<string> SkillTreeNodeIdOptions { get; }
+        public ObservableCollection<string> GameEventIdOptions { get; }
+
         public ObservableCollection<string> AvailableVoiceIds { get; }
 
         public ObservableCollection<string> VoiceUsageOptions { get; }
@@ -327,7 +338,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public HeroineSkillTreeNode SelectedProductionSkillTreeNode
         {
             get => selectedProductionSkillTreeNode;
-            set { if (selectedProductionSkillTreeNode != value) { selectedProductionSkillTreeNode = value; OnPropertyChanged(nameof(SelectedProductionSkillTreeNode)); CommandManager.InvalidateRequerySuggested(); } }
+            set
+            {
+                if (selectedProductionSkillTreeNode == value) return;
+                selectedProductionSkillTreeNode = value;
+                SelectedSkillNodePrerequisite = null;
+                SelectedSkillNodeUnlockedTraining = null;
+                OnPropertyChanged(nameof(SelectedProductionSkillTreeNode));
+                CommandManager.InvalidateRequerySuggested();
+            }
         }
 
         public bool IsBattleSkillEditorExpanded
@@ -866,6 +885,30 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             get => selectedTrainingUnlockNodeCandidate;
             set { if (selectedTrainingUnlockNodeCandidate != value) { selectedTrainingUnlockNodeCandidate = value; OnPropertyChanged(); } }
+        }
+
+        public string SelectedSkillNodePrerequisiteCandidate
+        {
+            get => selectedSkillNodePrerequisiteCandidate;
+            set { if (selectedSkillNodePrerequisiteCandidate != value) { selectedSkillNodePrerequisiteCandidate = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); } }
+        }
+
+        public string SelectedSkillNodePrerequisite
+        {
+            get => selectedSkillNodePrerequisite;
+            set { if (selectedSkillNodePrerequisite != value) { selectedSkillNodePrerequisite = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); } }
+        }
+
+        public string SelectedSkillNodeUnlockedTrainingCandidate
+        {
+            get => selectedSkillNodeUnlockedTrainingCandidate;
+            set { if (selectedSkillNodeUnlockedTrainingCandidate != value) { selectedSkillNodeUnlockedTrainingCandidate = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); } }
+        }
+
+        public string SelectedSkillNodeUnlockedTraining
+        {
+            get => selectedSkillNodeUnlockedTraining;
+            set { if (selectedSkillNodeUnlockedTraining != value) { selectedSkillNodeUnlockedTraining = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); } }
         }
 
         public HeroineAsset SelectedTrainingAsset
@@ -1518,6 +1561,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 ClearShortTextGenerationResult();
                 OnPropertyChanged(nameof(TrainingIdSuggestions));
                 OnPropertyChanged(nameof(TrainingUnlockNodeSuggestions));
+                RefreshSkillReferenceOptions();
                 SelectedOutfitMessageOverride = selectedProfile?.OutfitMessageOverrides?.FirstOrDefault();
                 SelectedOutfitReactionMessageOverride = selectedProfile?.OutfitReactionMessageOverrides?.FirstOrDefault();
                 SelectedTrainingImageEntry = selectedProfile?.TrainingImages?.Items?.FirstOrDefault();
@@ -1988,6 +2032,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedBasicInfoTabIndex == value) { return; }
                 selectedBasicInfoTabIndex = value;
                 OnPropertyChanged(nameof(SelectedBasicInfoTabIndex));
+                if (value == 2 || value == 3) RefreshSkillReferenceOptions();
             }
         }
 
@@ -2229,6 +2274,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ICommand AddSkillTreeNodeCommand { get; }
         public ICommand DuplicateSkillTreeNodeCommand { get; }
         public ICommand RemoveSkillTreeNodeCommand { get; }
+        public ICommand AddSkillNodePrerequisiteCommand { get; }
+        public ICommand RemoveSkillNodePrerequisiteCommand { get; }
+        public ICommand AddSkillNodeUnlockedTrainingCommand { get; }
+        public ICommand RemoveSkillNodeUnlockedTrainingCommand { get; }
+        public ICommand RefreshSkillReferenceOptionsCommand { get; }
 
         public ICommand OpenBattleMessagesTabCommand { get; }
 
@@ -2519,6 +2569,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
             BattleSkillTargetOptions = new ObservableCollection<string>(SkillValueCatalog.BattleTargets);
             BattleSkillAffectedStatOptions = new ObservableCollection<string>(SkillValueCatalog.BattleStats);
             TrainingSkillApplicationScopeOptions = new ObservableCollection<string>(SkillValueCatalog.TrainingApplicationScopes);
+            TrainingIdOptions = new ObservableCollection<string>();
+            TrainingCategoryIdOptions = new ObservableCollection<string>();
+            BattleSkillIdOptions = new ObservableCollection<string>();
+            TrainingSkillIdOptions = new ObservableCollection<string>();
+            SkillTreeNodeIdOptions = new ObservableCollection<string>();
+            GameEventIdOptions = new ObservableCollection<string>();
             AvailableVoiceIds = new ObservableCollection<string>();
             VoiceUsageOptions = new ObservableCollection<string>
             {
@@ -2842,6 +2898,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedProfile != null && SelectedProductionSkillTreeNode != null);
             RemoveSkillTreeNodeCommand = new RelayCommand(RemoveSkillTreeNode,
                 () => SelectedProfile != null && SelectedProductionSkillTreeNode != null);
+            AddSkillNodePrerequisiteCommand = new RelayCommand(AddSkillNodePrerequisite,
+                () => SelectedProductionSkillTreeNode != null && !string.IsNullOrWhiteSpace(SelectedSkillNodePrerequisiteCandidate));
+            RemoveSkillNodePrerequisiteCommand = new RelayCommand(RemoveSkillNodePrerequisite,
+                () => SelectedProductionSkillTreeNode != null && !string.IsNullOrWhiteSpace(SelectedSkillNodePrerequisite));
+            AddSkillNodeUnlockedTrainingCommand = new RelayCommand(AddSkillNodeUnlockedTraining,
+                () => SelectedProductionSkillTreeNode != null && !string.IsNullOrWhiteSpace(SelectedSkillNodeUnlockedTrainingCandidate));
+            RemoveSkillNodeUnlockedTrainingCommand = new RelayCommand(RemoveSkillNodeUnlockedTraining,
+                () => SelectedProductionSkillTreeNode != null && !string.IsNullOrWhiteSpace(SelectedSkillNodeUnlockedTraining));
+            RefreshSkillReferenceOptionsCommand = new RelayCommand(RefreshSkillReferenceOptions);
             OpenBattleMessagesTabCommand = new RelayCommand(() => SelectedMainTabIndex = 2);
             RefreshProductionStatusCommand = new RelayCommand(RefreshProductionStatus);
             OpenProductionStatusTargetCommand = new RelayCommand<object>(OpenProductionStatusTarget);
@@ -8407,6 +8472,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SelectedProfile.BattleSkills.Add(item);
             SelectedProfile.BattleSkillsSpecified = true;
             SelectedProductionBattleSkill = item;
+            RefreshSkillReferenceOptions();
             StatusMessage = $"戦闘スキル {item.SkillId} を追加しました。";
         }
 
@@ -8430,6 +8496,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SelectedProfile.BattleSkills.Add(item);
             SelectedProfile.BattleSkillsSpecified = true;
             SelectedProductionBattleSkill = item;
+            RefreshSkillReferenceOptions();
             StatusMessage = $"戦闘スキルを {item.SkillId} として複製しました。";
         }
 
@@ -8441,6 +8508,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             if (!ConfirmSkillRemoval("戦闘スキル", item.SkillId, references, "スキルツリーノード")) return;
             SelectedProfile.BattleSkills.Remove(item);
             SelectedProductionBattleSkill = null;
+            RefreshSkillReferenceOptions();
             StatusMessage = $"戦闘スキル {item.SkillId} を削除しました。";
         }
 
@@ -8455,6 +8523,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             };
             SelectedProfile.HeroineSkillTree.TrainingSkills.Add(item);
             SelectedProductionTrainingSkill = item;
+            RefreshSkillReferenceOptions();
             StatusMessage = $"訓練スキル {item.SkillId} を追加しました。";
         }
 
@@ -8477,6 +8546,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             };
             SelectedProfile.HeroineSkillTree.TrainingSkills.Add(item);
             SelectedProductionTrainingSkill = item;
+            RefreshSkillReferenceOptions();
             StatusMessage = $"訓練スキルを {item.SkillId} として複製しました。";
         }
 
@@ -8488,6 +8558,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             if (!ConfirmSkillRemoval("訓練スキル", item.SkillId, references, "スキルツリーノード")) return;
             SelectedProfile.HeroineSkillTree.TrainingSkills.Remove(item);
             SelectedProductionTrainingSkill = null;
+            RefreshSkillReferenceOptions();
             StatusMessage = $"訓練スキル {item.SkillId} を削除しました。";
         }
 
@@ -8502,6 +8573,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             };
             SelectedProfile.HeroineSkillTree.Nodes.Add(item);
             SelectedProductionSkillTreeNode = item;
+            RefreshSkillReferenceOptions();
             StatusMessage = $"スキルツリーノード {item.NodeId} を追加しました。";
         }
 
@@ -8526,6 +8598,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             };
             SelectedProfile.HeroineSkillTree.Nodes.Add(item);
             SelectedProductionSkillTreeNode = item;
+            RefreshSkillReferenceOptions();
             StatusMessage = $"スキルツリーノードを {item.NodeId} として複製しました。";
         }
 
@@ -8540,6 +8613,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             if (!ConfirmSkillRemoval("スキルツリーノード", item.NodeId, references, "他ノードまたは訓練定義")) return;
             SelectedProfile.HeroineSkillTree.Nodes.Remove(item);
             SelectedProductionSkillTreeNode = null;
+            RefreshSkillReferenceOptions();
             StatusMessage = $"スキルツリーノード {item.NodeId} を削除しました。";
         }
 
@@ -8551,6 +8625,66 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 kind + "の削除確認",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning) == MessageBoxResult.Yes;
+        }
+
+        private void AddSkillNodePrerequisite()
+        {
+            HeroineSkillTreeNode node = SelectedProductionSkillTreeNode;
+            string id = SelectedSkillNodePrerequisiteCandidate?.Trim();
+            node.PrerequisiteNodeIds ??= new ObservableCollection<string>();
+            if (!string.Equals(id, node.NodeId?.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                !node.PrerequisiteNodeIds.Contains(id, StringComparer.OrdinalIgnoreCase))
+                node.PrerequisiteNodeIds.Add(id);
+            SelectedSkillNodePrerequisiteCandidate = null;
+            OnPropertyChanged(nameof(SelectedProductionSkillTreeNode));
+        }
+
+        private void RemoveSkillNodePrerequisite()
+        {
+            HeroineSkillTreeNode node = SelectedProductionSkillTreeNode;
+            string existing = node.PrerequisiteNodeIds?.FirstOrDefault(x =>
+                string.Equals(x, SelectedSkillNodePrerequisite, StringComparison.OrdinalIgnoreCase));
+            if (existing != null) node.PrerequisiteNodeIds.Remove(existing);
+            SelectedSkillNodePrerequisite = null;
+            OnPropertyChanged(nameof(SelectedProductionSkillTreeNode));
+        }
+
+        private void AddSkillNodeUnlockedTraining()
+        {
+            HeroineSkillTreeNode node = SelectedProductionSkillTreeNode;
+            string id = SelectedSkillNodeUnlockedTrainingCandidate?.Trim();
+            node.UnlockedTrainingIds ??= new ObservableCollection<string>();
+            if (!node.UnlockedTrainingIds.Contains(id, StringComparer.OrdinalIgnoreCase))
+                node.UnlockedTrainingIds.Add(id);
+            SelectedSkillNodeUnlockedTrainingCandidate = null;
+            OnPropertyChanged(nameof(SelectedProductionSkillTreeNode));
+        }
+
+        private void RemoveSkillNodeUnlockedTraining()
+        {
+            HeroineSkillTreeNode node = SelectedProductionSkillTreeNode;
+            string existing = node.UnlockedTrainingIds?.FirstOrDefault(x =>
+                string.Equals(x, SelectedSkillNodeUnlockedTraining, StringComparison.OrdinalIgnoreCase));
+            if (existing != null) node.UnlockedTrainingIds.Remove(existing);
+            SelectedSkillNodeUnlockedTraining = null;
+            OnPropertyChanged(nameof(SelectedProductionSkillTreeNode));
+        }
+
+        private void RefreshSkillReferenceOptions()
+        {
+            HeroineProfile profile = SelectedProfile;
+            RefreshStringOptions(TrainingIdOptions,
+                profile?.TrainingCatalog?.Items?.Where(x => x != null).Select(x => x.TrainingId) ?? Enumerable.Empty<string>(), true);
+            RefreshStringOptions(TrainingCategoryIdOptions,
+                profile?.TrainingCatalog?.Items?.Where(x => x != null).Select(x => x.TrainingCategoryId) ?? Enumerable.Empty<string>(), true);
+            RefreshStringOptions(BattleSkillIdOptions,
+                profile?.BattleSkills?.Where(x => x != null).Select(x => x.SkillId) ?? Enumerable.Empty<string>(), true);
+            RefreshStringOptions(TrainingSkillIdOptions,
+                profile?.HeroineSkillTree?.TrainingSkills?.Where(x => x != null).Select(x => x.SkillId) ?? Enumerable.Empty<string>(), true);
+            RefreshStringOptions(SkillTreeNodeIdOptions,
+                profile?.HeroineSkillTree?.Nodes?.Where(x => x != null).Select(x => x.NodeId) ?? Enumerable.Empty<string>(), true);
+            RefreshStringOptions(GameEventIdOptions,
+                profile?.ConversationEntries?.Where(x => x != null && x.Kind == ConversationDataKind.GameEvents).Select(x => x.Id) ?? Enumerable.Empty<string>(), true);
         }
 
         private static string BuildUniqueId(string baseId, IEnumerable<string> existingIds)

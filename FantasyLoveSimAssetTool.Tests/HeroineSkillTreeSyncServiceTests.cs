@@ -10,6 +10,20 @@ namespace FantasyLoveSimAssetTool.Tests
     public class HeroineSkillTreeSyncServiceTests
     {
         [TestMethod]
+        public void TrainingSkill_AllTrainingsClearsTargetId()
+        {
+            HeroineTrainingSkill skill = new HeroineTrainingSkill
+            {
+                ApplicationScope = "Training",
+                ApplicationTargetId = "TrainingA"
+            };
+
+            skill.ApplicationScope = "AllTrainings";
+
+            Assert.AreEqual(string.Empty, skill.ApplicationTargetId);
+        }
+
+        [TestMethod]
         public void ExportAndImport_RoundTripsTrainingSkillsNodesAndConditions()
         {
             HeroineProfile source = Profile();

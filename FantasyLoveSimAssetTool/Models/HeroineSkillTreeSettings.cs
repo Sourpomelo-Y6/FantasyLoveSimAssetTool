@@ -1,11 +1,15 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json.Serialization;
+using FantasyLoveSimAssetTool.Common;
 
 namespace FantasyLoveSimAssetTool.Models
 {
-    public class HeroineTrainingSkill
+    public class HeroineTrainingSkill : ObservableObject
     {
+        private string applicationScope = "AllTrainings";
+        private string applicationTargetId = string.Empty;
+
         public string SkillId { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
@@ -15,8 +19,23 @@ namespace FantasyLoveSimAssetTool.Models
         public int HeroineHpCostReduction { get; set; }
         public int AffectionRewardModifier { get; set; }
         public int ProficiencyRewardModifier { get; set; }
-        public string ApplicationScope { get; set; } = "AllTrainings";
-        public string ApplicationTargetId { get; set; } = string.Empty;
+        public string ApplicationScope
+        {
+            get => applicationScope;
+            set
+            {
+                if (applicationScope == value) return;
+                applicationScope = value;
+                if (value == "AllTrainings") ApplicationTargetId = string.Empty;
+                OnPropertyChanged();
+            }
+        }
+
+        public string ApplicationTargetId
+        {
+            get => applicationTargetId;
+            set { if (applicationTargetId != value) { applicationTargetId = value; OnPropertyChanged(); } }
+        }
     }
 
     public class HeroineSkillTreeCondition
