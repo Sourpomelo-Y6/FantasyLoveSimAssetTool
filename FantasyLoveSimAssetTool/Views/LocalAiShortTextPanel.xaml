@@ -13,7 +13,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="AI 共通台詞候補" FontWeight="SemiBold" FontSize="15"/>
+                    <TextBlock Text="AI文章候補" FontWeight="SemiBold" FontSize="15"/>
                     <TextBlock Text="対象を選んで3案を生成します。採用するまで現在値は変わりません。"
                                Foreground="#66606A" TextWrapping="Wrap" Margin="0,3,12,0"/>
                 </StackPanel>

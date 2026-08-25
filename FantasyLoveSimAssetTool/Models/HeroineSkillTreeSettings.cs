@@ -9,10 +9,20 @@ namespace FantasyLoveSimAssetTool.Models
     {
         private string applicationScope = "AllTrainings";
         private string applicationTargetId = string.Empty;
+        private string displayName = string.Empty;
+        private string description = string.Empty;
 
         public string SkillId { get; set; } = string.Empty;
-        public string DisplayName { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
+        public string DisplayName
+        {
+            get => displayName;
+            set { if (displayName != value) { displayName = value; OnPropertyChanged(); } }
+        }
+        public string Description
+        {
+            get => description;
+            set { if (description != value) { description = value; OnPropertyChanged(); } }
+        }
         public int SortOrder { get; set; }
         public bool IsEnabled { get; set; } = true;
         public int PlayerHpCostReduction { get; set; }
@@ -77,10 +87,15 @@ namespace FantasyLoveSimAssetTool.Models
         }
     }
 
-    public class HeroineSkillTreeNode
+    public class HeroineSkillTreeNode : ObservableObject
     {
+        private string displayName = string.Empty;
         public string NodeId { get; set; } = string.Empty;
-        public string DisplayName { get; set; } = string.Empty;
+        public string DisplayName
+        {
+            get => displayName;
+            set { if (displayName != value) { displayName = value; OnPropertyChanged(); } }
+        }
         public string TrainingSkillId { get; set; } = string.Empty;
         public string GrantedHeroineSkillId { get; set; } = string.Empty;
         public int SortOrder { get; set; }

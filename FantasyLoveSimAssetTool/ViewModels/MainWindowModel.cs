@@ -207,6 +207,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private ShortTextGenerationTarget selectedShortTextTarget;
         private OutfitMessageOverride generatedShortTextOutfitMessage;
         private OutfitReactionMessageOverride generatedShortTextOutfitReaction;
+        private HeroineBattleSkill generatedShortTextBattleSkill;
+        private HeroineTrainingSkill generatedShortTextTrainingSkill;
+        private HeroineSkillTreeNode generatedShortTextSkillTreeNode;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
 
@@ -243,6 +246,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     return string.IsNullOrWhiteSpace(SelectedOutfitReactionMessageOverride?.ReactionType)
                         ? "衣装反応行を選択してください。"
                         : $"ReactionType: {SelectedOutfitReactionMessageOverride.ReactionType}";
+                if (SelectedShortTextTarget?.RequiredContext == "BattleSkill")
+                    return SelectedProductionBattleSkill == null ? "戦闘スキルを選択してください。" : $"SkillId: {SelectedProductionBattleSkill.SkillId}";
+                if (SelectedShortTextTarget?.RequiredContext == "TrainingSkill")
+                    return SelectedProductionTrainingSkill == null ? "訓練スキルを選択してください。" : $"SkillId: {SelectedProductionTrainingSkill.SkillId}";
+                if (SelectedShortTextTarget?.RequiredContext == "SkillTreeNode")
+                    return SelectedProductionSkillTreeNode == null ? "スキルツリーノードを選択してください。" : $"NodeId: {SelectedProductionSkillTreeNode.NodeId}";
                 return "ヒロイン共通台詞";
             }
         }
@@ -329,13 +338,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public HeroineBattleSkill SelectedProductionBattleSkill
         {
             get => selectedProductionBattleSkill;
-            set { if (selectedProductionBattleSkill != value) { selectedProductionBattleSkill = value; OnPropertyChanged(nameof(SelectedProductionBattleSkill)); CommandManager.InvalidateRequerySuggested(); } }
+            set { if (selectedProductionBattleSkill != value) { selectedProductionBattleSkill = value; OnPropertyChanged(nameof(SelectedProductionBattleSkill)); OnPropertyChanged(nameof(CurrentShortTextValue)); OnPropertyChanged(nameof(CurrentShortTextContext)); if (SelectedShortTextTarget?.RequiredContext == "BattleSkill") ClearShortTextGenerationResult(); CommandManager.InvalidateRequerySuggested(); } }
         }
 
         public HeroineTrainingSkill SelectedProductionTrainingSkill
         {
             get => selectedProductionTrainingSkill;
-            set { if (selectedProductionTrainingSkill != value) { selectedProductionTrainingSkill = value; OnPropertyChanged(nameof(SelectedProductionTrainingSkill)); CommandManager.InvalidateRequerySuggested(); } }
+            set { if (selectedProductionTrainingSkill != value) { selectedProductionTrainingSkill = value; OnPropertyChanged(nameof(SelectedProductionTrainingSkill)); OnPropertyChanged(nameof(CurrentShortTextValue)); OnPropertyChanged(nameof(CurrentShortTextContext)); if (SelectedShortTextTarget?.RequiredContext == "TrainingSkill") ClearShortTextGenerationResult(); CommandManager.InvalidateRequerySuggested(); } }
         }
 
         public HeroineSkillTreeNode SelectedProductionSkillTreeNode
@@ -349,6 +358,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 SelectedSkillNodePrerequisite = null;
                 SelectedSkillNodeUnlockedTraining = null;
                 OnPropertyChanged(nameof(SelectedProductionSkillTreeNode));
+                OnPropertyChanged(nameof(CurrentShortTextValue));
+                OnPropertyChanged(nameof(CurrentShortTextContext));
+                if (SelectedShortTextTarget?.RequiredContext == "SkillTreeNode") ClearShortTextGenerationResult();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -2042,7 +2054,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedBasicInfoTabIndex == value) { return; }
                 selectedBasicInfoTabIndex = value;
                 OnPropertyChanged(nameof(SelectedBasicInfoTabIndex));
-                if (value == 2 || value == 3) RefreshSkillReferenceOptions();
+                if (value == 2 || value == 3 || value == 4) RefreshSkillReferenceOptions();
             }
         }
 
@@ -2564,7 +2576,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 new ShortTextGenerationTarget("GameStartFollowUpMessage", "開始後メッセージ", "ゲーム開始時の案内に続けて表示する短い台詞", 10, 60),
                 new ShortTextGenerationTarget("OutfitLockedMessage", "衣装：未解放", "未解放の衣装を選んだプレイヤーへ返す短い台詞", 10, 50, requiredContext: "OutfitMessage"),
                 new ShortTextGenerationTarget("OutfitChangedMessage", "衣装：変更完了", "衣装へ着替えた直後にプレイヤーへ話す短い台詞", 10, 60, requiredContext: "OutfitMessage"),
-                new ShortTextGenerationTarget("OutfitReactionMessage", "衣装：反応", "衣装に関するプレイヤーの行動へ反応する短い台詞", 10, 60, requiredContext: "OutfitReaction")
+                new ShortTextGenerationTarget("OutfitReactionMessage", "衣装：反応", "衣装に関するプレイヤーの行動へ反応する短い台詞", 10, 60, requiredContext: "OutfitReaction"),
+                new ShortTextGenerationTarget("BattleSkillDisplayName", "戦闘スキル名", "選択した戦闘スキルの効果が伝わる短い表示名", 2, 18, requiredContext: "BattleSkill"),
+                new ShortTextGenerationTarget("TrainingSkillDisplayName", "訓練スキル名", "選択した訓練スキルの効果が伝わる短い表示名", 2, 18, requiredContext: "TrainingSkill"),
+                new ShortTextGenerationTarget("TrainingSkillDescription", "訓練スキル説明", "選択した訓練スキルの効果を自然に説明する文", 15, 80, requiredContext: "TrainingSkill"),
+                new ShortTextGenerationTarget("SkillTreeNodeDisplayName", "スキルノード名", "選択したスキルツリーノードの内容が伝わる短い表示名", 2, 18, requiredContext: "SkillTreeNode")
             };
             selectedShortTextTarget = ShortTextTargets.First(target => target.Id == "MorningGreeting");
             shortTextAiStatus = "ヒロインを選択してください。";
@@ -9146,6 +9162,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ShortTextGenerationTarget target = SelectedShortTextTarget;
             OutfitMessageOverride sourceOutfitMessage = SelectedOutfitMessageOverride;
             OutfitReactionMessageOverride sourceOutfitReaction = SelectedOutfitReactionMessageOverride;
+            HeroineBattleSkill sourceBattleSkill = SelectedProductionBattleSkill;
+            HeroineTrainingSkill sourceTrainingSkill = SelectedProductionTrainingSkill;
+            HeroineSkillTreeNode sourceSkillTreeNode = SelectedProductionSkillTreeNode;
             ShortTextGenerationContext generationContext = CreateShortTextGenerationContext(target);
 
             shortTextGenerationCancellation?.Dispose();
@@ -9175,9 +9194,15 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
                 if (SelectedShortTextTarget != target ||
                     (target.RequiredContext == "OutfitMessage" && SelectedOutfitMessageOverride != sourceOutfitMessage) ||
-                    (target.RequiredContext == "OutfitReaction" && SelectedOutfitReactionMessageOverride != sourceOutfitReaction)) return;
+                    (target.RequiredContext == "OutfitReaction" && SelectedOutfitReactionMessageOverride != sourceOutfitReaction) ||
+                    (target.RequiredContext == "BattleSkill" && SelectedProductionBattleSkill != sourceBattleSkill) ||
+                    (target.RequiredContext == "TrainingSkill" && SelectedProductionTrainingSkill != sourceTrainingSkill) ||
+                    (target.RequiredContext == "SkillTreeNode" && SelectedProductionSkillTreeNode != sourceSkillTreeNode)) return;
                 generatedShortTextOutfitMessage = sourceOutfitMessage;
                 generatedShortTextOutfitReaction = sourceOutfitReaction;
+                generatedShortTextBattleSkill = sourceBattleSkill;
+                generatedShortTextTrainingSkill = sourceTrainingSkill;
+                generatedShortTextSkillTreeNode = sourceSkillTreeNode;
                 ShortTextAiRawResponse = result.RawResponse;
                 if (!string.IsNullOrWhiteSpace(result.ParseError))
                 {
@@ -9226,7 +9251,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
             if ((SelectedShortTextTarget.RequiredContext == "OutfitMessage" &&
                     SelectedOutfitMessageOverride != generatedShortTextOutfitMessage) ||
                 (SelectedShortTextTarget.RequiredContext == "OutfitReaction" &&
-                    SelectedOutfitReactionMessageOverride != generatedShortTextOutfitReaction))
+                    SelectedOutfitReactionMessageOverride != generatedShortTextOutfitReaction) ||
+                (SelectedShortTextTarget.RequiredContext == "BattleSkill" &&
+                    SelectedProductionBattleSkill != generatedShortTextBattleSkill) ||
+                (SelectedShortTextTarget.RequiredContext == "TrainingSkill" &&
+                    SelectedProductionTrainingSkill != generatedShortTextTrainingSkill) ||
+                (SelectedShortTextTarget.RequiredContext == "SkillTreeNode" &&
+                    SelectedProductionSkillTreeNode != generatedShortTextSkillTreeNode))
             {
                 ClearShortTextGenerationResult();
                 ShortTextAiStatus = "生成元の衣装行が変更されたため候補を破棄しました。もう一度生成してください。";
@@ -9253,6 +9284,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ShortTextAiRawResponse = string.Empty;
             generatedShortTextOutfitMessage = null;
             generatedShortTextOutfitReaction = null;
+            generatedShortTextBattleSkill = null;
+            generatedShortTextTrainingSkill = null;
+            generatedShortTextSkillTreeNode = null;
         }
 
         private bool CanGenerateSelectedShortText()
@@ -9264,6 +9298,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             if (SelectedShortTextTarget.RequiredContext == "OutfitReaction")
                 return SelectedOutfitReactionMessageOverride != null &&
                     !string.IsNullOrWhiteSpace(SelectedOutfitReactionMessageOverride.ReactionType);
+            if (SelectedShortTextTarget.RequiredContext == "BattleSkill") return SelectedProductionBattleSkill != null;
+            if (SelectedShortTextTarget.RequiredContext == "TrainingSkill") return SelectedProductionTrainingSkill != null;
+            if (SelectedShortTextTarget.RequiredContext == "SkillTreeNode") return SelectedProductionSkillTreeNode != null;
             return true;
         }
 
@@ -9276,8 +9313,31 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     : string.Empty,
                 ReactionType = target.RequiredContext == "OutfitReaction"
                     ? SelectedOutfitReactionMessageOverride?.ReactionType ?? string.Empty
-                    : string.Empty
+                    : string.Empty,
+                TaskContext = BuildSkillShortTextContext(target)
             };
+        }
+
+        private string BuildSkillShortTextContext(ShortTextGenerationTarget target)
+        {
+            if (target?.RequiredContext == "BattleSkill" && SelectedProductionBattleSkill != null)
+            {
+                HeroineBattleSkill skill = SelectedProductionBattleSkill;
+                return $"SkillId={skill.SkillId}; Effect={skill.EffectType}; Target={skill.Target}; MP={skill.Cost}; Power={skill.Power}; Stat={skill.AffectedStat}; Duration={skill.StatusDurationTurns}; Chance={skill.UseChancePercent}%";
+            }
+            if (target?.RequiredContext == "TrainingSkill" && SelectedProductionTrainingSkill != null)
+            {
+                HeroineTrainingSkill skill = SelectedProductionTrainingSkill;
+                return $"SkillId={skill.SkillId}; Scope={skill.ApplicationScope}; TargetId={skill.ApplicationTargetId}; PlayerHpReduction={skill.PlayerHpCostReduction}; HeroineHpReduction={skill.HeroineHpCostReduction}; AffectionModifier={skill.AffectionRewardModifier}; ProficiencyModifier={skill.ProficiencyRewardModifier}";
+            }
+            if (target?.RequiredContext == "SkillTreeNode" && SelectedProductionSkillTreeNode != null)
+            {
+                HeroineSkillTreeNode node = SelectedProductionSkillTreeNode;
+                string conditions = string.Join(",", (node.UnlockConditions ?? new ObservableCollection<HeroineSkillTreeCondition>())
+                    .Take(5).Select(x => $"{x.ConditionType}/{x.Scope}/{x.TargetId}/{x.RequiredValue}"));
+                return $"NodeId={node.NodeId}; TrainingSkill={node.TrainingSkillId}; BattleSkill={node.GrantedHeroineSkillId}; SP={node.SkillPointCost}; Conditions={conditions}";
+            }
+            return string.Empty;
         }
 
         private IReadOnlyCollection<string> GetShortTextExpressionIds(ShortTextGenerationTarget target)
@@ -9329,6 +9389,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 case "OutfitLockedMessage": return SelectedOutfitMessageOverride?.LockedMessage ?? string.Empty;
                 case "OutfitChangedMessage": return SelectedOutfitMessageOverride?.ChangedMessage ?? string.Empty;
                 case "OutfitReactionMessage": return SelectedOutfitReactionMessageOverride?.Message ?? string.Empty;
+                case "BattleSkillDisplayName": return SelectedProductionBattleSkill?.DisplayName ?? string.Empty;
+                case "TrainingSkillDisplayName": return SelectedProductionTrainingSkill?.DisplayName ?? string.Empty;
+                case "TrainingSkillDescription": return SelectedProductionTrainingSkill?.Description ?? string.Empty;
+                case "SkillTreeNodeDisplayName": return SelectedProductionSkillTreeNode?.DisplayName ?? string.Empty;
                 default: return string.Empty;
             }
         }
@@ -9346,6 +9410,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 case "OutfitLockedMessage": SelectedOutfitMessageOverride.LockedMessage = value; break;
                 case "OutfitChangedMessage": SelectedOutfitMessageOverride.ChangedMessage = value; break;
                 case "OutfitReactionMessage": SelectedOutfitReactionMessageOverride.Message = value; break;
+                case "BattleSkillDisplayName": SelectedProductionBattleSkill.DisplayName = value; break;
+                case "TrainingSkillDisplayName": SelectedProductionTrainingSkill.DisplayName = value; break;
+                case "TrainingSkillDescription": SelectedProductionTrainingSkill.Description = value; break;
+                case "SkillTreeNodeDisplayName": SelectedProductionSkillTreeNode.DisplayName = value; break;
                 default: throw new InvalidOperationException($"未対応の生成対象です: {target.Id}");
             }
         }
@@ -9445,7 +9513,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 : "衣装定義の CostumeId はすべて衣装メッセージに登録済みです。";
 
             SelectedMainTabIndex = 0;
-            SelectedBasicInfoTabIndex = 4;
+            SelectedBasicInfoTabIndex = 5;
         }
 
         private void RemoveOutfitMessageOverride()
@@ -12430,7 +12498,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                         string.Equals(item.TrainingId, check.TargetId, StringComparison.OrdinalIgnoreCase));
                     break;
                 case ProductionStatusTargetKind.SkillTreeNode:
-                    SelectedBasicInfoTabIndex = 3;
+                    SelectedBasicInfoTabIndex = 4;
                     SelectedProductionSkillTreeNode = SelectedProfile.HeroineSkillTree?.Nodes?.FirstOrDefault(x =>
                         string.Equals(x.NodeId, check.TargetId, StringComparison.OrdinalIgnoreCase));
                     break;
@@ -12477,12 +12545,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
                                 StringComparison.OrdinalIgnoreCase));
                     break;
                 case ProductionStatusTargetKind.OutfitMessage:
-                    SelectedBasicInfoTabIndex = 4;
+                    SelectedBasicInfoTabIndex = 5;
                     SelectedOutfitMessageOverride = SelectedProfile.OutfitMessageOverrides?.FirstOrDefault(item =>
                         string.Equals(item.OutfitId, check.TargetId, StringComparison.OrdinalIgnoreCase));
                     break;
                 case ProductionStatusTargetKind.OutfitReactionMessage:
-                    SelectedBasicInfoTabIndex = 4;
+                    SelectedBasicInfoTabIndex = 5;
                     SelectedOutfitReactionMessageOverride = SelectedProfile.OutfitReactionMessageOverrides?.FirstOrDefault(item =>
                         string.Equals(item.ReactionType, check.TargetId, StringComparison.OrdinalIgnoreCase));
                     break;

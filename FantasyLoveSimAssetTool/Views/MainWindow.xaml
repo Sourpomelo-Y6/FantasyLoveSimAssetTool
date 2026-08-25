@@ -303,6 +303,7 @@
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         <DockPanel Margin="0,0,0,10">
                                             <TextBlock Text="戦闘で使用するヒロイン固有スキルを編集します。"
@@ -341,6 +342,11 @@
                                                 <DataGridTextColumn Header="回数" Binding="{Binding MaxUsesPerBattle}" Width="55"/>
                                             </DataGrid.Columns>
                                         </DataGrid>
+                                        <Expander Grid.Row="2" Header="AI文章作成" Margin="0,12,0,0" IsExpanded="False">
+                                            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="520" Padding="4,8,4,0">
+                                                <local:LocalAiShortTextPanel TargetGroup="BattleSkill"/>
+                                            </ScrollViewer>
+                                        </Expander>
                                     </Grid>
                                 </TabItem>
 
@@ -350,9 +356,6 @@
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="*"/>
                                             <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                            <RowDefinition Height="190"/>
-                                            <RowDefinition Height="210"/>
                                         </Grid.RowDefinitions>
                                         <DockPanel Margin="0,0,0,6">
                                             <TextBlock Text="訓練スキル" FontWeight="SemiBold" VerticalAlignment="Center"/>
@@ -373,6 +376,7 @@
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="SkillId" Binding="{Binding SkillId}" Width="120"/>
                                                 <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName}" Width="120"/>
+                                                <DataGridTextColumn Header="説明" Binding="{Binding Description}" Width="220"/>
                                                 <DataGridTextColumn Header="主人公HP軽減" Binding="{Binding PlayerHpCostReduction}" Width="90"/>
                                                 <DataGridTextColumn Header="ヒロインHP軽減" Binding="{Binding HeroineHpCostReduction}" Width="100"/>
                                                 <DataGridTextColumn Header="好感度補正" Binding="{Binding AffectionRewardModifier}" Width="80"/>
@@ -404,7 +408,26 @@
                                                 </DataGridTemplateColumn>
                                             </DataGrid.Columns>
                                         </DataGrid>
-                                        <DockPanel Grid.Row="2" Margin="0,0,0,6">
+                                        <Expander Grid.Row="2" Header="AI文章作成" Margin="0,12,0,0" IsExpanded="False">
+                                            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="520" Padding="4,8,4,0">
+                                                <local:LocalAiShortTextPanel TargetGroup="TrainingSkill"/>
+                                            </ScrollViewer>
+                                        </Expander>
+                                    </Grid>
+                                </TabItem>
+
+                                <TabItem Header="ヒロインスキルツリー">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Disabled">
+                                    <Grid Margin="16">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="240"/>
+                                            <RowDefinition Height="190"/>
+                                            <RowDefinition Height="210"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <DockPanel Grid.Row="0" Margin="0,0,0,6">
                                             <TextBlock Text="ヒロインスキルツリーノード（前提・解放訓練・条件の詳細はJSON往復でも保持されます）"
                                                        FontWeight="SemiBold" VerticalAlignment="Center"/>
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -413,7 +436,7 @@
                                                 <Button Content="削除" Command="{Binding RemoveSkillTreeNodeCommand}" Width="70" Margin="8,0,0,0"/>
                                             </StackPanel>
                                         </DockPanel>
-                                        <DataGrid Grid.Row="3"
+                                        <DataGrid Grid.Row="1"
                                                   ItemsSource="{Binding SelectedProfile.HeroineSkillTree.Nodes}"
                                                   SelectedItem="{Binding SelectedProductionSkillTreeNode}"
                                                   AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
@@ -439,7 +462,7 @@
                                                 <DataGridTextColumn Header="Y" Binding="{Binding TreePositionY}" Width="55"/>
                                             </DataGrid.Columns>
                                         </DataGrid>
-                                        <Grid Grid.Row="4" Margin="0,12,0,0">
+                                        <Grid Grid.Row="2" Margin="0,12,0,0">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="16"/>
@@ -484,7 +507,7 @@
                                                 </Grid>
                                             </GroupBox>
                                         </Grid>
-                                        <GroupBox Grid.Row="5" Header="選択ノードの解放条件" Margin="0,12,0,0">
+                                        <GroupBox Grid.Row="3" Header="選択ノードの解放条件" Margin="0,12,0,0">
                                             <Grid Margin="8">
                                                 <Grid.RowDefinitions>
                                                     <RowDefinition Height="Auto"/>
@@ -539,7 +562,13 @@
                                                 </DataGrid>
                                             </Grid>
                                         </GroupBox>
+                                        <Expander Grid.Row="4" Header="AI文章作成" Margin="0,12,0,0" IsExpanded="False">
+                                            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="520" Padding="4,8,4,0">
+                                                <local:LocalAiShortTextPanel TargetGroup="SkillTreeNode"/>
+                                            </ScrollViewer>
+                                        </Expander>
                                     </Grid>
+                                    </ScrollViewer>
                                 </TabItem>
 
                                 <TabItem Header="衣装メッセージ">

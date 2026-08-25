@@ -142,6 +142,40 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void BuildPrompt_ForSkillTextIncludesOnlyCompactTaskContext()
+        {
+            var profile = new HeroineProfile { DisplayName = "リリア", Personality = "努力家" };
+            var target = new ShortTextGenerationTarget(
+                "TrainingSkillDescription", "訓練スキル説明", "訓練効果の説明", 15, 80,
+                requiredContext: "TrainingSkill");
+
+            string prompt = ShortTextGenerationService.BuildPrompt(profile, target, context:
+                new ShortTextGenerationContext
+                {
+                    TaskContext = "SkillId=Lilia_Training; Scope=Training; TargetId=PracticeA; AffectionModifier=2"
+                });
+
+            StringAssert.Contains(prompt, "対象設定: SkillId=Lilia_Training");
+            StringAssert.Contains(prompt, "Scope=Training");
+            StringAssert.Contains(prompt, "15～80文字の文章");
+            Assert.IsFalse(prompt.Contains("expressionId"));
+        }
+
+        [TestMethod]
+        public void BuildPrompt_ForSkillTextRequiresSelectedSkillContext()
+        {
+            var target = new ShortTextGenerationTarget(
+                "BattleSkillDisplayName", "戦闘スキル名", "戦闘スキル名", 2, 18,
+                requiredContext: "BattleSkill");
+
+            InvalidOperationException error = Assert.ThrowsException<InvalidOperationException>(() =>
+                ShortTextGenerationService.BuildPrompt(new HeroineProfile(), target,
+                    context: new ShortTextGenerationContext()));
+
+            StringAssert.Contains(error.Message, "スキルまたはノード");
+        }
+
+        [TestMethod]
         public void TextGenerationCandidate_ReportsLengthWarningWithoutBlockingAdoption()
         {
             var candidate = new TextGenerationCandidate("短い", 15, 50);

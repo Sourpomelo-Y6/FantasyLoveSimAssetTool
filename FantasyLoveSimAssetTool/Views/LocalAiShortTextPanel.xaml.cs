@@ -59,9 +59,8 @@ namespace FantasyLoveSimAssetTool.Views
                 return;
             }
 
-            var isOutfitGroup = string.Equals(TargetGroup, "Outfit", StringComparison.OrdinalIgnoreCase);
             var targets = viewModel.ShortTextTargets
-                .Where(target => IsTargetInGroup(target, isOutfitGroup))
+                .Where(target => IsTargetInGroup(target, TargetGroup))
                 .ToList();
 
             TargetComboBox.ItemsSource = targets;
@@ -72,11 +71,17 @@ namespace FantasyLoveSimAssetTool.Views
             }
         }
 
-        private static bool IsTargetInGroup(ShortTextGenerationTarget target, bool isOutfitGroup)
+        private static bool IsTargetInGroup(ShortTextGenerationTarget target, string targetGroup)
         {
-            var isOutfitTarget = string.Equals(target.RequiredContext, "OutfitMessage", StringComparison.Ordinal)
-                || string.Equals(target.RequiredContext, "OutfitReaction", StringComparison.Ordinal);
-            return isOutfitGroup ? isOutfitTarget : !isOutfitTarget;
+            if (string.Equals(targetGroup, "Outfit", StringComparison.OrdinalIgnoreCase))
+                return target.RequiredContext == "OutfitMessage" || target.RequiredContext == "OutfitReaction";
+            if (string.Equals(targetGroup, "BattleSkill", StringComparison.OrdinalIgnoreCase))
+                return target.RequiredContext == "BattleSkill";
+            if (string.Equals(targetGroup, "TrainingSkill", StringComparison.OrdinalIgnoreCase))
+                return target.RequiredContext == "TrainingSkill";
+            if (string.Equals(targetGroup, "SkillTreeNode", StringComparison.OrdinalIgnoreCase))
+                return target.RequiredContext == "SkillTreeNode";
+            return target.RequiredContext == "None";
         }
     }
 }

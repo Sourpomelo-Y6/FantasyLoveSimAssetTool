@@ -5,5 +5,7 @@ namespace FantasyLoveSimAssetTool.Models
         public string OutfitId { get; set; } = string.Empty;
 
         public string ReactionType { get; set; } = string.Empty;
+
+        public string TaskContext { get; set; } = string.Empty;
     }
 }

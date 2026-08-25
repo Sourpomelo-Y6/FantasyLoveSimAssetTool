@@ -81,7 +81,7 @@ namespace FantasyLoveSimAssetTool.Services
                 throw new InvalidOperationException("候補数は1～3件で指定してください。");
             var builder = new StringBuilder();
             builder.AppendLine($"{target.Purpose}を、異なる内容で{candidateCount}件作成してください。");
-            builder.AppendLine($"各{target.MinLength}～{target.MaxLength}文字のセリフだけにしてください。");
+            builder.AppendLine($"各{target.MinLength}～{target.MaxLength}文字の文章だけにしてください。");
             Append(builder, "名前", profile.DisplayName, 40);
             Append(builder, "性格", profile.Personality, 200);
             Append(builder, "口調", profile.SpeakingStyle, 200);
@@ -100,6 +100,14 @@ namespace FantasyLoveSimAssetTool.Services
                 if (string.IsNullOrWhiteSpace(context?.ReactionType))
                     throw new InvalidOperationException("衣装反応行を選択し、ReactionTypeを入力してください。");
                 Append(builder, "反応種類", context.ReactionType, 80);
+            }
+            else if (target.RequiredContext == "BattleSkill" ||
+                target.RequiredContext == "TrainingSkill" ||
+                target.RequiredContext == "SkillTreeNode")
+            {
+                if (string.IsNullOrWhiteSpace(context?.TaskContext))
+                    throw new InvalidOperationException("生成対象のスキルまたはノードを選択してください。");
+                Append(builder, "対象設定", context.TaskContext, 500);
             }
             List<string> exclusions = (excludedCandidates ?? Array.Empty<string>())
                 .Where(value => !string.IsNullOrWhiteSpace(value)).Take(3).ToList();
