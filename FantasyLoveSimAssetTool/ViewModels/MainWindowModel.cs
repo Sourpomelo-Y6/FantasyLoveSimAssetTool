@@ -210,8 +210,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private HeroineBattleSkill generatedShortTextBattleSkill;
         private HeroineTrainingSkill generatedShortTextTrainingSkill;
         private HeroineSkillTreeNode generatedShortTextSkillTreeNode;
-        private ConversationEntry generatedShortTextConversationEntry;
-        private ConversationLine generatedShortTextConversationLine;
+        private ConversationLineGenerationSession generatedShortTextConversationSession;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
 
@@ -9193,8 +9192,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             HeroineBattleSkill sourceBattleSkill = SelectedProductionBattleSkill;
             HeroineTrainingSkill sourceTrainingSkill = SelectedProductionTrainingSkill;
             HeroineSkillTreeNode sourceSkillTreeNode = SelectedProductionSkillTreeNode;
-            ConversationEntry sourceConversationEntry = SelectedConversationEntry;
-            ConversationLine sourceConversationLine = SelectedConversationLine;
+            ConversationLineGenerationSession sourceConversationSession = target.RequiredContext == "ConversationLine"
+                ? new ConversationLineGenerationSession(SelectedConversationEntry, SelectedConversationLine)
+                : null;
             ShortTextGenerationContext generationContext = CreateShortTextGenerationContext(target);
 
             shortTextGenerationCancellation?.Dispose();
@@ -9229,14 +9229,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     (target.RequiredContext == "TrainingSkill" && SelectedProductionTrainingSkill != sourceTrainingSkill) ||
                     (target.RequiredContext == "SkillTreeNode" && SelectedProductionSkillTreeNode != sourceSkillTreeNode) ||
                     (target.RequiredContext == "ConversationLine" &&
-                        (SelectedConversationEntry != sourceConversationEntry || SelectedConversationLine != sourceConversationLine))) return;
+                        !sourceConversationSession.IsCurrent(SelectedConversationEntry, SelectedConversationLine))) return;
                 generatedShortTextOutfitMessage = sourceOutfitMessage;
                 generatedShortTextOutfitReaction = sourceOutfitReaction;
                 generatedShortTextBattleSkill = sourceBattleSkill;
                 generatedShortTextTrainingSkill = sourceTrainingSkill;
                 generatedShortTextSkillTreeNode = sourceSkillTreeNode;
-                generatedShortTextConversationEntry = sourceConversationEntry;
-                generatedShortTextConversationLine = sourceConversationLine;
+                generatedShortTextConversationSession = sourceConversationSession;
                 ShortTextAiRawResponse = result.RawResponse;
                 if (!string.IsNullOrWhiteSpace(result.ParseError))
                 {
@@ -9301,14 +9300,22 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 (SelectedShortTextTarget.RequiredContext == "SkillTreeNode" &&
                     SelectedProductionSkillTreeNode != generatedShortTextSkillTreeNode) ||
                 (SelectedShortTextTarget.RequiredContext == "ConversationLine" &&
-                    (SelectedConversationEntry != generatedShortTextConversationEntry ||
-                        SelectedConversationLine != generatedShortTextConversationLine)))
+                    (generatedShortTextConversationSession == null ||
+                        !generatedShortTextConversationSession.IsCurrent(SelectedConversationEntry, SelectedConversationLine))))
             {
                 ClearShortTextGenerationResult();
                 ShortTextAiStatus = "生成元の入力対象が変更されたため候補を破棄しました。もう一度生成してください。";
                 return;
             }
-            SetShortTextValue(SelectedProfile, SelectedShortTextTarget, candidate.Text.Trim());
+            if (SelectedShortTextTarget.RequiredContext == "ConversationLine")
+            {
+                if (!generatedShortTextConversationSession.TryAdopt(
+                    SelectedConversationEntry, SelectedConversationLine, candidate.Text)) return;
+            }
+            else
+            {
+                SetShortTextValue(SelectedProfile, SelectedShortTextTarget, candidate.Text.Trim());
+            }
             if (candidate.UseExpressionSuggestion && candidate.HasExpressionSuggestion)
             {
                 SetShortTextExpression(SelectedShortTextTarget, candidate.ExpressionId);
@@ -9332,8 +9339,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             generatedShortTextBattleSkill = null;
             generatedShortTextTrainingSkill = null;
             generatedShortTextSkillTreeNode = null;
-            generatedShortTextConversationEntry = null;
-            generatedShortTextConversationLine = null;
+            generatedShortTextConversationSession = null;
         }
 
         private bool CanGenerateSelectedShortText()
@@ -9355,6 +9361,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private ShortTextGenerationContext CreateShortTextGenerationContext(ShortTextGenerationTarget target)
         {
+            if (target.RequiredContext == "ConversationLine")
+                return ConversationLineGenerationSession.CreateContext(SelectedConversationEntry, SelectedConversationLine);
             return new ShortTextGenerationContext
             {
                 OutfitId = target.RequiredContext == "OutfitMessage"
@@ -9363,57 +9371,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 ReactionType = target.RequiredContext == "OutfitReaction"
                     ? SelectedOutfitReactionMessageOverride?.ReactionType ?? string.Empty
                     : string.Empty,
-                TaskContext = BuildSkillShortTextContext(target),
-                ConversationKind = target.RequiredContext == "ConversationLine"
-                    ? SelectedConversationEntry?.Kind.ToString() ?? string.Empty
-                    : string.Empty,
-                ConversationEntryId = target.RequiredContext == "ConversationLine"
-                    ? SelectedConversationEntry?.Id ?? string.Empty
-                    : string.Empty,
-                ConversationCategory = target.RequiredContext == "ConversationLine"
-                    ? SelectedConversationEntry?.Category ?? string.Empty
-                    : string.Empty,
-                ConversationSpeaker = target.RequiredContext == "ConversationLine"
-                    ? SelectedConversationLine?.Speaker ?? string.Empty
-                    : string.Empty,
-                PreviousConversationLines = target.RequiredContext == "ConversationLine"
-                    ? BuildPreviousConversationLines()
-                    : string.Empty,
-                ConversationConditions = target.RequiredContext == "ConversationLine"
-                    ? BuildConversationConditionSummary()
-                    : string.Empty
+                TaskContext = BuildSkillShortTextContext(target)
             };
-        }
-
-        private string BuildPreviousConversationLines()
-        {
-            if (SelectedConversationEntry?.Lines == null || SelectedConversationLine == null) return string.Empty;
-            int selectedIndex = SelectedConversationEntry.Lines.IndexOf(SelectedConversationLine);
-            if (selectedIndex <= 0) return string.Empty;
-            return string.Join(" / ", SelectedConversationEntry.Lines
-                .Skip(Math.Max(0, selectedIndex - 2))
-                .Take(Math.Min(2, selectedIndex))
-                .Where(line => line != null && !string.IsNullOrWhiteSpace(line.Text))
-                .Select(line => $"{line.Speaker}: {line.Text}"));
-        }
-
-        private string BuildConversationConditionSummary()
-        {
-            ConversationCondition conditions = SelectedConversationEntry?.Conditions;
-            if (conditions == null) return string.Empty;
-            var values = new List<string>();
-            AddConversationCondition(values, "場所", conditions.LocationId);
-            AddConversationCondition(values, "時間", conditions.TimeOfDay);
-            AddConversationCondition(values, "天候", conditions.Weather);
-            AddConversationCondition(values, "季節", conditions.Season);
-            AddConversationCondition(values, "衣装", conditions.CostumeId);
-            AddConversationCondition(values, "行動", conditions.ActionId);
-            return string.Join("; ", values);
-        }
-
-        private static void AddConversationCondition(ICollection<string> values, string label, string value)
-        {
-            if (!string.IsNullOrWhiteSpace(value)) values.Add($"{label}={value.Trim()}");
         }
 
         private string BuildSkillShortTextContext(ShortTextGenerationTarget target)
