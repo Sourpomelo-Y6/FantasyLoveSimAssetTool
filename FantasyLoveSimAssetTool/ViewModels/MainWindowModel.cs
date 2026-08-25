@@ -215,6 +215,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private ConversationLineGenerationSession generatedShortTextConversationSession;
         private string generatedShortTextConversationAdditionalPrompt = string.Empty;
         private ConversationSituationPrompt selectedConversationSituationPrompt;
+        private string selectedConversationSituationTypeFilter = "すべて";
         private ConversationCharacterPrompt selectedConversationCharacterPrompt;
         private string conversationAdditionalInstruction = string.Empty;
         private ConversationDraftSession generatedConversationDraftSession;
@@ -231,6 +232,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<ShortTextGenerationTarget> ShortTextTargets { get; }
 
         public ObservableCollection<ConversationSituationPrompt> ConversationSituationPrompts { get; }
+
+        public ObservableCollection<ConversationSituationPrompt> FilteredConversationSituationPrompts { get; }
+
+        public ObservableCollection<string> ConversationSituationTypeFilters { get; }
 
         public ObservableCollection<ConversationDraftLine> ConversationDraftLines { get; }
 
@@ -275,6 +280,19 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 OnPropertyChanged(nameof(ConversationAdditionalPromptPreview));
                 ClearConversationShortTextCandidates();
                 CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public string SelectedConversationSituationTypeFilter
+        {
+            get => selectedConversationSituationTypeFilter;
+            set
+            {
+                string normalized = string.IsNullOrWhiteSpace(value) ? "すべて" : value;
+                if (selectedConversationSituationTypeFilter == normalized) return;
+                selectedConversationSituationTypeFilter = normalized;
+                OnPropertyChanged();
+                RefreshFilteredConversationSituationPrompts(true);
             }
         }
 
@@ -2714,6 +2732,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
             };
             ConversationSituationPrompts = new ObservableCollection<ConversationSituationPrompt>(
                 conversationPromptService.LoadSituations());
+            FilteredConversationSituationPrompts = new ObservableCollection<ConversationSituationPrompt>(
+                ConversationSituationPrompts);
+            ConversationSituationTypeFilters = new ObservableCollection<string>
+            {
+                "すべて", "日常", "冒険", "食事", "恋愛"
+            };
             ConversationDraftLines = new ObservableCollection<ConversationDraftLine>();
             selectedShortTextTarget = ShortTextTargets.First(target => target.Id == "MorningGreeting");
             shortTextAiStatus = "ヒロインを選択してください。";
@@ -9532,6 +9556,36 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 prompt += Environment.NewLine + "【今回の追加指示】" + Environment.NewLine + instruction;
             }
             return prompt;
+        }
+
+        private void RefreshFilteredConversationSituationPrompts(bool selectFirst)
+        {
+            if (FilteredConversationSituationPrompts == null) return;
+            string category = GetConversationSituationCategory(SelectedConversationSituationTypeFilter);
+            List<ConversationSituationPrompt> matches = ConversationSituationPrompts
+                .Where(value => string.IsNullOrEmpty(category) ||
+                    string.Equals(value.Category, category, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            FilteredConversationSituationPrompts.Clear();
+            foreach (ConversationSituationPrompt value in matches)
+                FilteredConversationSituationPrompts.Add(value);
+            if (SelectedConversationSituationPrompt != null &&
+                FilteredConversationSituationPrompts.Contains(SelectedConversationSituationPrompt)) return;
+            SelectedConversationSituationPrompt = selectFirst
+                ? FilteredConversationSituationPrompts.FirstOrDefault()
+                : null;
+        }
+
+        private static string GetConversationSituationCategory(string filter)
+        {
+            switch (filter)
+            {
+                case "日常": return "Daily";
+                case "冒険": return "Adventure";
+                case "食事": return "Food";
+                case "恋愛": return "Love";
+                default: return string.Empty;
+            }
         }
 
         private void ClearConversationShortTextCandidates()
