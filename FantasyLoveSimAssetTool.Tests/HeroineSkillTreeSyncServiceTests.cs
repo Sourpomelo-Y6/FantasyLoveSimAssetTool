@@ -64,6 +64,59 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void ExportAndImport_PreservesEveryFieldMultipleConditionsAndEmptyValues()
+        {
+            HeroineProfile source = Profile();
+            HeroineTrainingSkill skill = source.HeroineSkillTree.TrainingSkills.Single();
+            skill.Description = "説明";
+            skill.SortOrder = 7;
+            skill.IsEnabled = false;
+            skill.HeroineHpCostReduction = 3;
+            skill.AffectionRewardModifier = -4;
+            skill.ProficiencyRewardModifier = 5;
+            HeroineSkillTreeNode node = source.HeroineSkillTree.Nodes.Single();
+            node.GrantedHeroineSkillId = "BattleSkillA";
+            node.SortOrder = 9;
+            node.PrerequisiteNodeIds.Add("TestHeroine_Root");
+            node.UnlockConditions.Add(new HeroineSkillTreeCondition
+            {
+                ConditionType = "Day",
+                Scope = "Total",
+                TargetId = string.Empty,
+                RequiredValue = 20
+            });
+            node.TreePositionX = 120.5f;
+            node.TreePositionY = -36.25f;
+            HeroineProfile target = new HeroineProfile { HeroineId = source.HeroineId };
+
+            HeroineSkillTreeSyncService.ApplyImportedValues(target,
+                HeroineSkillTreeSyncService.Deserialize(HeroineSkillTreeSyncService.BuildExportJson(source)));
+
+            HeroineTrainingSkill importedSkill = target.HeroineSkillTree.TrainingSkills.Single();
+            Assert.AreEqual("説明", importedSkill.Description);
+            Assert.AreEqual(7, importedSkill.SortOrder);
+            Assert.IsFalse(importedSkill.IsEnabled);
+            Assert.AreEqual(1, importedSkill.PlayerHpCostReduction);
+            Assert.AreEqual(3, importedSkill.HeroineHpCostReduction);
+            Assert.AreEqual(-4, importedSkill.AffectionRewardModifier);
+            Assert.AreEqual(5, importedSkill.ProficiencyRewardModifier);
+            Assert.AreEqual("TrainingCategory", importedSkill.ApplicationScope);
+            Assert.AreEqual("Cooperative", importedSkill.ApplicationTargetId);
+            HeroineSkillTreeNode importedNode = target.HeroineSkillTree.Nodes.Single();
+            Assert.AreEqual("BattleSkillA", importedNode.GrantedHeroineSkillId);
+            Assert.AreEqual(9, importedNode.SortOrder);
+            Assert.AreEqual(2, importedNode.SkillPointCost);
+            CollectionAssert.AreEqual(new[] { "TestHeroine_Root" }, importedNode.PrerequisiteNodeIds.ToArray());
+            CollectionAssert.AreEqual(new[] { "CooperativeDrill" }, importedNode.UnlockedTrainingIds.ToArray());
+            Assert.AreEqual("Manual_Care_01", importedNode.UnlockEventId);
+            Assert.AreEqual(2, importedNode.UnlockConditions.Count);
+            Assert.AreEqual("Day", importedNode.UnlockConditions[1].ConditionType);
+            Assert.AreEqual(string.Empty, importedNode.UnlockConditions[1].TargetId);
+            Assert.AreEqual(120.5f, importedNode.TreePositionX);
+            Assert.AreEqual(-36.25f, importedNode.TreePositionY);
+        }
+
+        [TestMethod]
         public void ApplyImportedValues_MissingArraysPreserveExistingValues()
         {
             HeroineProfile profile = Profile();
