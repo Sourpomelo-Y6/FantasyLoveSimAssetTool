@@ -24,6 +24,24 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void SkillTreeCondition_RequiredTypesNormalizeScopeAndTarget()
+        {
+            HeroineSkillTreeCondition condition = new HeroineSkillTreeCondition
+            {
+                Scope = "Training",
+                TargetId = "TrainingA"
+            };
+
+            condition.ConditionType = "Affection";
+
+            Assert.AreEqual("Total", condition.Scope);
+            Assert.AreEqual(string.Empty, condition.TargetId);
+
+            condition.ConditionType = "TrainingProficiency";
+            Assert.AreEqual("Training", condition.Scope);
+        }
+
+        [TestMethod]
         public void ExportAndImport_RoundTripsTrainingSkillsNodesAndConditions()
         {
             HeroineProfile source = Profile();

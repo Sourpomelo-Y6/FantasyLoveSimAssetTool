@@ -38,12 +38,43 @@ namespace FantasyLoveSimAssetTool.Models
         }
     }
 
-    public class HeroineSkillTreeCondition
+    public class HeroineSkillTreeCondition : ObservableObject
     {
-        public string ConditionType { get; set; } = "TrainingCount";
-        public string Scope { get; set; } = "Total";
-        public string TargetId { get; set; } = string.Empty;
-        public int RequiredValue { get; set; }
+        private string conditionType = "TrainingCount";
+        private string scope = "Total";
+        private string targetId = string.Empty;
+        private int requiredValue;
+
+        public string ConditionType
+        {
+            get => conditionType;
+            set { if (conditionType != value) { conditionType = value; ApplyRequiredScope(); OnPropertyChanged(); } }
+        }
+
+        public string Scope
+        {
+            get => scope;
+            set { if (scope != value) { scope = value; if (value == "Total") TargetId = string.Empty; OnPropertyChanged(); } }
+        }
+
+        public string TargetId
+        {
+            get => targetId;
+            set { if (targetId != value) { targetId = value; OnPropertyChanged(); } }
+        }
+
+        public int RequiredValue
+        {
+            get => requiredValue;
+            set { if (requiredValue != value) { requiredValue = value; OnPropertyChanged(); } }
+        }
+
+        private void ApplyRequiredScope()
+        {
+            if (conditionType == "TrainingProficiency") Scope = "Training";
+            else if (conditionType == "Affection" || conditionType == "Day") Scope = "Total";
+            else if (conditionType == "MonsterDefeatCount" && scope != "Total" && scope != "Enemy") Scope = "Total";
+        }
     }
 
     public class HeroineSkillTreeNode

@@ -355,6 +355,27 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void Evaluate_SkillTreeConditionRejectsInvalidTargetAndNegativeValue()
+        {
+            HeroineProfile profile = CompleteProfile();
+            HeroineSkillTreeNode node = profile.HeroineSkillTree.Nodes[0];
+            node.UnlockConditions.Add(new HeroineSkillTreeCondition
+            {
+                ConditionType = "TrainingCount",
+                Scope = "Training",
+                TargetId = "MissingTraining",
+                RequiredValue = -1
+            });
+
+            CharacterProductionStatusRow row = EvaluateWithDefinitions(profile);
+            ProductionStatusCheckItem check = row.SkillTree.Checks.First(x => x.Name.Contains(node.NodeId));
+
+            Assert.IsFalse(check.IsComplete);
+            StringAssert.Contains(check.Details, "条件Training:MissingTraining");
+            StringAssert.Contains(check.Details, "条件値:-1");
+        }
+
+        [TestMethod]
         public void Evaluate_GameEventShowsCompletionAffectionAndRejectsOutOfRangeValue()
         {
             HeroineProfile profile = CompleteProfile();

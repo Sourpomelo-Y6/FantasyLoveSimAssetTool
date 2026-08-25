@@ -195,6 +195,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private HeroineBattleSkill selectedProductionBattleSkill;
         private HeroineTrainingSkill selectedProductionTrainingSkill;
         private HeroineSkillTreeNode selectedProductionSkillTreeNode;
+        private HeroineSkillTreeCondition selectedSkillTreeCondition;
         private MenuActionDefinition selectedMenuAction;
         private bool isBattleSkillEditorExpanded;
         private bool isSkillTreeEditorExpanded;
@@ -298,6 +299,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<string> TrainingSkillIdOptions { get; }
         public ObservableCollection<string> SkillTreeNodeIdOptions { get; }
         public ObservableCollection<string> GameEventIdOptions { get; }
+        public ObservableCollection<string> EnemyIdOptions { get; }
+        public ObservableCollection<string> SkillTreeConditionTypeOptions { get; }
 
         public ObservableCollection<string> AvailableVoiceIds { get; }
 
@@ -342,11 +345,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 if (selectedProductionSkillTreeNode == value) return;
                 selectedProductionSkillTreeNode = value;
+                SelectedSkillTreeCondition = value?.UnlockConditions?.FirstOrDefault();
                 SelectedSkillNodePrerequisite = null;
                 SelectedSkillNodeUnlockedTraining = null;
                 OnPropertyChanged(nameof(SelectedProductionSkillTreeNode));
                 CommandManager.InvalidateRequerySuggested();
             }
+        }
+
+        public HeroineSkillTreeCondition SelectedSkillTreeCondition
+        {
+            get => selectedSkillTreeCondition;
+            set { if (selectedSkillTreeCondition != value) { selectedSkillTreeCondition = value; OnPropertyChanged(); CommandManager.InvalidateRequerySuggested(); } }
         }
 
         public bool IsBattleSkillEditorExpanded
@@ -2279,6 +2289,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ICommand AddSkillNodeUnlockedTrainingCommand { get; }
         public ICommand RemoveSkillNodeUnlockedTrainingCommand { get; }
         public ICommand RefreshSkillReferenceOptionsCommand { get; }
+        public ICommand AddSkillTreeConditionCommand { get; }
+        public ICommand DuplicateSkillTreeConditionCommand { get; }
+        public ICommand RemoveSkillTreeConditionCommand { get; }
 
         public ICommand OpenBattleMessagesTabCommand { get; }
 
@@ -2575,6 +2588,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             TrainingSkillIdOptions = new ObservableCollection<string>();
             SkillTreeNodeIdOptions = new ObservableCollection<string>();
             GameEventIdOptions = new ObservableCollection<string>();
+            EnemyIdOptions = new ObservableCollection<string>();
+            SkillTreeConditionTypeOptions = new ObservableCollection<string>(SkillValueCatalog.SkillTreeConditionTypes);
             AvailableVoiceIds = new ObservableCollection<string>();
             VoiceUsageOptions = new ObservableCollection<string>
             {
@@ -2907,6 +2922,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RemoveSkillNodeUnlockedTrainingCommand = new RelayCommand(RemoveSkillNodeUnlockedTraining,
                 () => SelectedProductionSkillTreeNode != null && !string.IsNullOrWhiteSpace(SelectedSkillNodeUnlockedTraining));
             RefreshSkillReferenceOptionsCommand = new RelayCommand(RefreshSkillReferenceOptions);
+            AddSkillTreeConditionCommand = new RelayCommand(AddSkillTreeCondition,
+                () => SelectedProductionSkillTreeNode != null);
+            DuplicateSkillTreeConditionCommand = new RelayCommand(DuplicateSkillTreeCondition,
+                () => SelectedProductionSkillTreeNode != null && SelectedSkillTreeCondition != null);
+            RemoveSkillTreeConditionCommand = new RelayCommand(RemoveSkillTreeCondition,
+                () => SelectedProductionSkillTreeNode != null && SelectedSkillTreeCondition != null);
             OpenBattleMessagesTabCommand = new RelayCommand(() => SelectedMainTabIndex = 2);
             RefreshProductionStatusCommand = new RelayCommand(RefreshProductionStatus);
             OpenProductionStatusTargetCommand = new RelayCommand<object>(OpenProductionStatusTarget);
@@ -8670,6 +8691,39 @@ namespace FantasyLoveSimAssetTool.ViewModels
             OnPropertyChanged(nameof(SelectedProductionSkillTreeNode));
         }
 
+        private void AddSkillTreeCondition()
+        {
+            HeroineSkillTreeNode node = SelectedProductionSkillTreeNode;
+            node.UnlockConditions ??= new ObservableCollection<HeroineSkillTreeCondition>();
+            HeroineSkillTreeCondition condition = new HeroineSkillTreeCondition();
+            node.UnlockConditions.Add(condition);
+            SelectedSkillTreeCondition = condition;
+            StatusMessage = $"{node.NodeId} に解放条件を追加しました。";
+        }
+
+        private void DuplicateSkillTreeCondition()
+        {
+            HeroineSkillTreeCondition source = SelectedSkillTreeCondition;
+            HeroineSkillTreeCondition condition = new HeroineSkillTreeCondition
+            {
+                ConditionType = source.ConditionType,
+                Scope = source.Scope,
+                TargetId = source.TargetId,
+                RequiredValue = source.RequiredValue
+            };
+            SelectedProductionSkillTreeNode.UnlockConditions.Add(condition);
+            SelectedSkillTreeCondition = condition;
+            StatusMessage = $"{SelectedProductionSkillTreeNode.NodeId} の解放条件を複製しました。";
+        }
+
+        private void RemoveSkillTreeCondition()
+        {
+            HeroineSkillTreeCondition condition = SelectedSkillTreeCondition;
+            SelectedProductionSkillTreeNode.UnlockConditions.Remove(condition);
+            SelectedSkillTreeCondition = SelectedProductionSkillTreeNode.UnlockConditions.FirstOrDefault();
+            StatusMessage = $"{SelectedProductionSkillTreeNode.NodeId} の解放条件を削除しました。";
+        }
+
         private void RefreshSkillReferenceOptions()
         {
             HeroineProfile profile = SelectedProfile;
@@ -8685,6 +8739,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 profile?.HeroineSkillTree?.Nodes?.Where(x => x != null).Select(x => x.NodeId) ?? Enumerable.Empty<string>(), true);
             RefreshStringOptions(GameEventIdOptions,
                 profile?.ConversationEntries?.Where(x => x != null && x.Kind == ConversationDataKind.GameEvents).Select(x => x.Id) ?? Enumerable.Empty<string>(), true);
+            RefreshStringOptions(EnemyIdOptions,
+                EnemyProfiles?.Where(x => x != null).Select(x => x.EnemyId) ?? Enumerable.Empty<string>(), true);
         }
 
         private static string BuildUniqueId(string baseId, IEnumerable<string> existingIds)

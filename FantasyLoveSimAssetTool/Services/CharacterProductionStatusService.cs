@@ -719,6 +719,34 @@ namespace FantasyLoveSimAssetTool.Services
                     eventsById.TryGetValue(node.UnlockEventId.Trim(), out ConversationEntry unlockEvent) &&
                     (unlockEvent.Conditions == null || !unlockEvent.Conditions.Once))
                     problems.Add("取得時EventのOnce:" + node.UnlockEventId.Trim());
+                foreach (HeroineSkillTreeCondition condition in node.UnlockConditions ?? new System.Collections.ObjectModel.ObservableCollection<HeroineSkillTreeCondition>())
+                {
+                    if (condition == null) { problems.Add("解放条件:null"); continue; }
+                    if (!SkillValueCatalog.Contains(SkillValueCatalog.SkillTreeConditionTypes, condition.ConditionType))
+                        problems.Add("条件種類:" + condition.ConditionType);
+                    if (!SkillValueCatalog.Contains(SkillValueCatalog.SkillTreeProgressScopes, condition.Scope))
+                        problems.Add("条件範囲:" + condition.Scope);
+                    if (condition.RequiredValue < 0) problems.Add("条件値:" + condition.RequiredValue);
+                    string targetId = (condition.TargetId ?? string.Empty).Trim();
+                    if (condition.ConditionType == "TrainingProficiency")
+                    {
+                        if (condition.Scope != "Training" || !trainingIds.Contains(targetId)) problems.Add("熟練度対象:" + targetId);
+                    }
+                    else if (condition.ConditionType == "MonsterDefeatCount")
+                    {
+                        if (condition.Scope != "Total" && condition.Scope != "Enemy") problems.Add("撃破条件範囲:" + condition.Scope);
+                        if (condition.Scope == "Total" && targetId.Length > 0) problems.Add("Total条件対象不要");
+                        if (condition.Scope == "Enemy" && targetId.Length == 0) problems.Add("Enemy対象未指定");
+                    }
+                    else if (condition.ConditionType == "Affection" || condition.ConditionType == "Day")
+                    {
+                        if (condition.Scope != "Total" || targetId.Length > 0) problems.Add("好感度・日数条件");
+                    }
+                    else if (condition.Scope == "Total" && targetId.Length > 0) problems.Add("Total条件対象不要");
+                    else if (condition.Scope == "Training" && !trainingIds.Contains(targetId)) problems.Add("条件Training:" + targetId);
+                    else if (condition.Scope == "TrainingCategory" && !trainingCategoryIds.Contains(targetId)) problems.Add("条件カテゴリー:" + targetId);
+                    else if (condition.Scope == "Enemy") problems.Add("訓練条件にEnemy範囲");
+                }
                 bool hasReward = !string.IsNullOrWhiteSpace(node.GrantedHeroineSkillId) ||
                     !string.IsNullOrWhiteSpace(node.TrainingSkillId) ||
                     !string.IsNullOrWhiteSpace(node.UnlockEventId) ||

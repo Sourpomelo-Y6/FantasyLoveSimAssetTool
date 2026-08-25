@@ -12,6 +12,8 @@
         <local:StringToImageSourceConverter x:Key="StringToImageSourceConverter"/>
         <local:EmptyStringToIntConverter x:Key="EmptyStringToIntConverter"/>
         <local:TrainingTargetOptionsConverter x:Key="TrainingTargetOptionsConverter"/>
+        <local:SkillConditionScopeOptionsConverter x:Key="SkillConditionScopeOptionsConverter"/>
+        <local:SkillConditionTargetOptionsConverter x:Key="SkillConditionTargetOptionsConverter"/>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <Style TargetType="{x:Type ComboBoxItem}">
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
@@ -350,6 +352,7 @@
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="*"/>
                                             <RowDefinition Height="190"/>
+                                            <RowDefinition Height="210"/>
                                         </Grid.RowDefinitions>
                                         <DockPanel Margin="0,0,0,6">
                                             <TextBlock Text="訓練スキル" FontWeight="SemiBold" VerticalAlignment="Center"/>
@@ -432,7 +435,6 @@
                                                                         SelectedItemBinding="{Binding UnlockEventId, UpdateSourceTrigger=PropertyChanged}"
                                                                         ItemsSource="{Binding Data.GameEventIdOptions, Source={StaticResource ViewModelProxy}}"
                                                                         Width="150"/>
-                                                <DataGridTextColumn Header="条件 Type|Scope|Target|Value（;区切り）" Binding="{Binding UnlockConditionsText}" Width="240"/>
                                                 <DataGridTextColumn Header="X" Binding="{Binding TreePositionX}" Width="55"/>
                                                 <DataGridTextColumn Header="Y" Binding="{Binding TreePositionY}" Width="55"/>
                                             </DataGrid.Columns>
@@ -482,6 +484,61 @@
                                                 </Grid>
                                             </GroupBox>
                                         </Grid>
+                                        <GroupBox Grid.Row="5" Header="選択ノードの解放条件" Margin="0,12,0,0">
+                                            <Grid Margin="8">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="*"/>
+                                                </Grid.RowDefinitions>
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,6">
+                                                    <Button Content="追加" Command="{Binding AddSkillTreeConditionCommand}" Width="70" Margin="8,0,0,0"/>
+                                                    <Button Content="複製" Command="{Binding DuplicateSkillTreeConditionCommand}" Width="70" Margin="8,0,0,0"/>
+                                                    <Button Content="削除" Command="{Binding RemoveSkillTreeConditionCommand}" Width="70" Margin="8,0,0,0"/>
+                                                </StackPanel>
+                                                <DataGrid Grid.Row="1"
+                                                          ItemsSource="{Binding SelectedProductionSkillTreeNode.UnlockConditions}"
+                                                          SelectedItem="{Binding SelectedSkillTreeCondition}"
+                                                          AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False">
+                                                    <DataGrid.Columns>
+                                                        <DataGridComboBoxColumn Header="条件種類"
+                                                                                SelectedItemBinding="{Binding ConditionType, UpdateSourceTrigger=PropertyChanged}"
+                                                                                ItemsSource="{Binding Data.SkillTreeConditionTypeOptions, Source={StaticResource ViewModelProxy}}"
+                                                                                Width="180"/>
+                                                        <DataGridTemplateColumn Header="範囲" Width="130">
+                                                            <DataGridTemplateColumn.CellTemplate>
+                                                                <DataTemplate><TextBlock Text="{Binding Scope}" Padding="4,2"/></DataTemplate>
+                                                            </DataGridTemplateColumn.CellTemplate>
+                                                            <DataGridTemplateColumn.CellEditingTemplate>
+                                                                <DataTemplate>
+                                                                    <ComboBox SelectedItem="{Binding Scope, UpdateSourceTrigger=PropertyChanged}"
+                                                                              ItemsSource="{Binding ConditionType, Converter={StaticResource SkillConditionScopeOptionsConverter}}"/>
+                                                                </DataTemplate>
+                                                            </DataGridTemplateColumn.CellEditingTemplate>
+                                                        </DataGridTemplateColumn>
+                                                        <DataGridTemplateColumn Header="対象ID" Width="180">
+                                                            <DataGridTemplateColumn.CellTemplate>
+                                                                <DataTemplate><TextBlock Text="{Binding TargetId}" Padding="4,2"/></DataTemplate>
+                                                            </DataGridTemplateColumn.CellTemplate>
+                                                            <DataGridTemplateColumn.CellEditingTemplate>
+                                                                <DataTemplate>
+                                                                    <ComboBox SelectedItem="{Binding TargetId, UpdateSourceTrigger=PropertyChanged}">
+                                                                        <ComboBox.ItemsSource>
+                                                                            <MultiBinding Converter="{StaticResource SkillConditionTargetOptionsConverter}">
+                                                                                <Binding Path="Scope"/>
+                                                                                <Binding Path="Data.TrainingIdOptions" Source="{StaticResource ViewModelProxy}"/>
+                                                                                <Binding Path="Data.TrainingCategoryIdOptions" Source="{StaticResource ViewModelProxy}"/>
+                                                                                <Binding Path="Data.EnemyIdOptions" Source="{StaticResource ViewModelProxy}"/>
+                                                                            </MultiBinding>
+                                                                        </ComboBox.ItemsSource>
+                                                                    </ComboBox>
+                                                                </DataTemplate>
+                                                            </DataGridTemplateColumn.CellEditingTemplate>
+                                                        </DataGridTemplateColumn>
+                                                        <DataGridTextColumn Header="必要値" Binding="{Binding RequiredValue, UpdateSourceTrigger=PropertyChanged}" Width="90"/>
+                                                    </DataGrid.Columns>
+                                                </DataGrid>
+                                            </Grid>
+                                        </GroupBox>
                                     </Grid>
                                 </TabItem>
 

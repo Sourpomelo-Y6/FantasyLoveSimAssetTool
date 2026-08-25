@@ -17,6 +17,15 @@ namespace FantasyLoveSimAssetTool.Models
         public static IReadOnlyList<string> TrainingApplicationScopes { get; } =
             new[] { "AllTrainings", "TrainingCategory", "Training" };
 
+        public static IReadOnlyList<string> SkillTreeConditionTypes { get; } = new[]
+        {
+            "TrainingProficiency", "TrainingCount", "PlayerLpConsumedCount",
+            "OpponentLpConsumedCount", "MonsterDefeatCount", "Affection", "Day"
+        };
+
+        public static IReadOnlyList<string> SkillTreeProgressScopes { get; } =
+            new[] { "Total", "Training", "TrainingCategory", "Enemy" };
+
         public static bool Contains(IReadOnlyList<string> values, string value)
         {
             if (string.IsNullOrWhiteSpace(value)) return false;
