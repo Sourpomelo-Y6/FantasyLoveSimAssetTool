@@ -1075,6 +1075,74 @@
                                                         </Expander>
                                                     </StackPanel>
                                                 </Border>
+                                                <Border Background="#F4F7FA"
+                                                        BorderBrush="#9FB8CC"
+                                                        BorderThickness="1"
+                                                        CornerRadius="6"
+                                                        Padding="12"
+                                                        Margin="0,0,0,8">
+                                                    <StackPanel>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <StackPanel>
+                                                                <TextBlock Text="複数行の会話下書き" FontWeight="SemiBold" FontSize="14"/>
+                                                                <TextBlock Text="選択中の会話項目に対して、最大3行の下書きを1案生成します。条件やIDは変更しません。"
+                                                                           Foreground="#596875" TextWrapping="Wrap" Margin="0,2,12,0"/>
+                                                            </StackPanel>
+                                                            <WrapPanel Grid.Column="1">
+                                                                <Button Content="下書きを生成 / 再生成"
+                                                                        Command="{Binding GenerateConversationDraftCommand}"
+                                                                        Padding="12,6" Margin="0,0,6,0"/>
+                                                                <Button Content="キャンセル"
+                                                                        Command="{Binding CancelConversationDraftCommand}"
+                                                                        Padding="12,6"/>
+                                                            </WrapPanel>
+                                                        </Grid>
+                                                        <TextBox Text="{Binding ConversationDraftStatus, Mode=OneWay}"
+                                                                 IsReadOnly="True" TextWrapping="Wrap" MinHeight="36"
+                                                                 Margin="0,8,0,8"/>
+                                                        <DataGrid ItemsSource="{Binding ConversationDraftLines}"
+                                                                  AutoGenerateColumns="False"
+                                                                  CanUserAddRows="False"
+                                                                  IsReadOnly="True"
+                                                                  MinHeight="110"
+                                                                  MaxHeight="210">
+                                                            <DataGrid.Columns>
+                                                                <DataGridTextColumn Header="話者" Binding="{Binding Speaker}" Width="100"/>
+                                                                <DataGridTextColumn Header="表情" Binding="{Binding ExpressionId}" Width="110"/>
+                                                                <DataGridTextColumn Header="本文" Binding="{Binding Text}" Width="*"/>
+                                                            </DataGrid.Columns>
+                                                        </DataGrid>
+                                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                                                            <Button Content="既存行へ追加"
+                                                                    Command="{Binding AppendConversationDraftCommand}"
+                                                                    Padding="12,6" Margin="0,0,8,0"/>
+                                                            <Button Content="既存行と置き換え"
+                                                                    Command="{Binding ReplaceConversationDraftCommand}"
+                                                                    Padding="12,6"/>
+                                                        </StackPanel>
+                                                        <Expander Header="下書き用プロンプト・生レスポンス" Margin="0,8,0,0">
+                                                            <Grid Margin="0,8,0,0">
+                                                                <Grid.RowDefinitions>
+                                                                    <RowDefinition/>
+                                                                    <RowDefinition/>
+                                                                </Grid.RowDefinitions>
+                                                                <TextBox Text="{Binding ConversationDraftPrompt, Mode=OneWay}"
+                                                                         IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+                                                                         Height="130" VerticalScrollBarVisibility="Auto"/>
+                                                                <TextBox Grid.Row="1"
+                                                                         Text="{Binding ConversationDraftRawResponse, Mode=OneWay}"
+                                                                         IsReadOnly="True" AcceptsReturn="True"
+                                                                         Height="110" FontFamily="Consolas" FontSize="11"
+                                                                         HorizontalScrollBarVisibility="Auto"
+                                                                         VerticalScrollBarVisibility="Auto" Margin="0,8,0,0"/>
+                                                            </Grid>
+                                                        </Expander>
+                                                    </StackPanel>
+                                                </Border>
                                                 <local:LocalAiShortTextPanel TargetGroup="ConversationLine"/>
                                             </StackPanel>
                                         </Expander>

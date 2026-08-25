@@ -50,6 +50,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly LocalLlmClient localLlmClient;
         private readonly ShortTextGenerationService shortTextGenerationService;
         private readonly ConversationPromptService conversationPromptService;
+        private readonly ConversationDraftGenerationService conversationDraftGenerationService;
         private readonly List<AudioLibraryItem> allAudioLibraryItems =
             new List<AudioLibraryItem>();
         private bool legacyWorkspaceChecked;
@@ -216,6 +217,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private ConversationSituationPrompt selectedConversationSituationPrompt;
         private ConversationCharacterPrompt selectedConversationCharacterPrompt;
         private string conversationAdditionalInstruction = string.Empty;
+        private ConversationDraftSession generatedConversationDraftSession;
+        private CancellationTokenSource conversationDraftCancellation;
+        private string conversationDraftStatus = "状況テンプレートを選択して下書きを生成してください。";
+        private string conversationDraftPrompt = string.Empty;
+        private string conversationDraftRawResponse = string.Empty;
+        private bool isGeneratingConversationDraft;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
 
@@ -224,6 +231,38 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<ShortTextGenerationTarget> ShortTextTargets { get; }
 
         public ObservableCollection<ConversationSituationPrompt> ConversationSituationPrompts { get; }
+
+        public ObservableCollection<ConversationDraftLine> ConversationDraftLines { get; }
+
+        public string ConversationDraftStatus
+        {
+            get => conversationDraftStatus;
+            private set { if (conversationDraftStatus != value) { conversationDraftStatus = value; OnPropertyChanged(); } }
+        }
+
+        public string ConversationDraftPrompt
+        {
+            get => conversationDraftPrompt;
+            private set { if (conversationDraftPrompt != value) { conversationDraftPrompt = value; OnPropertyChanged(); } }
+        }
+
+        public string ConversationDraftRawResponse
+        {
+            get => conversationDraftRawResponse;
+            private set { if (conversationDraftRawResponse != value) { conversationDraftRawResponse = value; OnPropertyChanged(); } }
+        }
+
+        public bool IsGeneratingConversationDraft
+        {
+            get => isGeneratingConversationDraft;
+            private set
+            {
+                if (isGeneratingConversationDraft == value) return;
+                isGeneratingConversationDraft = value;
+                OnPropertyChanged();
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
 
         public ConversationSituationPrompt SelectedConversationSituationPrompt
         {
@@ -1130,6 +1169,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 OnPropertyChanged(nameof(SelectedConversationEntry));
                 OnPropertyChanged(nameof(CurrentShortTextValue));
                 OnPropertyChanged(nameof(CurrentShortTextContext));
+                ClearConversationDraft();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -1655,6 +1695,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 OnPropertyChanged(nameof(CurrentShortTextValue));
                 RefreshConversationCharacterPrompt();
                 ClearShortTextGenerationResult();
+                ClearConversationDraft();
                 OnPropertyChanged(nameof(TrainingIdSuggestions));
                 OnPropertyChanged(nameof(TrainingUnlockNodeSuggestions));
                 RefreshSkillReferenceOptions();
@@ -2361,6 +2402,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ClearConversationSituationPromptCommand { get; }
 
+        public ICommand GenerateConversationDraftCommand { get; }
+
+        public ICommand CancelConversationDraftCommand { get; }
+
+        public ICommand AppendConversationDraftCommand { get; }
+
+        public ICommand ReplaceConversationDraftCommand { get; }
+
         public ICommand ImportHeroineProfileFromUnityCommand { get; }
 
         public ICommand AddBattleSkillCommand { get; }
@@ -2631,6 +2680,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             localLlmClient = new LocalLlmClient();
             shortTextGenerationService = new ShortTextGenerationService(localLlmClient);
             conversationPromptService = new ConversationPromptService(characterProjectService.WorkspaceRoot);
+            conversationDraftGenerationService = new ConversationDraftGenerationService(localLlmClient);
             audioPreviewService.PlaybackFailed += OnAudioPreviewFailed;
             ChangeWorkspaceCommand = new RelayCommand(ChangeWorkspace);
             AddTrainingPrerequisiteCommand = new RelayCommand(AddTrainingPrerequisite,
@@ -2662,6 +2712,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             };
             ConversationSituationPrompts = new ObservableCollection<ConversationSituationPrompt>(
                 conversationPromptService.LoadSituations());
+            ConversationDraftLines = new ObservableCollection<ConversationDraftLine>();
             selectedShortTextTarget = ShortTextTargets.First(target => target.Id == "MorningGreeting");
             shortTextAiStatus = "ヒロインを選択してください。";
             shortTextAiPrompt = string.Empty;
@@ -2994,6 +3045,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ClearConversationSituationPromptCommand = new RelayCommand(
                 () => SelectedConversationSituationPrompt = null,
                 () => SelectedConversationSituationPrompt != null);
+            GenerateConversationDraftCommand = new AsyncRelayCommand(
+                GenerateConversationDraftAsync,
+                () => CanGenerateConversationDraft() && !IsGeneratingConversationDraft);
+            CancelConversationDraftCommand = new RelayCommand(
+                () => conversationDraftCancellation?.Cancel(),
+                () => IsGeneratingConversationDraft);
+            AppendConversationDraftCommand = new RelayCommand(
+                () => ApplyConversationDraft(false),
+                CanApplyConversationDraft);
+            ReplaceConversationDraftCommand = new RelayCommand(
+                () => ApplyConversationDraft(true),
+                CanApplyConversationDraft);
             ImportHeroineProfileFromUnityCommand = new RelayCommand(
                 ImportHeroineProfileFromUnity,
                 () => SelectedProfile != null);
@@ -9468,9 +9531,119 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private void ClearConversationShortTextCandidates()
         {
+            ClearConversationDraft();
             if (SelectedShortTextTarget?.RequiredContext != "ConversationLine") return;
             shortTextGenerationCancellation?.Cancel();
             ClearShortTextGenerationResult();
+        }
+
+        private void ClearConversationDraft()
+        {
+            conversationDraftCancellation?.Cancel();
+            ConversationDraftLines?.Clear();
+            generatedConversationDraftSession = null;
+            ConversationDraftPrompt = string.Empty;
+            ConversationDraftRawResponse = string.Empty;
+            ConversationDraftStatus = "状況テンプレートを選択して下書きを生成してください。";
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private bool CanGenerateConversationDraft() =>
+            SelectedProfile != null && SelectedConversationEntry != null &&
+            SelectedConversationSituationPrompt != null &&
+            selectedConversationCharacterPrompt != null;
+
+        private async Task GenerateConversationDraftAsync()
+        {
+            if (!CanGenerateConversationDraft())
+            {
+                ConversationDraftStatus = "会話項目、状況テンプレート、キャラクター固有プロンプトを確認してください。";
+                return;
+            }
+            string additionalPrompt = BuildConversationAdditionalPrompt();
+            ConversationEntry sourceEntry = SelectedConversationEntry;
+            var session = new ConversationDraftSession(sourceEntry, additionalPrompt);
+            ConversationLine contextLine = sourceEntry.Lines?.FirstOrDefault() ?? new ConversationLine();
+            ShortTextGenerationContext compact = ConversationLineGenerationSession.CreateContext(sourceEntry, contextLine);
+            var context = new ConversationDraftGenerationContext
+            {
+                AdditionalPrompt = additionalPrompt,
+                ConversationKind = sourceEntry.Kind.ToString(),
+                ConversationEntryId = sourceEntry.Id ?? string.Empty,
+                ConversationCategory = sourceEntry.Category ?? string.Empty,
+                ConditionSummary = compact.ConversationConditions,
+                ExpressionIds = ExpressionIdOptions
+                    .Where(value => !string.IsNullOrWhiteSpace(value))
+                    .Select(value => value.Trim()).Distinct(StringComparer.Ordinal).Take(20).ToList()
+            };
+
+            conversationDraftCancellation?.Dispose();
+            conversationDraftCancellation = new CancellationTokenSource();
+            IsGeneratingConversationDraft = true;
+            ConversationDraftLines.Clear();
+            generatedConversationDraftSession = null;
+            ConversationDraftPrompt = ConversationDraftGenerationService.BuildPrompt(context);
+            ConversationDraftRawResponse = string.Empty;
+            ConversationDraftStatus = "会話下書きを生成中...";
+            try
+            {
+                ConversationDraftGenerationResult result = await conversationDraftGenerationService.GenerateAsync(
+                    localAiSettingsService.Load(), localAiInstructionService.Load(), context,
+                    conversationDraftCancellation.Token);
+                if (!session.IsCurrent(SelectedConversationEntry, BuildConversationAdditionalPrompt())) return;
+                ConversationDraftRawResponse = result.RawResponse;
+                if (!string.IsNullOrWhiteSpace(result.ParseError))
+                {
+                    ConversationDraftStatus = $"下書きを解析できませんでした: {result.ParseError}";
+                    return;
+                }
+                foreach (ConversationDraftLine line in result.Lines) ConversationDraftLines.Add(line);
+                generatedConversationDraftSession = session;
+                ConversationDraftStatus = $"{ConversationDraftLines.Count}行の下書きを生成しました（Model: {result.ModelId}）。";
+                CommandManager.InvalidateRequerySuggested();
+            }
+            catch (OperationCanceledException)
+            {
+                ConversationDraftStatus = "会話下書きの生成をキャンセルしました。既存の台詞行は変更されていません。";
+            }
+            catch (Exception ex)
+            {
+                ConversationDraftStatus = $"会話下書きの生成に失敗しました: {ex.Message}";
+            }
+            finally
+            {
+                conversationDraftCancellation?.Dispose();
+                conversationDraftCancellation = null;
+                IsGeneratingConversationDraft = false;
+            }
+        }
+
+        private bool CanApplyConversationDraft() =>
+            generatedConversationDraftSession != null && ConversationDraftLines.Count > 0 &&
+            generatedConversationDraftSession.IsCurrent(
+                SelectedConversationEntry, BuildConversationAdditionalPrompt());
+
+        private void ApplyConversationDraft(bool replace)
+        {
+            if (!CanApplyConversationDraft())
+            {
+                ClearConversationDraft();
+                ConversationDraftStatus = "生成元が変更されたため下書きを破棄しました。もう一度生成してください。";
+                return;
+            }
+            int previousCount = SelectedConversationEntry.Lines?.Count ?? 0;
+            if (!generatedConversationDraftSession.TryApply(
+                SelectedConversationEntry, BuildConversationAdditionalPrompt(), ConversationDraftLines, replace)) return;
+            SelectedConversationLine = replace
+                ? SelectedConversationEntry.Lines.FirstOrDefault()
+                : SelectedConversationEntry.Lines.Skip(previousCount).FirstOrDefault();
+            ConversationDraftLines.Clear();
+            generatedConversationDraftSession = null;
+            OnPropertyChanged(nameof(SelectedConversationEntry));
+            ConversationDraftStatus = replace
+                ? "既存の台詞行を下書きで置き換えました。保存するまではファイルへ書き込まれません。"
+                : "下書きを既存の台詞行へ追加しました。保存するまではファイルへ書き込まれません。";
+            CommandManager.InvalidateRequerySuggested();
         }
 
         private string BuildSkillShortTextContext(ShortTextGenerationTarget target)
