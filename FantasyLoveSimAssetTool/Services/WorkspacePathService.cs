@@ -166,14 +166,25 @@ namespace FantasyLoveSimAssetTool.Services
                     File.ReadAllText(sourcePath), options) ?? new List<ConversationSituationPrompt>();
                 List<ConversationSituationPrompt> existing = JsonSerializer.Deserialize<List<ConversationSituationPrompt>>(
                     File.ReadAllText(destinationPath), options) ?? new List<ConversationSituationPrompt>();
-                var existingIds = new HashSet<string>(
-                    existing.Where(value => !string.IsNullOrWhiteSpace(value?.SituationId))
-                        .Select(value => value.SituationId.Trim()), StringComparer.Ordinal);
+                var existingById = existing.Where(value => !string.IsNullOrWhiteSpace(value?.SituationId))
+                    .GroupBy(value => value.SituationId.Trim(), StringComparer.Ordinal)
+                    .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
                 List<ConversationSituationPrompt> additions = bundled
                     .Where(value => !string.IsNullOrWhiteSpace(value?.SituationId) &&
-                        !existingIds.Contains(value.SituationId.Trim()))
+                        !existingById.ContainsKey(value.SituationId.Trim()))
                     .ToList();
-                if (additions.Count == 0) return;
+                bool supplementedConditions = false;
+                foreach (ConversationSituationPrompt bundledValue in bundled.Where(value =>
+                    !string.IsNullOrWhiteSpace(value?.SituationId) && value.SuggestedConditions != null))
+                {
+                    if (existingById.TryGetValue(bundledValue.SituationId.Trim(), out ConversationSituationPrompt existingValue) &&
+                        existingValue.SuggestedConditions == null)
+                    {
+                        existingValue.SuggestedConditions = bundledValue.SuggestedConditions;
+                        supplementedConditions = true;
+                    }
+                }
+                if (additions.Count == 0 && !supplementedConditions) return;
 
                 existing.AddRange(additions);
                 string temporaryPath = destinationPath + ".merge.tmp";

@@ -73,7 +73,13 @@
     "avoidElements": [
       "一日の予定を勝手に確定する",
       "大きな事件の始まりにする"
-    ]
+    ],
+    "suggestedConditions": {
+      "timeOfDay": "Morning",
+      "priority": 200,
+      "once": false,
+      "note": "朝限定の反復可能な日常会話として使う推奨値です。"
+    }
   },
   {
     "situationId": "daily_listen_to_your_day",
@@ -103,7 +109,14 @@
     "avoidElements": [
       "災害や深刻な被害を追加する",
       "天候に反する外出を強要する"
-    ]
+    ],
+    "suggestedConditions": {
+      "locationId": "Room",
+      "weather": "Rainy",
+      "priority": 200,
+      "once": false,
+      "note": "初期値は雨の日です。雪向けにする場合は反映後に天候を Snow へ変更してください。"
+    }
   },
   {
     "situationId": "adventure_new_place",
@@ -148,7 +161,14 @@
     "avoidElements": [
       "絶対に勝てると断言する",
       "自己犠牲や別れを持ち出す"
-    ]
+    ],
+    "suggestedConditions": {
+      "minAffection": 30,
+      "maxAffection": 9999,
+      "priority": 100,
+      "once": false,
+      "note": "信頼が育ち始めた段階以降の反復可能な冒険会話として使います。"
+    }
   },
   {
     "situationId": "food_learn_preferences",
@@ -208,7 +228,14 @@
     "avoidElements": [
       "恋人関係を前提にする",
       "強い告白や永続的な約束をする"
-    ]
+    ],
+    "suggestedConditions": {
+      "minAffection": 30,
+      "maxAffection": 79,
+      "priority": 100,
+      "once": false,
+      "note": "親しくなり始めた中好感度帯の会話として使う推奨値です。"
+    }
   },
   {
     "situationId": "love_quiet_closeness",
@@ -223,7 +250,15 @@
     "avoidElements": [
       "性的な描写へ進める",
       "別れや不安を過度に強調する"
-    ]
+    ],
+    "suggestedConditions": {
+      "timeOfDay": "Night",
+      "minAffection": 30,
+      "maxAffection": 9999,
+      "priority": 200,
+      "once": false,
+      "note": "夜の親密な反復会話として使う推奨値です。雨音を扱う場合は天候を Rainy に追加設定してください。"
+    }
   },
   {
     "situationId": "love_honest_confession",
@@ -238,6 +273,13 @@
     "avoidElements": [
       "結婚や永遠を自動的に確定する",
       "拒絶できない圧力や条件を付ける"
-    ]
+    ],
+    "suggestedConditions": {
+      "minAffection": 80,
+      "maxAffection": 9999,
+      "priority": 300,
+      "once": true,
+      "note": "高好感度で一度だけ表示する重要会話として使う推奨値です。必要ならゲームイベント化も検討してください。"
+    }
   }
 ]

@@ -88,7 +88,7 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
-        public void SeedBundledDefaults_MergesMissingSituationsWithoutOverwritingUserVersion()
+        public void SeedBundledDefaults_MergesMissingSituationsAndConditionsWithoutOverwritingUserVersion()
         {
             string bundled = Path.Combine(root, "bundled");
             string destination = Path.Combine(root, "destination");
@@ -97,7 +97,7 @@ namespace FantasyLoveSimAssetTool.Tests
             Directory.CreateDirectory(bundledTemplates);
             Directory.CreateDirectory(destinationTemplates);
             File.WriteAllText(Path.Combine(bundledTemplates, "conversation-situations.json"),
-                "[{\"situationId\":\"daily\",\"displayName\":\"Bundled\"},{\"situationId\":\"rain\",\"displayName\":\"Rain\"}]");
+                "[{\"situationId\":\"daily\",\"displayName\":\"Bundled\",\"suggestedConditions\":{\"timeOfDay\":\"Morning\"}},{\"situationId\":\"rain\",\"displayName\":\"Rain\"}]");
             File.WriteAllText(Path.Combine(destinationTemplates, "conversation-situations.json"),
                 "[{\"situationId\":\"daily\",\"displayName\":\"User customized\"}]");
             var service = new WorkspacePathService(Path.Combine(root, "settings.json"), destination);
@@ -109,6 +109,7 @@ namespace FantasyLoveSimAssetTool.Tests
                 File.ReadAllText(Path.Combine(destinationTemplates, "conversation-situations.json")), options);
             Assert.AreEqual(2, merged.Count);
             Assert.AreEqual("User customized", merged.Single(value => value.SituationId == "daily").DisplayName);
+            Assert.AreEqual("Morning", merged.Single(value => value.SituationId == "daily").SuggestedConditions.TimeOfDay);
             Assert.AreEqual("Rain", merged.Single(value => value.SituationId == "rain").DisplayName);
         }
 

@@ -1070,6 +1070,33 @@
                                                                        VerticalAlignment="Center"
                                                                        TextWrapping="Wrap"/>
                                                         </Grid>
+                                                        <Border Background="#FFFDF4"
+                                                                BorderBrush="#D8C98F"
+                                                                BorderThickness="1"
+                                                                CornerRadius="4"
+                                                                Padding="8"
+                                                                Margin="0,8,0,0">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="120"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Text="推奨条件" FontWeight="SemiBold" VerticalAlignment="Top" Margin="0,3,8,0"/>
+                                                                <TextBlock Grid.Column="1"
+                                                                           Text="{Binding ConversationSuggestedConditionsPreview}"
+                                                                           TextWrapping="Wrap"
+                                                                           Foreground="#665D3C"
+                                                                           VerticalAlignment="Center"
+                                                                           Margin="0,0,12,0"/>
+                                                                <Button Grid.Column="2"
+                                                                        Content="推奨条件を反映"
+                                                                        Command="{Binding ApplyConversationSituationConditionsCommand}"
+                                                                        Height="28"
+                                                                        Padding="12,2"
+                                                                        VerticalAlignment="Center"/>
+                                                            </Grid>
+                                                        </Border>
                                                         <Grid Margin="0,8,0,0">
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="120"/>

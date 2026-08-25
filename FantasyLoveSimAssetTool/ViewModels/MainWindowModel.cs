@@ -278,6 +278,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 selectedConversationSituationPrompt = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(ConversationAdditionalPromptPreview));
+                OnPropertyChanged(nameof(ConversationSuggestedConditionsPreview));
                 ClearConversationShortTextCandidates();
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -321,6 +322,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             : selectedConversationCharacterPrompt == null
                 ? "キャラクター固有プロンプトを読み込めないため、追加プロンプトを合成できません。"
                 : BuildConversationAdditionalPrompt();
+
+        public string ConversationSuggestedConditionsPreview => SelectedConversationSituationPrompt == null
+            ? "状況テンプレートを選択すると、推奨条件を確認できます。"
+            : ConversationSituationConditionService.BuildSummary(SelectedConversationSituationPrompt);
 
         public ShortTextGenerationTarget SelectedShortTextTarget
         {
@@ -2438,6 +2443,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand PrepareConversationFromSituationCommand { get; }
 
+        public ICommand ApplyConversationSituationConditionsCommand { get; }
+
         public ICommand GenerateConversationDraftCommand { get; }
 
         public ICommand CancelConversationDraftCommand { get; }
@@ -3092,6 +3099,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             PrepareConversationFromSituationCommand = new RelayCommand(
                 PrepareConversationFromSituation,
                 () => SelectedProfile != null && SelectedConversationSituationPrompt != null);
+            ApplyConversationSituationConditionsCommand = new RelayCommand(
+                ApplyConversationSituationConditions,
+                () => SelectedConversationEntry != null &&
+                    SelectedConversationSituationPrompt?.SuggestedConditions != null);
             GenerateConversationDraftCommand = new AsyncRelayCommand(
                 GenerateConversationDraftAsync,
                 () => CanGenerateConversationDraft() && !IsGeneratingConversationDraft);
@@ -10337,6 +10348,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RefreshFilteredConversationEntries();
             SelectedConversationEntry = entry;
             StatusMessage = $"{SelectedConversationSituationPrompt.DisplayName} の新規会話を準備しました。条件を確認してから下書きを生成してください。";
+        }
+
+        private void ApplyConversationSituationConditions()
+        {
+            if (!ConversationSituationConditionService.Apply(
+                SelectedConversationEntry, SelectedConversationSituationPrompt)) return;
+            OnPropertyChanged(nameof(SelectedConversationEntry));
+            RefreshFilteredConversationEntries();
+            StatusMessage = "状況テンプレートの推奨条件を反映しました。保存するまではファイルへ書き込まれません。";
+            CommandManager.InvalidateRequerySuggested();
         }
 
         private void RemoveConversationEntry()
