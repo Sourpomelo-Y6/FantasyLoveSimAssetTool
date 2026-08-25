@@ -27,6 +27,12 @@
     <Content Include="..\PromptTemplates\templates.json" Link="PromptTemplates\templates.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\PromptTemplates\conversation-situations.json" Link="PromptTemplates\conversation-situations.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\Characters\Heroine3\conversation-ai-prompt.json" Link="Characters\Heroine3\conversation-ai-prompt.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="..\ComfySettings\comfyui.json" Link="ComfySettings\comfyui.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

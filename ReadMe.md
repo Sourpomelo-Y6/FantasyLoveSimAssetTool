@@ -127,6 +127,10 @@ FantasyLoveSimAssetTool/
     MainWindow.xaml
 PromptTemplates/
   templates.json
+  conversation-situations.json
+Characters/
+  Heroine3/
+    conversation-ai-prompt.json
 ComfySettings/
   comfyui.json
   workflow-template.json

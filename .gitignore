@@ -23,6 +23,13 @@ venv/
 Characters/
 Export/
 
+# Reviewed seed used by the conversation prompt prototype
+!Characters/
+Characters/*
+!Characters/Heroine3/
+Characters/Heroine3/*
+!Characters/Heroine3/conversation-ai-prompt.json
+
 # OS files
 Thumbs.db
 .DS_Store
