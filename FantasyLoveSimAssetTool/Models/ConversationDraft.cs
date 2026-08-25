@@ -7,6 +7,7 @@ namespace FantasyLoveSimAssetTool.Models
         public string Speaker { get; set; } = string.Empty;
         public string Text { get; set; } = string.Empty;
         public string ExpressionId { get; set; } = string.Empty;
+        public string WarningText { get; set; } = string.Empty;
     }
 
     public sealed class ConversationDraftGenerationContext

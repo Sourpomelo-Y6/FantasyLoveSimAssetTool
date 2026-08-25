@@ -1119,6 +1119,7 @@
                                                                 <DataGridTextColumn Header="話者" Binding="{Binding Speaker}" Width="100"/>
                                                                 <DataGridTextColumn Header="表情" Binding="{Binding ExpressionId}" Width="110"/>
                                                                 <DataGridTextColumn Header="本文" Binding="{Binding Text}" Width="*"/>
+                                                                <DataGridTextColumn Header="品質警告" Binding="{Binding WarningText}" Width="220"/>
                                                             </DataGrid.Columns>
                                                         </DataGrid>
                                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">

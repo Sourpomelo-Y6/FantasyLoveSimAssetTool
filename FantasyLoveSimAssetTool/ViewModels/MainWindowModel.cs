@@ -9603,8 +9603,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     return;
                 }
                 foreach (ConversationDraftLine line in result.Lines) ConversationDraftLines.Add(line);
+                int qualityWarningCount = ConversationDraftQualityService.Evaluate(
+                    ConversationDraftLines.ToList(), SelectedProfile?.ConversationEntries,
+                    sourceEntry, SelectedConversationSituationPrompt, selectedConversationCharacterPrompt,
+                    ExpressionIdOptions);
                 generatedConversationDraftSession = session;
-                ConversationDraftStatus = $"{ConversationDraftLines.Count}行の下書きを生成しました（Model: {result.ModelId}）。";
+                ConversationDraftStatus = qualityWarningCount == 0
+                    ? $"{ConversationDraftLines.Count}行の下書きを生成しました（Model: {result.ModelId}）。品質警告はありません。"
+                    : $"{ConversationDraftLines.Count}行の下書きを生成しました（Model: {result.ModelId}）。品質警告 {qualityWarningCount} 件を確認してください。";
                 CommandManager.InvalidateRequerySuggested();
             }
             catch (OperationCanceledException)
