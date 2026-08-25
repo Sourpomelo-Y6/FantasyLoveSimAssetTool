@@ -2402,6 +2402,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ClearConversationSituationPromptCommand { get; }
 
+        public ICommand PrepareConversationFromSituationCommand { get; }
+
         public ICommand GenerateConversationDraftCommand { get; }
 
         public ICommand CancelConversationDraftCommand { get; }
@@ -3045,6 +3047,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ClearConversationSituationPromptCommand = new RelayCommand(
                 () => SelectedConversationSituationPrompt = null,
                 () => SelectedConversationSituationPrompt != null);
+            PrepareConversationFromSituationCommand = new RelayCommand(
+                PrepareConversationFromSituation,
+                () => SelectedProfile != null && SelectedConversationSituationPrompt != null);
             GenerateConversationDraftCommand = new AsyncRelayCommand(
                 GenerateConversationDraftAsync,
                 () => CanGenerateConversationDraft() && !IsGeneratingConversationDraft);
@@ -10233,6 +10238,24 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RefreshFilteredConversationEntries();
             SelectedConversationEntry = entry;
             StatusMessage = $"{GetConversationKindDisplayName(SelectedConversationDataKind)}を追加しました。";
+        }
+
+        private void PrepareConversationFromSituation()
+        {
+            if (SelectedProfile == null || SelectedConversationSituationPrompt == null) return;
+            SelectedProfile.ConversationEntries ??= new ObservableCollection<ConversationEntry>();
+            ConversationEntry entry = ConversationEntryPreparationService.Create(
+                SelectedConversationSituationPrompt, SelectedProfile.ConversationEntries);
+            SelectedConversationDataKind = ConversationDataKind.Conversations;
+            SelectedProfile.ConversationEntries.Add(entry);
+            ConversationSearchText = string.Empty;
+            SelectedConversationCategoryFilter = "All";
+            SelectedConversationImageFilter = "All";
+            ShowOnlyConversationWarnings = false;
+            RefreshConversationCategorySuggestions();
+            RefreshFilteredConversationEntries();
+            SelectedConversationEntry = entry;
+            StatusMessage = $"{SelectedConversationSituationPrompt.DisplayName} の新規会話を準備しました。条件を確認してから下書きを生成してください。";
         }
 
         private void RemoveConversationEntry()

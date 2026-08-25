@@ -1039,12 +1039,17 @@
                                                                       DisplayMemberPath="DisplayName"
                                                                       Height="26"
                                                                       Margin="0,0,8,0"/>
-                                                            <Button Grid.Column="2"
-                                                                    Content="使用しない"
-                                                                    Command="{Binding ClearConversationSituationPromptCommand}"
-                                                                    Height="26"
-                                                                    Padding="10,2"
-                                                                    Margin="0,0,12,0"/>
+                                                            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,12,0">
+                                                                <Button Content="この状況で新規会話を準備"
+                                                                        Command="{Binding PrepareConversationFromSituationCommand}"
+                                                                        Height="26"
+                                                                        Padding="10,2"
+                                                                        Margin="0,0,8,0"/>
+                                                                <Button Content="使用しない"
+                                                                        Command="{Binding ClearConversationSituationPromptCommand}"
+                                                                        Height="26"
+                                                                        Padding="10,2"/>
+                                                            </StackPanel>
                                                             <TextBlock Grid.Column="3"
                                                                        Text="{Binding ConversationCharacterPromptStatus}"
                                                                        Foreground="#66606A"

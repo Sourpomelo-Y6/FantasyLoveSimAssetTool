@@ -57,6 +57,7 @@ Unity 取り込み方針は [Docs/Extra/UnityImportPlan.md](Docs/Extra/UnityImpo
 - Unity 側 ScriptableObject 保存先と会話 JSON フィールド対応表の整理
 - 選択中会話行のLocalAI候補生成と、状況テンプレート・キャラクター固有指示の合成プレビュー
 - 選択中会話項目に対する最大3行のAI下書き生成と、既存行への追加・置き換え
+- 状況テンプレートからカテゴリ、仮タイトル、重複しないIDを持つ新規会話項目を準備
 - 差分定義タブによる表情、衣装、透過レイヤー素材定義 JSON の編集、候補選択、保存前検証
 - レイヤープレビュータブによる Accepted 済み透過レイヤー素材の重ね合わせ確認
 - 透過レイヤー素材の `sprite_layers_export.json` 出力
