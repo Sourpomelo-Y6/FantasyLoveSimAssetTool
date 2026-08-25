@@ -1160,6 +1160,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedConversationDataKind == value) { return; }
                 selectedConversationDataKind = value;
                 OnPropertyChanged(nameof(SelectedConversationDataKind));
+                OnPropertyChanged(nameof(SelectedConversationUnityImportLabel));
                 if (SelectedVoiceAssignmentTarget == "選択中の会話・イベント行")
                 {
                     ApplyConversationVoiceUsageSuggestion();
@@ -1168,6 +1169,21 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 RefreshConversationActionSuggestions();
                 RefreshFilteredConversationEntries();
                 CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public string SelectedConversationUnityImportLabel
+        {
+            get
+            {
+                switch (SelectedConversationDataKind)
+                {
+                    case ConversationDataKind.ActionReactions: return "現在の行動反応をUnityから読み込む";
+                    case ConversationDataKind.GameEvents: return "現在のゲームイベントをUnityから読み込む";
+                    case ConversationDataKind.ScheduledEvents: return "現在の予定イベントをUnityから読み込む";
+                    case ConversationDataKind.Endings: return "現在のエンディングをUnityから読み込む";
+                    default: return "現在の通常会話をUnityから読み込む";
+                }
             }
         }
 
@@ -2626,6 +2642,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ImportEndingsFromUnityCommand { get; }
 
+        public ICommand ImportSelectedConversationDataFromUnityCommand { get; }
+
         public ICommand ApplyConversationCategorySuggestionCommand { get; }
 
         public ICommand ApplyConversationEventTemplateCommand { get; }
@@ -3366,6 +3384,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedProfile != null);
             ImportEndingsFromUnityCommand = new RelayCommand(
                 ImportEndingsFromUnity,
+                () => SelectedProfile != null);
+            ImportSelectedConversationDataFromUnityCommand = new RelayCommand(
+                ImportSelectedConversationDataFromUnity,
                 () => SelectedProfile != null);
             ApplyConversationCategorySuggestionCommand = new RelayCommand(
                 ApplyConversationCategorySuggestion,
@@ -10516,6 +10537,28 @@ namespace FantasyLoveSimAssetTool.ViewModels
             StatusMessage = MenuActionWarnings.Count == 0
                 ? "メニュー設定に問題はありません。"
                 : $"メニュー設定に {MenuActionWarnings.Count} 件の確認事項があります。";
+        }
+
+        private void ImportSelectedConversationDataFromUnity()
+        {
+            switch (SelectedConversationDataKind)
+            {
+                case ConversationDataKind.ActionReactions:
+                    ImportActionsFromUnity();
+                    break;
+                case ConversationDataKind.GameEvents:
+                    ImportGameEventsFromUnity();
+                    break;
+                case ConversationDataKind.ScheduledEvents:
+                    ImportScheduledEventsFromUnity();
+                    break;
+                case ConversationDataKind.Endings:
+                    ImportEndingsFromUnity();
+                    break;
+                default:
+                    ImportConversationsFromUnity();
+                    break;
+            }
         }
 
         private void ImportActionsFromUnity()

@@ -741,33 +741,33 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <Grid Grid.Row="0" Margin="0,0,0,12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="120"/>
-                                    <ColumnDefinition Width="220"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="560"/>
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock Grid.Column="0" Text="データ種別" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <ComboBox Grid.Column="1"
-                                          ItemsSource="{Binding ConversationDataKinds}"
-                                          SelectedItem="{Binding SelectedConversationDataKind}"
-                                          Height="26"
-                                          Margin="0,0,12,0"/>
-                                <TextBlock Grid.Column="2"
-                                           Text="会話、イベント、行動反応、エンディング本文を profile.json に保存します。"
-                                           Foreground="Gray"
-                                           VerticalAlignment="Center"/>
-                                <ScrollViewer Grid.Column="3"
-                                              HorizontalScrollBarVisibility="Auto"
-                                              VerticalScrollBarVisibility="Disabled">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button Content="標準メニュー項目を準備"
-                                                Command="{Binding PrepareStandardMenuActionsCommand}"
-                                                Height="26"
-                                                MinWidth="170"
-                                                Margin="0,0,8,0"/>
+                            <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="データ種別" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <ComboBox Grid.Column="1"
+                                              ItemsSource="{Binding ConversationDataKinds}"
+                                              SelectedItem="{Binding SelectedConversationDataKind}"
+                                              Height="28"
+                                              Margin="0,0,12,0"/>
+                                    <TextBlock Grid.Column="2"
+                                               Text="会話、イベント、行動反応、エンディング本文を profile.json に保存します。"
+                                               Foreground="Gray"
+                                               VerticalAlignment="Center"/>
+                                    <Button Grid.Column="3"
+                                            Content="{Binding SelectedConversationUnityImportLabel}"
+                                            Command="{Binding ImportSelectedConversationDataFromUnityCommand}"
+                                            Height="28"
+                                            MinWidth="250"
+                                            Padding="12,2"/>
+                                </Grid>
+                                <Expander Header="Unity読込の詳細" Margin="0,8,0,0">
+                                    <WrapPanel Margin="120,8,0,0">
                                         <Button Content="Unity Action読込"
                                                 Command="{Binding ImportActionsFromUnityCommand}"
                                                 Height="26"
@@ -793,18 +793,9 @@
                                                 Height="26"
                                                 MinWidth="132"
                                                 Margin="0,0,8,0"/>
-                                        <Button Content="追加"
-                                                Command="{Binding AddConversationEntryCommand}"
-                                                Height="26"
-                                                MinWidth="72"
-                                                Margin="0,0,8,0"/>
-                                        <Button Content="削除"
-                                                Command="{Binding RemoveConversationEntryCommand}"
-                                                Height="26"
-                                                MinWidth="72"/>
-                                    </StackPanel>
-                                </ScrollViewer>
-                            </Grid>
+                                    </WrapPanel>
+                                </Expander>
+                            </StackPanel>
 
                             <Grid Grid.Row="1">
                                 <Grid.ColumnDefinitions>
@@ -816,10 +807,27 @@
                                 <Grid Grid.Column="0">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
 
                                     <Grid Grid.Row="0" Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="会話項目" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                            <Button Content="新規追加"
+                                                    Command="{Binding AddConversationEntryCommand}"
+                                                    Height="26" MinWidth="84" Margin="0,0,8,0"/>
+                                            <Button Content="選択項目を削除"
+                                                    Command="{Binding RemoveConversationEntryCommand}"
+                                                    Height="26" MinWidth="112"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Grid.Row="1" Margin="0,0,0,8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="40"/>
                                             <ColumnDefinition Width="*"/>
@@ -895,7 +903,7 @@
                                         </StackPanel>
                                     </Grid>
 
-                                    <DataGrid Grid.Row="1"
+                                    <DataGrid Grid.Row="2"
                                               ItemsSource="{Binding FilteredConversationEntries}"
                                               SelectedItem="{Binding SelectedConversationEntry}"
                                               AutoGenerateColumns="False"
