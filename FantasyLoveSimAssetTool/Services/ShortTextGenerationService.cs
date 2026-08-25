@@ -82,6 +82,8 @@ namespace FantasyLoveSimAssetTool.Services
             var builder = new StringBuilder();
             builder.AppendLine($"{target.Purpose}を、異なる内容で{candidateCount}件作成してください。");
             builder.AppendLine($"各{target.MinLength}～{target.MaxLength}文字の文章だけにしてください。");
+            if (target.RequiredContext == "ConversationLine")
+                AppendBlock(builder, context?.ConversationAdditionalPrompt, 3000);
             Append(builder, "名前", profile.DisplayName, 40);
             Append(builder, "性格", profile.Personality, 200);
             Append(builder, "口調", profile.SpeakingStyle, 200);
@@ -253,6 +255,14 @@ namespace FantasyLoveSimAssetTool.Services
             string text = value.Trim().Replace("\r", " ").Replace("\n", " ");
             if (text.Length > maxLength) text = text.Substring(0, maxLength);
             builder.AppendLine($"{label}: {text}");
+        }
+
+        private static void AppendBlock(StringBuilder builder, string value, int maxLength)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return;
+            string text = value.Trim();
+            if (text.Length > maxLength) text = text.Substring(0, maxLength);
+            builder.AppendLine(text);
         }
     }
 }

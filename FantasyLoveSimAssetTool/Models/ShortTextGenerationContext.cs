@@ -19,5 +19,7 @@ namespace FantasyLoveSimAssetTool.Models
         public string PreviousConversationLines { get; set; } = string.Empty;
 
         public string ConversationConditions { get; set; } = string.Empty;
+
+        public string ConversationAdditionalPrompt { get; set; } = string.Empty;
     }
 }

@@ -129,6 +129,19 @@ namespace FantasyLoveSimAssetTool.Services
                     File.Copy(sourceFile, destinationFile);
                 }
             }
+
+            string bundledCharacters = Path.Combine(bundledRoot, "Characters");
+            if (!Directory.Exists(bundledCharacters)) return;
+            foreach (string sourceFile in Directory.EnumerateFiles(
+                bundledCharacters, "conversation-ai-prompt.json", SearchOption.AllDirectories))
+            {
+                string relative = sourceFile.Substring(bundledCharacters.Length)
+                    .TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                string destinationFile = Path.Combine(destinationRoot, "Characters", relative);
+                if (File.Exists(destinationFile)) continue;
+                Directory.CreateDirectory(Path.GetDirectoryName(destinationFile));
+                File.Copy(sourceFile, destinationFile);
+            }
         }
 
         public static bool IsBuildOutputPath(string path)

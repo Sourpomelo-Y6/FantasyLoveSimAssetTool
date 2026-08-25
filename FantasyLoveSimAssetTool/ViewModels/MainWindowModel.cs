@@ -49,6 +49,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly LocalAiInstructionService localAiInstructionService;
         private readonly LocalLlmClient localLlmClient;
         private readonly ShortTextGenerationService shortTextGenerationService;
+        private readonly ConversationPromptService conversationPromptService;
         private readonly List<AudioLibraryItem> allAudioLibraryItems =
             new List<AudioLibraryItem>();
         private bool legacyWorkspaceChecked;
@@ -211,12 +212,58 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private HeroineTrainingSkill generatedShortTextTrainingSkill;
         private HeroineSkillTreeNode generatedShortTextSkillTreeNode;
         private ConversationLineGenerationSession generatedShortTextConversationSession;
+        private string generatedShortTextConversationAdditionalPrompt = string.Empty;
+        private ConversationSituationPrompt selectedConversationSituationPrompt;
+        private ConversationCharacterPrompt selectedConversationCharacterPrompt;
+        private string conversationAdditionalInstruction = string.Empty;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
 
         public ObservableCollection<TextGenerationCandidate> ShortTextCandidates { get; }
 
         public ObservableCollection<ShortTextGenerationTarget> ShortTextTargets { get; }
+
+        public ObservableCollection<ConversationSituationPrompt> ConversationSituationPrompts { get; }
+
+        public ConversationSituationPrompt SelectedConversationSituationPrompt
+        {
+            get => selectedConversationSituationPrompt;
+            set
+            {
+                if (selectedConversationSituationPrompt == value) return;
+                selectedConversationSituationPrompt = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ConversationAdditionalPromptPreview));
+                ClearConversationShortTextCandidates();
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public string ConversationAdditionalInstruction
+        {
+            get => conversationAdditionalInstruction;
+            set
+            {
+                string normalized = value ?? string.Empty;
+                if (conversationAdditionalInstruction == normalized) return;
+                conversationAdditionalInstruction = normalized;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ConversationAdditionalPromptPreview));
+                ClearConversationShortTextCandidates();
+            }
+        }
+
+        public string ConversationCharacterPromptStatus => SelectedProfile == null
+            ? "ヒロインを選択してください。"
+            : selectedConversationCharacterPrompt == null
+                ? $"{SelectedProfile.HeroineId} のキャラクター固有プロンプトはありません。"
+                : $"{selectedConversationCharacterPrompt.DisplayName} の固有プロンプトを読み込みました。";
+
+        public string ConversationAdditionalPromptPreview => SelectedConversationSituationPrompt == null
+            ? "状況テンプレートは未選択です。従来の会話行生成を使用します。"
+            : selectedConversationCharacterPrompt == null
+                ? "キャラクター固有プロンプトを読み込めないため、追加プロンプトを合成できません。"
+                : BuildConversationAdditionalPrompt();
 
         public ShortTextGenerationTarget SelectedShortTextTarget
         {
@@ -1606,6 +1653,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
                 OnPropertyChanged(nameof(SelectedProfile));
                 OnPropertyChanged(nameof(CurrentShortTextValue));
+                RefreshConversationCharacterPrompt();
                 ClearShortTextGenerationResult();
                 OnPropertyChanged(nameof(TrainingIdSuggestions));
                 OnPropertyChanged(nameof(TrainingUnlockNodeSuggestions));
@@ -2311,6 +2359,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand AdoptShortTextCandidateCommand { get; }
 
+        public ICommand ClearConversationSituationPromptCommand { get; }
+
         public ICommand ImportHeroineProfileFromUnityCommand { get; }
 
         public ICommand AddBattleSkillCommand { get; }
@@ -2580,6 +2630,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             localAiInstructionService = new LocalAiInstructionService(characterProjectService.WorkspaceRoot);
             localLlmClient = new LocalLlmClient();
             shortTextGenerationService = new ShortTextGenerationService(localLlmClient);
+            conversationPromptService = new ConversationPromptService(characterProjectService.WorkspaceRoot);
             audioPreviewService.PlaybackFailed += OnAudioPreviewFailed;
             ChangeWorkspaceCommand = new RelayCommand(ChangeWorkspace);
             AddTrainingPrerequisiteCommand = new RelayCommand(AddTrainingPrerequisite,
@@ -2609,6 +2660,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 new ShortTextGenerationTarget("SkillTreeNodeDisplayName", "スキルノード名", "選択したスキルツリーノードの内容が伝わる短い表示名", 2, 18, requiredContext: "SkillTreeNode"),
                 new ShortTextGenerationTarget("ConversationLineText", "選択中の台詞本文", "選択中の会話行に入る自然な台詞", 5, 160, requiredContext: "ConversationLine")
             };
+            ConversationSituationPrompts = new ObservableCollection<ConversationSituationPrompt>(
+                conversationPromptService.LoadSituations());
             selectedShortTextTarget = ShortTextTargets.First(target => target.Id == "MorningGreeting");
             shortTextAiStatus = "ヒロインを選択してください。";
             shortTextAiPrompt = string.Empty;
@@ -2938,6 +2991,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             AdoptShortTextCandidateCommand = new RelayCommand<TextGenerationCandidate>(
                 AdoptShortTextCandidate,
                 candidate => SelectedProfile != null && candidate != null && !string.IsNullOrWhiteSpace(candidate.Text));
+            ClearConversationSituationPromptCommand = new RelayCommand(
+                () => SelectedConversationSituationPrompt = null,
+                () => SelectedConversationSituationPrompt != null);
             ImportHeroineProfileFromUnityCommand = new RelayCommand(
                 ImportHeroineProfileFromUnity,
                 () => SelectedProfile != null);
@@ -9229,13 +9285,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     (target.RequiredContext == "TrainingSkill" && SelectedProductionTrainingSkill != sourceTrainingSkill) ||
                     (target.RequiredContext == "SkillTreeNode" && SelectedProductionSkillTreeNode != sourceSkillTreeNode) ||
                     (target.RequiredContext == "ConversationLine" &&
-                        !sourceConversationSession.IsCurrent(SelectedConversationEntry, SelectedConversationLine))) return;
+                        (!sourceConversationSession.IsCurrent(SelectedConversationEntry, SelectedConversationLine) ||
+                         !string.Equals(generationContext.ConversationAdditionalPrompt,
+                             BuildConversationAdditionalPrompt(), StringComparison.Ordinal)))) return;
                 generatedShortTextOutfitMessage = sourceOutfitMessage;
                 generatedShortTextOutfitReaction = sourceOutfitReaction;
                 generatedShortTextBattleSkill = sourceBattleSkill;
                 generatedShortTextTrainingSkill = sourceTrainingSkill;
                 generatedShortTextSkillTreeNode = sourceSkillTreeNode;
                 generatedShortTextConversationSession = sourceConversationSession;
+                generatedShortTextConversationAdditionalPrompt = generationContext.ConversationAdditionalPrompt;
                 ShortTextAiRawResponse = result.RawResponse;
                 if (!string.IsNullOrWhiteSpace(result.ParseError))
                 {
@@ -9301,7 +9360,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     SelectedProductionSkillTreeNode != generatedShortTextSkillTreeNode) ||
                 (SelectedShortTextTarget.RequiredContext == "ConversationLine" &&
                     (generatedShortTextConversationSession == null ||
-                        !generatedShortTextConversationSession.IsCurrent(SelectedConversationEntry, SelectedConversationLine))))
+                        !generatedShortTextConversationSession.IsCurrent(SelectedConversationEntry, SelectedConversationLine) ||
+                        !string.Equals(generatedShortTextConversationAdditionalPrompt,
+                            BuildConversationAdditionalPrompt(), StringComparison.Ordinal))))
             {
                 ClearShortTextGenerationResult();
                 ShortTextAiStatus = "生成元の入力対象が変更されたため候補を破棄しました。もう一度生成してください。";
@@ -9340,6 +9401,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             generatedShortTextTrainingSkill = null;
             generatedShortTextSkillTreeNode = null;
             generatedShortTextConversationSession = null;
+            generatedShortTextConversationAdditionalPrompt = string.Empty;
         }
 
         private bool CanGenerateSelectedShortText()
@@ -9362,7 +9424,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private ShortTextGenerationContext CreateShortTextGenerationContext(ShortTextGenerationTarget target)
         {
             if (target.RequiredContext == "ConversationLine")
-                return ConversationLineGenerationSession.CreateContext(SelectedConversationEntry, SelectedConversationLine);
+            {
+                ShortTextGenerationContext context = ConversationLineGenerationSession.CreateContext(
+                    SelectedConversationEntry, SelectedConversationLine);
+                context.ConversationAdditionalPrompt = BuildConversationAdditionalPrompt();
+                return context;
+            }
             return new ShortTextGenerationContext
             {
                 OutfitId = target.RequiredContext == "OutfitMessage"
@@ -9373,6 +9440,37 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     : string.Empty,
                 TaskContext = BuildSkillShortTextContext(target)
             };
+        }
+
+        private void RefreshConversationCharacterPrompt()
+        {
+            selectedConversationCharacterPrompt = string.IsNullOrWhiteSpace(SelectedProfile?.HeroineId)
+                ? null
+                : conversationPromptService.LoadCharacterPrompt(SelectedProfile.HeroineId);
+            OnPropertyChanged(nameof(ConversationCharacterPromptStatus));
+            OnPropertyChanged(nameof(ConversationAdditionalPromptPreview));
+        }
+
+        private string BuildConversationAdditionalPrompt()
+        {
+            if (SelectedConversationSituationPrompt == null) return string.Empty;
+            if (selectedConversationCharacterPrompt == null) return string.Empty;
+            string prompt = ConversationPromptService.BuildAdditionalPrompt(
+                SelectedConversationSituationPrompt, selectedConversationCharacterPrompt);
+            if (!string.IsNullOrWhiteSpace(ConversationAdditionalInstruction))
+            {
+                string instruction = ConversationAdditionalInstruction.Trim();
+                if (instruction.Length > 500) instruction = instruction.Substring(0, 500);
+                prompt += Environment.NewLine + "【今回の追加指示】" + Environment.NewLine + instruction;
+            }
+            return prompt;
+        }
+
+        private void ClearConversationShortTextCandidates()
+        {
+            if (SelectedShortTextTarget?.RequiredContext != "ConversationLine") return;
+            shortTextGenerationCancellation?.Cancel();
+            ClearShortTextGenerationResult();
         }
 
         private string BuildSkillShortTextContext(ShortTextGenerationTarget target)

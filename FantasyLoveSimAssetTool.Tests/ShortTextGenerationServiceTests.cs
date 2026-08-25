@@ -226,6 +226,27 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void BuildPrompt_ForConversationLinePlacesAdditionalPromptBeforeCurrentContext()
+        {
+            var target = new ShortTextGenerationTarget(
+                "ConversationLineText", "選択中の台詞本文", "自然な台詞", 5, 160,
+                requiredContext: "ConversationLine");
+            var context = new ShortTextGenerationContext
+            {
+                ConversationKind = "Conversations",
+                ConversationEntryId = "Daily01",
+                ConversationAdditionalPrompt = "【状況指示】\n穏やかな日常会話にする。\n【キャラクター固有指示】\n落ち着いた口調にする。"
+            };
+
+            string prompt = ShortTextGenerationService.BuildPrompt(
+                new HeroineProfile { DisplayName = "クーデリア" }, target, context: context);
+
+            Assert.IsTrue(prompt.IndexOf("【状況指示】", StringComparison.Ordinal) <
+                prompt.IndexOf("会話種別: Conversations", StringComparison.Ordinal));
+            StringAssert.Contains(prompt, "会話ID: Daily01");
+        }
+
+        [TestMethod]
         public void TextGenerationCandidate_ReportsLengthWarningWithoutBlockingAdoption()
         {
             var candidate = new TextGenerationCandidate("短い", 15, 50);

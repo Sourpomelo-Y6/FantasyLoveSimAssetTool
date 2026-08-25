@@ -61,5 +61,26 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.IsTrue(WorkspacePathService.IsBuildOutputPath(Path.Combine(root, "bin", "Release", "net5.0-windows")));
             Assert.IsFalse(WorkspacePathService.IsBuildOutputPath(Path.Combine(root, "workspace")));
         }
+
+        [TestMethod]
+        public void SeedBundledDefaults_CopiesOnlyCharacterConversationPromptAndPreservesExistingFile()
+        {
+            string bundled = Path.Combine(root, "bundled");
+            string destination = Path.Combine(root, "destination");
+            string bundledCharacter = Path.Combine(bundled, "Characters", "Heroine3");
+            string destinationCharacter = Path.Combine(destination, "Characters", "Heroine3");
+            Directory.CreateDirectory(bundledCharacter);
+            Directory.CreateDirectory(destinationCharacter);
+            File.WriteAllText(Path.Combine(bundledCharacter, "conversation-ai-prompt.json"), "bundled prompt");
+            File.WriteAllText(Path.Combine(bundledCharacter, "profile.json"), "must not be seeded");
+            File.WriteAllText(Path.Combine(destinationCharacter, "conversation-ai-prompt.json"), "user prompt");
+            var service = new WorkspacePathService(Path.Combine(root, "settings.json"), destination);
+
+            service.SeedBundledDefaults(bundled, destination);
+
+            Assert.AreEqual("user prompt", File.ReadAllText(
+                Path.Combine(destinationCharacter, "conversation-ai-prompt.json")));
+            Assert.IsFalse(File.Exists(Path.Combine(destinationCharacter, "profile.json")));
+        }
     }
 }
