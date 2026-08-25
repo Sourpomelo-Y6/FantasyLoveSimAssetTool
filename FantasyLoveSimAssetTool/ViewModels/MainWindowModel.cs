@@ -9215,9 +9215,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     if (ShortTextCandidates.Any(existing =>
                         string.Equals(existing.Text, candidate.Text, StringComparison.Ordinal))) continue;
                     if (ShortTextCandidates.Count >= 3) break;
+                    IReadOnlyList<string> qualityWarnings = SkillTextCandidateQualityService.Evaluate(
+                        candidate.Text,
+                        target,
+                        GetExistingSkillDisplayNames(target),
+                        GetCurrentSkillDisplayName(target),
+                        generationContext.TaskContext,
+                        target.RequiredContext == "BattleSkill" ? sourceBattleSkill?.EffectType : string.Empty);
                     ShortTextCandidates.Add(new TextGenerationCandidate(
-                        candidate.Text, target.MinLength, target.MaxLength, candidate.ExpressionId));
+                        candidate.Text, target.MinLength, target.MaxLength, candidate.ExpressionId, qualityWarnings));
                 }
+                ApplyCandidateSimilarityWarnings();
                 int missingCount = Math.Max(0, 3 - ShortTextCandidates.Count);
                 ShortTextAiStatus = missingCount == 0
                     ? $"{target.DisplayName}を3件生成しました（Model: {result.ModelId}）。"
@@ -9338,6 +9346,37 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 return $"NodeId={node.NodeId}; TrainingSkill={node.TrainingSkillId}; BattleSkill={node.GrantedHeroineSkillId}; SP={node.SkillPointCost}; Conditions={conditions}";
             }
             return string.Empty;
+        }
+
+        private IEnumerable<string> GetExistingSkillDisplayNames(ShortTextGenerationTarget target)
+        {
+            if (target?.RequiredContext == "BattleSkill")
+                return SelectedProfile?.BattleSkills?.Where(x => x != null).Select(x => x.DisplayName) ?? Enumerable.Empty<string>();
+            if (target?.RequiredContext == "TrainingSkill")
+                return SelectedProfile?.HeroineSkillTree?.TrainingSkills?.Where(x => x != null).Select(x => x.DisplayName) ?? Enumerable.Empty<string>();
+            if (target?.RequiredContext == "SkillTreeNode")
+                return SelectedProfile?.HeroineSkillTree?.Nodes?.Where(x => x != null).Select(x => x.DisplayName) ?? Enumerable.Empty<string>();
+            return Enumerable.Empty<string>();
+        }
+
+        private string GetCurrentSkillDisplayName(ShortTextGenerationTarget target)
+        {
+            if (target?.RequiredContext == "BattleSkill") return SelectedProductionBattleSkill?.DisplayName ?? string.Empty;
+            if (target?.RequiredContext == "TrainingSkill") return SelectedProductionTrainingSkill?.DisplayName ?? string.Empty;
+            if (target?.RequiredContext == "SkillTreeNode") return SelectedProductionSkillTreeNode?.DisplayName ?? string.Empty;
+            return string.Empty;
+        }
+
+        private void ApplyCandidateSimilarityWarnings()
+        {
+            for (int left = 0; left < ShortTextCandidates.Count; left++)
+            for (int right = left + 1; right < ShortTextCandidates.Count; right++)
+            {
+                if (!SkillTextCandidateQualityService.AreTooSimilar(
+                    ShortTextCandidates[left].Text, ShortTextCandidates[right].Text)) continue;
+                ShortTextCandidates[left].AddWarning("ほかの候補と類似");
+                ShortTextCandidates[right].AddWarning("ほかの候補と類似");
+            }
         }
 
         private IReadOnlyCollection<string> GetShortTextExpressionIds(ShortTextGenerationTarget target)
