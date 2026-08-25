@@ -12,17 +12,21 @@ namespace FantasyLoveSimAssetTool.Tests
     public class ConversationPromptServiceTests
     {
         [TestMethod]
-        public void BundledDefinitions_LoadFourSituationsAndKuderiaPrompt()
+        public void BundledDefinitions_LoadSixteenSituationsAndKuderiaPrompt()
         {
             var service = new ConversationPromptService(AppContext.BaseDirectory);
 
             IReadOnlyList<ConversationSituationPrompt> situations = service.LoadSituations();
             ConversationCharacterPrompt character = service.LoadCharacterPrompt("Heroine3");
 
-            Assert.AreEqual(4, situations.Count);
+            Assert.AreEqual(16, situations.Count);
             CollectionAssert.AreEquivalent(
                 new[] { "Daily", "Adventure", "Food", "Love" },
-                situations.Select(value => value.Category).ToArray());
+                situations.Select(value => value.Category).Distinct().ToArray());
+            Assert.IsTrue(situations.Any(value => value.SituationId == "daily_bad_weather_indoors"));
+            Assert.IsTrue(situations.Any(value => value.SituationId == "adventure_safety_first"));
+            Assert.IsTrue(situations.Any(value => value.SituationId == "food_learn_preferences"));
+            Assert.IsTrue(situations.Any(value => value.SituationId == "love_honest_confession"));
             Assert.IsNotNull(character);
             Assert.AreEqual("クーデリア", character.DisplayName);
             Assert.AreEqual("わたし", character.FirstPerson);

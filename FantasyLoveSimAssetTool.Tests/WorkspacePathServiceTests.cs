@@ -1,7 +1,11 @@
+using FantasyLoveSimAssetTool.Models;
 using FantasyLoveSimAssetTool.Services;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text.Json;
 
 namespace FantasyLoveSimAssetTool.Tests
 {
@@ -81,6 +85,49 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual("user prompt", File.ReadAllText(
                 Path.Combine(destinationCharacter, "conversation-ai-prompt.json")));
             Assert.IsFalse(File.Exists(Path.Combine(destinationCharacter, "profile.json")));
+        }
+
+        [TestMethod]
+        public void SeedBundledDefaults_MergesMissingSituationsWithoutOverwritingUserVersion()
+        {
+            string bundled = Path.Combine(root, "bundled");
+            string destination = Path.Combine(root, "destination");
+            string bundledTemplates = Path.Combine(bundled, "PromptTemplates");
+            string destinationTemplates = Path.Combine(destination, "PromptTemplates");
+            Directory.CreateDirectory(bundledTemplates);
+            Directory.CreateDirectory(destinationTemplates);
+            File.WriteAllText(Path.Combine(bundledTemplates, "conversation-situations.json"),
+                "[{\"situationId\":\"daily\",\"displayName\":\"Bundled\"},{\"situationId\":\"rain\",\"displayName\":\"Rain\"}]");
+            File.WriteAllText(Path.Combine(destinationTemplates, "conversation-situations.json"),
+                "[{\"situationId\":\"daily\",\"displayName\":\"User customized\"}]");
+            var service = new WorkspacePathService(Path.Combine(root, "settings.json"), destination);
+
+            service.SeedBundledDefaults(bundled, destination);
+
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            List<ConversationSituationPrompt> merged = JsonSerializer.Deserialize<List<ConversationSituationPrompt>>(
+                File.ReadAllText(Path.Combine(destinationTemplates, "conversation-situations.json")), options);
+            Assert.AreEqual(2, merged.Count);
+            Assert.AreEqual("User customized", merged.Single(value => value.SituationId == "daily").DisplayName);
+            Assert.AreEqual("Rain", merged.Single(value => value.SituationId == "rain").DisplayName);
+        }
+
+        [TestMethod]
+        public void SeedBundledDefaults_DoesNotOverwriteInvalidUserSituationJson()
+        {
+            string bundled = Path.Combine(root, "bundled");
+            string destination = Path.Combine(root, "destination");
+            Directory.CreateDirectory(Path.Combine(bundled, "PromptTemplates"));
+            Directory.CreateDirectory(Path.Combine(destination, "PromptTemplates"));
+            string destinationFile = Path.Combine(destination, "PromptTemplates", "conversation-situations.json");
+            File.WriteAllText(Path.Combine(bundled, "PromptTemplates", "conversation-situations.json"),
+                "[{\"situationId\":\"daily\"}]");
+            File.WriteAllText(destinationFile, "user invalid json");
+            var service = new WorkspacePathService(Path.Combine(root, "settings.json"), destination);
+
+            service.SeedBundledDefaults(bundled, destination);
+
+            Assert.AreEqual("user invalid json", File.ReadAllText(destinationFile));
         }
     }
 }

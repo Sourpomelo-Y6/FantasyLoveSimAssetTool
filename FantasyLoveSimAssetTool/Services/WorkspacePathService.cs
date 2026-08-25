@@ -1,3 +1,4 @@
+using FantasyLoveSimAssetTool.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -130,6 +131,8 @@ namespace FantasyLoveSimAssetTool.Services
                 }
             }
 
+            MergeConversationSituationDefaults(bundledRoot, destinationRoot);
+
             string bundledCharacters = Path.Combine(bundledRoot, "Characters");
             if (!Directory.Exists(bundledCharacters)) return;
             foreach (string sourceFile in Directory.EnumerateFiles(
@@ -141,6 +144,45 @@ namespace FantasyLoveSimAssetTool.Services
                 if (File.Exists(destinationFile)) continue;
                 Directory.CreateDirectory(Path.GetDirectoryName(destinationFile));
                 File.Copy(sourceFile, destinationFile);
+            }
+        }
+
+        private static void MergeConversationSituationDefaults(string bundledRoot, string destinationRoot)
+        {
+            string relativePath = Path.Combine("PromptTemplates", "conversation-situations.json");
+            string sourcePath = Path.Combine(bundledRoot, relativePath);
+            string destinationPath = Path.Combine(destinationRoot, relativePath);
+            if (!File.Exists(sourcePath) || !File.Exists(destinationPath)) return;
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true
+            };
+            try
+            {
+                List<ConversationSituationPrompt> bundled = JsonSerializer.Deserialize<List<ConversationSituationPrompt>>(
+                    File.ReadAllText(sourcePath), options) ?? new List<ConversationSituationPrompt>();
+                List<ConversationSituationPrompt> existing = JsonSerializer.Deserialize<List<ConversationSituationPrompt>>(
+                    File.ReadAllText(destinationPath), options) ?? new List<ConversationSituationPrompt>();
+                var existingIds = new HashSet<string>(
+                    existing.Where(value => !string.IsNullOrWhiteSpace(value?.SituationId))
+                        .Select(value => value.SituationId.Trim()), StringComparer.Ordinal);
+                List<ConversationSituationPrompt> additions = bundled
+                    .Where(value => !string.IsNullOrWhiteSpace(value?.SituationId) &&
+                        !existingIds.Contains(value.SituationId.Trim()))
+                    .ToList();
+                if (additions.Count == 0) return;
+
+                existing.AddRange(additions);
+                string temporaryPath = destinationPath + ".merge.tmp";
+                File.WriteAllText(temporaryPath, JsonSerializer.Serialize(existing, options));
+                File.Replace(temporaryPath, destinationPath, null);
+            }
+            catch (JsonException)
+            {
+                // A user-edited invalid JSON file must not be overwritten during startup.
             }
         }
 

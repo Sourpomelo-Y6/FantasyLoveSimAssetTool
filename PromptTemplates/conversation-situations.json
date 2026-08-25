@@ -59,5 +59,185 @@
       "永遠や結婚など未確定の将来を断定する",
       "独占や嫉妬を過度に強調する"
     ]
+  },
+  {
+    "situationId": "daily_morning_invitation",
+    "displayName": "日常：朝の誘い",
+    "category": "Daily",
+    "instruction": "一日の始まりに周囲の様子へ触れ、散歩、会話、軽い用事などを一緒にしようと自然に誘う。穏やかで短い会話にする。",
+    "requiredElements": [
+      "朝の空気や季節感を一つだけ取り入れる",
+      "相手が断れる柔らかな誘い方にする",
+      "これから行う小さな行動を示す"
+    ],
+    "avoidElements": [
+      "一日の予定を勝手に確定する",
+      "大きな事件の始まりにする"
+    ]
+  },
+  {
+    "situationId": "daily_listen_to_your_day",
+    "displayName": "日常：相手の一日を聞く",
+    "category": "Daily",
+    "instruction": "プレイヤーが今日見たものや経験したことへ関心を示し、急かさず話を聞こうとする。関係段階に応じた距離感で会話を続ける。",
+    "requiredElements": [
+      "答えを決めつけない問いかけを一つ含める",
+      "相手の話を聞きたい理由を短く示す",
+      "落ち着いて返答を待つ終わり方にする"
+    ],
+    "avoidElements": [
+      "プレイヤーの行動や感情を断定する",
+      "質問を何個も連続させる"
+    ]
+  },
+  {
+    "situationId": "daily_bad_weather_indoors",
+    "displayName": "日常：悪天候を室内で過ごす",
+    "category": "Daily",
+    "instruction": "雨や雪など外出しにくい天候を受け、室内で穏やかに過ごす提案をする。天候への反応から二人の静かな時間へ話題を移す。",
+    "requiredElements": [
+      "指定された天候を自然に反映する",
+      "安全または快適さへの気遣いを含める",
+      "室内でできる簡単な過ごし方を提案する"
+    ],
+    "avoidElements": [
+      "災害や深刻な被害を追加する",
+      "天候に反する外出を強要する"
+    ]
+  },
+  {
+    "situationId": "adventure_new_place",
+    "displayName": "冒険：未知の場所へ向かう",
+    "category": "Adventure",
+    "instruction": "まだ知らない場所へ進む前に、期待と小さな不安を言葉にする。プレイヤーと景色や経験を共有したい気持ちを中心にする。",
+    "requiredElements": [
+      "未知への期待か不安を一つ示す",
+      "二人で進むことの意味を含める",
+      "結果ではなく出発前または移動中の会話にする"
+    ],
+    "avoidElements": [
+      "目的地で起きる事件を確定する",
+      "未知の場所の設定を勝手に作り込む"
+    ]
+  },
+  {
+    "situationId": "adventure_safety_first",
+    "displayName": "冒険：危険を避けて休む",
+    "category": "Adventure",
+    "instruction": "荒天、疲労、危険な状況を前に無理をせず、安全な場所で休息や準備を提案する。臆病さではなく仲間を守る判断として描く。",
+    "requiredElements": [
+      "現在の危険要因を一つだけ取り上げる",
+      "休息または準備という具体的な代案を示す",
+      "次に進む意志は失わない"
+    ],
+    "avoidElements": [
+      "危険を無視して進む",
+      "戦闘や負傷が起きたと断定する"
+    ]
+  },
+  {
+    "situationId": "adventure_mutual_trust",
+    "displayName": "冒険：背中を預ける信頼",
+    "category": "Adventure",
+    "instruction": "冒険中の役割分担や助け合いをきっかけに、互いを信頼していることを表す。高めの関係段階に合う、簡潔で実践的な言葉にする。",
+    "requiredElements": [
+      "相手へ任せることと自分が支えることの両方を示す",
+      "冒険中の協力として表現する",
+      "恋愛表現だけに寄せない"
+    ],
+    "avoidElements": [
+      "絶対に勝てると断言する",
+      "自己犠牲や別れを持ち出す"
+    ]
+  },
+  {
+    "situationId": "food_learn_preferences",
+    "displayName": "食事：相手の好みを知る",
+    "category": "Food",
+    "instruction": "料理や店の話題から、プレイヤーの好きな味や食べたいものを尋ねる。まだ回答されていない好みは決めず、次の食事につながる会話にする。",
+    "requiredElements": [
+      "答えを限定しない短い問いかけを含める",
+      "相手の好みを知りたい気持ちを示す",
+      "次回の食事へつながる余韻を残す"
+    ],
+    "avoidElements": [
+      "相手の好物を勝手に決める",
+      "特定の店や料理を設定なしに固有名詞で追加する"
+    ]
+  },
+  {
+    "situationId": "food_prepare_for_partner",
+    "displayName": "食事：相手のために用意する",
+    "category": "Food",
+    "instruction": "覚えている好みや季節を手がかりに、プレイヤーのために料理や飲み物を用意したいと申し出る。押しつけず、相手を気遣う姿勢を中心にする。",
+    "requiredElements": [
+      "用意する意志または提案を示す",
+      "二人で味わう流れにつなげる",
+      "既知の好みがない場合は選択を相手へ委ねる"
+    ],
+    "avoidElements": [
+      "料理の腕前や成功を断定する",
+      "未設定の好物を既知の事実として扱う"
+    ]
+  },
+  {
+    "situationId": "food_seasonal_comfort",
+    "displayName": "食事：季節に合う一品",
+    "category": "Food",
+    "instruction": "暑さや寒さ、時間帯に合わせた食べ物や飲み物を提案し、相手の体調を気遣う。具体的な料理名は設定がある場合だけ使う。",
+    "requiredElements": [
+      "季節、天候、時間帯のどれか一つを反映する",
+      "相手への体調の気遣いを含める",
+      "一緒に食べるか飲む提案で終える"
+    ],
+    "avoidElements": [
+      "医療的な効果を断定する",
+      "料理の詳しい作り方を説明する"
+    ]
+  },
+  {
+    "situationId": "love_growing_interest",
+    "displayName": "恋愛：もっと相手を知りたい",
+    "category": "Love",
+    "instruction": "親しくなり始めた段階で、プレイヤーと話す時間を楽しみにしていることや、もっと知りたい気持ちを控えめに伝える。",
+    "requiredElements": [
+      "現在の交流を肯定する",
+      "関係を急がず次の会話を望む",
+      "相手が答えやすい余地を残す"
+    ],
+    "avoidElements": [
+      "恋人関係を前提にする",
+      "強い告白や永続的な約束をする"
+    ]
+  },
+  {
+    "situationId": "love_quiet_closeness",
+    "displayName": "恋愛：静かな時間をそばで過ごす",
+    "category": "Love",
+    "instruction": "夜や雨音など静かな環境で、会話が途切れても相手のそばが心地よいと伝える。高すぎない親密さで、もう少し一緒にいたい気持ちを表す。",
+    "requiredElements": [
+      "周囲の静けさを一つだけ描写する",
+      "相手のそばで安心する気持ちを示す",
+      "滞在を命令せずお願いまたは希望として伝える"
+    ],
+    "avoidElements": [
+      "性的な描写へ進める",
+      "別れや不安を過度に強調する"
+    ]
+  },
+  {
+    "situationId": "love_honest_confession",
+    "displayName": "恋愛：高好感度の素直な告白",
+    "category": "Love",
+    "instruction": "十分に信頼が育った高好感度段階で、遠回しにせず好意と今後も一緒にいたい希望を伝える。相手の返答や将来を勝手に確定しない。",
+    "requiredElements": [
+      "高好感度条件でのみ使う",
+      "好意を明確な言葉で一度伝える",
+      "相手の返答を待つ余地を残す"
+    ],
+    "avoidElements": [
+      "結婚や永遠を自動的に確定する",
+      "拒絶できない圧力や条件を付ける"
+    ]
   }
 ]
