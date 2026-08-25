@@ -10352,10 +10352,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private void ApplyConversationSituationConditions()
         {
+            ConversationEntry target = SelectedConversationEntry;
             if (!ConversationSituationConditionService.Apply(
-                SelectedConversationEntry, SelectedConversationSituationPrompt)) return;
+                target, SelectedConversationSituationPrompt)) return;
+            target.ValidationWarningText = BuildConversationWarningText(target);
+            if (target.Kind == ConversationDataKind.GameEvents)
+                target.TriggerCandidateText = MatchesGameEventTestConditions(target) ? "候補" : "対象外";
             OnPropertyChanged(nameof(SelectedConversationEntry));
-            RefreshFilteredConversationEntries();
             StatusMessage = "状況テンプレートの推奨条件を反映しました。保存するまではファイルへ書き込まれません。";
             CommandManager.InvalidateRequerySuggested();
         }
