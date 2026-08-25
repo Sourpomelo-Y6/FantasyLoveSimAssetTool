@@ -913,22 +913,15 @@
                                     </DataGrid>
                                 </Grid>
 
-                                <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
-                                    <Grid>
+                                <TabControl Grid.Column="2">
+                                    <TabItem Header="本文編集">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                            <Grid Margin="8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="120"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
@@ -973,139 +966,7 @@
                                                     Margin="8,0,0,0"/>
                                         </Grid>
 
-                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="場所/イベント発火" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                        <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
-                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.LocationId, UpdateSourceTrigger=PropertyChanged}"
-                                                     Width="180"
-                                                     ToolTip="場所条件"/>
-                                            <TextBlock Text="発火種類" VerticalAlignment="Center" Margin="16,0,8,0"/>
-                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.GameEventTriggerType, UpdateSourceTrigger=PropertyChanged}"
-                                                     Width="190"
-                                                     ToolTip="例: ScheduledEventCompleted"/>
-                                            <TextBlock Text="対象ID" VerticalAlignment="Center" Margin="16,0,8,0"/>
-                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.TriggerContextId, UpdateSourceTrigger=PropertyChanged}"
-                                                     Width="140"
-                                                     ToolTip="例: Forest"/>
-                                        </StackPanel>
-
-                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="好感度" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                        <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
-                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.MinAffection, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
-                                            <TextBlock Text=" -" VerticalAlignment="Center" Margin="8,0,8,0"/>
-                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.MaxAffection, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
-                                            <CheckBox Content="一度だけ"
-                                                      IsChecked="{Binding SelectedConversationEntry.Conditions.Once}"
-                                                      VerticalAlignment="Center"
-                                                      Margin="24,0,0,0"/>
-                                            <TextBlock Text="イベント完了時変化"
-                                                       VerticalAlignment="Center"
-                                                       Margin="24,0,8,0"/>
-                                            <TextBox Text="{Binding SelectedConversationEntry.AffectionChange, UpdateSourceTrigger=PropertyChanged}"
-                                                     Width="80"/>
-                                        </StackPanel>
-
-                                        <TextBlock Grid.Row="5" Grid.Column="0" Text="天候/季節/時間" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                        <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
-                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.Weather, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="0,0,8,0"/>
-                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.Season, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="0,0,8,0"/>
-                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.TimeOfDay, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
-                                            <ComboBox ItemsSource="{Binding ConversationWeatherSuggestions}"
-                                                      SelectedItem="{Binding SelectedConversationWeatherSuggestion}"
-                                                      Width="105"
-                                                      Height="26"
-                                                      Margin="16,0,8,0"/>
-                                            <ComboBox ItemsSource="{Binding ConversationSeasonSuggestions}"
-                                                      SelectedItem="{Binding SelectedConversationSeasonSuggestion}"
-                                                      Width="105"
-                                                      Height="26"
-                                                      Margin="0,0,8,0"/>
-                                            <ComboBox ItemsSource="{Binding ConversationTimeOfDaySuggestions}"
-                                                      SelectedItem="{Binding SelectedConversationTimeOfDaySuggestion}"
-                                                      Width="105"
-                                                      Height="26"
-                                                      Margin="0,0,8,0"/>
-                                            <Button Content="候補反映" Command="{Binding ApplyConversationConditionSuggestionsCommand}" Height="26" Width="80"/>
-                                        </StackPanel>
-
-                                        <TextBlock Grid.Row="6" Grid.Column="0" Text="行動/必要Item" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                        <StackPanel Grid.Row="6" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
-                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.ActionId, UpdateSourceTrigger=PropertyChanged}" Width="180" Margin="0,0,8,0"/>
-                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.RequiredItemId, UpdateSourceTrigger=PropertyChanged}" Width="180"/>
-                                            <ComboBox ItemsSource="{Binding ConversationActionSuggestions}"
-                                                      SelectedItem="{Binding SelectedConversationActionSuggestion}"
-                                                      Width="140"
-                                                      Height="26"
-                                                      Margin="16,0,8,0"/>
-                                            <ComboBox ItemsSource="{Binding ConversationLocationSuggestions}"
-                                                      SelectedItem="{Binding SelectedConversationLocationSuggestion}"
-                                                      Width="140"
-                                                      Height="26"
-                                                      Margin="0,0,8,0"/>
-                                            <Button Content="候補反映" Command="{Binding ApplyConversationConditionSuggestionsCommand}" Height="26" Width="80"/>
-                                        </StackPanel>
-
-                                        <TextBlock Grid.Row="7" Grid.Column="0" Text="衣装" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                        <StackPanel Grid.Row="7" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
-                                            <TextBox Text="{Binding SelectedConversationEntry.Conditions.CostumeId, UpdateSourceTrigger=PropertyChanged}" Width="180" Margin="0,0,8,0"/>
-                                            <ComboBox ItemsSource="{Binding ConversationCostumeSuggestions}"
-                                                      SelectedItem="{Binding SelectedConversationCostumeSuggestion}"
-                                                      Width="140"
-                                                      Height="26"
-                                                      Margin="0,0,8,0"/>
-                                            <Button Content="候補反映" Command="{Binding ApplyConversationConditionSuggestionsCommand}" Height="26" Width="80"/>
-                                        </StackPanel>
-
-                                        <TextBlock Grid.Row="8" Grid.Column="0" Text="必要条件" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                        <Grid Grid.Row="8" Grid.Column="1" Margin="0,0,0,8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBox Grid.Column="0" Text="{Binding SelectedConversationEntry.Conditions.RequiredFlagIdsText, UpdateSourceTrigger=PropertyChanged}" ToolTip="必要フラグID（カンマまたは改行区切り）" Margin="0,0,4,0"/>
-                                            <TextBox Grid.Column="1" Text="{Binding SelectedConversationEntry.Conditions.RequiredSkillIdsText, UpdateSourceTrigger=PropertyChanged}" ToolTip="必要スキルID（カンマまたは改行区切り）" Margin="4,0,0,0"/>
-                                        </Grid>
-
-                                        <TextBlock Grid.Row="9" Grid.Column="0" Text="画像AssetId" VerticalAlignment="Top" Margin="0,4,8,8"/>
-                                        <Grid Grid.Row="9" Grid.Column="1" Margin="0,0,0,8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="180"/>
-                                                <ColumnDefinition Width="80"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBox Grid.Column="0"
-                                                     Text="{Binding SelectedConversationEntry.ImageAssetIdsText, UpdateSourceTrigger=PropertyChanged}"
-                                                     AcceptsReturn="True"
-                                                     Height="48"
-                                                     TextWrapping="Wrap"
-                                                     Margin="0,0,8,0"/>
-                                            <ComboBox Grid.Column="1"
-                                                      ItemsSource="{Binding AcceptedAssets}"
-                                                      SelectedItem="{Binding SelectedConversationImageAsset}"
-                                                      DisplayMemberPath="AssetId"
-                                                      Height="26"
-                                                      Margin="0,0,8,0"/>
-                                            <Button Grid.Column="2" Content="追加" Command="{Binding AddConversationImageAssetCommand}" Height="26" VerticalAlignment="Top"/>
-                                        </Grid>
-
-                                        <TextBlock Grid.Row="10" Grid.Column="0" Text="優先度" VerticalAlignment="Center" Margin="0,0,8,8"/>
-                                        <StackPanel Grid.Row="10" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
-                                            <TextBox Text="{Binding SelectedConversationEntry.Priority, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
-                                            <StackPanel Orientation="Horizontal"
-                                                        Margin="24,0,0,0"
-                                                        Visibility="{Binding SelectedConversationEntry.IsEnding, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                <TextBlock Text="Ending表示" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                <ComboBox ItemsSource="{Binding EndingVisualModeOptions}"
-                                                          SelectedItem="{Binding SelectedConversationEntry.EndingVisualMode, UpdateSourceTrigger=PropertyChanged}"
-                                                          Width="150"
-                                                          ToolTip="Auto: 従来表示、StillOnly: スチルのみ、StillWithPortrait: スチルと立ち絵、PortraitOnly: 立ち絵のみ"/>
-                                                <CheckBox Content="代表スチルを全ページで維持"
-                                                          IsChecked="{Binding SelectedConversationEntry.KeepEndingStillAcrossPages, UpdateSourceTrigger=PropertyChanged}"
-                                                          VerticalAlignment="Center"
-                                                          Margin="16,0,0,0"/>
-                                            </StackPanel>
-                                        </StackPanel>
-
-                                        <Grid Grid.Row="11" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,8">
+                                        <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,8">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="100"/>
@@ -1124,14 +985,14 @@
                                             <Button Grid.Column="2" Content="行削除" Command="{Binding RemoveConversationLineCommand}" Height="26"/>
                                         </Grid>
 
-                                        <DataGrid Grid.Row="12"
+                                        <DataGrid Grid.Row="4"
                                                   Grid.Column="0"
                                                   Grid.ColumnSpan="2"
                                                   ItemsSource="{Binding SelectedConversationEntry.Lines}"
                                                   SelectedItem="{Binding SelectedConversationLine}"
                                                   AutoGenerateColumns="False"
                                                   CanUserAddRows="False"
-                                                  MinHeight="160"
+                                                  MinHeight="220"
                                                   Margin="0,0,0,8">
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="話者" Binding="{Binding Speaker}" Width="100"/>
@@ -1150,7 +1011,7 @@
                                             </DataGrid.Columns>
                                         </DataGrid>
 
-                                        <Grid Grid.Row="13" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,8">
+                                        <Grid Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,8">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="100"/>
@@ -1161,14 +1022,14 @@
                                             <Button Grid.Column="2" Content="選択肢削除" Command="{Binding RemoveConversationChoiceCommand}" Height="26"/>
                                         </Grid>
 
-                                        <DataGrid Grid.Row="14"
+                                        <DataGrid Grid.Row="6"
                                                   Grid.Column="0"
                                                   Grid.ColumnSpan="2"
                                                   ItemsSource="{Binding SelectedConversationEntry.Choices}"
                                                   SelectedItem="{Binding SelectedConversationChoice}"
                                                   AutoGenerateColumns="False"
                                                   CanUserAddRows="False"
-                                                  MinHeight="120"
+                                                  MinHeight="160"
                                                   Margin="0,0,0,8">
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="選択肢" Binding="{Binding ChoiceText}" Width="2*"/>
@@ -1177,16 +1038,113 @@
                                             </DataGrid.Columns>
                                         </DataGrid>
 
-                                        <TextBlock Grid.Row="15" Grid.Column="0" Text="メモ" VerticalAlignment="Top" Margin="0,4,8,8"/>
-                                        <TextBox Grid.Row="15"
-                                                 Grid.Column="1"
-                                                 Text="{Binding SelectedConversationEntry.Memo, UpdateSourceTrigger=PropertyChanged}"
-                                                 AcceptsReturn="True"
-                                                 Height="72"
-                                                 TextWrapping="Wrap"
-                                                 Margin="0,0,0,8"/>
-                                    </Grid>
-                                </ScrollViewer>
+                                            </Grid>
+                                        </ScrollViewer>
+                                    </TabItem>
+
+                                    <TabItem Header="条件・演出">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                            <Grid Margin="8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="120"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+
+                                                <TextBlock Grid.Row="0" Grid.Column="0" Text="場所/イベント発火" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                                <WrapPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,8">
+                                                    <TextBox Text="{Binding SelectedConversationEntry.Conditions.LocationId, UpdateSourceTrigger=PropertyChanged}" Width="180" ToolTip="場所条件" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="発火種類" VerticalAlignment="Center" Margin="8,0"/>
+                                                    <TextBox Text="{Binding SelectedConversationEntry.Conditions.GameEventTriggerType, UpdateSourceTrigger=PropertyChanged}" Width="190" ToolTip="例: ScheduledEventCompleted" Margin="0,0,8,0"/>
+                                                    <TextBlock Text="対象ID" VerticalAlignment="Center" Margin="8,0"/>
+                                                    <TextBox Text="{Binding SelectedConversationEntry.Conditions.TriggerContextId, UpdateSourceTrigger=PropertyChanged}" Width="140" ToolTip="例: Forest"/>
+                                                </WrapPanel>
+
+                                                <TextBlock Grid.Row="1" Grid.Column="0" Text="好感度" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                                <WrapPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,8">
+                                                    <TextBox Text="{Binding SelectedConversationEntry.Conditions.MinAffection, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                                                    <TextBlock Text=" - " VerticalAlignment="Center" Margin="8,0"/>
+                                                    <TextBox Text="{Binding SelectedConversationEntry.Conditions.MaxAffection, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                                                    <CheckBox Content="一度だけ" IsChecked="{Binding SelectedConversationEntry.Conditions.Once}" VerticalAlignment="Center" Margin="24,0,0,0"/>
+                                                    <TextBlock Text="イベント完了時変化" VerticalAlignment="Center" Margin="24,0,8,0"/>
+                                                    <TextBox Text="{Binding SelectedConversationEntry.AffectionChange, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                                                </WrapPanel>
+
+                                                <TextBlock Grid.Row="2" Grid.Column="0" Text="天候/季節/時間" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                                <WrapPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,8">
+                                                    <TextBox Text="{Binding SelectedConversationEntry.Conditions.Weather, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="0,0,8,0"/>
+                                                    <TextBox Text="{Binding SelectedConversationEntry.Conditions.Season, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="0,0,8,0"/>
+                                                    <TextBox Text="{Binding SelectedConversationEntry.Conditions.TimeOfDay, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="0,0,16,0"/>
+                                                    <ComboBox ItemsSource="{Binding ConversationWeatherSuggestions}" SelectedItem="{Binding SelectedConversationWeatherSuggestion}" Width="105" Height="26" Margin="0,0,8,0"/>
+                                                    <ComboBox ItemsSource="{Binding ConversationSeasonSuggestions}" SelectedItem="{Binding SelectedConversationSeasonSuggestion}" Width="105" Height="26" Margin="0,0,8,0"/>
+                                                    <ComboBox ItemsSource="{Binding ConversationTimeOfDaySuggestions}" SelectedItem="{Binding SelectedConversationTimeOfDaySuggestion}" Width="105" Height="26" Margin="0,0,8,0"/>
+                                                    <Button Content="候補反映" Command="{Binding ApplyConversationConditionSuggestionsCommand}" Height="26" Width="80"/>
+                                                </WrapPanel>
+
+                                                <TextBlock Grid.Row="3" Grid.Column="0" Text="行動/必要Item" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                                <WrapPanel Grid.Row="3" Grid.Column="1" Margin="0,0,0,8">
+                                                    <TextBox Text="{Binding SelectedConversationEntry.Conditions.ActionId, UpdateSourceTrigger=PropertyChanged}" Width="180" Margin="0,0,8,0"/>
+                                                    <TextBox Text="{Binding SelectedConversationEntry.Conditions.RequiredItemId, UpdateSourceTrigger=PropertyChanged}" Width="180" Margin="0,0,16,0"/>
+                                                    <ComboBox ItemsSource="{Binding ConversationActionSuggestions}" SelectedItem="{Binding SelectedConversationActionSuggestion}" Width="140" Height="26" Margin="0,0,8,0"/>
+                                                    <ComboBox ItemsSource="{Binding ConversationLocationSuggestions}" SelectedItem="{Binding SelectedConversationLocationSuggestion}" Width="140" Height="26" Margin="0,0,8,0"/>
+                                                    <Button Content="候補反映" Command="{Binding ApplyConversationConditionSuggestionsCommand}" Height="26" Width="80"/>
+                                                </WrapPanel>
+
+                                                <TextBlock Grid.Row="4" Grid.Column="0" Text="衣装" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                                <WrapPanel Grid.Row="4" Grid.Column="1" Margin="0,0,0,8">
+                                                    <TextBox Text="{Binding SelectedConversationEntry.Conditions.CostumeId, UpdateSourceTrigger=PropertyChanged}" Width="180" Margin="0,0,8,0"/>
+                                                    <ComboBox ItemsSource="{Binding ConversationCostumeSuggestions}" SelectedItem="{Binding SelectedConversationCostumeSuggestion}" Width="140" Height="26" Margin="0,0,8,0"/>
+                                                    <Button Content="候補反映" Command="{Binding ApplyConversationConditionSuggestionsCommand}" Height="26" Width="80"/>
+                                                </WrapPanel>
+
+                                                <TextBlock Grid.Row="5" Grid.Column="0" Text="必要条件" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                                <Grid Grid.Row="5" Grid.Column="1" Margin="0,0,0,8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBox Grid.Column="0" Text="{Binding SelectedConversationEntry.Conditions.RequiredFlagIdsText, UpdateSourceTrigger=PropertyChanged}" ToolTip="必要フラグID（カンマまたは改行区切り）" Margin="0,0,4,0"/>
+                                                    <TextBox Grid.Column="1" Text="{Binding SelectedConversationEntry.Conditions.RequiredSkillIdsText, UpdateSourceTrigger=PropertyChanged}" ToolTip="必要スキルID（カンマまたは改行区切り）" Margin="4,0,0,0"/>
+                                                </Grid>
+
+                                                <TextBlock Grid.Row="6" Grid.Column="0" Text="画像AssetId" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                                <Grid Grid.Row="6" Grid.Column="1" Margin="0,0,0,8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="180"/>
+                                                        <ColumnDefinition Width="80"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBox Grid.Column="0" Text="{Binding SelectedConversationEntry.ImageAssetIdsText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="64" TextWrapping="Wrap" Margin="0,0,8,0"/>
+                                                    <ComboBox Grid.Column="1" ItemsSource="{Binding AcceptedAssets}" SelectedItem="{Binding SelectedConversationImageAsset}" DisplayMemberPath="AssetId" Height="26" Margin="0,0,8,0"/>
+                                                    <Button Grid.Column="2" Content="追加" Command="{Binding AddConversationImageAssetCommand}" Height="26" VerticalAlignment="Top"/>
+                                                </Grid>
+
+                                                <TextBlock Grid.Row="7" Grid.Column="0" Text="優先度・Ending" VerticalAlignment="Center" Margin="0,0,8,8"/>
+                                                <WrapPanel Grid.Row="7" Grid.Column="1" Margin="0,0,0,8">
+                                                    <TextBox Text="{Binding SelectedConversationEntry.Priority, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="24,0,0,0" Visibility="{Binding SelectedConversationEntry.IsEnding, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                        <TextBlock Text="Ending表示" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                        <ComboBox ItemsSource="{Binding EndingVisualModeOptions}" SelectedItem="{Binding SelectedConversationEntry.EndingVisualMode, UpdateSourceTrigger=PropertyChanged}" Width="150" ToolTip="Auto: 従来表示、StillOnly: スチルのみ、StillWithPortrait: スチルと立ち絵、PortraitOnly: 立ち絵のみ"/>
+                                                        <CheckBox Content="代表スチルを全ページで維持" IsChecked="{Binding SelectedConversationEntry.KeepEndingStillAcrossPages, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Margin="16,0,0,0"/>
+                                                    </StackPanel>
+                                                </WrapPanel>
+
+                                                <TextBlock Grid.Row="8" Grid.Column="0" Text="メモ" VerticalAlignment="Top" Margin="0,4,8,8"/>
+                                                <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding SelectedConversationEntry.Memo, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" MinHeight="100" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                            </Grid>
+                                        </ScrollViewer>
+                                    </TabItem>
+                                </TabControl>
                             </Grid>
 
                             <Button Grid.Row="2"
