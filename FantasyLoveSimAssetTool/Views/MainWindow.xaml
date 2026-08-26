@@ -1434,6 +1434,17 @@
                                                                     Command="{Binding CancelConversationChoiceResponseGenerationCommand}"
                                                                     Height="26" Padding="12,2"/>
                                                         </WrapPanel>
+                                                        <TextBlock Text="追加プロンプト（任意）" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                                                        <TextBox Text="{Binding ConversationChoiceResponseAdditionalInstruction, UpdateSourceTrigger=PropertyChanged}"
+                                                                 AcceptsReturn="True"
+                                                                 TextWrapping="Wrap"
+                                                                 MinHeight="58"
+                                                                 VerticalScrollBarVisibility="Auto"
+                                                                 ToolTip="例: 少し照れながら / 誘いを断るが嬉しそうにする / 入力した返答案をキャラクターらしく添削"
+                                                                 Margin="0,0,0,4"/>
+                                                        <TextBlock Text="感情・反応方針・キーワードを反映し、文章はキャラクターらしい返答へ添削します。"
+                                                                   Foreground="Gray" FontSize="11" TextWrapping="Wrap"
+                                                                   Margin="0,0,0,8"/>
                                                         <TextBox Text="{Binding ConversationChoiceResponseAiStatus, Mode=OneWay}"
                                                                  IsReadOnly="True" TextWrapping="Wrap"
                                                                  MinHeight="34" Margin="0,0,0,8"/>

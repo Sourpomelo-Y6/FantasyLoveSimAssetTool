@@ -247,6 +247,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private ConversationChoiceResponseGenerationSession generatedConversationChoiceResponseSession;
         private CancellationTokenSource conversationChoiceResponseGenerationCancellation;
         private string conversationChoiceResponseAiStatus = "選択肢文言を入力して返答候補を生成してください。";
+        private string conversationChoiceResponseAdditionalInstruction = string.Empty;
         private string conversationChoiceResponseAiPrompt = string.Empty;
         private string conversationChoiceResponseAiRawResponse = string.Empty;
         private bool isGeneratingConversationChoiceResponse;
@@ -322,6 +323,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             get => conversationChoiceResponseAiStatus;
             private set { if (conversationChoiceResponseAiStatus != value) { conversationChoiceResponseAiStatus = value; OnPropertyChanged(); } }
+        }
+
+        public string ConversationChoiceResponseAdditionalInstruction
+        {
+            get => conversationChoiceResponseAdditionalInstruction;
+            set
+            {
+                if (conversationChoiceResponseAdditionalInstruction == value) return;
+                conversationChoiceResponseAdditionalInstruction = value ?? string.Empty;
+                OnPropertyChanged();
+            }
         }
 
         public string ConversationChoiceResponseAiPrompt
@@ -10982,6 +10994,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 ConversationCategory = sourceEntry.Category ?? string.Empty,
                 PreviousLine = previousLine?.Text ?? string.Empty,
                 ChoiceText = sourceChoice.ChoiceText,
+                AdditionalInstruction = ConversationChoiceResponseAdditionalInstruction,
                 ExistingResponses = (sourceEntry.Choices ?? new ObservableCollection<ConversationChoice>())
                     .Where(choice => choice != null && choice != sourceChoice)
                     .Select(choice => choice.ResponseText ?? string.Empty).ToList()
