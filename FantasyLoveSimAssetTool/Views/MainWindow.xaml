@@ -1361,6 +1361,17 @@
                                                                     Command="{Binding CancelConversationChoiceGenerationCommand}"
                                                                     Height="26" Padding="12,2"/>
                                                         </WrapPanel>
+                                                        <TextBlock Text="追加プロンプト（任意）" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                                                        <TextBox Text="{Binding ConversationChoiceAdditionalInstruction, UpdateSourceTrigger=PropertyChanged}"
+                                                                 AcceptsReturn="True"
+                                                                 TextWrapping="Wrap"
+                                                                 MinHeight="58"
+                                                                 VerticalScrollBarVisibility="Auto"
+                                                                 ToolTip="例: 森、安全を優先 / 入力した文章をプレイヤーの自然な選択肢へ添削"
+                                                                 Margin="0,0,0,4"/>
+                                                        <TextBlock Text="キーワードは候補の内容へ反映し、文章は意図を保ったプレイヤー選択肢へ添削します。"
+                                                                   Foreground="Gray" FontSize="11" TextWrapping="Wrap"
+                                                                   Margin="0,0,0,8"/>
                                                         <TextBox Text="{Binding ConversationChoiceAiStatus, Mode=OneWay}"
                                                                  IsReadOnly="True" TextWrapping="Wrap"
                                                                  MinHeight="34" Margin="0,0,0,8"/>

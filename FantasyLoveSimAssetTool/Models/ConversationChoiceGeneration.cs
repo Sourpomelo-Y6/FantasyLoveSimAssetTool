@@ -10,6 +10,7 @@ namespace FantasyLoveSimAssetTool.Models
         public string ConversationCategory { get; set; } = string.Empty;
         public string PreviousLine { get; set; } = string.Empty;
         public string Direction { get; set; } = string.Empty;
+        public string AdditionalInstruction { get; set; } = string.Empty;
         public IReadOnlyCollection<string> ExistingChoices { get; set; } = new List<string>();
     }
 

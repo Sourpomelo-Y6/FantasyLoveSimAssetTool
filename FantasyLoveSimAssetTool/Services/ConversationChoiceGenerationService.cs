@@ -69,6 +69,12 @@ namespace FantasyLoveSimAssetTool.Services
             Append(builder, "カテゴリ", context.ConversationCategory, 100);
             Append(builder, "直前の台詞", context.PreviousLine, 400);
             Append(builder, "方向性", context.Direction, 40);
+            if (!string.IsNullOrWhiteSpace(context.AdditionalInstruction))
+            {
+                builder.AppendLine("【ユーザーの追加指定・入力案】");
+                AppendBlock(builder, context.AdditionalInstruction, 1000);
+                builder.AppendLine("単語や短いキーワードの場合は候補の内容へ反映してください。文章の場合は意図と意味を保ち、プレイヤーの自然な選択肢文へ添削してください。");
+            }
             foreach (string choice in (context.ExistingChoices ?? Array.Empty<string>())
                 .Where(value => !string.IsNullOrWhiteSpace(value)).Take(10))
                 Append(builder, "既存選択肢（重複禁止）", choice, 100);

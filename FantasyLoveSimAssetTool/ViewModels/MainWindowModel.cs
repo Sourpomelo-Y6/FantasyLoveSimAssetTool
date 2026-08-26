@@ -239,6 +239,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private ConversationChoiceGenerationSession generatedConversationChoiceSession;
         private CancellationTokenSource conversationChoiceGenerationCancellation;
         private string selectedConversationChoiceDirection = "肯定";
+        private string conversationChoiceAdditionalInstruction = string.Empty;
         private string conversationChoiceAiStatus = "選択肢を選んで候補を生成してください。";
         private string conversationChoiceAiPrompt = string.Empty;
         private string conversationChoiceAiRawResponse = string.Empty;
@@ -274,6 +275,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             get => selectedConversationChoiceDirection;
             set { if (selectedConversationChoiceDirection != value) { selectedConversationChoiceDirection = value; OnPropertyChanged(); } }
+        }
+
+        public string ConversationChoiceAdditionalInstruction
+        {
+            get => conversationChoiceAdditionalInstruction;
+            set
+            {
+                if (conversationChoiceAdditionalInstruction == value) return;
+                conversationChoiceAdditionalInstruction = value ?? string.Empty;
+                OnPropertyChanged();
+            }
         }
 
         public string ConversationChoiceAiStatus
@@ -10861,6 +10873,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 ConversationCategory = sourceEntry.Category ?? string.Empty,
                 PreviousLine = previousLine?.Text ?? string.Empty,
                 Direction = SelectedConversationChoiceDirection ?? string.Empty,
+                AdditionalInstruction = ConversationChoiceAdditionalInstruction,
                 ExistingChoices = (sourceEntry.Choices ?? new ObservableCollection<ConversationChoice>())
                     .Where(choice => choice != null && choice != sourceChoice)
                     .Select(choice => choice.ChoiceText ?? string.Empty).ToList()
