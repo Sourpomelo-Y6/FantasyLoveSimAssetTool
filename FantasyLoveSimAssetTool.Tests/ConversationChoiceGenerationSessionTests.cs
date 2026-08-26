@@ -13,9 +13,12 @@ namespace FantasyLoveSimAssetTool.Tests
             var entry = new ConversationEntry();
             var choice = new ConversationChoice();
             var session = new ConversationChoiceGenerationSession(entry, choice);
+            string changedProperty = null;
+            choice.PropertyChanged += (_, args) => changedProperty = args.PropertyName;
 
             Assert.IsTrue(session.TryAdopt(entry, choice, "  慎重に進もう  "));
             Assert.AreEqual("慎重に進もう", choice.ChoiceText);
+            Assert.AreEqual(nameof(ConversationChoice.ChoiceText), changedProperty);
         }
 
         [TestMethod]
