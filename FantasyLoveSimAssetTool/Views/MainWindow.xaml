@@ -996,7 +996,7 @@
                                 </Grid>
 
                                 <TabControl Grid.Column="2">
-                                    <TabItem Header="本文編集">
+                                    <TabItem Header="通常台詞">
                                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                                             <Grid Margin="8">
                                         <Grid.ColumnDefinitions>
@@ -1287,33 +1287,56 @@
                                             </StackPanel>
                                         </Expander>
 
-                                        <Grid Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,4,0,8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="100"/>
-                                                <ColumnDefinition Width="100"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="選択肢" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                            <Button Grid.Column="1" Content="選択肢追加" Command="{Binding AddConversationChoiceCommand}" Height="26" Margin="0,0,8,0"/>
-                                            <Button Grid.Column="2" Content="選択肢削除" Command="{Binding RemoveConversationChoiceCommand}" Height="26"/>
-                                        </Grid>
+                                            </Grid>
+                                        </ScrollViewer>
+                                    </TabItem>
 
-                                        <DataGrid Grid.Row="7"
-                                                  Grid.Column="0"
-                                                  Grid.ColumnSpan="2"
-                                                  ItemsSource="{Binding SelectedConversationEntry.Choices}"
-                                                  SelectedItem="{Binding SelectedConversationChoice}"
-                                                  AutoGenerateColumns="False"
-                                                  CanUserAddRows="False"
-                                                  MinHeight="160"
-                                                  Margin="0,0,0,8">
-                                            <DataGrid.Columns>
-                                                <DataGridTextColumn Header="選択肢" Binding="{Binding ChoiceText}" Width="2*"/>
-                                                <DataGridTextColumn Header="返答" Binding="{Binding ResponseText}" Width="3*"/>
-                                                <DataGridTextColumn Header="好感度" Binding="{Binding AffectionChange}" Width="80"/>
-                                            </DataGrid.Columns>
-                                        </DataGrid>
+                                    <TabItem Header="選択肢・分岐">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                            <Grid Margin="8">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
 
+                                                <Grid Grid.Row="0" Margin="0,0,0,8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="100"/>
+                                                        <ColumnDefinition Width="100"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="選択肢と分岐" FontWeight="SemiBold" FontSize="14"/>
+                                                        <TextBlock Text="選択肢の表示文、返答、好感度変化を編集します。"
+                                                                   Foreground="Gray"
+                                                                   Margin="0,3,8,0"/>
+                                                    </StackPanel>
+                                                    <Button Grid.Column="1"
+                                                            Content="選択肢追加"
+                                                            Command="{Binding AddConversationChoiceCommand}"
+                                                            Height="26"
+                                                            Margin="0,0,8,0"
+                                                            VerticalAlignment="Top"/>
+                                                    <Button Grid.Column="2"
+                                                            Content="選択肢削除"
+                                                            Command="{Binding RemoveConversationChoiceCommand}"
+                                                            Height="26"
+                                                            VerticalAlignment="Top"/>
+                                                </Grid>
+
+                                                <DataGrid Grid.Row="1"
+                                                          ItemsSource="{Binding SelectedConversationEntry.Choices}"
+                                                          SelectedItem="{Binding SelectedConversationChoice}"
+                                                          AutoGenerateColumns="False"
+                                                          CanUserAddRows="False"
+                                                          MinHeight="240"
+                                                          Margin="0,0,0,8">
+                                                    <DataGrid.Columns>
+                                                        <DataGridTextColumn Header="選択肢" Binding="{Binding ChoiceText}" Width="2*"/>
+                                                        <DataGridTextColumn Header="返答" Binding="{Binding ResponseText}" Width="3*"/>
+                                                        <DataGridTextColumn Header="好感度" Binding="{Binding AffectionChange}" Width="80"/>
+                                                    </DataGrid.Columns>
+                                                </DataGrid>
                                             </Grid>
                                         </ScrollViewer>
                                     </TabItem>
