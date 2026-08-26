@@ -52,6 +52,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly ShortTextGenerationService shortTextGenerationService;
         private readonly ConversationPromptService conversationPromptService;
         private readonly ConversationDraftGenerationService conversationDraftGenerationService;
+        private readonly ConversationChoiceGenerationService conversationChoiceGenerationService;
         private readonly List<AudioLibraryItem> allAudioLibraryItems =
             new List<AudioLibraryItem>();
         private bool legacyWorkspaceChecked;
@@ -234,6 +235,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string conversationDraftPrompt = string.Empty;
         private string conversationDraftRawResponse = string.Empty;
         private bool isGeneratingConversationDraft;
+        private ConversationChoiceGenerationSession generatedConversationChoiceSession;
+        private CancellationTokenSource conversationChoiceGenerationCancellation;
+        private string selectedConversationChoiceDirection = "肯定";
+        private string conversationChoiceAiStatus = "選択肢を選んで候補を生成してください。";
+        private string conversationChoiceAiPrompt = string.Empty;
+        private string conversationChoiceAiRawResponse = string.Empty;
+        private bool isGeneratingConversationChoice;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
 
@@ -248,6 +256,46 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<string> ConversationSituationTypeFilters { get; }
 
         public ObservableCollection<ConversationDraftLine> ConversationDraftLines { get; }
+
+        public ObservableCollection<string> ConversationChoiceDirections { get; }
+
+        public ObservableCollection<TextGenerationCandidate> ConversationChoiceCandidates { get; }
+
+        public string SelectedConversationChoiceDirection
+        {
+            get => selectedConversationChoiceDirection;
+            set { if (selectedConversationChoiceDirection != value) { selectedConversationChoiceDirection = value; OnPropertyChanged(); } }
+        }
+
+        public string ConversationChoiceAiStatus
+        {
+            get => conversationChoiceAiStatus;
+            private set { if (conversationChoiceAiStatus != value) { conversationChoiceAiStatus = value; OnPropertyChanged(); } }
+        }
+
+        public string ConversationChoiceAiPrompt
+        {
+            get => conversationChoiceAiPrompt;
+            private set { if (conversationChoiceAiPrompt != value) { conversationChoiceAiPrompt = value; OnPropertyChanged(); } }
+        }
+
+        public string ConversationChoiceAiRawResponse
+        {
+            get => conversationChoiceAiRawResponse;
+            private set { if (conversationChoiceAiRawResponse != value) { conversationChoiceAiRawResponse = value; OnPropertyChanged(); } }
+        }
+
+        public bool IsGeneratingConversationChoice
+        {
+            get => isGeneratingConversationChoice;
+            private set
+            {
+                if (isGeneratingConversationChoice == value) return;
+                isGeneratingConversationChoice = value;
+                OnPropertyChanged();
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
 
         public string ConversationDraftStatus
         {
@@ -1489,6 +1537,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedConversationChoice == value) { return; }
                 selectedConversationChoice = value;
                 OnPropertyChanged(nameof(SelectedConversationChoice));
+                ClearConversationChoiceCandidates();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -2537,6 +2586,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ReplaceConversationDraftCommand { get; }
 
+        public ICommand GenerateConversationChoiceCandidatesCommand { get; }
+
+        public ICommand CancelConversationChoiceGenerationCommand { get; }
+
+        public ICommand AdoptConversationChoiceCandidateCommand { get; }
+
         public ICommand ImportHeroineProfileFromUnityCommand { get; }
 
         public ICommand AddBattleSkillCommand { get; }
@@ -2810,6 +2865,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             shortTextGenerationService = new ShortTextGenerationService(localLlmClient);
             conversationPromptService = new ConversationPromptService(characterProjectService.WorkspaceRoot);
             conversationDraftGenerationService = new ConversationDraftGenerationService(localLlmClient);
+            conversationChoiceGenerationService = new ConversationChoiceGenerationService(localLlmClient);
             audioPreviewService.PlaybackFailed += OnAudioPreviewFailed;
             ChangeWorkspaceCommand = new RelayCommand(ChangeWorkspace);
             AddTrainingPrerequisiteCommand = new RelayCommand(AddTrainingPrerequisite,
@@ -2848,6 +2904,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 "すべて", "日常", "冒険", "食事", "恋愛"
             };
             ConversationDraftLines = new ObservableCollection<ConversationDraftLine>();
+            ConversationChoiceDirections = new ObservableCollection<string> { "肯定", "慎重", "否定", "質問", "自由" };
+            ConversationChoiceCandidates = new ObservableCollection<TextGenerationCandidate>();
             selectedShortTextTarget = ShortTextTargets.First(target => target.Id == "MorningGreeting");
             shortTextAiStatus = "ヒロインを選択してください。";
             shortTextAiPrompt = string.Empty;
@@ -3220,6 +3278,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ReplaceConversationDraftCommand = new RelayCommand(
                 () => ApplyConversationDraft(true),
                 CanApplyConversationDraft);
+            GenerateConversationChoiceCandidatesCommand = new AsyncRelayCommand(
+                GenerateConversationChoiceCandidatesAsync,
+                () => SelectedProfile != null && SelectedConversationEntry != null &&
+                    SelectedConversationChoice != null && !IsGeneratingConversationChoice);
+            CancelConversationChoiceGenerationCommand = new RelayCommand(
+                () => conversationChoiceGenerationCancellation?.Cancel(),
+                () => IsGeneratingConversationChoice);
+            AdoptConversationChoiceCandidateCommand = new RelayCommand<TextGenerationCandidate>(
+                AdoptConversationChoiceCandidate,
+                candidate => candidate != null && generatedConversationChoiceSession != null);
             ImportHeroineProfileFromUnityCommand = new RelayCommand(
                 ImportHeroineProfileFromUnity,
                 () => SelectedProfile != null);
@@ -10703,6 +10771,110 @@ namespace FantasyLoveSimAssetTool.ViewModels
             SelectedConversationLine = SelectedConversationEntry.Lines.FirstOrDefault();
             OnPropertyChanged(nameof(SelectedConversationEntry));
             StatusMessage = "台詞行を削除しました。保存すると profile.json に反映されます。";
+        }
+
+        private async Task GenerateConversationChoiceCandidatesAsync()
+        {
+            ConversationEntry sourceEntry = SelectedConversationEntry;
+            ConversationChoice sourceChoice = SelectedConversationChoice;
+            if (sourceEntry == null || sourceChoice == null) return;
+            ConversationLine previousLine = sourceEntry.Lines?.LastOrDefault(line =>
+                line != null && !string.IsNullOrWhiteSpace(line.Text));
+            var context = new ConversationChoiceGenerationContext
+            {
+                CharacterPrompt = ConversationCharacterPromptPreview,
+                ConversationKind = sourceEntry.Kind.ToString(),
+                ConversationEntryId = sourceEntry.Id ?? string.Empty,
+                ConversationCategory = sourceEntry.Category ?? string.Empty,
+                PreviousLine = previousLine?.Text ?? string.Empty,
+                Direction = SelectedConversationChoiceDirection ?? string.Empty,
+                ExistingChoices = (sourceEntry.Choices ?? new ObservableCollection<ConversationChoice>())
+                    .Where(choice => choice != null && choice != sourceChoice)
+                    .Select(choice => choice.ChoiceText ?? string.Empty).ToList()
+            };
+            var session = new ConversationChoiceGenerationSession(sourceEntry, sourceChoice);
+            conversationChoiceGenerationCancellation?.Dispose();
+            conversationChoiceGenerationCancellation = new CancellationTokenSource();
+            ConversationChoiceCandidates.Clear();
+            generatedConversationChoiceSession = null;
+            IsGeneratingConversationChoice = true;
+            ConversationChoiceAiRawResponse = string.Empty;
+            try
+            {
+                ConversationChoiceAiPrompt = ConversationChoiceGenerationService.BuildPrompt(context);
+                ConversationChoiceAiStatus = "選択肢文言を生成中...";
+                LocalAiSettings settings = localAiSettingsService.Load();
+                ConversationChoiceGenerationResult result = await conversationChoiceGenerationService.GenerateAsync(
+                    settings, localAiInstructionService.Load(), context,
+                    conversationChoiceGenerationCancellation.Token);
+                if (!session.IsCurrent(SelectedConversationEntry, SelectedConversationChoice)) return;
+                ConversationChoiceAiRawResponse = result.RawResponse;
+                if (!string.IsNullOrWhiteSpace(result.ParseError))
+                {
+                    ConversationChoiceAiStatus = $"候補を解析できませんでした: {result.ParseError}";
+                    return;
+                }
+                IReadOnlyList<string> existingChoices = context.ExistingChoices.ToList();
+                foreach (string text in result.Candidates.Take(3))
+                {
+                    var candidate = new TextGenerationCandidate(text, 2, 40);
+                    if (existingChoices.Any(existing => string.Equals(existing?.Trim(), text.Trim(), StringComparison.Ordinal)))
+                        candidate.AddWarning("既存選択肢と重複");
+                    else if (existingChoices.Any(existing =>
+                        SkillTextCandidateQualityService.AreTooSimilar(existing, text)))
+                        candidate.AddWarning("既存選択肢と類似");
+                    ConversationChoiceCandidates.Add(candidate);
+                }
+                for (int left = 0; left < ConversationChoiceCandidates.Count; left++)
+                for (int right = left + 1; right < ConversationChoiceCandidates.Count; right++)
+                {
+                    if (!SkillTextCandidateQualityService.AreTooSimilar(
+                        ConversationChoiceCandidates[left].Text, ConversationChoiceCandidates[right].Text)) continue;
+                    ConversationChoiceCandidates[left].AddWarning("ほかの候補と類似");
+                    ConversationChoiceCandidates[right].AddWarning("ほかの候補と類似");
+                }
+                generatedConversationChoiceSession = session;
+                ConversationChoiceAiStatus = $"{ConversationChoiceCandidates.Count}件を生成しました（Model: {result.ModelId}）。候補を選んで反映してください。";
+            }
+            catch (OperationCanceledException)
+            {
+                ConversationChoiceAiStatus = "選択肢文言の生成をキャンセルしました。現在値は変更されていません。";
+            }
+            catch (Exception ex)
+            {
+                ConversationChoiceAiStatus = $"選択肢文言の生成に失敗しました: {ex.Message}";
+            }
+            finally
+            {
+                conversationChoiceGenerationCancellation?.Dispose();
+                conversationChoiceGenerationCancellation = null;
+                IsGeneratingConversationChoice = false;
+            }
+        }
+
+        private void AdoptConversationChoiceCandidate(TextGenerationCandidate candidate)
+        {
+            if (candidate == null || generatedConversationChoiceSession == null ||
+                !generatedConversationChoiceSession.TryAdopt(
+                    SelectedConversationEntry, SelectedConversationChoice, candidate.Text))
+            {
+                ClearConversationChoiceCandidates();
+                ConversationChoiceAiStatus = "生成元の会話または選択肢が変更されたため候補を破棄しました。もう一度生成してください。";
+                return;
+            }
+            OnPropertyChanged(nameof(SelectedConversationChoice));
+            OnPropertyChanged(nameof(SelectedConversationEntry));
+            ConversationChoiceAiStatus = "候補を選択肢へ反映しました。保存ボタンで確定してください。";
+            StatusMessage = ConversationChoiceAiStatus;
+        }
+
+        private void ClearConversationChoiceCandidates()
+        {
+            ConversationChoiceCandidates?.Clear();
+            generatedConversationChoiceSession = null;
+            ConversationChoiceAiPrompt = string.Empty;
+            ConversationChoiceAiRawResponse = string.Empty;
+            ConversationChoiceAiStatus = "選択肢を選んで候補を生成してください。";
         }
 
         private void AddConversationChoice()
