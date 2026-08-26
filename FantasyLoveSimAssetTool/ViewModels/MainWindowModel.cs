@@ -1364,6 +1364,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 OnPropertyChanged(nameof(SelectedConversationEntry));
                 OnPropertyChanged(nameof(CurrentShortTextValue));
                 OnPropertyChanged(nameof(CurrentShortTextContext));
+                ClearConversationChoiceCandidates();
                 ClearConversationDraft();
                 CommandManager.InvalidateRequerySuggested();
             }
@@ -1580,7 +1581,6 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedConversationChoice != null)
                     selectedConversationChoice.PropertyChanged += OnSelectedConversationChoicePropertyChanged;
                 OnPropertyChanged(nameof(SelectedConversationChoice));
-                ClearConversationChoiceCandidates();
                 ClearConversationChoiceResponseCandidates();
                 CommandManager.InvalidateRequerySuggested();
             }
