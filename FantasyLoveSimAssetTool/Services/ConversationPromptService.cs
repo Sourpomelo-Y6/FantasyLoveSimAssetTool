@@ -104,7 +104,7 @@ namespace FantasyLoveSimAssetTool.Services
             string temporaryPath = path + ".tmp";
             var options = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
             File.WriteAllText(temporaryPath, JsonSerializer.Serialize(prompt, options));
-            if (File.Exists(path)) File.Replace(temporaryPath, path, null);
+            if (File.Exists(path)) File.Replace(temporaryPath, path, path + ".bak");
             else File.Move(temporaryPath, path);
         }
 

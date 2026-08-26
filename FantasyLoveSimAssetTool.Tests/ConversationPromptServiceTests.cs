@@ -109,6 +109,9 @@ namespace FantasyLoveSimAssetTool.Tests
                 Assert.AreEqual("テスト", loaded.DisplayName);
                 StringAssert.Contains(File.ReadAllText(Path.Combine(root, "Characters", "Heroine9", "conversation-ai-prompt.json")),
                     "\"heroineId\"");
+                prompt.Summary = "更新後";
+                service.SaveCharacterPrompt(prompt);
+                Assert.IsTrue(File.Exists(Path.Combine(root, "Characters", "Heroine9", "conversation-ai-prompt.json.bak")));
             }
             finally
             {

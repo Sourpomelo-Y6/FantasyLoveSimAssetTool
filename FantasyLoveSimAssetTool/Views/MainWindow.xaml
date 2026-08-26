@@ -727,6 +727,75 @@
                                         </Grid>
                                     </ScrollViewer>
                                 </TabItem>
+
+                                <TabItem Header="会話AI設定">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
+                                        <StackPanel Margin="12,12,18,18">
+                                            <TextBlock Text="キャラクター固有プロンプト"
+                                                       FontSize="16" FontWeight="SemiBold"/>
+                                            <TextBlock Text="このキャラクターのすべての会話AI生成で共通して使用する設定です。会話本文の生成操作は会話データタブにあります。"
+                                                       Foreground="#666666" TextWrapping="Wrap" Margin="0,4,0,10"/>
+                                            <TextBlock Text="{Binding ConversationCharacterPromptStatus}"
+                                                       Foreground="#665A72" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{Binding ConversationCharacterPromptEditStatus}"
+                                                       Foreground="#765D24" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                                            <Border BorderBrush="#D8D1DD" BorderThickness="1" CornerRadius="6" Padding="12">
+                                                <StackPanel>
+                                                    <TextBlock Text="概要（400文字以内）"/>
+                                                    <TextBox Text="{Binding ConversationCharacterSummary, UpdateSourceTrigger=PropertyChanged}"
+                                                             AcceptsReturn="True" TextWrapping="Wrap" MaxLength="400"
+                                                             MinHeight="64" Margin="0,3,0,10"/>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="12"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel Grid.Column="0">
+                                                            <TextBlock Text="口調ルール（1行1件・最大8件）"/>
+                                                            <TextBox Text="{Binding ConversationCharacterVoiceRulesText, UpdateSourceTrigger=PropertyChanged}"
+                                                                     AcceptsReturn="True" TextWrapping="Wrap" Height="110"
+                                                                     VerticalScrollBarVisibility="Auto" Margin="0,3,0,10"/>
+                                                            <TextBlock Text="感情表現ルール（1行1件・最大8件）"/>
+                                                            <TextBox Text="{Binding ConversationCharacterEmotionRulesText, UpdateSourceTrigger=PropertyChanged}"
+                                                                     AcceptsReturn="True" TextWrapping="Wrap" Height="110"
+                                                                     VerticalScrollBarVisibility="Auto" Margin="0,3,0,10"/>
+                                                            <TextBlock Text="参考台詞（1行1件・最大3件）"/>
+                                                            <TextBox Text="{Binding ConversationCharacterReferenceLinesText, UpdateSourceTrigger=PropertyChanged}"
+                                                                     AcceptsReturn="True" TextWrapping="Wrap" Height="110"
+                                                                     VerticalScrollBarVisibility="Auto" Margin="0,3,0,0"/>
+                                                        </StackPanel>
+                                                        <StackPanel Grid.Column="2">
+                                                            <TextBlock Text="関係性ルール（1行1件・最大8件）"/>
+                                                            <TextBox Text="{Binding ConversationCharacterRelationshipRulesText, UpdateSourceTrigger=PropertyChanged}"
+                                                                     AcceptsReturn="True" TextWrapping="Wrap" Height="110"
+                                                                     VerticalScrollBarVisibility="Auto" Margin="0,3,0,10"/>
+                                                            <TextBlock Text="禁止表現（1行1件・最大8件）"/>
+                                                            <TextBox Text="{Binding ConversationCharacterAvoidExpressionsText, UpdateSourceTrigger=PropertyChanged}"
+                                                                     AcceptsReturn="True" TextWrapping="Wrap" Height="110"
+                                                                     VerticalScrollBarVisibility="Auto" Margin="0,3,0,10"/>
+                                                            <TextBlock Text="生成に使う固有指示プレビュー"/>
+                                                            <TextBox Text="{Binding ConversationCharacterPromptPreview, Mode=OneWay}"
+                                                                     IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+                                                                     Height="110" VerticalScrollBarVisibility="Auto" Margin="0,3,0,0"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Border>
+                                            <WrapPanel HorizontalAlignment="Right" Margin="0,12,0,0">
+                                                <Button Content="基本情報から再構築"
+                                                        Command="{Binding RebuildConversationCharacterPromptCommand}"
+                                                        Padding="12,5" Margin="0,0,8,0"/>
+                                                <Button Content="保存済み内容を再読込"
+                                                        Command="{Binding ReloadConversationCharacterPromptCommand}"
+                                                        Padding="12,5" Margin="0,0,8,0"/>
+                                                <Button Content="固有プロンプトを保存"
+                                                        Command="{Binding SaveConversationCharacterPromptCommand}"
+                                                        Padding="12,5"/>
+                                            </WrapPanel>
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                </TabItem>
                             </TabControl>
 
                             <Button Grid.Row="1" Content="保存" Command="{Binding SaveSelectedProfileCommand}" Width="120" Height="30" HorizontalAlignment="Right" Margin="0,12,0,0"/>
@@ -1077,25 +1146,17 @@
                                                                        VerticalAlignment="Center"
                                                                        TextWrapping="Wrap"/>
                                                         </Grid>
-                                                        <Expander Header="キャラクター固有指示を確認" Margin="0,8,0,0">
-                                                            <Grid Margin="0,8,0,0">
-                                                                <Grid.RowDefinitions>
-                                                                    <RowDefinition Height="Auto"/>
-                                                                    <RowDefinition Height="Auto"/>
-                                                                </Grid.RowDefinitions>
+                                                        <Expander Header="使用するキャラクター固有指示を確認" Margin="0,8,0,0">
+                                                            <StackPanel Margin="0,8,0,0">
+                                                                <TextBlock Text="{Binding ConversationCharacterPromptEditStatus}"
+                                                                           Foreground="#765D24" TextWrapping="Wrap" Margin="0,0,0,8"/>
                                                                 <TextBox Text="{Binding ConversationCharacterPromptPreview, Mode=OneWay}"
-                                                                         IsReadOnly="True"
-                                                                         AcceptsReturn="True"
-                                                                         TextWrapping="Wrap"
-                                                                         Height="150"
-                                                                         VerticalScrollBarVisibility="Auto"/>
-                                                                <Button Grid.Row="1"
-                                                                        Content="一時プロンプトを固有ファイルとして保存"
-                                                                        Command="{Binding SaveConversationCharacterPromptCommand}"
-                                                                        HorizontalAlignment="Right"
-                                                                        Padding="12,4"
-                                                                        Margin="0,8,0,0"/>
-                                                            </Grid>
+                                                                         IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+                                                                         Height="120" VerticalScrollBarVisibility="Auto"/>
+                                                                <Button Content="基本情報の会話AI設定を編集"
+                                                                        Command="{Binding OpenConversationCharacterPromptEditorCommand}"
+                                                                        HorizontalAlignment="Right" Padding="12,4" Margin="0,8,0,0"/>
+                                                            </StackPanel>
                                                         </Expander>
                                                         <Border Background="#FFFDF4"
                                                                 BorderBrush="#D8C98F"
