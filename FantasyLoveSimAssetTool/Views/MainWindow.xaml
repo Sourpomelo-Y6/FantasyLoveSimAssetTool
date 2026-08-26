@@ -1077,6 +1077,26 @@
                                                                        VerticalAlignment="Center"
                                                                        TextWrapping="Wrap"/>
                                                         </Grid>
+                                                        <Expander Header="キャラクター固有指示を確認" Margin="0,8,0,0">
+                                                            <Grid Margin="0,8,0,0">
+                                                                <Grid.RowDefinitions>
+                                                                    <RowDefinition Height="Auto"/>
+                                                                    <RowDefinition Height="Auto"/>
+                                                                </Grid.RowDefinitions>
+                                                                <TextBox Text="{Binding ConversationCharacterPromptPreview, Mode=OneWay}"
+                                                                         IsReadOnly="True"
+                                                                         AcceptsReturn="True"
+                                                                         TextWrapping="Wrap"
+                                                                         Height="150"
+                                                                         VerticalScrollBarVisibility="Auto"/>
+                                                                <Button Grid.Row="1"
+                                                                        Content="一時プロンプトを固有ファイルとして保存"
+                                                                        Command="{Binding SaveConversationCharacterPromptCommand}"
+                                                                        HorizontalAlignment="Right"
+                                                                        Padding="12,4"
+                                                                        Margin="0,8,0,0"/>
+                                                            </Grid>
+                                                        </Expander>
                                                         <Border Background="#FFFDF4"
                                                                 BorderBrush="#D8C98F"
                                                                 BorderThickness="1"

@@ -217,6 +217,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private ConversationSituationPrompt selectedConversationSituationPrompt;
         private string selectedConversationSituationTypeFilter = "すべて";
         private ConversationCharacterPrompt selectedConversationCharacterPrompt;
+        private bool isConversationCharacterPromptTemporary;
         private string conversationAdditionalInstruction = string.Empty;
         private ConversationDraftSession generatedConversationDraftSession;
         private CancellationTokenSource conversationDraftCancellation;
@@ -315,7 +316,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ? "ヒロインを選択してください。"
             : selectedConversationCharacterPrompt == null
                 ? $"{SelectedProfile.HeroineId} のキャラクター固有プロンプトはありません。"
-                : $"{selectedConversationCharacterPrompt.DisplayName} の固有プロンプトを読み込みました。";
+                : isConversationCharacterPromptTemporary
+                    ? $"{selectedConversationCharacterPrompt.DisplayName} の基本情報から一時プロンプトを構築しました。"
+                    : $"{selectedConversationCharacterPrompt.DisplayName} の保存済み固有プロンプトを読み込みました。";
+
+        public string ConversationCharacterPromptPreview =>
+            ConversationPromptService.BuildCharacterPromptPreview(GetCurrentConversationCharacterPrompt());
 
         public string ConversationAdditionalPromptPreview => SelectedConversationSituationPrompt == null
             ? "状況テンプレートは未選択です。従来の会話行生成を使用します。"
@@ -2445,6 +2451,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ApplyConversationSituationConditionsCommand { get; }
 
+        public ICommand SaveConversationCharacterPromptCommand { get; }
+
         public ICommand GenerateConversationDraftCommand { get; }
 
         public ICommand CancelConversationDraftCommand { get; }
@@ -3103,6 +3111,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 ApplyConversationSituationConditions,
                 () => SelectedConversationEntry != null &&
                     SelectedConversationSituationPrompt?.SuggestedConditions != null);
+            SaveConversationCharacterPromptCommand = new RelayCommand(
+                SaveConversationCharacterPrompt,
+                () => isConversationCharacterPromptTemporary && selectedConversationCharacterPrompt != null);
             GenerateConversationDraftCommand = new AsyncRelayCommand(
                 GenerateConversationDraftAsync,
                 () => CanGenerateConversationDraft() && !IsGeneratingConversationDraft);
@@ -9568,19 +9579,35 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private void RefreshConversationCharacterPrompt()
         {
-            selectedConversationCharacterPrompt = string.IsNullOrWhiteSpace(SelectedProfile?.HeroineId)
-                ? null
-                : conversationPromptService.LoadCharacterPrompt(SelectedProfile.HeroineId);
+            ConversationCharacterPrompt saved = string.IsNullOrWhiteSpace(SelectedProfile?.HeroineId)
+                ? null : conversationPromptService.LoadCharacterPrompt(SelectedProfile.HeroineId);
+            isConversationCharacterPromptTemporary = saved == null && SelectedProfile != null;
+            selectedConversationCharacterPrompt = saved ?? ConversationPromptService.BuildCharacterPrompt(SelectedProfile);
             OnPropertyChanged(nameof(ConversationCharacterPromptStatus));
+            OnPropertyChanged(nameof(ConversationCharacterPromptPreview));
             OnPropertyChanged(nameof(ConversationAdditionalPromptPreview));
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void SaveConversationCharacterPrompt()
+        {
+            ConversationCharacterPrompt prompt = GetCurrentConversationCharacterPrompt();
+            if (!isConversationCharacterPromptTemporary || prompt == null) return;
+            conversationPromptService.SaveCharacterPrompt(prompt);
+            isConversationCharacterPromptTemporary = false;
+            OnPropertyChanged(nameof(ConversationCharacterPromptStatus));
+            OnPropertyChanged(nameof(ConversationCharacterPromptPreview));
+            StatusMessage = $"{selectedConversationCharacterPrompt.DisplayName} のキャラクター固有プロンプトを保存しました。";
+            CommandManager.InvalidateRequerySuggested();
         }
 
         private string BuildConversationAdditionalPrompt()
         {
             if (SelectedConversationSituationPrompt == null) return string.Empty;
-            if (selectedConversationCharacterPrompt == null) return string.Empty;
+            ConversationCharacterPrompt characterPrompt = GetCurrentConversationCharacterPrompt();
+            if (characterPrompt == null) return string.Empty;
             string prompt = ConversationPromptService.BuildAdditionalPrompt(
-                SelectedConversationSituationPrompt, selectedConversationCharacterPrompt);
+                SelectedConversationSituationPrompt, characterPrompt);
             if (!string.IsNullOrWhiteSpace(ConversationAdditionalInstruction))
             {
                 string instruction = ConversationAdditionalInstruction.Trim();
@@ -9588,6 +9615,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 prompt += Environment.NewLine + "【今回の追加指示】" + Environment.NewLine + instruction;
             }
             return prompt;
+        }
+
+        private ConversationCharacterPrompt GetCurrentConversationCharacterPrompt()
+        {
+            if (isConversationCharacterPromptTemporary && SelectedProfile != null)
+                selectedConversationCharacterPrompt = ConversationPromptService.BuildCharacterPrompt(SelectedProfile);
+            return selectedConversationCharacterPrompt;
         }
 
         private void RefreshFilteredConversationSituationPrompts(bool selectFirst)

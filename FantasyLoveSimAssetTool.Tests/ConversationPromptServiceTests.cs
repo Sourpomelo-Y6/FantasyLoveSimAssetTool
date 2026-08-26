@@ -66,6 +66,57 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void BuildCharacterPrompt_UsesProfileFieldsAndReferenceLines()
+        {
+            var profile = new HeroineProfile
+            {
+                HeroineId = "Heroine9",
+                DisplayName = "テスト",
+                Personality = "穏やか",
+                SpeakingStyle = "短く話す",
+                FirstPerson = "私",
+                SecondPerson = "あなた",
+                ActionReactionPolicy = "相手を急かさない",
+                MorningGreeting = "おはよう。"
+            };
+
+            ConversationCharacterPrompt prompt = ConversationPromptService.BuildCharacterPrompt(profile);
+
+            Assert.AreEqual("Heroine9", prompt.HeroineId);
+            Assert.AreEqual("テスト", prompt.DisplayName);
+            StringAssert.Contains(prompt.Summary, "穏やか");
+            CollectionAssert.Contains(prompt.VoiceRules, "短く話す");
+            CollectionAssert.Contains(prompt.RelationshipRules, "相手を急かさない");
+            CollectionAssert.Contains(prompt.ReferenceLines, "おはよう。");
+        }
+
+        [TestMethod]
+        public void SaveCharacterPrompt_WritesLoadableCamelCaseJson()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "ConversationPromptSaveTests", Guid.NewGuid().ToString("N"));
+            try
+            {
+                var service = new ConversationPromptService(root);
+                var prompt = new ConversationCharacterPrompt
+                {
+                    HeroineId = "Heroine9", DisplayName = "テスト", Summary = "穏やかに話す。"
+                };
+
+                service.SaveCharacterPrompt(prompt);
+
+                ConversationCharacterPrompt loaded = service.LoadCharacterPrompt("Heroine9");
+                Assert.IsNotNull(loaded);
+                Assert.AreEqual("テスト", loaded.DisplayName);
+                StringAssert.Contains(File.ReadAllText(Path.Combine(root, "Characters", "Heroine9", "conversation-ai-prompt.json")),
+                    "\"heroineId\"");
+            }
+            finally
+            {
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+            }
+        }
+
+        [TestMethod]
         public void LoadCharacterPrompt_DoesNotAllowPathTraversal()
         {
             var service = new ConversationPromptService(Path.GetTempPath());
