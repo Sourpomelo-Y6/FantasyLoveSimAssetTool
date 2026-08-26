@@ -347,6 +347,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public string ConversationAiSettingsTabHeader => isConversationCharacterPromptDirty
+            ? "会話AI設定 *" : "会話AI設定";
+
         public string ConversationCharacterSummary
         {
             get => conversationCharacterSummary;
@@ -1785,6 +1788,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
             set
             {
                 if (selectedProfile == value) { return; }
+                if (!ConfirmSaveOrDiscardConversationCharacterPromptChanges("キャラクターを切り替える"))
+                {
+                    OnPropertyChanged(nameof(SelectedProfile));
+                    return;
+                }
                 if (selectedProfile != null)
                 {
                     selectedProfile.PropertyChanged -= SelectedProfilePropertyChanged;
@@ -2519,6 +2527,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand OpenConversationCharacterPromptEditorCommand { get; }
 
+        public ICommand RestoreConversationCharacterPromptBackupCommand { get; }
+
         public ICommand GenerateConversationDraftCommand { get; }
 
         public ICommand CancelConversationDraftCommand { get; }
@@ -3194,6 +3204,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     SelectedBasicInfoTabIndex = 6;
                 },
                 () => SelectedProfile != null);
+            RestoreConversationCharacterPromptBackupCommand = new RelayCommand(
+                RestoreConversationCharacterPromptBackup,
+                () => SelectedProfile != null &&
+                    conversationPromptService.HasCharacterPromptBackup(SelectedProfile.HeroineId));
             GenerateConversationDraftCommand = new AsyncRelayCommand(
                 GenerateConversationDraftAsync,
                 () => CanGenerateConversationDraft() && !IsGeneratingConversationDraft);
@@ -3629,6 +3643,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     destination + "\n\n続行しますか？",
                     "作業フォルダーの変更", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (confirmation != MessageBoxResult.Yes) return;
+                if (!ConfirmSaveOrDiscardConversationCharacterPromptChanges("作業フォルダーを変更する")) return;
 
                 WorkspaceMigrationResult result = workspacePathService.Migrate(WorkspacePath, destination);
                 workspacePathService.SaveWorkspaceRoot(destination);
@@ -9669,28 +9684,45 @@ namespace FantasyLoveSimAssetTool.ViewModels
             OnPropertyChanged(nameof(ConversationCharacterPromptStatus));
             OnPropertyChanged(nameof(ConversationCharacterPromptPreview));
             OnPropertyChanged(nameof(ConversationCharacterPromptEditStatus));
+            OnPropertyChanged(nameof(ConversationAiSettingsTabHeader));
             OnPropertyChanged(nameof(ConversationAdditionalPromptPreview));
             CommandManager.InvalidateRequerySuggested();
         }
 
         private void SaveConversationCharacterPrompt()
         {
-            RefreshTemporaryConversationCharacterPromptFromProfileIfClean();
-            if (!TryApplyConversationCharacterPromptEditor(out string error))
+            TrySaveConversationCharacterPrompt();
+        }
+
+        private bool TrySaveConversationCharacterPrompt()
+        {
+            try
             {
-                StatusMessage = error;
-                return;
+                RefreshTemporaryConversationCharacterPromptFromProfileIfClean();
+                if (!TryApplyConversationCharacterPromptEditor(out string error))
+                {
+                    StatusMessage = error;
+                    return false;
+                }
+                ConversationCharacterPrompt prompt = selectedConversationCharacterPrompt;
+                if (prompt == null) return false;
+                conversationPromptService.SaveCharacterPrompt(prompt);
+                isConversationCharacterPromptTemporary = false;
+                isConversationCharacterPromptDirty = false;
+                OnPropertyChanged(nameof(ConversationCharacterPromptStatus));
+                OnPropertyChanged(nameof(ConversationCharacterPromptPreview));
+                OnPropertyChanged(nameof(ConversationCharacterPromptEditStatus));
+                OnPropertyChanged(nameof(ConversationAiSettingsTabHeader));
+                StatusMessage = $"{selectedConversationCharacterPrompt.DisplayName} のキャラクター固有プロンプトを保存しました。";
+                CommandManager.InvalidateRequerySuggested();
+                return true;
             }
-            ConversationCharacterPrompt prompt = selectedConversationCharacterPrompt;
-            if (prompt == null) return;
-            conversationPromptService.SaveCharacterPrompt(prompt);
-            isConversationCharacterPromptTemporary = false;
-            isConversationCharacterPromptDirty = false;
-            OnPropertyChanged(nameof(ConversationCharacterPromptStatus));
-            OnPropertyChanged(nameof(ConversationCharacterPromptPreview));
-            OnPropertyChanged(nameof(ConversationCharacterPromptEditStatus));
-            StatusMessage = $"{selectedConversationCharacterPrompt.DisplayName} のキャラクター固有プロンプトを保存しました。";
-            CommandManager.InvalidateRequerySuggested();
+            catch (Exception ex)
+            {
+                StatusMessage = "キャラクター固有プロンプトを保存できませんでした: " + ex.Message;
+                MessageBox.Show(StatusMessage, "保存エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
         }
 
         private void RebuildConversationCharacterPrompt()
@@ -9717,6 +9749,38 @@ namespace FantasyLoveSimAssetTool.ViewModels
             !isConversationCharacterPromptDirty || MessageBox.Show(
                 "キャラクター固有プロンプトの未保存変更を破棄しますか？",
                 "未保存変更の確認", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
+
+        private bool ConfirmSaveOrDiscardConversationCharacterPromptChanges(string operation)
+        {
+            if (!isConversationCharacterPromptDirty) return true;
+            MessageBoxResult result = MessageBox.Show(
+                $"会話AI設定に未保存の変更があります。\n\nはい: 保存して{operation}\nいいえ: 変更を破棄して{operation}\nキャンセル: {operation}操作を中止",
+                "会話AI設定の未保存変更", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
+            if (result == MessageBoxResult.Cancel) return false;
+            if (result == MessageBoxResult.Yes) return TrySaveConversationCharacterPrompt();
+            isConversationCharacterPromptDirty = false;
+            OnPropertyChanged(nameof(ConversationCharacterPromptEditStatus));
+            OnPropertyChanged(nameof(ConversationAiSettingsTabHeader));
+            CommandManager.InvalidateRequerySuggested();
+            return true;
+        }
+
+        private void RestoreConversationCharacterPromptBackup()
+        {
+            if (SelectedProfile == null || !ConfirmDiscardConversationCharacterPromptChanges()) return;
+            ConversationCharacterPrompt backup = conversationPromptService.LoadCharacterPromptBackup(SelectedProfile.HeroineId);
+            if (backup == null)
+            {
+                StatusMessage = "復元できるキャラクター固有プロンプトのバックアップがありません。";
+                return;
+            }
+            selectedConversationCharacterPrompt = backup;
+            isConversationCharacterPromptTemporary = false;
+            isConversationCharacterPromptDirty = true;
+            PopulateConversationCharacterPromptEditor();
+            NotifyConversationCharacterPromptChanged();
+            StatusMessage = "直前のバックアップを編集内容として読み込みました。内容を確認して保存してください。";
+        }
 
         private string BuildConversationAdditionalPrompt()
         {
@@ -9817,6 +9881,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             OnPropertyChanged(nameof(ConversationCharacterPromptStatus));
             OnPropertyChanged(nameof(ConversationCharacterPromptPreview));
             OnPropertyChanged(nameof(ConversationCharacterPromptEditStatus));
+            OnPropertyChanged(nameof(ConversationAiSettingsTabHeader));
             OnPropertyChanged(nameof(ConversationAdditionalPromptPreview));
             CommandManager.InvalidateRequerySuggested();
         }
@@ -13103,6 +13168,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private void LoadProfiles()
         {
+            if (!ConfirmSaveOrDiscardConversationCharacterPromptChanges("キャラクター一覧を再読み込みする")) return;
             try
             {
                 string previousHeroineId = SelectedProfile == null ? string.Empty : SelectedProfile.HeroineId;
@@ -13129,6 +13195,11 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 StatusMessage = $"読み込みに失敗しました: {ex.Message}";
             }
+        }
+
+        public bool CanCloseWindow()
+        {
+            return ConfirmSaveOrDiscardConversationCharacterPromptChanges("アプリを終了する");
         }
 
         private void RefreshProductionStatus()

@@ -728,13 +728,15 @@
                                     </ScrollViewer>
                                 </TabItem>
 
-                                <TabItem Header="会話AI設定">
+                                <TabItem Header="{Binding ConversationAiSettingsTabHeader}">
                                     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
                                         <StackPanel Margin="12,12,18,18">
                                             <TextBlock Text="キャラクター固有プロンプト"
                                                        FontSize="16" FontWeight="SemiBold"/>
                                             <TextBlock Text="このキャラクターのすべての会話AI生成で共通して使用する設定です。会話本文の生成操作は会話データタブにあります。"
                                                        Foreground="#666666" TextWrapping="Wrap" Margin="0,4,0,10"/>
+                                            <TextBlock Text="画面下部の基本情報『保存』とは別ファイルです。このページの『固有プロンプトを保存』で確定します。"
+                                                       Foreground="#9A5B20" TextWrapping="Wrap" Margin="0,0,0,10"/>
                                             <TextBlock Text="{Binding ConversationCharacterPromptStatus}"
                                                        Foreground="#665A72" TextWrapping="Wrap" Margin="0,0,0,4"/>
                                             <TextBlock Text="{Binding ConversationCharacterPromptEditStatus}"
@@ -788,6 +790,9 @@
                                                         Padding="12,5" Margin="0,0,8,0"/>
                                                 <Button Content="保存済み内容を再読込"
                                                         Command="{Binding ReloadConversationCharacterPromptCommand}"
+                                                        Padding="12,5" Margin="0,0,8,0"/>
+                                                <Button Content="直前バックアップを復元"
+                                                        Command="{Binding RestoreConversationCharacterPromptBackupCommand}"
                                                         Padding="12,5" Margin="0,0,8,0"/>
                                                 <Button Content="固有プロンプトを保存"
                                                         Command="{Binding SaveConversationCharacterPromptCommand}"

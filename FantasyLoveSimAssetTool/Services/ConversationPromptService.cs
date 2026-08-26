@@ -40,10 +40,24 @@ namespace FantasyLoveSimAssetTool.Services
 
         public ConversationCharacterPrompt LoadCharacterPrompt(string heroineId)
         {
-            if (string.IsNullOrWhiteSpace(heroineId) ||
-                heroineId.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
-                heroineId.Contains("..", StringComparison.Ordinal)) return null;
-            string path = Path.Combine(workspaceRoot, "Characters", heroineId, "conversation-ai-prompt.json");
+            return LoadCharacterPromptFile(heroineId, "conversation-ai-prompt.json");
+        }
+
+        public ConversationCharacterPrompt LoadCharacterPromptBackup(string heroineId)
+        {
+            return LoadCharacterPromptFile(heroineId, "conversation-ai-prompt.json.bak");
+        }
+
+        public bool HasCharacterPromptBackup(string heroineId)
+        {
+            return IsSafeHeroineId(heroineId) && File.Exists(Path.Combine(
+                workspaceRoot, "Characters", heroineId, "conversation-ai-prompt.json.bak"));
+        }
+
+        private ConversationCharacterPrompt LoadCharacterPromptFile(string heroineId, string fileName)
+        {
+            if (!IsSafeHeroineId(heroineId)) return null;
+            string path = Path.Combine(workspaceRoot, "Characters", heroineId, fileName);
             if (!File.Exists(path)) return null;
             try
             {
@@ -59,6 +73,11 @@ namespace FantasyLoveSimAssetTool.Services
                 return null;
             }
         }
+
+        private static bool IsSafeHeroineId(string heroineId) =>
+            !string.IsNullOrWhiteSpace(heroineId) &&
+            heroineId.IndexOfAny(Path.GetInvalidFileNameChars()) < 0 &&
+            !heroineId.Contains("..", StringComparison.Ordinal);
 
         public static ConversationCharacterPrompt BuildCharacterPrompt(HeroineProfile profile)
         {

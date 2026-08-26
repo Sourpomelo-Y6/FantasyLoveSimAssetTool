@@ -14,6 +14,12 @@ namespace FantasyLoveSimAssetTool.Views
         {
             InitializeComponent();
             Loaded += MainWindow_Loaded;
+            Closing += MainWindow_Closing;
+        }
+
+        private void MainWindow_Closing(object sender, CancelEventArgs e)
+        {
+            if (DataContext is MainWindowModel model && !model.CanCloseWindow()) e.Cancel = true;
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)

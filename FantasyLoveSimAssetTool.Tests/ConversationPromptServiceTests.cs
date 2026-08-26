@@ -112,6 +112,8 @@ namespace FantasyLoveSimAssetTool.Tests
                 prompt.Summary = "更新後";
                 service.SaveCharacterPrompt(prompt);
                 Assert.IsTrue(File.Exists(Path.Combine(root, "Characters", "Heroine9", "conversation-ai-prompt.json.bak")));
+                Assert.IsTrue(service.HasCharacterPromptBackup("Heroine9"));
+                Assert.AreEqual("穏やかに話す。", service.LoadCharacterPromptBackup("Heroine9").Summary);
             }
             finally
             {
