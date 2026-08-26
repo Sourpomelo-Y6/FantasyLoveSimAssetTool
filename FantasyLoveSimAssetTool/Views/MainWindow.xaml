@@ -1298,6 +1298,7 @@
                                                     <RowDefinition Height="Auto"/>
                                                     <RowDefinition Height="Auto"/>
                                                     <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
                                                 </Grid.RowDefinitions>
 
                                                 <Grid Grid.Row="0" Margin="0,0,0,8">
@@ -1396,6 +1397,68 @@
                                                                          IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
                                                                          Height="120" VerticalScrollBarVisibility="Auto"/>
                                                                 <TextBox Grid.Row="1" Text="{Binding ConversationChoiceAiRawResponse, Mode=OneWay}"
+                                                                         IsReadOnly="True" AcceptsReturn="True"
+                                                                         Height="100" FontFamily="Consolas" FontSize="11"
+                                                                         HorizontalScrollBarVisibility="Auto"
+                                                                         VerticalScrollBarVisibility="Auto" Margin="0,8,0,0"/>
+                                                            </Grid>
+                                                        </Expander>
+                                                    </StackPanel>
+                                                </Expander>
+
+                                                <Expander Grid.Row="3"
+                                                          Header="AIでヒロインの返答を補助"
+                                                          IsExpanded="True"
+                                                          Margin="0,8,0,0">
+                                                    <StackPanel Margin="8">
+                                                        <TextBlock Text="選択中のプレイヤー選択肢を必須の文脈として、ヒロインの返答だけを生成します。選択肢文言や好感度は変更しません。"
+                                                                   TextWrapping="Wrap"
+                                                                   Foreground="Gray"
+                                                                   Margin="0,0,0,8"/>
+                                                        <WrapPanel Margin="0,0,0,8">
+                                                            <Button Content="返答を3案生成"
+                                                                    Command="{Binding GenerateConversationChoiceResponseCandidatesCommand}"
+                                                                    Height="26" Padding="12,2" Margin="0,0,8,0"/>
+                                                            <Button Content="キャンセル"
+                                                                    Command="{Binding CancelConversationChoiceResponseGenerationCommand}"
+                                                                    Height="26" Padding="12,2"/>
+                                                        </WrapPanel>
+                                                        <TextBox Text="{Binding ConversationChoiceResponseAiStatus, Mode=OneWay}"
+                                                                 IsReadOnly="True" TextWrapping="Wrap"
+                                                                 MinHeight="34" Margin="0,0,0,8"/>
+                                                        <ItemsControl ItemsSource="{Binding ConversationChoiceResponseCandidates}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Border BorderBrush="#D8D8D8" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,6">
+                                                                        <Grid>
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="*"/>
+                                                                                <ColumnDefinition Width="Auto"/>
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <StackPanel>
+                                                                                <TextBlock Text="{Binding Text}" TextWrapping="Wrap"/>
+                                                                                <TextBlock Text="{Binding ValidationMessage}"
+                                                                                           Foreground="#A06020" FontSize="11" Margin="0,3,0,0"/>
+                                                                            </StackPanel>
+                                                                            <Button Grid.Column="1" Content="この返答を反映"
+                                                                                    Command="{Binding DataContext.AdoptConversationChoiceResponseCandidateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                                    CommandParameter="{Binding}"
+                                                                                    Height="26" Padding="10,2" Margin="12,0,0,0"/>
+                                                                        </Grid>
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                        <Expander Header="プロンプト・生レスポンス" Margin="0,4,0,0">
+                                                            <Grid Margin="0,8,0,0">
+                                                                <Grid.RowDefinitions>
+                                                                    <RowDefinition/>
+                                                                    <RowDefinition/>
+                                                                </Grid.RowDefinitions>
+                                                                <TextBox Text="{Binding ConversationChoiceResponseAiPrompt, Mode=OneWay}"
+                                                                         IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+                                                                         Height="120" VerticalScrollBarVisibility="Auto"/>
+                                                                <TextBox Grid.Row="1" Text="{Binding ConversationChoiceResponseAiRawResponse, Mode=OneWay}"
                                                                          IsReadOnly="True" AcceptsReturn="True"
                                                                          Height="100" FontFamily="Consolas" FontSize="11"
                                                                          HorizontalScrollBarVisibility="Auto"
