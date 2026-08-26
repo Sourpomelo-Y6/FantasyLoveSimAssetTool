@@ -1612,10 +1612,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         private void OnSelectedConversationChoicePropertyChanged(object sender, PropertyChangedEventArgs e)
         {
+            if (e.PropertyName == nameof(ConversationChoice.ValidationWarningText)) return;
             if (e.PropertyName == nameof(ConversationChoice.ChoiceText))
             {
                 ClearConversationChoiceResponseCandidates();
                 CommandManager.InvalidateRequerySuggested();
+            }
+            RefreshConversationChoiceWarnings(SelectedConversationEntry);
+            if (SelectedConversationEntry != null)
+            {
+                SelectedConversationEntry.ValidationWarningText = BuildConversationWarningText(SelectedConversationEntry);
+                OnPropertyChanged(nameof(SelectedConversationEntry));
             }
         }
 
@@ -11099,6 +11106,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ConversationChoice choice = new ConversationChoice();
             SelectedConversationEntry.Choices.Add(choice);
             SelectedConversationChoice = choice;
+            RefreshConversationChoiceWarnings(SelectedConversationEntry);
+            SelectedConversationEntry.ValidationWarningText = BuildConversationWarningText(SelectedConversationEntry);
             OnPropertyChanged(nameof(SelectedConversationEntry));
             StatusMessage = "選択肢を追加しました。";
         }
@@ -11113,6 +11122,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ConversationChoice choice = SelectedConversationChoice;
             SelectedConversationEntry.Choices.Remove(choice);
             SelectedConversationChoice = SelectedConversationEntry.Choices.FirstOrDefault();
+            RefreshConversationChoiceWarnings(SelectedConversationEntry);
+            SelectedConversationEntry.ValidationWarningText = BuildConversationWarningText(SelectedConversationEntry);
             OnPropertyChanged(nameof(SelectedConversationEntry));
             StatusMessage = "選択肢を削除しました。保存すると profile.json に反映されます。";
         }
@@ -12954,6 +12965,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 entry.Conditions ??= new ConversationCondition();
                 entry.Lines ??= new ObservableCollection<ConversationLine>();
+                entry.Choices ??= new ObservableCollection<ConversationChoice>();
+                RefreshConversationChoiceWarnings(entry);
                 entry.ValidationWarningText = BuildConversationWarningText(entry);
                 bool matchesGameEventTest = MatchesGameEventTestConditions(entry);
                 entry.TriggerCandidateText = SelectedConversationDataKind == ConversationDataKind.GameEvents
@@ -13240,24 +13253,19 @@ namespace FantasyLoveSimAssetTool.ViewModels
             for (int index = 0; index < choices.Count; index++)
             {
                 ConversationChoice choice = choices[index];
-                if (choice == null)
-                {
-                    warnings.Add($"{index + 1} 番目の選択肢が空");
-                    continue;
-                }
-
-                if (string.IsNullOrWhiteSpace(choice.ChoiceText))
-                {
-                    warnings.Add($"{index + 1} 番目の選択肢本文空欄");
-                }
-
-                if (string.IsNullOrWhiteSpace(choice.ResponseText))
-                {
-                    warnings.Add($"{index + 1} 番目の選択後返答空欄");
-                }
+                foreach (string warning in ConversationChoiceValidationService.Evaluate(choice, choices))
+                    warnings.Add($"{index + 1} 番目: {warning}");
             }
 
             return warnings;
+        }
+
+        private static void RefreshConversationChoiceWarnings(ConversationEntry entry)
+        {
+            if (entry?.Choices == null) return;
+            foreach (ConversationChoice choice in entry.Choices.Where(choice => choice != null))
+                choice.ValidationWarningText = string.Join(" / ",
+                    ConversationChoiceValidationService.Evaluate(choice, entry.Choices));
         }
 
         private static void AddUnexpectedValueWarning(List<string> warnings, string label, string value, string[] allowedValues)

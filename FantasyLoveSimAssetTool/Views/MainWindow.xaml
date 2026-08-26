@@ -1337,6 +1337,7 @@
                                                         <DataGridTextColumn Header="選択肢" Binding="{Binding ChoiceText}" Width="2*"/>
                                                         <DataGridTextColumn Header="返答" Binding="{Binding ResponseText}" Width="3*"/>
                                                         <DataGridTextColumn Header="好感度" Binding="{Binding AffectionChange}" Width="80"/>
+                                                        <DataGridTextColumn Header="警告" Binding="{Binding ValidationWarningText}" Width="220" IsReadOnly="True"/>
                                                     </DataGrid.Columns>
                                                 </DataGrid>
 

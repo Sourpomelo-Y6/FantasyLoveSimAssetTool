@@ -124,6 +124,39 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void Validate_InvalidConversationChoicesReturnNavigableWarnings()
+        {
+            string workspace = CreateWorkspace();
+            try
+            {
+                CharacterProjectService project = new CharacterProjectService(workspace);
+                HeroineProfile profile = project.CreateCharacter("TestHeroine", "Test");
+                var entry = new ConversationEntry
+                {
+                    Id = "ChoiceEvent",
+                    Title = "Choice",
+                    Category = "Daily",
+                    Kind = ConversationDataKind.Conversations
+                };
+                entry.Lines.Add(new ConversationLine { Speaker = "Heroine", Text = "どうするの？" });
+                entry.Choices.Add(new ConversationChoice { ChoiceText = string.Empty, ResponseText = string.Empty });
+                profile.ConversationEntries.Add(entry);
+
+                ExportValidationResult result = new ExportValidationService(project).Validate(profile);
+
+                ExportValidationIssue issue = result.Issues.First(value =>
+                    value.Message.Contains("選択肢1") && value.Message.Contains("選択肢文言が空"));
+                Assert.AreEqual(ExportValidationSeverity.Warning, issue.Severity);
+                Assert.AreEqual(ProductionStatusTargetKind.Conversation, issue.TargetKind);
+                Assert.AreEqual("ChoiceEvent", issue.TargetId);
+            }
+            finally
+            {
+                Directory.Delete(workspace, true);
+            }
+        }
+
+        [TestMethod]
         public void Validate_ContextGameEventWithoutTargetReturnsNavigableError()
         {
             string workspace = CreateWorkspace();

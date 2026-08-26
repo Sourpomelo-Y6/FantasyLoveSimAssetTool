@@ -101,6 +101,12 @@ namespace FantasyLoveSimAssetTool.Services
                 foreach (ConversationLine line in entry.Lines ?? new System.Collections.ObjectModel.ObservableCollection<ConversationLine>())
                     if (line != null && !string.IsNullOrWhiteSpace(line.Expression) && !expressionIds.Contains(line.Expression.Trim()))
                         AddConversation(issues, entry, ExportValidationSeverity.Error, label + $": 表情 {line.Expression} が未登録です。");
+                List<ConversationChoice> choices = (entry.Choices ?? new System.Collections.ObjectModel.ObservableCollection<ConversationChoice>())
+                    .Where(choice => choice != null).ToList();
+                for (int choiceIndex = 0; choiceIndex < choices.Count; choiceIndex++)
+                    foreach (string warning in ConversationChoiceValidationService.Evaluate(choices[choiceIndex], choices))
+                        AddConversation(issues, entry, ExportValidationSeverity.Warning,
+                            $"{label}: 選択肢{choiceIndex + 1}: {warning}。");
                 foreach (string id in SplitIds(entry.ImageAssetIdsText))
                     if (!acceptedIds.Contains(id)) AddConversation(issues, entry, ExportValidationSeverity.Error, label + $": 画像 {id} がAcceptedではありません。");
             }

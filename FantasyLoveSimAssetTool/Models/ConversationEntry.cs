@@ -1,11 +1,13 @@
+using FantasyLoveSimAssetTool.Common;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace FantasyLoveSimAssetTool.Models
 {
-    public class ConversationEntry
+    public class ConversationEntry : ObservableObject
     {
+        private string validationWarningText = string.Empty;
         public ConversationDataKind Kind { get; set; }
 
         public string Id { get; set; }
@@ -43,7 +45,17 @@ namespace FantasyLoveSimAssetTool.Models
         }
 
         [JsonIgnore]
-        public string ValidationWarningText { get; set; }
+        public string ValidationWarningText
+        {
+            get => validationWarningText;
+            set
+            {
+                string normalized = value ?? string.Empty;
+                if (validationWarningText == normalized) return;
+                validationWarningText = normalized;
+                OnPropertyChanged();
+            }
+        }
 
         [JsonIgnore]
         public string TriggerCandidateText { get; set; }

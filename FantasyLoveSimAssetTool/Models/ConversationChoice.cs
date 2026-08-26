@@ -1,4 +1,5 @@
 using FantasyLoveSimAssetTool.Common;
+using System.Text.Json.Serialization;
 
 namespace FantasyLoveSimAssetTool.Models
 {
@@ -7,6 +8,7 @@ namespace FantasyLoveSimAssetTool.Models
         private string choiceText = string.Empty;
         private string responseText = string.Empty;
         private int? affectionChange = 0;
+        private string validationWarningText = string.Empty;
 
         public string ChoiceText
         {
@@ -39,6 +41,19 @@ namespace FantasyLoveSimAssetTool.Models
             {
                 if (affectionChange == value) return;
                 affectionChange = value;
+                OnPropertyChanged();
+            }
+        }
+
+        [JsonIgnore]
+        public string ValidationWarningText
+        {
+            get => validationWarningText;
+            set
+            {
+                string normalized = value ?? string.Empty;
+                if (validationWarningText == normalized) return;
+                validationWarningText = normalized;
                 OnPropertyChanged();
             }
         }
