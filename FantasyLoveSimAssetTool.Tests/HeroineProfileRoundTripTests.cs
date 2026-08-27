@@ -62,6 +62,18 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(
                 "Event/CompletionReward01",
                 loaded.ConversationEntries[0].Lines[0].VoiceId);
+            Assert.AreEqual(2, loaded.ConversationEntries[0].Choices.Count);
+            Assert.AreEqual("報酬を受け取る", loaded.ConversationEntries[0].Choices[0].ChoiceText);
+            Assert.AreEqual("ええ、あなたのものです。", loaded.ConversationEntries[0].Choices[0].ResponseText);
+            Assert.AreEqual(3, loaded.ConversationEntries[0].Choices[0].AffectionChange);
+            Assert.AreEqual("今回は遠慮する", loaded.ConversationEntries[0].Choices[1].ChoiceText);
+            Assert.AreEqual("そうですか。必要ならいつでも。", loaded.ConversationEntries[0].Choices[1].ResponseText);
+            Assert.AreEqual(-1, loaded.ConversationEntries[0].Choices[1].AffectionChange);
+
+            string profileJson = File.ReadAllText(Path.Combine(
+                workspaceRoot, "Characters", source.HeroineId, "profile.json"));
+            StringAssert.DoesNotMatch(profileJson, new System.Text.RegularExpressions.Regex(
+                "ValidationWarningText", System.Text.RegularExpressions.RegexOptions.IgnoreCase));
         }
 
         [TestMethod]
@@ -114,6 +126,18 @@ namespace FantasyLoveSimAssetTool.Tests
                     .GetProperty("voiceId")
                     .GetString());
             Assert.AreEqual("Forest", conditions.GetProperty("triggerContextId").GetString());
+            JsonElement choices = gameEvents.RootElement.GetProperty("items")[0].GetProperty("choices");
+            Assert.AreEqual(2, choices.GetArrayLength());
+            Assert.AreEqual("報酬を受け取る", choices[0].GetProperty("choiceText").GetString());
+            Assert.AreEqual("ええ、あなたのものです。", choices[0].GetProperty("responseText").GetString());
+            Assert.AreEqual(3, choices[0].GetProperty("affectionChange").GetInt32());
+            Assert.AreEqual("今回は遠慮する", choices[1].GetProperty("choiceText").GetString());
+            Assert.AreEqual("そうですか。必要ならいつでも。", choices[1].GetProperty("responseText").GetString());
+            Assert.AreEqual(-1, choices[1].GetProperty("affectionChange").GetInt32());
+            StringAssert.DoesNotMatch(File.ReadAllText(gameEventPath),
+                new System.Text.RegularExpressions.Regex(
+                    "ValidationWarningText|AdditionalInstruction|AiStatus",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase));
         }
 
         [TestMethod]
@@ -228,6 +252,22 @@ namespace FantasyLoveSimAssetTool.Tests
                                 Speaker = "Heroine",
                                 Text = "完了です。",
                                 VoiceId = "Event/CompletionReward01"
+                            }
+                        },
+                        Choices = new ObservableCollection<ConversationChoice>
+                        {
+                            new ConversationChoice
+                            {
+                                ChoiceText = "報酬を受け取る",
+                                ResponseText = "ええ、あなたのものです。",
+                                AffectionChange = 3,
+                                ValidationWarningText = "保存してはいけない警告"
+                            },
+                            new ConversationChoice
+                            {
+                                ChoiceText = "今回は遠慮する",
+                                ResponseText = "そうですか。必要ならいつでも。",
+                                AffectionChange = -1
                             }
                         }
                     }
