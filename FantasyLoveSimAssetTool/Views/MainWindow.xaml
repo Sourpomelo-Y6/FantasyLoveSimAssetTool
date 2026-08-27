@@ -1398,9 +1398,18 @@
                                                 </Border>
 
                                                 <Expander Grid.Row="3"
-                                                          Header="AIで選択肢文言を補助"
-                                                          IsExpanded="True"
+                                                          IsExpanded="False"
                                                           Margin="0,4,0,0">
+                                                    <Expander.Header>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="プレイヤー選択肢AI" FontWeight="SemiBold"/>
+                                                            <TextBlock Text="{Binding ConversationChoiceCandidates.Count, StringFormat=候補 {0}件}"
+                                                                       Foreground="Gray" Margin="12,0,0,0"/>
+                                                            <TextBlock Text="{Binding ConversationChoiceAiStatus}"
+                                                                       Foreground="Gray" Margin="12,0,0,0"
+                                                                       TextTrimming="CharacterEllipsis" MaxWidth="360"/>
+                                                        </StackPanel>
+                                                    </Expander.Header>
                                                     <StackPanel Margin="8">
                                                         <TextBlock Text="選択中の会話の最後の台詞を文脈にし、選択肢の表示文だけを生成します。返答・好感度・分岐設定は変更しません。"
                                                                    TextWrapping="Wrap"
@@ -1475,9 +1484,18 @@
                                                 </Expander>
 
                                                 <Expander Grid.Row="4"
-                                                          Header="AIでヒロインの返答を補助"
-                                                          IsExpanded="True"
+                                                          IsExpanded="False"
                                                           Margin="0,8,0,0">
+                                                    <Expander.Header>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="ヒロイン返答AI" FontWeight="SemiBold"/>
+                                                            <TextBlock Text="{Binding ConversationChoiceResponseCandidates.Count, StringFormat=候補 {0}件}"
+                                                                       Foreground="Gray" Margin="12,0,0,0"/>
+                                                            <TextBlock Text="{Binding ConversationChoiceResponseAiStatus}"
+                                                                       Foreground="Gray" Margin="12,0,0,0"
+                                                                       TextTrimming="CharacterEllipsis" MaxWidth="360"/>
+                                                        </StackPanel>
+                                                    </Expander.Header>
                                                     <StackPanel Margin="8">
                                                         <TextBlock Text="選択中のプレイヤー選択肢を必須の文脈として、ヒロインの返答だけを生成します。選択肢文言や好感度は変更しません。"
                                                                    TextWrapping="Wrap"
