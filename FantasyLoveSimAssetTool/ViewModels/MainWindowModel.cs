@@ -181,6 +181,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string lastBattleMessageImportReport;
         private int selectedMainTabIndex;
         private int selectedBasicInfoTabIndex;
+        private int selectedBattleMessageTabIndex;
         private bool showOnlyIncompleteProductionStatus;
         private string unityProjectPath;
         private string audioLibrarySearchText;
@@ -2536,6 +2537,17 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public int SelectedBattleMessageTabIndex
+        {
+            get { return selectedBattleMessageTabIndex; }
+            set
+            {
+                if (selectedBattleMessageTabIndex == value) { return; }
+                selectedBattleMessageTabIndex = value;
+                OnPropertyChanged(nameof(SelectedBattleMessageTabIndex));
+            }
+        }
+
         public bool ShowOnlyIncompleteProductionStatus
         {
             get { return showOnlyIncompleteProductionStatus; }
@@ -3425,6 +3437,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             lastBattleMessageImportReport = "Unityから戦闘メッセージを読み込むと、ここに差分が表示されます。";
             selectedMainTabIndex = 0;
             selectedBasicInfoTabIndex = 0;
+            selectedBattleMessageTabIndex = 0;
             showOnlyIncompleteProductionStatus = false;
             unityProjectPath = AudioLibraryService.LoadUnityProjectPath();
             audioLibrarySearchText = string.Empty;
@@ -13995,6 +14008,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             SelectedMainTabIndex = tabIndex;
+            if (cell != null && tabIndex == 2)
+            {
+                SelectedBattleMessageTabIndex = 0;
+            }
             if (check != null)
             {
                 SelectProductionStatusDetail(check);
@@ -14005,6 +14022,29 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private void SelectProductionStatusDetail(ProductionStatusCheckItem check)
         {
             if (SelectedProfile == null) return;
+            if (check.TargetTabIndex == 2 && check.TargetKind == ProductionStatusTargetKind.None)
+            {
+                const string resultPrefix = "戦闘結果 ";
+                const string panelPrefix = "戦闘パネル ";
+                if ((check.Name ?? string.Empty).StartsWith(panelPrefix, StringComparison.Ordinal))
+                {
+                    SelectedBattleMessageTabIndex = 1;
+                    string resultType = check.Name.Substring(panelPrefix.Length);
+                    SelectedBattlePanelMessage = SelectedProfile.BattleMessages?.PanelMessages?.FirstOrDefault(item =>
+                        string.Equals(item.ResultType, resultType, StringComparison.Ordinal));
+                }
+                else
+                {
+                    SelectedBattleMessageTabIndex = 0;
+                    string resultType = (check.Name ?? string.Empty).StartsWith(resultPrefix, StringComparison.Ordinal)
+                        ? check.Name.Substring(resultPrefix.Length)
+                        : string.Empty;
+                    if (!string.IsNullOrWhiteSpace(resultType))
+                        SelectedBattleResultEvent = SelectedProfile.BattleMessages?.ResultEvents?.FirstOrDefault(item =>
+                            string.Equals(item.ResultType, resultType, StringComparison.Ordinal));
+                }
+                return;
+            }
             switch (check.TargetKind)
             {
                 case ProductionStatusTargetKind.Conversation:

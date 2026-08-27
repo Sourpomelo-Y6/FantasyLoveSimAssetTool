@@ -1720,17 +1720,29 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Text="戦闘後イベント（結果種別、戦闘Context、本文、スチル、好感度、解放衣装）"
-                                       FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <StackPanel Grid.Row="0" Margin="0,0,0,8">
+                                <TextBlock Text="戦闘メッセージを種類別に編集します。保存とUnity取込差分は3ページ共通です。"
+                                           Foreground="Gray" TextWrapping="Wrap"/>
+                                <WrapPanel Margin="0,5,0,0">
+                                    <TextBlock Text="{Binding SelectedProfile.BattleMessages.ResultEvents.Count, StringFormat=戦闘後イベント {0}件}" Margin="0,0,16,0"/>
+                                    <TextBlock Text="{Binding SelectedProfile.BattleMessages.PanelMessages.Count, StringFormat=パネル結果文 {0}件}" Margin="0,0,16,0"/>
+                                    <TextBlock Text="{Binding SelectedProfile.BattleMessages.SoloReturnReactions.Count, StringFormat=単独帰還反応 {0}件}"/>
+                                </WrapPanel>
+                            </StackPanel>
+                            <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedBattleMessageTabIndex, Mode=TwoWay}">
+                                <TabItem Header="戦闘後イベント">
+                                    <Grid Margin="8">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Text="結果種別、戦闘Context、本文、スチル、好感度、解放衣装を編集します。"
+                                                   Foreground="Gray" Margin="0,0,0,6"/>
                             <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedProfile.BattleMessages.ResultEvents}"
                                       SelectedItem="{Binding SelectedBattleResultEvent}"
                                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True"
-                                      Margin="0,0,0,12">
+                                      Margin="0">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="EventId" Binding="{Binding EventId}" Width="130"/>
                                     <DataGridTemplateColumn Header="結果種別" Width="120">
@@ -1801,8 +1813,17 @@
                                     </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
-                            <TextBlock Grid.Row="2" Text="戦闘パネル結果メッセージ" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                            <DataGrid Grid.Row="3" ItemsSource="{Binding SelectedProfile.BattleMessages.PanelMessages}"
+                                    </Grid>
+                                </TabItem>
+                                <TabItem Header="パネル結果文">
+                                    <Grid Margin="8">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Text="戦闘パネルに表示する結果メッセージを編集します。"
+                                                   Foreground="Gray" Margin="0,0,0,6"/>
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedProfile.BattleMessages.PanelMessages}"
                                       SelectedItem="{Binding SelectedBattlePanelMessage}"
                                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
                                 <DataGrid.Columns>
@@ -1828,9 +1849,17 @@
                                     </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
-                            <TextBlock Grid.Row="4" Text="主人公単独外出後の帰還反応（未設定ならゲームでは何も追加しません）"
-                                       FontWeight="SemiBold" Margin="0,12,0,6"/>
-                            <DataGrid Grid.Row="5" ItemsSource="{Binding SelectedProfile.BattleMessages.SoloReturnReactions}"
+                                    </Grid>
+                                </TabItem>
+                                <TabItem Header="単独帰還反応">
+                                    <Grid Margin="8">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Text="主人公単独外出後の帰還反応です。未設定ならゲームでは何も追加しません。"
+                                                   Foreground="Gray" Margin="0,0,0,6"/>
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedProfile.BattleMessages.SoloReturnReactions}"
                                       AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="ReactionId" Binding="{Binding ReactionId}" Width="130"/>
@@ -1870,15 +1899,21 @@
                                     </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
-                            <Grid Grid.Row="6" Margin="0,12,0,0">
+                                    </Grid>
+                                </TabItem>
+                            </TabControl>
+                            <Grid Grid.Row="2" Margin="0,8,0,0">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
-                                <Border Grid.Row="0" Background="#F5F5F5" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8">
-                                    <TextBlock Text="{Binding LastBattleMessageImportReport}"
-                                               TextWrapping="Wrap"/>
-                                </Border>
+                                <Expander Grid.Row="0" Header="Unity取込差分" IsExpanded="False">
+                                    <Border Background="#F5F5F5" BorderBrush="#DDDDDD" BorderThickness="1" Padding="8" Margin="0,6,0,0">
+                                        <TextBox Text="{Binding LastBattleMessageImportReport, Mode=OneWay}"
+                                                 IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+                                                 BorderThickness="0" Background="Transparent"/>
+                                    </Border>
+                                </Expander>
                                 <Button Grid.Row="1" Content="戦闘メッセージ保存"
                                         Command="{Binding SaveSelectedProfileCommand}" Width="160" Height="30"
                                         HorizontalAlignment="Right" Margin="0,8,0,0"/>
