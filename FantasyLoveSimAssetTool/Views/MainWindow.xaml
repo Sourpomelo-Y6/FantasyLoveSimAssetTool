@@ -2167,16 +2167,24 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0"
-                                           Text="訓練条件、画像マッピング、画像作成・採用を用途別のページで編集します。Unity読込と保存は各ページで共通です。"
-                                           Foreground="Gray" TextWrapping="Wrap" Margin="0,0,12,0"/>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <Button Content="Unity訓練一覧読込"
-                                            Command="{Binding ImportTrainingCatalogFromUnityCommand}"
-                                            MinWidth="150" Height="28" Margin="0,0,8,0"/>
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                    <TextBlock Text="Unityの訓練一覧を読み込んだ後、画像作成枠を準備すると「画像作成・採用」の一覧へ表示されます。"
+                                               Foreground="Gray" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding TrainingAssetPreparationSummary, Mode=OneWay}"
+                                               FontWeight="SemiBold" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <WrapPanel HorizontalAlignment="Right">
+                                        <Button Content="Unity訓練一覧読込"
+                                                Command="{Binding ImportTrainingCatalogFromUnityCommand}"
+                                                MinWidth="150" Height="28" Margin="0,0,8,0"/>
+                                        <Button Content="画像作成枠を準備"
+                                                Command="{Binding AddTrainingStandardAssetDataCommand}"
+                                                MinWidth="150" Height="28"/>
+                                    </WrapPanel>
                                     <Button Content="Unity訓練セリフ読込"
                                             Command="{Binding ImportTrainingDialoguesFromUnityCommand}"
-                                            MinWidth="160" Height="28"/>
+                                            MinWidth="160" Height="28" HorizontalAlignment="Right" Margin="0,6,0,0"/>
                                 </StackPanel>
                             </Grid>
 
@@ -2498,11 +2506,6 @@
                                         </StackPanel>
                                     </Grid>
                                 </GroupBox>
-                                <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5"
-                                        Content="登録済み訓練の不足枠を準備"
-                                        Command="{Binding AddTrainingStandardAssetDataCommand}"
-                                        Width="210" Height="30"
-                                        HorizontalAlignment="Right" Margin="0,8,0,0"/>
                                     </Grid>
                                 </TabItem>
                             </TabControl>

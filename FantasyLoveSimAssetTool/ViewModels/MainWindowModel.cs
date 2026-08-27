@@ -701,6 +701,23 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ObservableCollection<HeroineAsset> TrainingAssets { get; }
 
+        public string TrainingAssetPreparationSummary
+        {
+            get
+            {
+                IReadOnlyList<TrainingAssetTemplate> templates = CreateTrainingAssetTemplates();
+                var existingAssetIds = new HashSet<string>(
+                    (SelectedProfile?.Assets ?? new ObservableCollection<HeroineAsset>())
+                        .Where(asset => asset != null && asset.Usage == AssetUsage.Training)
+                        .Select(asset => asset.AssetId ?? string.Empty),
+                    StringComparer.Ordinal);
+                int missingCount = templates.Count(template => !existingAssetIds.Contains(template.AssetId));
+                return templates.Count == 0
+                    ? "画像作成枠: Unityから訓練一覧を取り込んでください。"
+                    : $"画像作成枠: 全{templates.Count}件 / 未準備{missingCount}件";
+            }
+        }
+
         public ObservableCollection<PromptTemplate> AvailablePromptTemplates { get; }
 
         public ObservableCollection<StillDefinition> StillDefinitions { get; }
@@ -7279,6 +7296,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             characterProjectService.SaveProfile(SelectedProfile);
             OnPropertyChanged(nameof(SelectedProfile));
+            OnPropertyChanged(nameof(TrainingAssetPreparationSummary));
             StatusMessage =
                 $"FromUnity 訓練一覧を取り込みました。追加 {result.AddedCount} 件、更新 {result.UpdatedCount} 件、" +
                 $"重複・不正値スキップ {result.SkippedCount} 件、条件警告 {result.WarningCount} 件。" +
@@ -9522,6 +9540,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 selectedTrainingAsset = nextSelection;
                 OnPropertyChanged(nameof(SelectedTrainingAsset));
             }
+            OnPropertyChanged(nameof(TrainingAssetPreparationSummary));
         }
 
         private void RefreshAcceptedAssets()
