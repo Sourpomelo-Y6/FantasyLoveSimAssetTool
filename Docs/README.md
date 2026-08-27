@@ -6,7 +6,8 @@ Unity Runtime、Scene、Prefab、ゲーム内での利用方法は `FantasyLoveS
 ## 最初に読む文書
 
 - [`../ReadMe.md`](../ReadMe.md): ツール概要、起動、実装済み機能
-- [`Handoff.md`](Handoff.md): 現在の実装状況と次の候補
+- [`ProjectStatus.md`](ProjectStatus.md): 現在状況、未完了、保留、見送り、次の作業を選ぶ基準
+- [`Handoff.md`](Handoff.md): 実装の経緯と構成を含む引継ぎ資料
 - [`CharacterAssetGenerationToolSpec.md`](CharacterAssetGenerationToolSpec.md): 素材管理・生成・Exportの全体仕様
 - [`ToolUsabilityReorganizationPlan.md`](ToolUsabilityReorganizationPlan.md): 画面構成と操作改善
 - [`LocalAIIntegrationPlan.md`](LocalAIIntegrationPlan.md): LocalAIEventPrototypeの機能・UIを統合する計画
@@ -38,3 +39,4 @@ Unity Runtime、Scene、Prefab、ゲーム内での利用方法は `FantasyLoveS
 - Unity固有のRuntime挙動やScene設定はUnityリポジトリだけで更新する
 - 同じ全文を両方のリポジトリへコピーしない
 - 契約変更時は、AssetToolのExport、Unity Import、双方向同期、検証項目を同時に確認する
+- プロジェクト横断の優先順位、保留、見送りは `ProjectStatus.md` を正本とし、個別計画書へ別の「次の作業」を増やさない
