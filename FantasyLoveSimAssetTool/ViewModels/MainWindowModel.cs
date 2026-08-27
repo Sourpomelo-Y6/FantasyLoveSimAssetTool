@@ -54,6 +54,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private readonly ConversationDraftGenerationService conversationDraftGenerationService;
         private readonly ConversationChoiceGenerationService conversationChoiceGenerationService;
         private readonly ConversationChoiceResponseGenerationService conversationChoiceResponseGenerationService;
+        private readonly TrainingDialogueGenerationService trainingDialogueGenerationService;
         private readonly List<AudioLibraryItem> allAudioLibraryItems =
             new List<AudioLibraryItem>();
         private bool legacyWorkspaceChecked;
@@ -251,6 +252,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string conversationChoiceResponseAiPrompt = string.Empty;
         private string conversationChoiceResponseAiRawResponse = string.Empty;
         private bool isGeneratingConversationChoiceResponse;
+        private TrainingDialogueGenerationSession generatedTrainingDialogueSession;
+        private CancellationTokenSource trainingDialogueGenerationCancellation;
+        private string trainingDialogueAdditionalInstruction = string.Empty;
+        private string trainingDialogueAiStatus = "訓練画像を選んでセリフ候補を生成してください。";
+        private string trainingDialogueAiPrompt = string.Empty;
+        private string trainingDialogueAiRawResponse = string.Empty;
+        private bool isGeneratingTrainingDialogue;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
 
@@ -1252,6 +1260,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 selectedTrainingDialogueEntry = value;
                 OnPropertyChanged(nameof(SelectedTrainingDialogueEntry));
                 SelectedTrainingDialogueMessage = value?.Messages?.FirstOrDefault();
+                trainingDialogueGenerationCancellation?.Cancel();
+                ClearTrainingDialogueCandidates();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -1264,6 +1274,49 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedTrainingDialogueMessage == value) { return; }
                 selectedTrainingDialogueMessage = value;
                 OnPropertyChanged(nameof(SelectedTrainingDialogueMessage));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public ObservableCollection<TextGenerationCandidate> TrainingDialogueCandidates { get; }
+
+        public string TrainingDialogueAdditionalInstruction
+        {
+            get => trainingDialogueAdditionalInstruction;
+            set
+            {
+                if (trainingDialogueAdditionalInstruction == value) return;
+                trainingDialogueAdditionalInstruction = value ?? string.Empty;
+                OnPropertyChanged();
+            }
+        }
+
+        public string TrainingDialogueAiStatus
+        {
+            get => trainingDialogueAiStatus;
+            private set { if (trainingDialogueAiStatus != value) { trainingDialogueAiStatus = value; OnPropertyChanged(); } }
+        }
+
+        public string TrainingDialogueAiPrompt
+        {
+            get => trainingDialogueAiPrompt;
+            private set { if (trainingDialogueAiPrompt != value) { trainingDialogueAiPrompt = value; OnPropertyChanged(); } }
+        }
+
+        public string TrainingDialogueAiRawResponse
+        {
+            get => trainingDialogueAiRawResponse;
+            private set { if (trainingDialogueAiRawResponse != value) { trainingDialogueAiRawResponse = value; OnPropertyChanged(); } }
+        }
+
+        public bool IsGeneratingTrainingDialogue
+        {
+            get => isGeneratingTrainingDialogue;
+            private set
+            {
+                if (isGeneratingTrainingDialogue == value) return;
+                isGeneratingTrainingDialogue = value;
+                OnPropertyChanged();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -2806,6 +2859,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ImportTrainingCatalogFromUnityCommand { get; }
 
+        public ICommand GenerateTrainingDialogueCandidatesCommand { get; }
+
+        public ICommand CancelTrainingDialogueGenerationCommand { get; }
+
+        public ICommand AddTrainingDialogueCandidateCommand { get; }
+
+        public ICommand ReplaceTrainingDialogueCandidateCommand { get; }
+
         public ICommand SavePromptRecordCommand { get; }
 
         public ICommand ApplyPromptTemplateCommand { get; }
@@ -2957,6 +3018,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             conversationDraftGenerationService = new ConversationDraftGenerationService(localLlmClient);
             conversationChoiceGenerationService = new ConversationChoiceGenerationService(localLlmClient);
             conversationChoiceResponseGenerationService = new ConversationChoiceResponseGenerationService(localLlmClient);
+            trainingDialogueGenerationService = new TrainingDialogueGenerationService(localLlmClient);
             audioPreviewService.PlaybackFailed += OnAudioPreviewFailed;
             ChangeWorkspaceCommand = new RelayCommand(ChangeWorkspace);
             AddTrainingPrerequisiteCommand = new RelayCommand(AddTrainingPrerequisite,
@@ -2998,6 +3060,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ConversationChoiceDirections = new ObservableCollection<string> { "肯定", "慎重", "否定", "質問", "自由" };
             ConversationChoiceCandidates = new ObservableCollection<TextGenerationCandidate>();
             ConversationChoiceResponseCandidates = new ObservableCollection<TextGenerationCandidate>();
+            TrainingDialogueCandidates = new ObservableCollection<TextGenerationCandidate>();
             selectedShortTextTarget = ShortTextTargets.First(target => target.Id == "MorningGreeting");
             shortTextAiStatus = "ヒロインを選択してください。";
             shortTextAiPrompt = string.Empty;
@@ -3554,6 +3617,20 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ImportTrainingCatalogFromUnityCommand = new RelayCommand(
                 ImportTrainingCatalogFromUnity,
                 () => SelectedProfile != null);
+            GenerateTrainingDialogueCandidatesCommand = new AsyncRelayCommand(
+                GenerateTrainingDialogueCandidatesAsync,
+                () => SelectedProfile != null && SelectedTrainingDialogueEntry != null &&
+                    CurrentPromptRecord != null && !IsGeneratingTrainingDialogue);
+            CancelTrainingDialogueGenerationCommand = new RelayCommand(
+                () => trainingDialogueGenerationCancellation?.Cancel(),
+                () => IsGeneratingTrainingDialogue);
+            AddTrainingDialogueCandidateCommand = new RelayCommand<TextGenerationCandidate>(
+                AddTrainingDialogueCandidate,
+                candidate => candidate != null && generatedTrainingDialogueSession != null);
+            ReplaceTrainingDialogueCandidateCommand = new RelayCommand<TextGenerationCandidate>(
+                ReplaceTrainingDialogueCandidate,
+                candidate => candidate != null && generatedTrainingDialogueSession != null &&
+                    SelectedTrainingDialogueMessage != null);
             SavePromptRecordCommand = new RelayCommand(
                 SavePromptRecord,
                 () => SelectedProfile != null && SelectedAsset != null && CurrentPromptRecord != null);
@@ -7008,6 +7085,129 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             SelectedTrainingDialogueEntry.Messages.Remove(SelectedTrainingDialogueMessage);
             SelectedTrainingDialogueMessage = SelectedTrainingDialogueEntry.Messages.FirstOrDefault();
+        }
+
+        private async Task GenerateTrainingDialogueCandidatesAsync()
+        {
+            TrainingDialogueEntry sourceEntry = SelectedTrainingDialogueEntry;
+            PromptRecord sourcePrompt = CurrentPromptRecord;
+            if (SelectedProfile == null || sourceEntry == null || sourcePrompt == null) return;
+            TrainingCatalogItem catalog = SelectedProfile.TrainingCatalog?.Items?.FirstOrDefault(item =>
+                item != null && string.Equals(item.TrainingId, sourcePrompt.TrainingId,
+                    StringComparison.OrdinalIgnoreCase));
+            var context = new TrainingDialogueGenerationContext
+            {
+                TrainingId = sourcePrompt.TrainingId,
+                TrainingDisplayName = catalog?.DisplayName ?? string.Empty,
+                TrainingCategory = catalog?.TrainingCategoryId ?? string.Empty,
+                VisualState = sourcePrompt.TrainingVisualState,
+                PlayerVisible = sourcePrompt.PlayerVisible,
+                HeroineVisible = sourcePrompt.HeroineVisible,
+                AdditionalInstruction = TrainingDialogueAdditionalInstruction,
+                ExistingMessages = (sourceEntry.Messages ?? new ObservableCollection<TrainingDialogueMessage>())
+                    .Where(message => message != null).Select(message => message.Text ?? string.Empty).ToList()
+            };
+            var session = new TrainingDialogueGenerationSession(
+                sourceEntry, SelectedTrainingDialogueMessage, context.TrainingId, context.VisualState);
+            trainingDialogueGenerationCancellation?.Dispose();
+            trainingDialogueGenerationCancellation = new CancellationTokenSource();
+            TrainingDialogueCandidates.Clear();
+            generatedTrainingDialogueSession = null;
+            IsGeneratingTrainingDialogue = true;
+            TrainingDialogueAiRawResponse = string.Empty;
+            try
+            {
+                TrainingDialogueAiPrompt = TrainingDialogueGenerationService.BuildPrompt(SelectedProfile, context);
+                TrainingDialogueAiStatus = "訓練セリフを生成中...";
+                LocalAiSettings settings = localAiSettingsService.Load();
+                TrainingDialogueGenerationResult result = await trainingDialogueGenerationService.GenerateAsync(
+                    SelectedProfile, settings, localAiInstructionService.Load(), context,
+                    trainingDialogueGenerationCancellation.Token);
+                if (!session.IsCurrent(SelectedTrainingDialogueEntry,
+                    CurrentPromptRecord?.TrainingId, CurrentPromptRecord?.TrainingVisualState)) return;
+                TrainingDialogueAiRawResponse = result.RawResponse;
+                if (!string.IsNullOrWhiteSpace(result.ParseError))
+                {
+                    TrainingDialogueAiStatus = $"候補を解析できませんでした: {result.ParseError}";
+                    return;
+                }
+                IReadOnlyList<string> existingMessages = context.ExistingMessages.ToList();
+                foreach (string text in result.Candidates.Take(3))
+                {
+                    var candidate = new TextGenerationCandidate(text, 5, 100);
+                    if (existingMessages.Any(existing => string.Equals(existing?.Trim(), text.Trim(), StringComparison.Ordinal)))
+                        candidate.AddWarning("既存候補と重複");
+                    else if (existingMessages.Any(existing =>
+                        SkillTextCandidateQualityService.AreTooSimilar(existing, text)))
+                        candidate.AddWarning("既存候補と類似");
+                    TrainingDialogueCandidates.Add(candidate);
+                }
+                for (int left = 0; left < TrainingDialogueCandidates.Count; left++)
+                for (int right = left + 1; right < TrainingDialogueCandidates.Count; right++)
+                {
+                    if (!SkillTextCandidateQualityService.AreTooSimilar(
+                        TrainingDialogueCandidates[left].Text, TrainingDialogueCandidates[right].Text)) continue;
+                    TrainingDialogueCandidates[left].AddWarning("ほかの候補と類似");
+                    TrainingDialogueCandidates[right].AddWarning("ほかの候補と類似");
+                }
+                generatedTrainingDialogueSession = session;
+                TrainingDialogueAiStatus =
+                    $"{TrainingDialogueCandidates.Count}件を生成しました（Model: {result.ModelId}）。追加または置き換えを選んでください。";
+            }
+            catch (OperationCanceledException)
+            {
+                TrainingDialogueAiStatus = "訓練セリフの生成をキャンセルしました。現在値は変更されていません。";
+            }
+            catch (Exception ex)
+            {
+                TrainingDialogueAiStatus = $"訓練セリフの生成に失敗しました: {ex.Message}";
+            }
+            finally
+            {
+                trainingDialogueGenerationCancellation?.Dispose();
+                trainingDialogueGenerationCancellation = null;
+                IsGeneratingTrainingDialogue = false;
+            }
+        }
+
+        private void AddTrainingDialogueCandidate(TextGenerationCandidate candidate)
+        {
+            TrainingDialogueMessage added = generatedTrainingDialogueSession?.TryAdd(
+                SelectedTrainingDialogueEntry, CurrentPromptRecord?.TrainingId,
+                CurrentPromptRecord?.TrainingVisualState, candidate?.Text);
+            if (added == null)
+            {
+                ClearTrainingDialogueCandidates();
+                TrainingDialogueAiStatus = "生成元の訓練または表示状態が変更されたため候補を破棄しました。もう一度生成してください。";
+                return;
+            }
+            SelectedTrainingDialogueMessage = added;
+            TrainingDialogueAiStatus = "候補を新しい訓練セリフとして追加しました。Voice IDを確認して保存してください。";
+            StatusMessage = TrainingDialogueAiStatus;
+        }
+
+        private void ReplaceTrainingDialogueCandidate(TextGenerationCandidate candidate)
+        {
+            if (generatedTrainingDialogueSession == null ||
+                !generatedTrainingDialogueSession.TryReplace(
+                    SelectedTrainingDialogueEntry, SelectedTrainingDialogueMessage,
+                    CurrentPromptRecord?.TrainingId, CurrentPromptRecord?.TrainingVisualState, candidate?.Text))
+            {
+                ClearTrainingDialogueCandidates();
+                TrainingDialogueAiStatus = "生成元の訓練、表示状態、または置換対象が変更されたため候補を破棄しました。もう一度生成してください。";
+                return;
+            }
+            TrainingDialogueAiStatus = "候補を選択中の訓練セリフへ反映しました。Voice IDは維持されています。保存してください。";
+            StatusMessage = TrainingDialogueAiStatus;
+        }
+
+        private void ClearTrainingDialogueCandidates()
+        {
+            TrainingDialogueCandidates?.Clear();
+            generatedTrainingDialogueSession = null;
+            TrainingDialogueAiPrompt = string.Empty;
+            TrainingDialogueAiRawResponse = string.Empty;
+            TrainingDialogueAiStatus = "訓練画像を選んでセリフ候補を生成してください。";
         }
 
         private void ImportTrainingDialoguesFromUnity()

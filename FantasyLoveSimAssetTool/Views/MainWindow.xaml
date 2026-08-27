@@ -2401,6 +2401,59 @@
                                                         <Button Content="候補追加" Command="{Binding AddTrainingDialogueMessageCommand}" Width="84" Margin="0,0,6,0"/>
                                                         <Button Content="候補削除" Command="{Binding RemoveTrainingDialogueMessageCommand}" Width="84"/>
                                                     </WrapPanel>
+                                                    <Expander Header="セリフAI" Margin="0,10,0,0">
+                                                        <StackPanel Margin="8">
+                                                            <TextBlock Text="選択中の訓練と表示状態に合う、ヒロインのセリフを最大3案生成します。"
+                                                                       TextWrapping="Wrap" Foreground="Gray" Margin="0,0,0,6"/>
+                                                            <TextBlock Text="追加プロンプト（任意）"/>
+                                                            <TextBox Text="{Binding TrainingDialogueAdditionalInstruction, UpdateSourceTrigger=PropertyChanged}"
+                                                                     AcceptsReturn="True" TextWrapping="Wrap" Height="58" Margin="0,4,0,6"
+                                                                     ToolTip="入れたいキーワード、雰囲気、または添削してほしいセリフ案を入力できます"/>
+                                                            <WrapPanel>
+                                                                <Button Content="3案を生成" Command="{Binding GenerateTrainingDialogueCandidatesCommand}"
+                                                                        Width="96" Height="30" Margin="0,0,6,6"/>
+                                                                <Button Content="キャンセル" Command="{Binding CancelTrainingDialogueGenerationCommand}"
+                                                                        Width="84" Height="30" Margin="0,0,6,6"/>
+                                                            </WrapPanel>
+                                                            <TextBox Text="{Binding TrainingDialogueAiStatus, Mode=OneWay}"
+                                                                     IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0"
+                                                                     Background="Transparent" Margin="0,0,0,6"/>
+                                                            <ItemsControl ItemsSource="{Binding TrainingDialogueCandidates}">
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Border BorderBrush="#D0D0D0" BorderThickness="1" CornerRadius="3"
+                                                                                Padding="7" Margin="0,0,0,6">
+                                                                            <StackPanel>
+                                                                                <TextBlock Text="{Binding Text}" TextWrapping="Wrap"/>
+                                                                                <TextBlock Text="{Binding ValidationMessage}" Foreground="#A06020"
+                                                                                           FontSize="11" Margin="0,3,0,5"/>
+                                                                                <WrapPanel HorizontalAlignment="Right">
+                                                                                    <Button Content="新規候補に追加"
+                                                                                            Command="{Binding DataContext.AddTrainingDialogueCandidateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                                            CommandParameter="{Binding}" Width="108" Margin="0,0,6,0"/>
+                                                                                    <Button Content="選択中を置換"
+                                                                                            Command="{Binding DataContext.ReplaceTrainingDialogueCandidateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                                            CommandParameter="{Binding}" Width="100"/>
+                                                                                </WrapPanel>
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                            <Expander Header="送信内容・生の応答を確認" Margin="0,4,0,0">
+                                                                <StackPanel Margin="8">
+                                                                    <TextBlock Text="送信プロンプト" FontWeight="SemiBold"/>
+                                                                    <TextBox Text="{Binding TrainingDialogueAiPrompt, Mode=OneWay}" IsReadOnly="True"
+                                                                             AcceptsReturn="True" TextWrapping="Wrap" Height="100"
+                                                                             VerticalScrollBarVisibility="Auto" Margin="0,4,0,8"/>
+                                                                    <TextBlock Text="生の応答" FontWeight="SemiBold"/>
+                                                                    <TextBox Text="{Binding TrainingDialogueAiRawResponse, Mode=OneWay}" IsReadOnly="True"
+                                                                             AcceptsReturn="True" TextWrapping="Wrap" Height="80"
+                                                                             VerticalScrollBarVisibility="Auto" Margin="0,4,0,0"/>
+                                                                </StackPanel>
+                                                            </Expander>
+                                                        </StackPanel>
+                                                    </Expander>
                                                 </StackPanel>
                                             </GroupBox>
                                             <TextBlock Text="positive prompt"/>
