@@ -2190,24 +2190,8 @@
                                                   AutoGenerateColumns="False"
                                                   CanUserAddRows="False"
                                                   IsReadOnly="True"
-                                                  RowDetailsVisibilityMode="VisibleWhenSelected"
                                                   Height="220"
                                                   Margin="8">
-                                            <DataGrid.RowDetailsTemplate>
-                                                <DataTemplate>
-                                                    <Border Background="#FFF6F6F6" Padding="8" Margin="4">
-                                                        <StackPanel>
-                                                            <TextBlock Text="{Binding ConditionDetails}"
-                                                                       TextWrapping="Wrap"/>
-                                                            <TextBlock Text="{Binding ReferenceWarning}"
-                                                                       Foreground="DarkOrange"
-                                                                       FontWeight="Bold"
-                                                                       Margin="0,4,0,0"
-                                                                       TextWrapping="Wrap"/>
-                                                        </StackPanel>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </DataGrid.RowDetailsTemplate>
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="TrainingId" Binding="{Binding TrainingId}" Width="180"/>
                                                 <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName}" Width="140"/>
