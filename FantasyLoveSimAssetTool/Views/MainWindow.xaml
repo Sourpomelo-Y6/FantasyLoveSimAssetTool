@@ -2368,17 +2368,34 @@
                                 </Grid.ColumnDefinitions>
 
                                 <GroupBox Grid.Column="0" Header="1. 作成する訓練画像">
-                                    <DataGrid ItemsSource="{Binding TrainingAssets}"
-                                              SelectedItem="{Binding SelectedTrainingAsset}"
-                                              AutoGenerateColumns="False"
-                                              CanUserAddRows="False"
-                                              IsReadOnly="True"
-                                              Margin="8">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId}" Width="*"/>
-                                            <DataGridTextColumn Header="状態" Binding="{Binding Status}" Width="80"/>
-                                        </DataGrid.Columns>
-                                    </DataGrid>
+                                    <Grid Margin="8">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Text="{Binding TrainingDialogueProgressSummary, Mode=OneWay}"
+                                                   TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                        <CheckBox Grid.Row="1" Content="セリフ未入力のみ"
+                                                  IsChecked="{Binding ShowOnlyTrainingAssetsWithoutDialogue}"
+                                                  Margin="0,0,0,6"/>
+                                        <DataGrid Grid.Row="2" ItemsSource="{Binding TrainingAssetWorkItems}"
+                                                  SelectedItem="{Binding SelectedTrainingAssetWorkItem}"
+                                                  AutoGenerateColumns="False" CanUserAddRows="False"
+                                                  IsReadOnly="True">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="訓練" Binding="{Binding TrainingDisplayName}" Width="110"/>
+                                                <DataGridTextColumn Header="表示状態" Binding="{Binding VisualStateDisplayName}" Width="150"/>
+                                                <DataGridTextColumn Header="セリフ・Voice" Binding="{Binding DialogueProgressSummary}" Width="190"/>
+                                                <DataGridTextColumn Header="画像" Binding="{Binding Status}" Width="70"/>
+                                                <DataGridTextColumn Header="AssetId" Binding="{Binding AssetId}" Width="180"/>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                        <Button Grid.Row="3" Content="次のセリフ未入力枠へ"
+                                                Command="{Binding SelectNextTrainingAssetWithoutDialogueCommand}"
+                                                HorizontalAlignment="Right" MinWidth="160" Height="28" Margin="0,8,0,0"/>
+                                    </Grid>
                                 </GroupBox>
 
                                 <GroupBox Grid.Column="2" Header="2. Promptと生成">

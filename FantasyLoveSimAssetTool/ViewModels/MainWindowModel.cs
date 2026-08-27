@@ -259,6 +259,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string trainingDialogueAiPrompt = string.Empty;
         private string trainingDialogueAiRawResponse = string.Empty;
         private bool isGeneratingTrainingDialogue;
+        private readonly List<TrainingAssetWorkItem> allTrainingAssetWorkItems = new List<TrainingAssetWorkItem>();
+        private TrainingAssetWorkItem selectedTrainingAssetWorkItem;
+        private bool showOnlyTrainingAssetsWithoutDialogue;
 
         public ObservableCollection<HeroineProfile> Profiles { get; }
 
@@ -700,6 +703,43 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ObservableCollection<HeroineAsset> AcceptedAssets { get; }
 
         public ObservableCollection<HeroineAsset> TrainingAssets { get; }
+
+        public ObservableCollection<TrainingAssetWorkItem> TrainingAssetWorkItems { get; }
+
+        public TrainingAssetWorkItem SelectedTrainingAssetWorkItem
+        {
+            get => selectedTrainingAssetWorkItem;
+            set
+            {
+                if (selectedTrainingAssetWorkItem == value) return;
+                selectedTrainingAssetWorkItem = value;
+                OnPropertyChanged();
+                if (value != null) SelectedTrainingAsset = value.Asset;
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public bool ShowOnlyTrainingAssetsWithoutDialogue
+        {
+            get => showOnlyTrainingAssetsWithoutDialogue;
+            set
+            {
+                if (showOnlyTrainingAssetsWithoutDialogue == value) return;
+                showOnlyTrainingAssetsWithoutDialogue = value;
+                OnPropertyChanged();
+                ApplyTrainingAssetWorkItemFilter();
+            }
+        }
+
+        public string TrainingDialogueProgressSummary
+        {
+            get
+            {
+                int completed = allTrainingAssetWorkItems.Count(item => !item.IsDialogueMissing);
+                int missingVoice = allTrainingAssetWorkItems.Sum(item => item.MissingVoiceIdCount);
+                return $"セリフ入力済み {completed}/{allTrainingAssetWorkItems.Count}枠 / Voice ID未設定 {missingVoice}件";
+            }
+        }
 
         public string TrainingAssetPreparationSummary
         {
@@ -1260,6 +1300,13 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedTrainingAsset == value) { return; }
                 selectedTrainingAsset = value;
                 OnPropertyChanged(nameof(SelectedTrainingAsset));
+                TrainingAssetWorkItem matchingWorkItem = allTrainingAssetWorkItems.FirstOrDefault(item =>
+                    ReferenceEquals(item.Asset, value));
+                if (selectedTrainingAssetWorkItem != matchingWorkItem)
+                {
+                    selectedTrainingAssetWorkItem = matchingWorkItem;
+                    OnPropertyChanged(nameof(SelectedTrainingAssetWorkItem));
+                }
                 if (value != null && SelectedAsset != value)
                 {
                     SelectedAsset = value;
@@ -2862,6 +2909,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand AddTrainingStandardAssetDataCommand { get; }
 
+        public ICommand SelectNextTrainingAssetWithoutDialogueCommand { get; }
+
         public ICommand AddTrainingImageEntryCommand { get; }
 
         public ICommand RemoveTrainingImageEntryCommand { get; }
@@ -3119,6 +3168,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             FilteredAssets = new ObservableCollection<HeroineAsset>();
             AcceptedAssets = new ObservableCollection<HeroineAsset>();
             TrainingAssets = new ObservableCollection<HeroineAsset>();
+            TrainingAssetWorkItems = new ObservableCollection<TrainingAssetWorkItem>();
             AvailablePromptTemplates = new ObservableCollection<PromptTemplate>();
             StillDefinitions = new ObservableCollection<StillDefinition>();
             FilteredStillDefinitions = new ObservableCollection<StillDefinition>();
@@ -3610,6 +3660,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             AddTrainingStandardAssetDataCommand = new RelayCommand(
                 AddTrainingStandardAssetData,
                 () => SelectedProfile != null);
+            SelectNextTrainingAssetWithoutDialogueCommand = new RelayCommand(
+                SelectNextTrainingAssetWithoutDialogue,
+                () => allTrainingAssetWorkItems.Any(item => item.IsDialogueMissing));
             AddTrainingImageEntryCommand = new RelayCommand(
                 AddTrainingImageEntry,
                 () => SelectedProfile != null);
@@ -7312,6 +7365,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
             characterProjectService.SaveProfile(SelectedProfile);
             RefreshSelectedTrainingDialogueEntry();
+            RefreshTrainingAssetWorkItems();
             OnPropertyChanged(nameof(SelectedProfile));
             StatusMessage =
                 $"FromUnity 訓練セリフを取り込みました。枠追加 {result.AddedEntryCount} 件、候補追加 {result.AddedMessageCount} 件、Voice ID更新 {result.UpdatedVoiceIdCount} 件、重複・不正値スキップ {result.SkippedCount} 件。";
@@ -9540,7 +9594,69 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 selectedTrainingAsset = nextSelection;
                 OnPropertyChanged(nameof(SelectedTrainingAsset));
             }
+            RefreshTrainingAssetWorkItems();
             OnPropertyChanged(nameof(TrainingAssetPreparationSummary));
+        }
+
+        private void RefreshTrainingAssetWorkItems()
+        {
+            foreach (TrainingAssetWorkItem item in allTrainingAssetWorkItems)
+            {
+                item.ProgressChanged -= TrainingAssetWorkItemProgressChanged;
+                item.Dispose();
+            }
+            allTrainingAssetWorkItems.Clear();
+            foreach (HeroineAsset asset in TrainingAssets)
+            {
+                (string trainingId, string visualState) = TrainingAssetWorkItem.Parse(asset.AssetId);
+                TrainingCatalogItem catalog = SelectedProfile?.TrainingCatalog?.Items?.FirstOrDefault(item =>
+                    item != null && string.Equals(item.TrainingId, trainingId, StringComparison.Ordinal));
+                TrainingDialogueEntry dialogue = SelectedProfile?.TrainingDialogues?.Items?.FirstOrDefault(entry =>
+                    entry != null && string.Equals(entry.TrainingId, trainingId, StringComparison.Ordinal) &&
+                    string.Equals(TrainingDialogueSyncService.NormalizeVisualState(entry.VisualState),
+                        visualState, StringComparison.Ordinal));
+                var workItem = new TrainingAssetWorkItem(asset,
+                    string.IsNullOrWhiteSpace(catalog?.DisplayName) ? trainingId : catalog.DisplayName, dialogue);
+                workItem.ProgressChanged += TrainingAssetWorkItemProgressChanged;
+                allTrainingAssetWorkItems.Add(workItem);
+            }
+            ApplyTrainingAssetWorkItemFilter();
+        }
+
+        private void TrainingAssetWorkItemProgressChanged(object sender, EventArgs e)
+        {
+            ApplyTrainingAssetWorkItemFilter();
+        }
+
+        private void ApplyTrainingAssetWorkItemFilter()
+        {
+            HeroineAsset selectedAsset = selectedTrainingAsset;
+            TrainingAssetWorkItems.Clear();
+            foreach (TrainingAssetWorkItem item in allTrainingAssetWorkItems.Where(item =>
+                !ShowOnlyTrainingAssetsWithoutDialogue || item.IsDialogueMissing ||
+                ReferenceEquals(item.Asset, selectedTrainingAsset)))
+                TrainingAssetWorkItems.Add(item);
+            selectedTrainingAssetWorkItem = TrainingAssetWorkItems.FirstOrDefault(item =>
+                ReferenceEquals(item.Asset, selectedAsset)) ?? TrainingAssetWorkItems.FirstOrDefault();
+            OnPropertyChanged(nameof(SelectedTrainingAssetWorkItem));
+            if (selectedTrainingAssetWorkItem != null &&
+                !ReferenceEquals(selectedTrainingAssetWorkItem.Asset, selectedTrainingAsset))
+                SelectedTrainingAsset = selectedTrainingAssetWorkItem.Asset;
+            OnPropertyChanged(nameof(TrainingDialogueProgressSummary));
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private void SelectNextTrainingAssetWithoutDialogue()
+        {
+            List<TrainingAssetWorkItem> missing = allTrainingAssetWorkItems.Where(item => item.IsDialogueMissing).ToList();
+            if (missing.Count == 0) return;
+            int currentIndex = missing.FindIndex(item => ReferenceEquals(item.Asset, selectedTrainingAsset));
+            TrainingAssetWorkItem next = missing[(currentIndex + 1 + missing.Count) % missing.Count];
+            if (ShowOnlyTrainingAssetsWithoutDialogue && !TrainingAssetWorkItems.Contains(next))
+                ApplyTrainingAssetWorkItemFilter();
+            SelectedTrainingAssetWorkItem = next;
+            if (ShowOnlyTrainingAssetsWithoutDialogue) ApplyTrainingAssetWorkItemFilter();
+            StatusMessage = $"次のセリフ未入力枠 {next.AssetId} を選択しました。";
         }
 
         private void RefreshAcceptedAssets()
