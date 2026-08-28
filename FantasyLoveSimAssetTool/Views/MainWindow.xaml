@@ -1938,52 +1938,112 @@
                                 </TabItem>
                                 <TabItem Header="単独帰還反応">
                                     <Grid Margin="8">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                        </Grid.RowDefinitions>
-                                        <TextBlock Text="主人公単独外出後の帰還反応です。未設定ならゲームでは何も追加しません。"
-                                                   Foreground="Gray" Margin="0,0,0,6"/>
-                            <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedProfile.BattleMessages.SoloReturnReactions}"
-                                      AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="ReactionId" Binding="{Binding ReactionId}" Width="130"/>
-                                    <DataGridTemplateColumn Header="結果種別" Width="120">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <ComboBox ItemsSource="{Binding Data.SoloReturnResultTypeOptions, Source={StaticResource ViewModelProxy}}"
-                                                          SelectedItem="{Binding ResultType, UpdateSourceTrigger=PropertyChanged}"/>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="BattleContextId" Binding="{Binding BattleContextId}" Width="130"/>
-                                    <DataGridTextColumn Header="メッセージ" Binding="{Binding Message}" Width="*"/>
-                                    <DataGridTemplateColumn Header="Voice ID" Width="180">
-                                        <DataGridTemplateColumn.CellTemplate><DataTemplate>
-                                            <ComboBox ItemsSource="{Binding Data.AvailableVoiceIds, Source={StaticResource ViewModelProxy}}"
-                                                      Text="{Binding VoiceId, UpdateSourceTrigger=PropertyChanged}" IsEditable="True"/>
-                                        </DataTemplate></DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="StillId" Width="130">
-                                        <DataGridTemplateColumn.CellTemplate><DataTemplate>
-                                            <ComboBox ItemsSource="{Binding Data.BattleStillIdOptions, Source={StaticResource ViewModelProxy}}"
-                                                      Text="{Binding StillId, UpdateSourceTrigger=PropertyChanged}" IsEditable="True"/>
-                                        </DataTemplate></DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="表示方式" Width="140">
-                                        <DataGridTemplateColumn.CellTemplate><DataTemplate>
-                                            <ComboBox ItemsSource="{Binding Data.BattleVisualModeOptions, Source={StaticResource ViewModelProxy}}"
-                                                      SelectedItem="{Binding VisualMode, UpdateSourceTrigger=PropertyChanged}"/>
-                                        </DataTemplate></DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="表情" Width="120">
-                                        <DataGridTemplateColumn.CellTemplate><DataTemplate>
-                                            <ComboBox ItemsSource="{Binding Data.ExpressionIdOptions, Source={StaticResource ViewModelProxy}}"
-                                                      Text="{Binding ExpressionId, UpdateSourceTrigger=PropertyChanged}" IsEditable="True"/>
-                                        </DataTemplate></DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                </DataGrid.Columns>
-                            </DataGrid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="390"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid Grid.Column="0">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel>
+                                                    <TextBlock Text="単独帰還反応一覧" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="任意項目です。未設定でもゲーム動作に問題はありません。" Foreground="Gray" FontSize="11"/>
+                                                </StackPanel>
+                                                <WrapPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <Button Content="追加" Command="{Binding AddSoloReturnReactionCommand}" Width="64" Margin="0,0,6,0"/>
+                                                    <Button Content="削除" Command="{Binding RemoveSoloReturnReactionCommand}" Width="64"/>
+                                                </WrapPanel>
+                                            </Grid>
+                                            <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedProfile.BattleMessages.SoloReturnReactions}"
+                                                      SelectedItem="{Binding SelectedSoloReturnReaction}"
+                                                      AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                                                      IsReadOnly="True" Margin="0,7,0,0">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="ReactionId" Binding="{Binding ReactionId}" Width="120"/>
+                                                    <DataGridTextColumn Header="結果" Binding="{Binding ResultType}" Width="90"/>
+                                                    <DataGridTextColumn Header="Context" Binding="{Binding BattleContextId}" Width="90"/>
+                                                    <DataGridTextColumn Header="本文" Binding="{Binding Message}" Width="*"/>
+                                                    <DataGridTextColumn Header="Voice" Binding="{Binding VoiceId}" Width="70"/>
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                        </Grid>
+                                        <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                                            <StackPanel>
+                                                <TextBlock Text="主人公単独外出後の帰還反応です。未設定ならゲームでは何も追加しません。"
+                                                           Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                                <GroupBox Header="基本" Margin="0,0,0,8">
+                                                    <Grid Margin="8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="130"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <TextBlock Text="ReactionId" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                                                        <TextBox Grid.Column="1" Text="{Binding SelectedSoloReturnReaction.ReactionId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+                                                        <TextBlock Grid.Row="1" Text="結果種別" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                                                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding SoloReturnResultTypeOptions}"
+                                                                  SelectedItem="{Binding SelectedSoloReturnReaction.ResultType, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+                                                        <TextBlock Grid.Row="2" Text="BattleContextId" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedSoloReturnReaction.BattleContextId, UpdateSourceTrigger=PropertyChanged}"/>
+                                                    </Grid>
+                                                </GroupBox>
+                                                <GroupBox Header="セリフ" Margin="0,0,0,8">
+                                                    <Grid Margin="8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="130"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <TextBlock Text="本文" VerticalAlignment="Top" Margin="0,4,8,6"/>
+                                                        <TextBox Grid.Column="1" Text="{Binding SelectedSoloReturnReaction.Message, UpdateSourceTrigger=PropertyChanged}"
+                                                                 AcceptsReturn="True" TextWrapping="Wrap" Height="100"
+                                                                 VerticalScrollBarVisibility="Auto" Margin="0,0,0,6"/>
+                                                        <TextBlock Grid.Row="1" Text="Voice ID" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding AvailableVoiceIds}"
+                                                                  Text="{Binding SelectedSoloReturnReaction.VoiceId, UpdateSourceTrigger=PropertyChanged}"
+                                                                  IsEditable="True" ToolTip="音声タブで検出したIDから選択。直接入力も可能です"/>
+                                                    </Grid>
+                                                </GroupBox>
+                                                <GroupBox Header="表示">
+                                                    <Grid Margin="8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="130"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <TextBlock Text="StillId" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                                                        <ComboBox Grid.Column="1" ItemsSource="{Binding BattleStillIdOptions}"
+                                                                  Text="{Binding SelectedSoloReturnReaction.StillId, UpdateSourceTrigger=PropertyChanged}"
+                                                                  IsEditable="True" Margin="0,0,0,6"/>
+                                                        <TextBlock Grid.Row="1" Text="表示方式" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                                                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding BattleVisualModeOptions}"
+                                                                  SelectedItem="{Binding SelectedSoloReturnReaction.VisualMode, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+                                                        <TextBlock Grid.Row="2" Text="表情ID" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                        <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding ExpressionIdOptions}"
+                                                                  Text="{Binding SelectedSoloReturnReaction.ExpressionId, UpdateSourceTrigger=PropertyChanged}" IsEditable="True"/>
+                                                    </Grid>
+                                                </GroupBox>
+                                            </StackPanel>
+                                        </ScrollViewer>
                                     </Grid>
                                 </TabItem>
                             </TabControl>

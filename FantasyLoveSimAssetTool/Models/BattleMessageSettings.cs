@@ -81,16 +81,32 @@ namespace FantasyLoveSimAssetTool.Models
         }
     }
 
-    public class SoloReturnReactionEntry
+    public class SoloReturnReactionEntry : ObservableObject
     {
-        public string ReactionId { get; set; } = string.Empty;
-        public string ResultType { get; set; } = "SoloVictory";
-        public string BattleContextId { get; set; } = string.Empty;
-        public string Message { get; set; } = string.Empty;
-        public string VoiceId { get; set; }
-        public string StillId { get; set; } = string.Empty;
-        public string VisualMode { get; set; } = "Auto";
-        public string ExpressionId { get; set; } = string.Empty;
+        private string reactionId = string.Empty;
+        private string resultType = "SoloVictory";
+        private string battleContextId = string.Empty;
+        private string message = string.Empty;
+        private string voiceId;
+        private string stillId = string.Empty;
+        private string visualMode = "Auto";
+        private string expressionId = string.Empty;
+
+        public string ReactionId { get => reactionId; set => Set(ref reactionId, value); }
+        public string ResultType { get => resultType; set => Set(ref resultType, value); }
+        public string BattleContextId { get => battleContextId; set => Set(ref battleContextId, value); }
+        public string Message { get => message; set => Set(ref message, value); }
+        public string VoiceId { get => voiceId; set => Set(ref voiceId, value); }
+        public string StillId { get => stillId; set => Set(ref stillId, value); }
+        public string VisualMode { get => visualMode; set => Set(ref visualMode, value); }
+        public string ExpressionId { get => expressionId; set => Set(ref expressionId, value); }
+
+        private void Set<T>(ref T field, T value, [System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
+        {
+            if (Equals(field, value)) return;
+            field = value;
+            OnPropertyChanged(propertyName);
+        }
     }
 
     public class BattleMessageSettings

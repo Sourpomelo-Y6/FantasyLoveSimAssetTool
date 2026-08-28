@@ -199,6 +199,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private string selectedVoiceAssignmentTarget;
         private BattleResultEventEntry selectedBattleResultEvent;
         private BattlePanelResultMessageEntry selectedBattlePanelMessage;
+        private SoloReturnReactionEntry selectedSoloReturnReaction;
         private HeroineBattleSkill selectedProductionBattleSkill;
         private HeroineTrainingSkill selectedProductionTrainingSkill;
         private HeroineSkillTreeNode selectedProductionSkillTreeNode;
@@ -2069,6 +2070,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 SelectedTrainingCatalogItem = selectedProfile?.TrainingCatalog?.Items?.FirstOrDefault();
                 SelectedBattleResultEvent = null;
                 SelectedBattlePanelMessage = null;
+                SelectedSoloReturnReaction = null;
                 RefreshStillPromptAfterProfilePromptChanged();
                 LoadStillDefinitions();
                 RefreshFilteredAssets();
@@ -2753,6 +2755,18 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
         }
 
+        public SoloReturnReactionEntry SelectedSoloReturnReaction
+        {
+            get { return selectedSoloReturnReaction; }
+            set
+            {
+                if (selectedSoloReturnReaction == value) { return; }
+                selectedSoloReturnReaction = value;
+                OnPropertyChanged(nameof(SelectedSoloReturnReaction));
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
         public ICommand CreateCharacterCommand { get; }
 
         public ICommand AddTrainingPrerequisiteCommand { get; }
@@ -2840,6 +2854,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
         public ICommand AddBattlePanelMessageCommand { get; }
 
         public ICommand RemoveBattlePanelMessageCommand { get; }
+
+        public ICommand AddSoloReturnReactionCommand { get; }
+
+        public ICommand RemoveSoloReturnReactionCommand { get; }
 
         public ICommand RefreshProductionStatusCommand { get; }
 
@@ -3585,6 +3603,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedProfile != null);
             RemoveBattlePanelMessageCommand = new RelayCommand(RemoveBattlePanelMessage,
                 () => SelectedProfile != null && SelectedBattlePanelMessage != null);
+            AddSoloReturnReactionCommand = new RelayCommand(AddSoloReturnReaction,
+                () => SelectedProfile != null);
+            RemoveSoloReturnReactionCommand = new RelayCommand(RemoveSoloReturnReaction,
+                () => SelectedProfile != null && SelectedSoloReturnReaction != null);
             RefreshProductionStatusCommand = new RelayCommand(RefreshProductionStatus);
             OpenProductionStatusTargetCommand = new RelayCommand<object>(OpenProductionStatusTarget);
             BrowseUnityProjectCommand = new RelayCommand(BrowseUnityProject);
@@ -14224,6 +14246,36 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 : entries[Math.Min(index, entries.Count - 1)];
             RefreshProductionStatus();
             StatusMessage = "選択中のパネル結果文を削除しました。保存すると確定します。";
+        }
+
+        private void AddSoloReturnReaction()
+        {
+            if (SelectedProfile == null) return;
+            SelectedProfile.BattleMessages ??= new BattleMessageSettings();
+            SelectedProfile.BattleMessages.SoloReturnReactions ??=
+                new ObservableCollection<SoloReturnReactionEntry>();
+            var entry = new SoloReturnReactionEntry
+            {
+                ReactionId = BuildUniqueId(
+                    (SelectedProfile.HeroineId ?? "Heroine") + "_SoloReturn",
+                    SelectedProfile.BattleMessages.SoloReturnReactions.Select(item => item?.ReactionId))
+            };
+            SelectedProfile.BattleMessages.SoloReturnReactions.Add(entry);
+            SelectedSoloReturnReaction = entry;
+            StatusMessage = $"単独帰還反応 {entry.ReactionId} を追加しました。保存すると確定します。";
+        }
+
+        private void RemoveSoloReturnReaction()
+        {
+            ObservableCollection<SoloReturnReactionEntry> entries =
+                SelectedProfile?.BattleMessages?.SoloReturnReactions;
+            if (entries == null || SelectedSoloReturnReaction == null) return;
+            int index = entries.IndexOf(SelectedSoloReturnReaction);
+            entries.Remove(SelectedSoloReturnReaction);
+            SelectedSoloReturnReaction = entries.Count == 0
+                ? null
+                : entries[Math.Min(index, entries.Count - 1)];
+            StatusMessage = "選択中の単独帰還反応を削除しました。保存すると確定します。";
         }
 
         private void LoadEnemies()

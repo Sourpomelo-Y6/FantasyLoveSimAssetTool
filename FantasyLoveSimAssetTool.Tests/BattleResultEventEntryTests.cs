@@ -56,5 +56,25 @@ namespace FantasyLoveSimAssetTool.Tests
             CollectionAssert.Contains(changed, nameof(BattlePanelResultMessageEntry.Message));
             CollectionAssert.Contains(changed, nameof(BattlePanelResultMessageEntry.VoiceId));
         }
+
+        [TestMethod]
+        public void EditingSoloReturnReactionSummaryFields_RaisesPropertyChanged()
+        {
+            var entry = new SoloReturnReactionEntry();
+            var changed = new List<string>();
+            entry.PropertyChanged += (_, args) => changed.Add(args.PropertyName);
+
+            entry.ReactionId = "Return_Win";
+            entry.ResultType = "DuoVictory";
+            entry.BattleContextId = "ForestBattle";
+            entry.Message = "お帰りなさい。";
+            entry.VoiceId = "return_win_01";
+
+            CollectionAssert.Contains(changed, nameof(SoloReturnReactionEntry.ReactionId));
+            CollectionAssert.Contains(changed, nameof(SoloReturnReactionEntry.ResultType));
+            CollectionAssert.Contains(changed, nameof(SoloReturnReactionEntry.BattleContextId));
+            CollectionAssert.Contains(changed, nameof(SoloReturnReactionEntry.Message));
+            CollectionAssert.Contains(changed, nameof(SoloReturnReactionEntry.VoiceId));
+        }
     }
 }
