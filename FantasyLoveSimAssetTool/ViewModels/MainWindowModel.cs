@@ -2833,6 +2833,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand OpenBattleMessagesTabCommand { get; }
 
+        public ICommand AddBattleResultEventCommand { get; }
+
+        public ICommand RemoveBattleResultEventCommand { get; }
+
         public ICommand RefreshProductionStatusCommand { get; }
 
         public ICommand OpenProductionStatusTargetCommand { get; }
@@ -3569,6 +3573,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
             RemoveSkillTreeConditionCommand = new RelayCommand(RemoveSkillTreeCondition,
                 () => SelectedProductionSkillTreeNode != null && SelectedSkillTreeCondition != null);
             OpenBattleMessagesTabCommand = new RelayCommand(() => SelectedMainTabIndex = 2);
+            AddBattleResultEventCommand = new RelayCommand(AddBattleResultEvent,
+                () => SelectedProfile != null);
+            RemoveBattleResultEventCommand = new RelayCommand(RemoveBattleResultEvent,
+                () => SelectedProfile != null && SelectedBattleResultEvent != null);
             RefreshProductionStatusCommand = new RelayCommand(RefreshProductionStatus);
             OpenProductionStatusTargetCommand = new RelayCommand<object>(OpenProductionStatusTarget);
             BrowseUnityProjectCommand = new RelayCommand(BrowseUnityProject);
@@ -14143,6 +14151,38 @@ namespace FantasyLoveSimAssetTool.ViewModels
                         string.Equals(item.ReactionType, check.TargetId, StringComparison.OrdinalIgnoreCase));
                     break;
             }
+        }
+
+        private void AddBattleResultEvent()
+        {
+            if (SelectedProfile == null) return;
+            SelectedProfile.BattleMessages ??= new BattleMessageSettings();
+            SelectedProfile.BattleMessages.ResultEvents ??=
+                new ObservableCollection<BattleResultEventEntry>();
+            var entry = new BattleResultEventEntry
+            {
+                EventId = BuildUniqueId(
+                    (SelectedProfile.HeroineId ?? "Heroine") + "_BattleResult",
+                    SelectedProfile.BattleMessages.ResultEvents.Select(item => item?.EventId))
+            };
+            SelectedProfile.BattleMessages.ResultEvents.Add(entry);
+            SelectedBattleResultEvent = entry;
+            RefreshProductionStatus();
+            StatusMessage = $"戦闘後イベント {entry.EventId} を追加しました。保存すると確定します。";
+        }
+
+        private void RemoveBattleResultEvent()
+        {
+            ObservableCollection<BattleResultEventEntry> entries =
+                SelectedProfile?.BattleMessages?.ResultEvents;
+            if (entries == null || SelectedBattleResultEvent == null) return;
+            int index = entries.IndexOf(SelectedBattleResultEvent);
+            entries.Remove(SelectedBattleResultEvent);
+            SelectedBattleResultEvent = entries.Count == 0
+                ? null
+                : entries[Math.Min(index, entries.Count - 1)];
+            RefreshProductionStatus();
+            StatusMessage = "選択中の戦闘後イベントを削除しました。保存すると確定します。";
         }
 
         private void LoadEnemies()

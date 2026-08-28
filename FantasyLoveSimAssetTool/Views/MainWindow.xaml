@@ -1733,86 +1733,134 @@
                             <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedBattleMessageTabIndex, Mode=TwoWay}">
                                 <TabItem Header="戦闘後イベント">
                                     <Grid Margin="8">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                        </Grid.RowDefinitions>
-                                        <TextBlock Text="結果種別、戦闘Context、本文、スチル、好感度、解放衣装を編集します。"
-                                                   Foreground="Gray" Margin="0,0,0,6"/>
-                            <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedProfile.BattleMessages.ResultEvents}"
-                                      SelectedItem="{Binding SelectedBattleResultEvent}"
-                                      AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True"
-                                      Margin="0">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="EventId" Binding="{Binding EventId}" Width="130"/>
-                                    <DataGridTemplateColumn Header="結果種別" Width="120">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <ComboBox ItemsSource="{Binding Data.BattleResultTypeOptions, Source={StaticResource ViewModelProxy}}"
-                                                          SelectedItem="{Binding ResultType, UpdateSourceTrigger=PropertyChanged}"/>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="BattleContextId" Binding="{Binding BattleContextId}" Width="130"/>
-                                    <DataGridTemplateColumn Header="話者種別" Width="110">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <ComboBox ItemsSource="{Binding Data.BattleSpeakerTypeOptions, Source={StaticResource ViewModelProxy}}"
-                                                          SelectedItem="{Binding SpeakerType, UpdateSourceTrigger=PropertyChanged}"/>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="話者名" Binding="{Binding SpeakerName}" Width="120"/>
-                                    <DataGridTextColumn Header="メッセージ" Binding="{Binding Message}" Width="*"/>
-                                    <DataGridTemplateColumn Header="Voice ID" Width="190">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <ComboBox ItemsSource="{Binding Data.AvailableVoiceIds, Source={StaticResource ViewModelProxy}}"
-                                                          Text="{Binding VoiceId, UpdateSourceTrigger=PropertyChanged}"
-                                                          IsEditable="True"
-                                                          ToolTip="音声タブで検出したIDから選択。直接入力も可能です"/>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="StillId" Width="140">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <ComboBox ItemsSource="{Binding Data.BattleStillIdOptions, Source={StaticResource ViewModelProxy}}"
-                                                          Text="{Binding StillId, UpdateSourceTrigger=PropertyChanged}"
-                                                          IsEditable="True"/>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="表示方式" Width="145">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <ComboBox ItemsSource="{Binding Data.BattleVisualModeOptions, Source={StaticResource ViewModelProxy}}"
-                                                          SelectedItem="{Binding VisualMode, UpdateSourceTrigger=PropertyChanged}"
-                                                          ToolTip="Auto: スチル優先／未解決時は暗幕+立ち絵、StillOnly: スチルのみ、StillWithPortrait: 暗幕+スチル+立ち絵、PortraitOnly: 暗幕+立ち絵"/>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="表情" Width="120">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <ComboBox ItemsSource="{Binding Data.ExpressionIdOptions, Source={StaticResource ViewModelProxy}}"
-                                                          Text="{Binding ExpressionId, UpdateSourceTrigger=PropertyChanged}"
-                                                          IsEditable="True"/>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="好感度" Binding="{Binding AffectionChange}" Width="65"/>
-                                    <DataGridTemplateColumn Header="解放OutfitId（カンマ区切り）" Width="210">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <ComboBox ItemsSource="{Binding Data.CostumeIdOptions, Source={StaticResource ViewModelProxy}}"
-                                                          Text="{Binding UnlockedOutfitIdsText, UpdateSourceTrigger=PropertyChanged}"
-                                                          IsEditable="True" ToolTip="候補を1件選択、または複数IDをカンマ区切りで入力"/>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                </DataGrid.Columns>
-                            </DataGrid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="350"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid Grid.Column="0">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel>
+                                                    <TextBlock Text="戦闘後イベント一覧" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="項目を選ぶと右側で詳細を編集できます。" Foreground="Gray" FontSize="11"/>
+                                                </StackPanel>
+                                                <WrapPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <Button Content="追加" Command="{Binding AddBattleResultEventCommand}" Width="64" Margin="0,0,6,0"/>
+                                                    <Button Content="削除" Command="{Binding RemoveBattleResultEventCommand}" Width="64"/>
+                                                </WrapPanel>
+                                            </Grid>
+                                            <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedProfile.BattleMessages.ResultEvents}"
+                                                      SelectedItem="{Binding SelectedBattleResultEvent}"
+                                                      AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                                                      IsReadOnly="True" Margin="0,7,0,0">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="EventId" Binding="{Binding EventId}" Width="125"/>
+                                                    <DataGridTextColumn Header="結果" Binding="{Binding ResultType}" Width="95"/>
+                                                    <DataGridTextColumn Header="本文" Binding="{Binding Message}" Width="*"/>
+                                                    <DataGridTextColumn Header="Voice" Binding="{Binding VoiceId}" Width="75"/>
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                        </Grid>
+                                        <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                                            <StackPanel>
+                                                <GroupBox Header="基本" Margin="0,0,0,8">
+                                                    <Grid Margin="8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="130"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <TextBlock Text="EventId" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                                                        <TextBox Grid.Column="1" Text="{Binding SelectedBattleResultEvent.EventId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+                                                        <TextBlock Grid.Row="1" Text="結果種別" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                                                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding BattleResultTypeOptions}"
+                                                                  SelectedItem="{Binding SelectedBattleResultEvent.ResultType, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+                                                        <TextBlock Grid.Row="2" Text="BattleContextId" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedBattleResultEvent.BattleContextId, UpdateSourceTrigger=PropertyChanged}"/>
+                                                    </Grid>
+                                                </GroupBox>
+                                                <GroupBox Header="セリフ" Margin="0,0,0,8">
+                                                    <Grid Margin="8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="130"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <TextBlock Text="話者種別" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                                                        <ComboBox Grid.Column="1" ItemsSource="{Binding BattleSpeakerTypeOptions}"
+                                                                  SelectedItem="{Binding SelectedBattleResultEvent.SpeakerType, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+                                                        <TextBlock Grid.Row="1" Text="話者名" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                                                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SelectedBattleResultEvent.SpeakerName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+                                                        <TextBlock Grid.Row="2" Text="本文" VerticalAlignment="Top" Margin="0,4,8,6"/>
+                                                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedBattleResultEvent.Message, UpdateSourceTrigger=PropertyChanged}"
+                                                                 AcceptsReturn="True" TextWrapping="Wrap" Height="90" VerticalScrollBarVisibility="Auto" Margin="0,0,0,6"/>
+                                                        <TextBlock Grid.Row="3" Text="Voice ID" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                        <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding AvailableVoiceIds}"
+                                                                  Text="{Binding SelectedBattleResultEvent.VoiceId, UpdateSourceTrigger=PropertyChanged}"
+                                                                  IsEditable="True" ToolTip="音声タブで検出したIDから選択。直接入力も可能です"/>
+                                                    </Grid>
+                                                </GroupBox>
+                                                <GroupBox Header="表示" Margin="0,0,0,8">
+                                                    <Grid Margin="8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="130"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <TextBlock Text="StillId" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                                                        <ComboBox Grid.Column="1" ItemsSource="{Binding BattleStillIdOptions}"
+                                                                  Text="{Binding SelectedBattleResultEvent.StillId, UpdateSourceTrigger=PropertyChanged}"
+                                                                  IsEditable="True" Margin="0,0,0,6"/>
+                                                        <TextBlock Grid.Row="1" Text="表示方式" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                                                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding BattleVisualModeOptions}"
+                                                                  SelectedItem="{Binding SelectedBattleResultEvent.VisualMode, UpdateSourceTrigger=PropertyChanged}"
+                                                                  ToolTip="Auto: スチル優先／未解決時は暗幕+立ち絵、StillOnly: スチルのみ、StillWithPortrait: 暗幕+スチル+立ち絵、PortraitOnly: 暗幕+立ち絵" Margin="0,0,0,6"/>
+                                                        <TextBlock Grid.Row="2" Text="表情ID" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                        <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding ExpressionIdOptions}"
+                                                                  Text="{Binding SelectedBattleResultEvent.ExpressionId, UpdateSourceTrigger=PropertyChanged}" IsEditable="True"/>
+                                                    </Grid>
+                                                </GroupBox>
+                                                <GroupBox Header="結果">
+                                                    <Grid Margin="8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="130"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <TextBlock Text="好感度変化" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                                                        <TextBox Grid.Column="1" Text="{Binding SelectedBattleResultEvent.AffectionChange, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+                                                        <TextBlock Grid.Row="1" Text="解放Outfit ID" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding CostumeIdOptions}"
+                                                                  Text="{Binding SelectedBattleResultEvent.UnlockedOutfitIdsText, UpdateSourceTrigger=PropertyChanged}"
+                                                                  IsEditable="True" ToolTip="候補を1件選択、または複数IDをカンマ区切りで入力"/>
+                                                    </Grid>
+                                                </GroupBox>
+                                            </StackPanel>
+                                        </ScrollViewer>
                                     </Grid>
                                 </TabItem>
                                 <TabItem Header="パネル結果文">

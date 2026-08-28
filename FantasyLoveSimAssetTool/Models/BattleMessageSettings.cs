@@ -1,23 +1,46 @@
+using FantasyLoveSimAssetTool.Common;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace FantasyLoveSimAssetTool.Models
 {
-    public class BattleResultEventEntry
+    public class BattleResultEventEntry : ObservableObject
     {
-        public string EventId { get; set; } = string.Empty;
-        public string ResultType { get; set; } = "SoloVictory";
-        public string BattleContextId { get; set; } = string.Empty;
-        public string SpeakerType { get; set; } = "Heroine";
-        public string SpeakerName { get; set; } = string.Empty;
-        public string Message { get; set; } = string.Empty;
-        public string VoiceId { get; set; }
-        public string StillId { get; set; } = string.Empty;
-        public string VisualMode { get; set; } = "Auto";
-        public string ExpressionId { get; set; } = string.Empty;
-        public int AffectionChange { get; set; }
-        public string[] UnlockedOutfitIds { get; set; } = new string[0];
+        private string eventId = string.Empty;
+        private string resultType = "SoloVictory";
+        private string battleContextId = string.Empty;
+        private string speakerType = "Heroine";
+        private string speakerName = string.Empty;
+        private string message = string.Empty;
+        private string voiceId;
+        private string stillId = string.Empty;
+        private string visualMode = "Auto";
+        private string expressionId = string.Empty;
+        private int affectionChange;
+        private string[] unlockedOutfitIds = new string[0];
+
+        public string EventId { get => eventId; set => Set(ref eventId, value); }
+        public string ResultType { get => resultType; set => Set(ref resultType, value); }
+        public string BattleContextId { get => battleContextId; set => Set(ref battleContextId, value); }
+        public string SpeakerType { get => speakerType; set => Set(ref speakerType, value); }
+        public string SpeakerName { get => speakerName; set => Set(ref speakerName, value); }
+        public string Message { get => message; set => Set(ref message, value); }
+        public string VoiceId { get => voiceId; set => Set(ref voiceId, value); }
+        public string StillId { get => stillId; set => Set(ref stillId, value); }
+        public string VisualMode { get => visualMode; set => Set(ref visualMode, value); }
+        public string ExpressionId { get => expressionId; set => Set(ref expressionId, value); }
+        public int AffectionChange { get => affectionChange; set => Set(ref affectionChange, value); }
+        public string[] UnlockedOutfitIds
+        {
+            get => unlockedOutfitIds;
+            set
+            {
+                unlockedOutfitIds = value ?? new string[0];
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(UnlockedOutfitIdsText));
+            }
+        }
 
         [JsonIgnore]
         public string UnlockedOutfitIdsText
@@ -28,6 +51,13 @@ namespace FantasyLoveSimAssetTool.Models
                 UnlockedOutfitIds = (value ?? string.Empty).Split(',').Select(x => x.Trim())
                     .Where(x => x.Length > 0).Distinct().ToArray();
             }
+        }
+
+        private void Set<T>(ref T field, T value, [System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
+        {
+            if (Equals(field, value)) return;
+            field = value;
+            OnPropertyChanged(propertyName);
         }
     }
 
