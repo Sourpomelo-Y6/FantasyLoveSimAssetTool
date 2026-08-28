@@ -26,7 +26,9 @@ namespace FantasyLoveSimAssetTool.Models
         StillDefinition,
         Audio,
         OutfitMessage,
-        OutfitReactionMessage
+        OutfitReactionMessage,
+        BattleResultEvent,
+        BattlePanelMessage
     }
 
     public sealed class ProductionStatusCell

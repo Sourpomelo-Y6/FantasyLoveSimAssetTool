@@ -11075,6 +11075,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             string battleEventsPath = Path.Combine(fromUnityFolder, "battle_result_events_from_unity.json");
             string battlePanelMessagesPath = Path.Combine(fromUnityFolder, "battle_panel_result_messages_from_unity.json");
             string soloReturnReactionsPath = Path.Combine(fromUnityFolder, "solo_return_reactions_from_unity.json");
+            string selectedBattleEventId = SelectedBattleResultEvent?.EventId;
+            string selectedPanelMessageId = SelectedBattlePanelMessage?.MessageId;
+            string selectedSoloReactionId = SelectedSoloReturnReaction?.ReactionId;
             BattleResultEventEntry[] beforeBattleEvents = SelectedProfile.BattleMessages?.ResultEvents?.ToArray()
                 ?? Array.Empty<BattleResultEventEntry>();
             BattlePanelResultMessageEntry[] beforePanelMessages = SelectedProfile.BattleMessages?.PanelMessages?.ToArray()
@@ -11103,6 +11106,19 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     BattleMessageSyncService.DeserializeSoloReturnReactions(File.ReadAllText(soloReturnReactionsPath)));
                 importedBattleMessages = true;
             }
+
+            SelectedBattleResultEvent = SelectedProfile.BattleMessages?.ResultEvents?.FirstOrDefault(item =>
+                !string.IsNullOrWhiteSpace(selectedBattleEventId) &&
+                string.Equals(item.EventId, selectedBattleEventId, StringComparison.OrdinalIgnoreCase)) ??
+                SelectedProfile.BattleMessages?.ResultEvents?.FirstOrDefault();
+            SelectedBattlePanelMessage = SelectedProfile.BattleMessages?.PanelMessages?.FirstOrDefault(item =>
+                !string.IsNullOrWhiteSpace(selectedPanelMessageId) &&
+                string.Equals(item.MessageId, selectedPanelMessageId, StringComparison.OrdinalIgnoreCase)) ??
+                SelectedProfile.BattleMessages?.PanelMessages?.FirstOrDefault();
+            SelectedSoloReturnReaction = SelectedProfile.BattleMessages?.SoloReturnReactions?.FirstOrDefault(item =>
+                !string.IsNullOrWhiteSpace(selectedSoloReactionId) &&
+                string.Equals(item.ReactionId, selectedSoloReactionId, StringComparison.OrdinalIgnoreCase)) ??
+                SelectedProfile.BattleMessages?.SoloReturnReactions?.FirstOrDefault();
 
             BattleMessageChangeSummary battleSummary = BattleMessageSyncService.AnalyzeChanges(
                 beforeBattleEvents,
@@ -14060,31 +14076,24 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private void SelectProductionStatusDetail(ProductionStatusCheckItem check)
         {
             if (SelectedProfile == null) return;
-            if (check.TargetTabIndex == 2 && check.TargetKind == ProductionStatusTargetKind.None)
-            {
-                const string resultPrefix = "戦闘結果 ";
-                const string panelPrefix = "戦闘パネル ";
-                if ((check.Name ?? string.Empty).StartsWith(panelPrefix, StringComparison.Ordinal))
-                {
-                    SelectedBattleMessageTabIndex = 1;
-                    string resultType = check.Name.Substring(panelPrefix.Length);
-                    SelectedBattlePanelMessage = SelectedProfile.BattleMessages?.PanelMessages?.FirstOrDefault(item =>
-                        string.Equals(item.ResultType, resultType, StringComparison.Ordinal));
-                }
-                else
-                {
-                    SelectedBattleMessageTabIndex = 0;
-                    string resultType = (check.Name ?? string.Empty).StartsWith(resultPrefix, StringComparison.Ordinal)
-                        ? check.Name.Substring(resultPrefix.Length)
-                        : string.Empty;
-                    if (!string.IsNullOrWhiteSpace(resultType))
-                        SelectedBattleResultEvent = SelectedProfile.BattleMessages?.ResultEvents?.FirstOrDefault(item =>
-                            string.Equals(item.ResultType, resultType, StringComparison.Ordinal));
-                }
-                return;
-            }
             switch (check.TargetKind)
             {
+                case ProductionStatusTargetKind.BattleResultEvent:
+                    SelectedBattleMessageTabIndex = 0;
+                    SelectedBattleResultEvent = SelectedProfile.BattleMessages?.ResultEvents?.FirstOrDefault(item =>
+                        !string.IsNullOrWhiteSpace(check.TargetId) &&
+                        string.Equals(item.EventId, check.TargetId, StringComparison.OrdinalIgnoreCase)) ??
+                        SelectedProfile.BattleMessages?.ResultEvents?.FirstOrDefault(item =>
+                            string.Equals(item.ResultType, check.TargetSubId, StringComparison.Ordinal));
+                    break;
+                case ProductionStatusTargetKind.BattlePanelMessage:
+                    SelectedBattleMessageTabIndex = 1;
+                    SelectedBattlePanelMessage = SelectedProfile.BattleMessages?.PanelMessages?.FirstOrDefault(item =>
+                        !string.IsNullOrWhiteSpace(check.TargetId) &&
+                        string.Equals(item.MessageId, check.TargetId, StringComparison.OrdinalIgnoreCase)) ??
+                        SelectedProfile.BattleMessages?.PanelMessages?.FirstOrDefault(item =>
+                            string.Equals(item.ResultType, check.TargetSubId, StringComparison.Ordinal));
+                    break;
                 case ProductionStatusTargetKind.Conversation:
                     SelectedConversationDataKind = check.ConversationKind;
                     RefreshFilteredConversationEntries();

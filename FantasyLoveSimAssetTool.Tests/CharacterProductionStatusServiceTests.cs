@@ -56,6 +56,34 @@ namespace FantasyLoveSimAssetTool.Tests
         }
 
         [TestMethod]
+        public void EvaluateBattleMessages_ProvidesStableNavigationTargets()
+        {
+            HeroineProfile profile = CompleteProfile();
+
+            CharacterProductionStatusRow row = EvaluateWithDefinitions(profile);
+
+            ProductionStatusCheckItem result = row.BattleMessages.Checks.Single(x =>
+                x.Name == "戦闘結果 SoloVictory");
+            Assert.AreEqual(ProductionStatusTargetKind.BattleResultEvent, result.TargetKind);
+            Assert.AreEqual("SoloVictory", result.TargetId);
+            Assert.AreEqual("SoloVictory", result.TargetSubId);
+            Assert.AreEqual(2, result.TargetTabIndex);
+
+            ProductionStatusCheckItem panel = row.BattleMessages.Checks.Single(x =>
+                x.Name == "戦闘パネル Victory");
+            Assert.AreEqual(ProductionStatusTargetKind.BattlePanelMessage, panel.TargetKind);
+            Assert.AreEqual("Victory", panel.TargetId);
+            Assert.AreEqual("Victory", panel.TargetSubId);
+            Assert.AreEqual(2, panel.TargetTabIndex);
+
+            ProductionStatusCheckItem escape = row.BattleMessages.Checks.Single(x =>
+                x.Name == "逃走イベント");
+            Assert.AreEqual(ProductionStatusTargetKind.BattleResultEvent, escape.TargetKind);
+            Assert.AreEqual("Escape", escape.TargetSubId);
+            Assert.IsFalse(escape.IsApplicable);
+        }
+
+        [TestMethod]
         public void Evaluate_EmptyProfile_ReturnsMissingWithoutThrowing()
         {
             CharacterProductionStatusRow row = CharacterProductionStatusService.Evaluate(new HeroineProfile());

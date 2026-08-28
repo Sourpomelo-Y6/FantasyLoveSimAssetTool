@@ -942,15 +942,38 @@ namespace FantasyLoveSimAssetTool.Services
             string details = missing.Count == 0
                 ? $"必須結果イベント {RequiredResultTypes.Length} 件、パネル文 {RequiredPanelTypes.Length} 件を登録済みです。逃走は任意です。"
                 : $"必須項目 {completed}/{RequiredResultTypes.Length + RequiredPanelTypes.Length}。不足: {string.Join(", ", missing)}。逃走は任意です。";
-            List<ProductionStatusCheckItem> checks = RequiredResultTypes.Select(type => Check(
-                "戦闘結果 " + type,
-                events.Any(x => string.Equals(x.ResultType, type, StringComparison.Ordinal) && !string.IsNullOrWhiteSpace(x.Message)),
-                "対応する本文入りイベントが必要です。")).ToList();
-            checks.AddRange(RequiredPanelTypes.Select(type => Check(
-                "戦闘パネル " + type,
-                panels.Any(x => string.Equals(x.ResultType, type, StringComparison.Ordinal) && !string.IsNullOrWhiteSpace(x.Message)),
-                "対応する本文入りパネル文が必要です。")));
-            checks.Add(Check("逃走イベント", true, "任意項目のため完成判定には影響しません。"));
+            List<ProductionStatusCheckItem> checks = RequiredResultTypes.Select(type =>
+            {
+                BattleResultEventEntry entry = events.FirstOrDefault(x =>
+                    string.Equals(x.ResultType, type, StringComparison.Ordinal));
+                ProductionStatusCheckItem check = Check(
+                    "戦闘結果 " + type,
+                    entry != null && !string.IsNullOrWhiteSpace(entry.Message),
+                    "対応する本文入りイベントが必要です。",
+                    ProductionStatusTargetKind.BattleResultEvent, entry?.EventId, 2);
+                check.TargetSubId = type;
+                return check;
+            }).ToList();
+            checks.AddRange(RequiredPanelTypes.Select(type =>
+            {
+                BattlePanelResultMessageEntry entry = panels.FirstOrDefault(x =>
+                    string.Equals(x.ResultType, type, StringComparison.Ordinal));
+                ProductionStatusCheckItem check = Check(
+                    "戦闘パネル " + type,
+                    entry != null && !string.IsNullOrWhiteSpace(entry.Message),
+                    "対応する本文入りパネル文が必要です。",
+                    ProductionStatusTargetKind.BattlePanelMessage, entry?.MessageId, 2);
+                check.TargetSubId = type;
+                return check;
+            }));
+            BattleResultEventEntry escape = events.FirstOrDefault(x =>
+                string.Equals(x.ResultType, "Escape", StringComparison.Ordinal));
+            ProductionStatusCheckItem escapeCheck = Check("逃走イベント", true,
+                "任意項目のため完成判定には影響しません。",
+                ProductionStatusTargetKind.BattleResultEvent, escape?.EventId, 2);
+            escapeCheck.TargetSubId = "Escape";
+            escapeCheck.IsApplicable = false;
+            checks.Add(escapeCheck);
             return Cell(profile, "戦闘メッセージ", 2, kind, details, checks);
         }
 
