@@ -21,6 +21,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
     public class MainWindowModel : ObservableObject
     {
         private const int LayerPreviewTabIndex = 11;
+        private const int ImageDetailTabIndex = 4;
         private static readonly string[] OutfitReactionTypes =
         {
             "Praise",
@@ -2997,6 +2998,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand PrepareImageRegistrationForStillCommand { get; }
 
+        public ICommand RegisterStillImageCommand { get; }
+
+        public ICommand UnregisterStillImageCommand { get; }
+
+        public ICommand OpenStillImageDetailCommand { get; }
+
         public ICommand ExportSelectedProfileCommand { get; }
 
         public ICommand OpenExportDirectoryCommand { get; }
@@ -3784,6 +3791,16 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedProfile != null && SelectedStillDefinition != null);
             PrepareImageRegistrationForStillCommand = new RelayCommand(
                 PrepareImageRegistrationForStill,
+                () => SelectedProfile != null && SelectedStillDefinition != null);
+            RegisterStillImageCommand = new RelayCommand(
+                RegisterStillImage,
+                () => SelectedProfile != null && SelectedStillDefinition != null);
+            UnregisterStillImageCommand = new RelayCommand(
+                UnregisterStillImage,
+                () => SelectedProfile != null && SelectedStillDefinition != null &&
+                    FindAssetForStill(SelectedProfile, SelectedStillDefinition) != null);
+            OpenStillImageDetailCommand = new RelayCommand(
+                OpenStillImageDetail,
                 () => SelectedProfile != null && SelectedStillDefinition != null);
             ExportSelectedProfileCommand = new RelayCommand(ExportSelectedProfile, () => SelectedProfile != null);
             OpenExportDirectoryCommand = new RelayCommand(OpenExportDirectory);
@@ -7801,6 +7818,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     return;
                 }
 
+                SelectedAsset = null;
                 RefreshFilteredAssets();
                 RefreshAcceptedAssets();
                 RefreshSelectedStillStatus();
@@ -9935,14 +9953,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 return;
             }
 
+            HeroineAsset asset = FindAssetForStill(SelectedProfile, SelectedStillDefinition);
+            SelectedAsset = asset;
             AssetIdInput = SelectedStillDefinition.AssetId;
             SelectedAssetUsage = SelectedStillDefinition.Usage;
-            SelectedAssetStatus = AssetStatus.Pending;
-
-            HeroineAsset asset = FindAssetForStill(SelectedProfile, SelectedStillDefinition);
+            SelectedAssetStatus = asset?.Status ?? AssetStatus.Pending;
+            if (asset == null) ImageSourcePathInput = string.Empty;
             if (asset != null)
             {
-                SelectedAsset = asset;
                 StatusMessage = $"{SelectedStillDefinition.DisplayName} の既存 Asset を選択しました。画像タブで状態確認または画像情報保存を行えます。";
             }
             else
@@ -9951,6 +9969,65 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             RefreshSelectedStillStatus();
+        }
+
+        private void RegisterStillImage()
+        {
+            if (SelectedProfile == null || SelectedStillDefinition == null) return;
+
+            StillDefinition still = SelectedStillDefinition;
+            HeroineAsset existing = FindAssetForStill(SelectedProfile, still);
+            AssetIdInput = still.AssetId;
+            SelectedAssetUsage = still.Usage;
+            SelectedAssetStatus = existing?.Status ?? AssetStatus.Pending;
+
+            var dialog = new OpenFileDialog
+            {
+                Title = $"{still.DisplayName} に登録する画像を選択",
+                Filter = "Image files (*.png;*.jpg;*.jpeg;*.webp)|*.png;*.jpg;*.jpeg;*.webp|All files (*.*)|*.*"
+            };
+            if (dialog.ShowDialog() != true)
+            {
+                StatusMessage = "スチル画像の登録をキャンセルしました。";
+                return;
+            }
+
+            try
+            {
+                ImageSourcePathInput = dialog.FileName;
+                HeroineAsset asset = AddImageAssetCore();
+                if (asset == null) return;
+                RefreshSelectedStillStatus();
+                StatusMessage = $"{still.DisplayName} の画像を登録しました。保存済み画像を右側のプレビューで確認できます。";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"スチル画像の登録に失敗しました: {ex.Message}";
+            }
+        }
+
+        private void UnregisterStillImage()
+        {
+            if (SelectedProfile == null || SelectedStillDefinition == null) return;
+            HeroineAsset asset = FindAssetForStill(SelectedProfile, SelectedStillDefinition);
+            if (asset == null)
+            {
+                RefreshSelectedStillStatus();
+                StatusMessage = "選択中スチルには登録済み画像がありません。";
+                return;
+            }
+
+            SelectedAsset = asset;
+            UnregisterImageAsset();
+            RefreshSelectedStillStatus();
+        }
+
+        private void OpenStillImageDetail()
+        {
+            if (SelectedProfile == null || SelectedStillDefinition == null) return;
+            PrepareImageRegistrationForStill();
+            SelectedMainTabIndex = ImageDetailTabIndex;
+            StatusMessage = $"{SelectedStillDefinition.DisplayName} を画像（詳細）で開きました。";
         }
 
         private HeroineAsset EnsureAssetForStill(HeroineProfile profile, StillDefinition stillDefinition)
