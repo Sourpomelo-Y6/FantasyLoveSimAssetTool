@@ -218,6 +218,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private HeroineBattleSkill generatedShortTextBattleSkill;
         private HeroineTrainingSkill generatedShortTextTrainingSkill;
         private HeroineSkillTreeNode generatedShortTextSkillTreeNode;
+        private BattleResultEventEntry generatedShortTextBattleResultEvent;
+        private BattlePanelResultMessageEntry generatedShortTextBattlePanelMessage;
+        private SoloReturnReactionEntry generatedShortTextSoloReturnReaction;
         private ConversationLineGenerationSession generatedShortTextConversationSession;
         private string generatedShortTextConversationAdditionalPrompt = string.Empty;
         private ConversationSituationPrompt selectedConversationSituationPrompt;
@@ -559,6 +562,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     return SelectedConversationEntry == null || SelectedConversationLine == null
                         ? "会話項目と台詞行を選択してください。"
                         : $"{SelectedConversationEntry.Kind}: {SelectedConversationEntry.Id} / 話者: {SelectedConversationLine.Speaker}";
+                if (SelectedShortTextTarget?.RequiredContext == "BattleResultEvent")
+                    return SelectedBattleResultEvent == null ? "戦闘後イベントを選択してください。" : $"{SelectedBattleResultEvent.EventId} / 結果: {SelectedBattleResultEvent.ResultType}";
+                if (SelectedShortTextTarget?.RequiredContext == "BattlePanelMessage")
+                    return SelectedBattlePanelMessage == null ? "パネル結果文を選択してください。" : $"{SelectedBattlePanelMessage.MessageId} / 結果: {SelectedBattlePanelMessage.ResultType}";
+                if (SelectedShortTextTarget?.RequiredContext == "SoloReturnReaction")
+                    return SelectedSoloReturnReaction == null ? "単独帰還反応を選択してください。" : $"{SelectedSoloReturnReaction.ReactionId} / 結果: {SelectedSoloReturnReaction.ResultType}";
                 return "ヒロイン共通台詞";
             }
         }
@@ -2739,6 +2748,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedBattleResultEvent == value) { return; }
                 selectedBattleResultEvent = value;
                 OnPropertyChanged(nameof(SelectedBattleResultEvent));
+                OnPropertyChanged(nameof(CurrentShortTextValue));
+                OnPropertyChanged(nameof(CurrentShortTextContext));
+                if (SelectedShortTextTarget?.RequiredContext == "BattleResultEvent") ClearShortTextGenerationResult();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -2751,6 +2763,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedBattlePanelMessage == value) { return; }
                 selectedBattlePanelMessage = value;
                 OnPropertyChanged(nameof(SelectedBattlePanelMessage));
+                OnPropertyChanged(nameof(CurrentShortTextValue));
+                OnPropertyChanged(nameof(CurrentShortTextContext));
+                if (SelectedShortTextTarget?.RequiredContext == "BattlePanelMessage") ClearShortTextGenerationResult();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -2763,6 +2778,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedSoloReturnReaction == value) { return; }
                 selectedSoloReturnReaction = value;
                 OnPropertyChanged(nameof(SelectedSoloReturnReaction));
+                OnPropertyChanged(nameof(CurrentShortTextValue));
+                OnPropertyChanged(nameof(CurrentShortTextContext));
+                if (SelectedShortTextTarget?.RequiredContext == "SoloReturnReaction") ClearShortTextGenerationResult();
                 CommandManager.InvalidateRequerySuggested();
             }
         }
@@ -3150,7 +3168,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 new ShortTextGenerationTarget("TrainingSkillDisplayName", "訓練スキル名", "選択した訓練スキルの効果が伝わる短い表示名", 2, 18, requiredContext: "TrainingSkill"),
                 new ShortTextGenerationTarget("TrainingSkillDescription", "訓練スキル説明", "選択した訓練スキルの効果を自然に説明する文", 15, 80, requiredContext: "TrainingSkill"),
                 new ShortTextGenerationTarget("SkillTreeNodeDisplayName", "スキルノード名", "選択したスキルツリーノードの内容が伝わる短い表示名", 2, 18, requiredContext: "SkillTreeNode"),
-                new ShortTextGenerationTarget("ConversationLineText", "選択中の台詞本文", "選択中の会話行に入る自然な台詞", 5, 160, requiredContext: "ConversationLine")
+                new ShortTextGenerationTarget("ConversationLineText", "選択中の台詞本文", "選択中の会話行に入る自然な台詞", 5, 160, requiredContext: "ConversationLine"),
+                new ShortTextGenerationTarget("BattleResultEventMessage", "戦闘後イベント本文", "選択した戦闘結果の直後に表示する自然な台詞", 10, 120, requiredContext: "BattleResultEvent"),
+                new ShortTextGenerationTarget("BattlePanelMessage", "パネル結果文", "戦闘結果パネルに表示する簡潔なメッセージ", 5, 60, requiredContext: "BattlePanelMessage"),
+                new ShortTextGenerationTarget("SoloReturnReactionMessage", "単独帰還反応", "主人公が単独戦闘から帰還したときのヒロインの自然な反応", 10, 120, requiredContext: "SoloReturnReaction")
             };
             ConversationSituationPrompts = new ObservableCollection<ConversationSituationPrompt>(
                 conversationPromptService.LoadSituations());
@@ -10036,6 +10057,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             HeroineBattleSkill sourceBattleSkill = SelectedProductionBattleSkill;
             HeroineTrainingSkill sourceTrainingSkill = SelectedProductionTrainingSkill;
             HeroineSkillTreeNode sourceSkillTreeNode = SelectedProductionSkillTreeNode;
+            BattleResultEventEntry sourceBattleResultEvent = SelectedBattleResultEvent;
+            BattlePanelResultMessageEntry sourceBattlePanelMessage = SelectedBattlePanelMessage;
+            SoloReturnReactionEntry sourceSoloReturnReaction = SelectedSoloReturnReaction;
             ConversationLineGenerationSession sourceConversationSession = target.RequiredContext == "ConversationLine"
                 ? new ConversationLineGenerationSession(SelectedConversationEntry, SelectedConversationLine)
                 : null;
@@ -10072,6 +10096,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     (target.RequiredContext == "BattleSkill" && SelectedProductionBattleSkill != sourceBattleSkill) ||
                     (target.RequiredContext == "TrainingSkill" && SelectedProductionTrainingSkill != sourceTrainingSkill) ||
                     (target.RequiredContext == "SkillTreeNode" && SelectedProductionSkillTreeNode != sourceSkillTreeNode) ||
+                    (target.RequiredContext == "BattleResultEvent" && SelectedBattleResultEvent != sourceBattleResultEvent) ||
+                    (target.RequiredContext == "BattlePanelMessage" && SelectedBattlePanelMessage != sourceBattlePanelMessage) ||
+                    (target.RequiredContext == "SoloReturnReaction" && SelectedSoloReturnReaction != sourceSoloReturnReaction) ||
                     (target.RequiredContext == "ConversationLine" &&
                         (!sourceConversationSession.IsCurrent(SelectedConversationEntry, SelectedConversationLine) ||
                          !string.Equals(generationContext.ConversationAdditionalPrompt,
@@ -10081,6 +10108,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 generatedShortTextBattleSkill = sourceBattleSkill;
                 generatedShortTextTrainingSkill = sourceTrainingSkill;
                 generatedShortTextSkillTreeNode = sourceSkillTreeNode;
+                generatedShortTextBattleResultEvent = sourceBattleResultEvent;
+                generatedShortTextBattlePanelMessage = sourceBattlePanelMessage;
+                generatedShortTextSoloReturnReaction = sourceSoloReturnReaction;
                 generatedShortTextConversationSession = sourceConversationSession;
                 generatedShortTextConversationAdditionalPrompt = generationContext.ConversationAdditionalPrompt;
                 ShortTextAiRawResponse = result.RawResponse;
@@ -10146,6 +10176,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     SelectedProductionTrainingSkill != generatedShortTextTrainingSkill) ||
                 (SelectedShortTextTarget.RequiredContext == "SkillTreeNode" &&
                     SelectedProductionSkillTreeNode != generatedShortTextSkillTreeNode) ||
+                (SelectedShortTextTarget.RequiredContext == "BattleResultEvent" &&
+                    SelectedBattleResultEvent != generatedShortTextBattleResultEvent) ||
+                (SelectedShortTextTarget.RequiredContext == "BattlePanelMessage" &&
+                    SelectedBattlePanelMessage != generatedShortTextBattlePanelMessage) ||
+                (SelectedShortTextTarget.RequiredContext == "SoloReturnReaction" &&
+                    SelectedSoloReturnReaction != generatedShortTextSoloReturnReaction) ||
                 (SelectedShortTextTarget.RequiredContext == "ConversationLine" &&
                     (generatedShortTextConversationSession == null ||
                         !generatedShortTextConversationSession.IsCurrent(SelectedConversationEntry, SelectedConversationLine) ||
@@ -10188,6 +10224,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             generatedShortTextBattleSkill = null;
             generatedShortTextTrainingSkill = null;
             generatedShortTextSkillTreeNode = null;
+            generatedShortTextBattleResultEvent = null;
+            generatedShortTextBattlePanelMessage = null;
+            generatedShortTextSoloReturnReaction = null;
             generatedShortTextConversationSession = null;
             generatedShortTextConversationAdditionalPrompt = string.Empty;
         }
@@ -10204,6 +10243,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
             if (SelectedShortTextTarget.RequiredContext == "BattleSkill") return SelectedProductionBattleSkill != null;
             if (SelectedShortTextTarget.RequiredContext == "TrainingSkill") return SelectedProductionTrainingSkill != null;
             if (SelectedShortTextTarget.RequiredContext == "SkillTreeNode") return SelectedProductionSkillTreeNode != null;
+            if (SelectedShortTextTarget.RequiredContext == "BattleResultEvent") return SelectedBattleResultEvent != null;
+            if (SelectedShortTextTarget.RequiredContext == "BattlePanelMessage") return SelectedBattlePanelMessage != null;
+            if (SelectedShortTextTarget.RequiredContext == "SoloReturnReaction") return SelectedSoloReturnReaction != null;
             if (SelectedShortTextTarget.RequiredContext == "ConversationLine")
                 return SelectedConversationEntry != null && SelectedConversationLine != null &&
                     (SelectedConversationSituationPrompt == null || GetCurrentConversationCharacterPrompt() != null);
@@ -10227,8 +10269,19 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 ReactionType = target.RequiredContext == "OutfitReaction"
                     ? SelectedOutfitReactionMessageOverride?.ReactionType ?? string.Empty
                     : string.Empty,
-                TaskContext = BuildSkillShortTextContext(target)
+                TaskContext = BuildShortTextTaskContext(target)
             };
+        }
+
+        private string BuildShortTextTaskContext(ShortTextGenerationTarget target)
+        {
+            if (target?.RequiredContext == "BattleResultEvent")
+                return $"結果種別={SelectedBattleResultEvent?.ResultType}; BattleContextId={SelectedBattleResultEvent?.BattleContextId}; 話者種別={SelectedBattleResultEvent?.SpeakerType}; 話者名={SelectedBattleResultEvent?.SpeakerName}";
+            if (target?.RequiredContext == "BattlePanelMessage")
+                return $"結果種別={SelectedBattlePanelMessage?.ResultType}; 戦闘結果パネル用の短い表示文";
+            if (target?.RequiredContext == "SoloReturnReaction")
+                return $"結果種別={SelectedSoloReturnReaction?.ResultType}; BattleContextId={SelectedSoloReturnReaction?.BattleContextId}; 主人公の単独戦闘からの帰還に対するヒロインの発言";
+            return BuildSkillShortTextContext(target);
         }
 
         private void RefreshConversationCharacterPrompt()
@@ -10657,7 +10710,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
         {
             if (target?.RequiredContext != "OutfitMessage" &&
                 target?.RequiredContext != "OutfitReaction" &&
-                target?.RequiredContext != "ConversationLine")
+                target?.RequiredContext != "ConversationLine" &&
+                target?.RequiredContext != "BattleResultEvent" &&
+                target?.RequiredContext != "SoloReturnReaction")
             {
                 return Array.Empty<string>();
             }
@@ -10691,6 +10746,14 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     if (SelectedConversationLine != null)
                         SelectedConversationLine.Expression = expressionId;
                     break;
+                case "BattleResultEventMessage":
+                    if (SelectedBattleResultEvent != null)
+                        SelectedBattleResultEvent.ExpressionId = expressionId;
+                    break;
+                case "SoloReturnReactionMessage":
+                    if (SelectedSoloReturnReaction != null)
+                        SelectedSoloReturnReaction.ExpressionId = expressionId;
+                    break;
             }
         }
 
@@ -10713,6 +10776,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 case "TrainingSkillDescription": return SelectedProductionTrainingSkill?.Description ?? string.Empty;
                 case "SkillTreeNodeDisplayName": return SelectedProductionSkillTreeNode?.DisplayName ?? string.Empty;
                 case "ConversationLineText": return SelectedConversationLine?.Text ?? string.Empty;
+                case "BattleResultEventMessage": return SelectedBattleResultEvent?.Message ?? string.Empty;
+                case "BattlePanelMessage": return SelectedBattlePanelMessage?.Message ?? string.Empty;
+                case "SoloReturnReactionMessage": return SelectedSoloReturnReaction?.Message ?? string.Empty;
                 default: return string.Empty;
             }
         }
@@ -10735,6 +10801,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 case "TrainingSkillDescription": SelectedProductionTrainingSkill.Description = value; break;
                 case "SkillTreeNodeDisplayName": SelectedProductionSkillTreeNode.DisplayName = value; break;
                 case "ConversationLineText": SelectedConversationLine.Text = value; break;
+                case "BattleResultEventMessage": SelectedBattleResultEvent.Message = value; break;
+                case "BattlePanelMessage": SelectedBattlePanelMessage.Message = value; break;
+                case "SoloReturnReactionMessage": SelectedSoloReturnReaction.Message = value; break;
                 default: throw new InvalidOperationException($"未対応の生成対象です: {target.Id}");
             }
         }

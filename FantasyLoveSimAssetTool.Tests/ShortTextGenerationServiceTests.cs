@@ -172,7 +172,35 @@ namespace FantasyLoveSimAssetTool.Tests
                 ShortTextGenerationService.BuildPrompt(new HeroineProfile(), target,
                     context: new ShortTextGenerationContext()));
 
-            StringAssert.Contains(error.Message, "スキルまたはノード");
+            StringAssert.Contains(error.Message, "生成対象の行");
+        }
+
+        [DataTestMethod]
+        [DataRow("BattleResultEvent", "戦闘後イベント本文")]
+        [DataRow("BattlePanelMessage", "パネル結果文")]
+        [DataRow("SoloReturnReaction", "単独帰還反応")]
+        public void BuildPrompt_ForBattleMessageIncludesCompactSelectedRowContext(
+            string requiredContext, string displayName)
+        {
+            var profile = new HeroineProfile
+            {
+                DisplayName = "クーデリア",
+                Personality = "誇り高い",
+                SpeakingStyle = "丁寧"
+            };
+            var target = new ShortTextGenerationTarget(
+                requiredContext + "Message", displayName, displayName + "を作る", 5, 120,
+                requiredContext: requiredContext);
+
+            string prompt = ShortTextGenerationService.BuildPrompt(profile, target, context:
+                new ShortTextGenerationContext
+                {
+                    TaskContext = "結果種別=Victory; BattleContextId=Forest"
+                });
+
+            StringAssert.Contains(prompt, "結果種別=Victory");
+            StringAssert.Contains(prompt, "BattleContextId=Forest");
+            StringAssert.Contains(prompt, "クーデリア");
         }
 
         [TestMethod]

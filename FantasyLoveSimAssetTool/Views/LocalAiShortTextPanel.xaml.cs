@@ -83,6 +83,12 @@ namespace FantasyLoveSimAssetTool.Views
                 return target.RequiredContext == "SkillTreeNode";
             if (string.Equals(targetGroup, "ConversationLine", StringComparison.OrdinalIgnoreCase))
                 return target.RequiredContext == "ConversationLine";
+            if (string.Equals(targetGroup, "BattleResultEvent", StringComparison.OrdinalIgnoreCase))
+                return target.RequiredContext == "BattleResultEvent";
+            if (string.Equals(targetGroup, "BattlePanelMessage", StringComparison.OrdinalIgnoreCase))
+                return target.RequiredContext == "BattlePanelMessage";
+            if (string.Equals(targetGroup, "SoloReturnReaction", StringComparison.OrdinalIgnoreCase))
+                return target.RequiredContext == "SoloReturnReaction";
             return target.RequiredContext == "None";
         }
     }

@@ -105,10 +105,13 @@ namespace FantasyLoveSimAssetTool.Services
             }
             else if (target.RequiredContext == "BattleSkill" ||
                 target.RequiredContext == "TrainingSkill" ||
-                target.RequiredContext == "SkillTreeNode")
+                target.RequiredContext == "SkillTreeNode" ||
+                target.RequiredContext == "BattleResultEvent" ||
+                target.RequiredContext == "BattlePanelMessage" ||
+                target.RequiredContext == "SoloReturnReaction")
             {
                 if (string.IsNullOrWhiteSpace(context?.TaskContext))
-                    throw new InvalidOperationException("生成対象のスキルまたはノードを選択してください。");
+                    throw new InvalidOperationException("生成対象の行を選択してください。");
                 Append(builder, "対象設定", context.TaskContext, 500);
             }
             else if (target.RequiredContext == "ConversationLine")
@@ -131,7 +134,8 @@ namespace FantasyLoveSimAssetTool.Services
             }
             List<string> allowedExpressions = NormalizeExpressionIds(expressionIds);
             if (target.RequiredContext == "OutfitMessage" || target.RequiredContext == "OutfitReaction" ||
-                target.RequiredContext == "ConversationLine")
+                target.RequiredContext == "ConversationLine" || target.RequiredContext == "BattleResultEvent" ||
+                target.RequiredContext == "SoloReturnReaction")
             {
                 if (allowedExpressions.Count > 0)
                     builder.AppendLine("各候補の表情は次のIDから1つだけ選んでください: " + string.Join(",", allowedExpressions));

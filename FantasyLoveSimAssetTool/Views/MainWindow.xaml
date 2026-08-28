@@ -1841,7 +1841,7 @@
                                                                   Text="{Binding SelectedBattleResultEvent.ExpressionId, UpdateSourceTrigger=PropertyChanged}" IsEditable="True"/>
                                                     </Grid>
                                                 </GroupBox>
-                                                <GroupBox Header="結果">
+                                                <GroupBox Header="結果" Margin="0,0,0,8">
                                                     <Grid Margin="8">
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="130"/>
@@ -1859,6 +1859,7 @@
                                                                   IsEditable="True" ToolTip="候補を1件選択、または複数IDをカンマ区切りで入力"/>
                                                     </Grid>
                                                 </GroupBox>
+                                                <local:LocalAiShortTextPanel TargetGroup="BattleResultEvent"/>
                                             </StackPanel>
                                         </ScrollViewer>
                                     </Grid>
@@ -1905,7 +1906,7 @@
                                             <StackPanel>
                                                 <TextBlock Text="戦闘パネルに表示する結果メッセージを編集します。"
                                                            Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,8"/>
-                                                <GroupBox Header="パネル結果文">
+                                                <GroupBox Header="パネル結果文" Margin="0,0,0,8">
                                                     <Grid Margin="8">
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="130"/>
@@ -1932,6 +1933,7 @@
                                                                   IsEditable="True" ToolTip="音声タブで検出したIDから選択。直接入力も可能です"/>
                                                     </Grid>
                                                 </GroupBox>
+                                                <local:LocalAiShortTextPanel TargetGroup="BattlePanelMessage"/>
                                             </StackPanel>
                                         </ScrollViewer>
                                     </Grid>
@@ -2019,7 +2021,7 @@
                                                                   IsEditable="True" ToolTip="音声タブで検出したIDから選択。直接入力も可能です"/>
                                                     </Grid>
                                                 </GroupBox>
-                                                <GroupBox Header="表示">
+                                                <GroupBox Header="表示" Margin="0,0,0,8">
                                                     <Grid Margin="8">
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="130"/>
@@ -2042,6 +2044,7 @@
                                                                   Text="{Binding SelectedSoloReturnReaction.ExpressionId, UpdateSourceTrigger=PropertyChanged}" IsEditable="True"/>
                                                     </Grid>
                                                 </GroupBox>
+                                                <local:LocalAiShortTextPanel TargetGroup="SoloReturnReaction"/>
                                             </StackPanel>
                                         </ScrollViewer>
                                     </Grid>
