@@ -10,6 +10,8 @@ namespace FantasyLoveSimAssetTool.Models
 
         public string NegativePromptAddition { get; set; }
 
+        public bool IsHidden { get; set; }
+
         public StillWorkItem()
         {
             AssetId = string.Empty;

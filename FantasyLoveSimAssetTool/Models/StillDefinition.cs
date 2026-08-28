@@ -11,6 +11,7 @@ namespace FantasyLoveSimAssetTool.Models
         private string specificPrompt;
         private string negativePromptAddition;
         private StillStatus status;
+        private bool isHidden;
 
         public string AssetId
         {
@@ -86,6 +87,17 @@ namespace FantasyLoveSimAssetTool.Models
                 if (status == value) { return; }
                 status = value;
                 OnPropertyChanged(nameof(Status));
+            }
+        }
+
+        public bool IsHidden
+        {
+            get { return isHidden; }
+            set
+            {
+                if (isHidden == value) { return; }
+                isHidden = value;
+                OnPropertyChanged(nameof(IsHidden));
             }
         }
 

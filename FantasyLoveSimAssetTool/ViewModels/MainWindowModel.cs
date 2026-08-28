@@ -102,6 +102,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private AssetUsage selectedPromptTemplateUsage;
         private PromptTemplate selectedPromptTemplate;
         private StillDefinition selectedStillDefinition;
+        private bool showHiddenStillDefinitions;
         private string selectedStillUsageFilter;
         private ConversationDataKind selectedConversationDataKind;
         private ConversationEntry selectedConversationEntry;
@@ -1440,6 +1441,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
                 ApplySelectedStillWorkItem();
                 OnPropertyChanged(nameof(SelectedStillDefinition));
+                OnPropertyChanged(nameof(SelectedStillVisibilityCommandText));
                 OnPropertyChanged(nameof(StillPromptPreview));
                 RequestComfyPollingCancellation();
                 IsComfyWaitingResult = false;
@@ -1465,6 +1467,21 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 RefreshFilteredStillDefinitions();
             }
         }
+
+        public bool ShowHiddenStillDefinitions
+        {
+            get { return showHiddenStillDefinitions; }
+            set
+            {
+                if (showHiddenStillDefinitions == value) { return; }
+                showHiddenStillDefinitions = value;
+                OnPropertyChanged(nameof(ShowHiddenStillDefinitions));
+                RefreshFilteredStillDefinitions();
+            }
+        }
+
+        public string SelectedStillVisibilityCommandText =>
+            SelectedStillDefinition?.IsHidden == true ? "この項目を再表示" : "この項目を非表示";
 
         public ConversationDataKind SelectedConversationDataKind
         {
@@ -3004,6 +3021,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand OpenStillImageDetailCommand { get; }
 
+        public ICommand ToggleSelectedStillVisibilityCommand { get; }
+
         public ICommand ExportSelectedProfileCommand { get; }
 
         public ICommand OpenExportDirectoryCommand { get; }
@@ -3801,6 +3820,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
                     FindAssetForStill(SelectedProfile, SelectedStillDefinition) != null);
             OpenStillImageDetailCommand = new RelayCommand(
                 OpenStillImageDetail,
+                () => SelectedProfile != null && SelectedStillDefinition != null);
+            ToggleSelectedStillVisibilityCommand = new RelayCommand(
+                ToggleSelectedStillVisibility,
                 () => SelectedProfile != null && SelectedStillDefinition != null);
             ExportSelectedProfileCommand = new RelayCommand(ExportSelectedProfile, () => SelectedProfile != null);
             OpenExportDirectoryCommand = new RelayCommand(OpenExportDirectory);
@@ -9811,6 +9833,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 {
                     definition.NegativePromptAddition = workItem.NegativePromptAddition;
                 }
+                definition.IsHidden = workItem.IsHidden;
             }
         }
 
@@ -9838,6 +9861,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 SelectedStillDefinition.NegativePromptAddition = workItem.NegativePromptAddition;
             }
+            SelectedStillDefinition.IsHidden = workItem.IsHidden;
         }
 
         private void UpdateStillWorkItemFromDefinition()
@@ -9863,6 +9887,7 @@ namespace FantasyLoveSimAssetTool.ViewModels
             workItem.Status = SelectedStillDefinition.Status;
             workItem.SpecificPrompt = SelectedStillDefinition.SpecificPrompt ?? string.Empty;
             workItem.NegativePromptAddition = SelectedStillDefinition.NegativePromptAddition ?? string.Empty;
+            workItem.IsHidden = SelectedStillDefinition.IsHidden;
         }
 
         private void RefreshFilteredStillDefinitions()
@@ -9870,7 +9895,8 @@ namespace FantasyLoveSimAssetTool.ViewModels
             StillDefinition previousSelection = SelectedStillDefinition;
             FilteredStillDefinitions.Clear();
 
-            foreach (StillDefinition definition in StillDefinitions.Where(MatchesStillUsageFilter))
+            foreach (StillDefinition definition in StillDefinitions.Where(definition =>
+                MatchesStillUsageFilter(definition) && (ShowHiddenStillDefinitions || !definition.IsHidden)))
             {
                 FilteredStillDefinitions.Add(definition);
             }
@@ -9892,6 +9918,21 @@ namespace FantasyLoveSimAssetTool.ViewModels
             }
 
             return definition.Usage.ToString() == SelectedStillUsageFilter;
+        }
+
+        private void ToggleSelectedStillVisibility()
+        {
+            if (SelectedProfile == null || SelectedStillDefinition == null) return;
+
+            StillDefinition target = SelectedStillDefinition;
+            target.IsHidden = !target.IsHidden;
+            UpdateStillWorkItemFromDefinition();
+            characterProjectService.SaveProfile(SelectedProfile);
+            OnPropertyChanged(nameof(SelectedStillVisibilityCommandText));
+            RefreshFilteredStillDefinitions();
+            StatusMessage = target.IsHidden
+                ? $"{target.DisplayName} をスチル作業一覧で非表示にしました。「非表示項目も表示」で戻せます。"
+                : $"{target.DisplayName} をスチル作業一覧へ再表示しました。";
         }
 
         private void ApplyPromptTemplate()

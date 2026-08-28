@@ -135,5 +135,23 @@ namespace FantasyLoveSimAssetTool.Tests
             Assert.AreEqual(0, service.LoadProfile("TestHeroine").Assets.Count);
             Assert.IsTrue(File.Exists(storedPath), "登録解除では画像ファイルを削除しない契約です。");
         }
+
+        [TestMethod]
+        public void SaveAndLoadProfile_PreservesHiddenStillWorkItems()
+        {
+            CharacterProjectService service = new CharacterProjectService(workspaceRoot);
+            HeroineProfile profile = service.CreateCharacter("TestHeroine", "テスト");
+            profile.StillWorkItems.Add(new StillWorkItem
+            {
+                AssetId = "LegacyExpression",
+                IsHidden = true
+            });
+
+            service.SaveProfile(profile);
+
+            StillWorkItem loaded = service.LoadProfile("TestHeroine").StillWorkItems.Single();
+            Assert.AreEqual("LegacyExpression", loaded.AssetId);
+            Assert.IsTrue(loaded.IsHidden);
+        }
     }
 }
