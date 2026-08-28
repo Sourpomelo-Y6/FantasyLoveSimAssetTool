@@ -1865,38 +1865,75 @@
                                 </TabItem>
                                 <TabItem Header="パネル結果文">
                                     <Grid Margin="8">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                        </Grid.RowDefinitions>
-                                        <TextBlock Text="戦闘パネルに表示する結果メッセージを編集します。"
-                                                   Foreground="Gray" Margin="0,0,0,6"/>
-                            <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedProfile.BattleMessages.PanelMessages}"
-                                      SelectedItem="{Binding SelectedBattlePanelMessage}"
-                                      AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="MessageId" Binding="{Binding MessageId}" Width="130"/>
-                                    <DataGridTemplateColumn Header="結果種別" Width="120">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <ComboBox ItemsSource="{Binding Data.BattlePanelResultTypeOptions, Source={StaticResource ViewModelProxy}}"
-                                                          SelectedItem="{Binding ResultType, UpdateSourceTrigger=PropertyChanged}"/>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                    <DataGridTextColumn Header="メッセージ" Binding="{Binding Message}" Width="*"/>
-                                    <DataGridTemplateColumn Header="Voice ID" Width="190">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <ComboBox ItemsSource="{Binding Data.AvailableVoiceIds, Source={StaticResource ViewModelProxy}}"
-                                                          Text="{Binding VoiceId, UpdateSourceTrigger=PropertyChanged}"
-                                                          IsEditable="True"
-                                                          ToolTip="音声タブで検出したIDから選択。直接入力も可能です"/>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
-                                </DataGrid.Columns>
-                            </DataGrid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="350"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid Grid.Column="0">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel>
+                                                    <TextBlock Text="パネル結果文一覧" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="項目を選ぶと右側で詳細を編集できます。" Foreground="Gray" FontSize="11"/>
+                                                </StackPanel>
+                                                <WrapPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <Button Content="追加" Command="{Binding AddBattlePanelMessageCommand}" Width="64" Margin="0,0,6,0"/>
+                                                    <Button Content="削除" Command="{Binding RemoveBattlePanelMessageCommand}" Width="64"/>
+                                                </WrapPanel>
+                                            </Grid>
+                                            <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedProfile.BattleMessages.PanelMessages}"
+                                                      SelectedItem="{Binding SelectedBattlePanelMessage}"
+                                                      AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                                                      IsReadOnly="True" Margin="0,7,0,0">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="MessageId" Binding="{Binding MessageId}" Width="125"/>
+                                                    <DataGridTextColumn Header="結果" Binding="{Binding ResultType}" Width="85"/>
+                                                    <DataGridTextColumn Header="本文" Binding="{Binding Message}" Width="*"/>
+                                                    <DataGridTextColumn Header="Voice" Binding="{Binding VoiceId}" Width="75"/>
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                        </Grid>
+                                        <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                                            <StackPanel>
+                                                <TextBlock Text="戦闘パネルに表示する結果メッセージを編集します。"
+                                                           Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                                <GroupBox Header="パネル結果文">
+                                                    <Grid Margin="8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="130"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <TextBlock Text="MessageId" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                                                        <TextBox Grid.Column="1" Text="{Binding SelectedBattlePanelMessage.MessageId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+                                                        <TextBlock Grid.Row="1" Text="結果種別" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                                                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding BattlePanelResultTypeOptions}"
+                                                                  SelectedItem="{Binding SelectedBattlePanelMessage.ResultType, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6"/>
+                                                        <TextBlock Grid.Row="2" Text="本文" VerticalAlignment="Top" Margin="0,4,8,6"/>
+                                                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SelectedBattlePanelMessage.Message, UpdateSourceTrigger=PropertyChanged}"
+                                                                 AcceptsReturn="True" TextWrapping="Wrap" Height="110"
+                                                                 VerticalScrollBarVisibility="Auto" Margin="0,0,0,6"/>
+                                                        <TextBlock Grid.Row="3" Text="Voice ID" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                        <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding AvailableVoiceIds}"
+                                                                  Text="{Binding SelectedBattlePanelMessage.VoiceId, UpdateSourceTrigger=PropertyChanged}"
+                                                                  IsEditable="True" ToolTip="音声タブで検出したIDから選択。直接入力も可能です"/>
+                                                    </Grid>
+                                                </GroupBox>
+                                            </StackPanel>
+                                        </ScrollViewer>
                                     </Grid>
                                 </TabItem>
                                 <TabItem Header="単独帰還反応">

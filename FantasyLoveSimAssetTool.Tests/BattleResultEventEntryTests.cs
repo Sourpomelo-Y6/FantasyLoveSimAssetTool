@@ -38,5 +38,23 @@ namespace FantasyLoveSimAssetTool.Tests
             CollectionAssert.Contains(changed, nameof(BattleResultEventEntry.UnlockedOutfitIds));
             CollectionAssert.Contains(changed, nameof(BattleResultEventEntry.UnlockedOutfitIdsText));
         }
+
+        [TestMethod]
+        public void EditingPanelMessageSummaryFields_RaisesPropertyChanged()
+        {
+            var entry = new BattlePanelResultMessageEntry();
+            var changed = new List<string>();
+            entry.PropertyChanged += (_, args) => changed.Add(args.PropertyName);
+
+            entry.MessageId = "Panel_Win";
+            entry.ResultType = "Victory";
+            entry.Message = "勝利です。";
+            entry.VoiceId = "panel_win_01";
+
+            CollectionAssert.Contains(changed, nameof(BattlePanelResultMessageEntry.MessageId));
+            CollectionAssert.Contains(changed, nameof(BattlePanelResultMessageEntry.ResultType));
+            CollectionAssert.Contains(changed, nameof(BattlePanelResultMessageEntry.Message));
+            CollectionAssert.Contains(changed, nameof(BattlePanelResultMessageEntry.VoiceId));
+        }
     }
 }

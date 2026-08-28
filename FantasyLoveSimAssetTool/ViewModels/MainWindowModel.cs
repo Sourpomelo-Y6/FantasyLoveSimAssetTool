@@ -2837,6 +2837,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand RemoveBattleResultEventCommand { get; }
 
+        public ICommand AddBattlePanelMessageCommand { get; }
+
+        public ICommand RemoveBattlePanelMessageCommand { get; }
+
         public ICommand RefreshProductionStatusCommand { get; }
 
         public ICommand OpenProductionStatusTargetCommand { get; }
@@ -3577,6 +3581,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 () => SelectedProfile != null);
             RemoveBattleResultEventCommand = new RelayCommand(RemoveBattleResultEvent,
                 () => SelectedProfile != null && SelectedBattleResultEvent != null);
+            AddBattlePanelMessageCommand = new RelayCommand(AddBattlePanelMessage,
+                () => SelectedProfile != null);
+            RemoveBattlePanelMessageCommand = new RelayCommand(RemoveBattlePanelMessage,
+                () => SelectedProfile != null && SelectedBattlePanelMessage != null);
             RefreshProductionStatusCommand = new RelayCommand(RefreshProductionStatus);
             OpenProductionStatusTargetCommand = new RelayCommand<object>(OpenProductionStatusTarget);
             BrowseUnityProjectCommand = new RelayCommand(BrowseUnityProject);
@@ -14183,6 +14191,39 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 : entries[Math.Min(index, entries.Count - 1)];
             RefreshProductionStatus();
             StatusMessage = "選択中の戦闘後イベントを削除しました。保存すると確定します。";
+        }
+
+        private void AddBattlePanelMessage()
+        {
+            if (SelectedProfile == null) return;
+            SelectedProfile.BattleMessages ??= new BattleMessageSettings();
+            SelectedProfile.BattleMessages.PanelMessages ??=
+                new ObservableCollection<BattlePanelResultMessageEntry>();
+            var entry = new BattlePanelResultMessageEntry
+            {
+                MessageId = BuildUniqueId(
+                    (SelectedProfile.HeroineId ?? "Heroine") + "_BattlePanel",
+                    SelectedProfile.BattleMessages.PanelMessages.Select(item => item?.MessageId)),
+                ResultType = "Victory"
+            };
+            SelectedProfile.BattleMessages.PanelMessages.Add(entry);
+            SelectedBattlePanelMessage = entry;
+            RefreshProductionStatus();
+            StatusMessage = $"パネル結果文 {entry.MessageId} を追加しました。保存すると確定します。";
+        }
+
+        private void RemoveBattlePanelMessage()
+        {
+            ObservableCollection<BattlePanelResultMessageEntry> entries =
+                SelectedProfile?.BattleMessages?.PanelMessages;
+            if (entries == null || SelectedBattlePanelMessage == null) return;
+            int index = entries.IndexOf(SelectedBattlePanelMessage);
+            entries.Remove(SelectedBattlePanelMessage);
+            SelectedBattlePanelMessage = entries.Count == 0
+                ? null
+                : entries[Math.Min(index, entries.Count - 1)];
+            RefreshProductionStatus();
+            StatusMessage = "選択中のパネル結果文を削除しました。保存すると確定します。";
         }
 
         private void LoadEnemies()

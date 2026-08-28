@@ -61,12 +61,24 @@ namespace FantasyLoveSimAssetTool.Models
         }
     }
 
-    public class BattlePanelResultMessageEntry
+    public class BattlePanelResultMessageEntry : ObservableObject
     {
-        public string MessageId { get; set; } = string.Empty;
-        public string ResultType { get; set; } = "Default";
-        public string Message { get; set; } = string.Empty;
-        public string VoiceId { get; set; }
+        private string messageId = string.Empty;
+        private string resultType = "Default";
+        private string message = string.Empty;
+        private string voiceId;
+
+        public string MessageId { get => messageId; set => Set(ref messageId, value); }
+        public string ResultType { get => resultType; set => Set(ref resultType, value); }
+        public string Message { get => message; set => Set(ref message, value); }
+        public string VoiceId { get => voiceId; set => Set(ref voiceId, value); }
+
+        private void Set<T>(ref T field, T value, [System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
+        {
+            if (Equals(field, value)) return;
+            field = value;
+            OnPropertyChanged(propertyName);
+        }
     }
 
     public class SoloReturnReactionEntry
