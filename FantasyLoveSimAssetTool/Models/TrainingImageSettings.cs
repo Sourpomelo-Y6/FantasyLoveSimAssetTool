@@ -91,6 +91,10 @@ namespace FantasyLoveSimAssetTool.Models
         public bool HideAfterCompletion { get; set; }
         public List<string> UnlockNodeIds { get; set; } = new List<string>();
         public List<string> UnlockNodeNames { get; set; } = new List<string>();
+        public bool IsToolCreated { get; set; }
+
+        [JsonIgnore]
+        public string SourceLabel => IsToolCreated ? "Tool追加" : "Unity";
 
         [JsonIgnore]
         public string VisibleConditionRanksText

@@ -95,7 +95,8 @@ namespace FantasyLoveSimAssetTool.Tests
                 ExecutableConditionRanks = new List<string> { "Good", "Excellent" },
                 RequiredCompletedTrainingIds = new List<string> { "Preparation" },
                 UnlockNodeIds = new List<string> { "TestHeroine_Limited" },
-                HideAfterCompletion = true
+                HideAfterCompletion = true,
+                IsToolCreated = true
             });
             service.SaveProfile(profile);
 
@@ -108,6 +109,7 @@ namespace FantasyLoveSimAssetTool.Tests
             CollectionAssert.AreEqual(new[] { "Preparation" }, loaded.RequiredCompletedTrainingIds);
             CollectionAssert.AreEqual(new[] { "TestHeroine_Limited" }, loaded.UnlockNodeIds);
             Assert.IsTrue(loaded.HideAfterCompletion);
+            Assert.IsTrue(loaded.IsToolCreated);
         }
 
         [TestMethod]

@@ -166,5 +166,40 @@ namespace FantasyLoveSimAssetTool.Tests
             CollectionAssert.AreEqual(new[] { "TestHeroine_Limited" }, item.UnlockNodeIds);
             Assert.IsTrue(item.HideAfterCompletion.Value);
         }
+
+        [TestMethod]
+        public void ToolItems_CanBeAddedPreservedByUnityMergeAndRemovedSafely()
+        {
+            var settings = new TrainingCatalogSettings();
+            TrainingCatalogItem toolItem = TrainingCatalogSyncService.AddToolItem(
+                settings, "Custom_Training1", "追加訓練", "Custom");
+
+            Assert.IsTrue(toolItem.IsToolCreated);
+            Assert.AreEqual("Tool追加", toolItem.SourceLabel);
+            Assert.AreEqual("追加訓練", toolItem.DisplayName);
+
+            FromUnityTrainingCatalogDataFile data = TrainingCatalogSyncService.DeserializeFromUnity(
+                "{\"schemaVersion\":1,\"heroineId\":\"TestHeroine\",\"items\":[{" +
+                "\"trainingId\":\"UnityTraining\",\"displayName\":\"Unity訓練\"}]}");
+            TrainingCatalogSyncService.MergeFromUnity(settings, "TestHeroine", data);
+
+            Assert.IsTrue(settings.Items.Any(item => item.TrainingId == "Custom_Training1" && item.IsToolCreated));
+            Assert.IsFalse(settings.Items.Single(item => item.TrainingId == "UnityTraining").IsToolCreated);
+            Assert.IsFalse(TrainingCatalogSyncService.RemoveToolItem(
+                settings, settings.Items.Single(item => item.TrainingId == "UnityTraining")));
+            Assert.IsTrue(TrainingCatalogSyncService.RemoveToolItem(settings, toolItem));
+        }
+
+        [TestMethod]
+        public void AddToolItem_RejectsInvalidAndDuplicateTrainingIds()
+        {
+            var settings = new TrainingCatalogSettings();
+            TrainingCatalogSyncService.AddToolItem(settings, "Custom", "", "");
+
+            Assert.ThrowsException<System.InvalidOperationException>(() =>
+                TrainingCatalogSyncService.AddToolItem(settings, "Custom", "重複", ""));
+            Assert.ThrowsException<System.InvalidOperationException>(() =>
+                TrainingCatalogSyncService.AddToolItem(settings, "1 Invalid", "不正", ""));
+        }
     }
 }

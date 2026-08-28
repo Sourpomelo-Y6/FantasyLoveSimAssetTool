@@ -2375,6 +2375,38 @@
                                 <TabItem Header="訓練条件">
                                     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8">
                                         <StackPanel>
+                                    <GroupBox Header="Toolで訓練を追加" Margin="0,8,0,8">
+                                        <Grid Margin="8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="180"/>
+                                                <ColumnDefinition Width="80"/>
+                                                <ColumnDefinition Width="180"/>
+                                                <ColumnDefinition Width="90"/>
+                                                <ColumnDefinition Width="180"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Text="TrainingId" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                                            <TextBox Grid.Column="1" Text="{Binding NewTrainingId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,6"/>
+                                            <TextBlock Grid.Column="2" Text="表示名" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                                            <TextBox Grid.Column="3" Text="{Binding NewTrainingDisplayName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,6"/>
+                                            <TextBlock Grid.Column="4" Text="カテゴリー" VerticalAlignment="Center" Margin="0,0,8,6"/>
+                                            <ComboBox Grid.Column="5" ItemsSource="{Binding TrainingCategoryIdOptions}"
+                                                      Text="{Binding NewTrainingCategoryId, UpdateSourceTrigger=PropertyChanged}"
+                                                      IsEditable="True" Margin="0,0,12,6"/>
+                                            <WrapPanel Grid.Column="6">
+                                                <Button Content="訓練を追加" Command="{Binding AddToolTrainingCatalogItemCommand}" MinWidth="100" Height="28" Margin="0,0,6,6"/>
+                                                <Button Content="選択したTool項目を削除" Command="{Binding RemoveToolTrainingCatalogItemCommand}" MinWidth="155" Height="28"/>
+                                            </WrapPanel>
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="6"
+                                                       Text="TrainingIdは半角英字で開始し、半角英数字と _ を使用します。削除できるのはToolで追加した項目だけです。"
+                                                       Foreground="Gray" TextWrapping="Wrap"/>
+                                        </Grid>
+                                    </GroupBox>
                                     <GroupBox Header="Unityから取り込んだ訓練一覧" Margin="0,8,0,8">
                                         <DataGrid ItemsSource="{Binding SelectedProfile.TrainingCatalog.Items}"
                                                   SelectedItem="{Binding SelectedTrainingCatalogItem}"
@@ -2385,6 +2417,7 @@
                                                   Margin="8">
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="TrainingId" Binding="{Binding TrainingId}" Width="180"/>
+                                                <DataGridTextColumn Header="由来" Binding="{Binding SourceLabel}" Width="75"/>
                                                 <DataGridTextColumn Header="表示名" Binding="{Binding DisplayName}" Width="140"/>
                                                 <DataGridTextColumn Header="カテゴリー" Binding="{Binding TrainingCategoryId}" Width="130"/>
                                                 <DataGridTextColumn Header="解放" Binding="{Binding UnlockSummary}" Width="150"/>

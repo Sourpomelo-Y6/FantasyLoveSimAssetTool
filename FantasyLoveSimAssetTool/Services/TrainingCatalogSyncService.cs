@@ -111,6 +111,7 @@ namespace FantasyLoveSimAssetTool.Services
                     : source.DisplayName.Trim();
                 target.TrainingCategoryId = (source.TrainingCategoryId ?? string.Empty).Trim();
                 target.UnlockedByDefault = source.UnlockedByDefault;
+                target.IsToolCreated = false;
                 target.UnlockNodeIds = CleanIds(source.UnlockNodeIds);
                 target.UnlockNodeNames = CleanIds(source.UnlockNodeNames);
 
@@ -272,5 +273,48 @@ namespace FantasyLoveSimAssetTool.Services
             }
             return cleaned;
         }
+
+        public static TrainingCatalogItem AddToolItem(
+            TrainingCatalogSettings settings,
+            string trainingId,
+            string displayName,
+            string categoryId)
+        {
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
+            settings.Items ??= new ObservableCollection<TrainingCatalogItem>();
+            string normalizedId = (trainingId ?? string.Empty).Trim();
+            if (!IsValidTrainingId(normalizedId))
+                throw new InvalidOperationException("TrainingIdは半角英字で始まり、半角英数字とアンダースコアだけを使用してください。");
+            if (settings.Items.Any(item => string.Equals(
+                item?.TrainingId, normalizedId, StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidOperationException($"TrainingId '{normalizedId}' はすでに登録されています。");
+
+            var item = new TrainingCatalogItem
+            {
+                TrainingId = normalizedId,
+                DisplayName = string.IsNullOrWhiteSpace(displayName) ? normalizedId : displayName.Trim(),
+                TrainingCategoryId = (categoryId ?? string.Empty).Trim(),
+                IsToolCreated = true,
+                SortOrder = settings.Items.Count == 0 ? 0 : settings.Items.Max(value => value?.SortOrder ?? 0) + 1
+            };
+            settings.Items.Add(item);
+            return item;
+        }
+
+        public static bool RemoveToolItem(TrainingCatalogSettings settings, TrainingCatalogItem item)
+        {
+            if (settings?.Items == null || item?.IsToolCreated != true) return false;
+            return settings.Items.Remove(item);
+        }
+
+        private static bool IsValidTrainingId(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value) || !IsAsciiLetter(value[0])) return false;
+            return value.All(character => IsAsciiLetter(character) ||
+                (character >= '0' && character <= '9') || character == '_');
+        }
+
+        private static bool IsAsciiLetter(char value) =>
+            (value >= 'A' && value <= 'Z') || (value >= 'a' && value <= 'z');
     }
 }

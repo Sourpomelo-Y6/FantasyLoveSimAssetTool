@@ -63,6 +63,9 @@ namespace FantasyLoveSimAssetTool.ViewModels
         private OutfitReactionMessageOverride selectedOutfitReactionMessageOverride;
         private TrainingImageEntry selectedTrainingImageEntry;
         private TrainingCatalogItem selectedTrainingCatalogItem;
+        private string newTrainingId = string.Empty;
+        private string newTrainingDisplayName = string.Empty;
+        private string newTrainingCategoryId = string.Empty;
         private string selectedTrainingPrerequisiteCandidate;
         private string selectedTrainingUnlockNodeCandidate;
         private string selectedSkillNodePrerequisiteCandidate;
@@ -1254,7 +1257,26 @@ namespace FantasyLoveSimAssetTool.ViewModels
                 if (selectedTrainingCatalogItem == value) return;
                 selectedTrainingCatalogItem = value;
                 OnPropertyChanged(nameof(SelectedTrainingCatalogItem));
+                CommandManager.InvalidateRequerySuggested();
             }
+        }
+
+        public string NewTrainingId
+        {
+            get => newTrainingId;
+            set { if (newTrainingId != value) { newTrainingId = value; OnPropertyChanged(nameof(NewTrainingId)); CommandManager.InvalidateRequerySuggested(); } }
+        }
+
+        public string NewTrainingDisplayName
+        {
+            get => newTrainingDisplayName;
+            set { if (newTrainingDisplayName != value) { newTrainingDisplayName = value; OnPropertyChanged(nameof(NewTrainingDisplayName)); } }
+        }
+
+        public string NewTrainingCategoryId
+        {
+            get => newTrainingCategoryId;
+            set { if (newTrainingCategoryId != value) { newTrainingCategoryId = value; OnPropertyChanged(nameof(NewTrainingCategoryId)); } }
         }
 
         public string TrainingIdSuggestions => string.Join(", ",
@@ -2999,6 +3021,10 @@ namespace FantasyLoveSimAssetTool.ViewModels
 
         public ICommand ImportTrainingCatalogFromUnityCommand { get; }
 
+        public ICommand AddToolTrainingCatalogItemCommand { get; }
+
+        public ICommand RemoveToolTrainingCatalogItemCommand { get; }
+
         public ICommand GenerateTrainingDialogueCandidatesCommand { get; }
 
         public ICommand CancelTrainingDialogueGenerationCommand { get; }
@@ -3785,6 +3811,12 @@ namespace FantasyLoveSimAssetTool.ViewModels
             ImportTrainingCatalogFromUnityCommand = new RelayCommand(
                 ImportTrainingCatalogFromUnity,
                 () => SelectedProfile != null);
+            AddToolTrainingCatalogItemCommand = new RelayCommand(
+                AddToolTrainingCatalogItem,
+                () => SelectedProfile != null && !string.IsNullOrWhiteSpace(NewTrainingId));
+            RemoveToolTrainingCatalogItemCommand = new RelayCommand(
+                RemoveToolTrainingCatalogItem,
+                () => SelectedProfile != null && SelectedTrainingCatalogItem?.IsToolCreated == true);
             GenerateTrainingDialogueCandidatesCommand = new AsyncRelayCommand(
                 GenerateTrainingDialogueCandidatesAsync,
                 () => SelectedProfile != null && SelectedTrainingDialogueEntry != null &&
@@ -7445,6 +7477,71 @@ namespace FantasyLoveSimAssetTool.ViewModels
             {
                 StatusMessage = $"FromUnity 訓練一覧 import に失敗しました: {ex.Message}";
             }
+        }
+
+        private void AddToolTrainingCatalogItem()
+        {
+            if (SelectedProfile == null) return;
+            string trainingId = (NewTrainingId ?? string.Empty).Trim();
+
+            SelectedProfile.TrainingCatalog ??= new TrainingCatalogSettings();
+            SelectedProfile.TrainingCatalog.Items ??= new ObservableCollection<TrainingCatalogItem>();
+            TrainingCatalogItem item;
+            try
+            {
+                item = TrainingCatalogSyncService.AddToolItem(
+                    SelectedProfile.TrainingCatalog,
+                    trainingId,
+                    NewTrainingDisplayName,
+                    NewTrainingCategoryId);
+            }
+            catch (InvalidOperationException ex)
+            {
+                StatusMessage = ex.Message;
+                return;
+            }
+            SelectedTrainingCatalogItem = item;
+            TrainingCatalogSyncService.RefreshReferenceWarnings(
+                SelectedProfile.TrainingCatalog,
+                SelectedProfile.HeroineSkillTree?.Nodes?.Where(node => node != null).Select(node => node.NodeId));
+            characterProjectService.SaveProfile(SelectedProfile);
+            RefreshSkillReferenceOptions();
+            OnPropertyChanged(nameof(TrainingIdSuggestions));
+            OnPropertyChanged(nameof(TrainingAssetPreparationSummary));
+            NewTrainingId = string.Empty;
+            NewTrainingDisplayName = string.Empty;
+            NewTrainingCategoryId = string.Empty;
+            StatusMessage = $"訓練 '{trainingId}' をTool項目として追加しました。「画像作成枠を準備」で固定5状態を作成できます。";
+        }
+
+        private void RemoveToolTrainingCatalogItem()
+        {
+            TrainingCatalogItem item = SelectedTrainingCatalogItem;
+            if (SelectedProfile?.TrainingCatalog?.Items == null || item?.IsToolCreated != true) return;
+
+            MessageBoxResult result = MessageBox.Show(
+                $"Toolで追加した訓練 '{item.TrainingId}' を訓練一覧から削除しますか？\n" +
+                "作成済みの画像、画像マッピング、セリフは削除されません。",
+                "Tool追加訓練の削除確認",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+            if (result != MessageBoxResult.Yes)
+            {
+                StatusMessage = "訓練項目の削除をキャンセルしました。";
+                return;
+            }
+
+            string trainingId = item.TrainingId;
+            TrainingCatalogSyncService.RemoveToolItem(SelectedProfile.TrainingCatalog, item);
+            SelectedTrainingCatalogItem = SelectedProfile.TrainingCatalog.Items.FirstOrDefault();
+            TrainingCatalogSyncService.RefreshReferenceWarnings(
+                SelectedProfile.TrainingCatalog,
+                SelectedProfile.HeroineSkillTree?.Nodes?.Where(node => node != null).Select(node => node.NodeId));
+            characterProjectService.SaveProfile(SelectedProfile);
+            RefreshSkillReferenceOptions();
+            OnPropertyChanged(nameof(TrainingIdSuggestions));
+            OnPropertyChanged(nameof(TrainingAssetPreparationSummary));
+            StatusMessage = $"訓練 '{trainingId}' を一覧から削除しました。既存の画像・マッピング・セリフは残しています。";
         }
 
         private void ImportTrainingCatalogFromUnityFile(string filePath)
